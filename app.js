@@ -417,6 +417,9 @@ function dsHandleHtml(attrs = "", label = "") {
 function dragSort(h, o) {
   if (!h) return;
   const X = o.axis === "x";
+  // o.grid: items wrap in rows (cards two a row): the row moves both ways and
+  // the line stands at the side of the card it lands before.
+  const G = !!o.grid;
   const rowOf = () => (o.item ? o.item(h) : h.closest(o.row));
   const listOf = (row) => (o.items ? o.items(row) : [...row.parentElement.children].filter((x) => x.matches(o.row)));
   const finish = (row, from, to) => {
@@ -433,10 +436,11 @@ function dragSort(h, o) {
   h.onkeydown = (e) => {
     const back = X ? (document.documentElement.dir === "rtl" ? "ArrowRight" : "ArrowLeft") : "ArrowUp";
     const fwd = X ? (document.documentElement.dir === "rtl" ? "ArrowLeft" : "ArrowRight") : "ArrowDown";
-    if (e.key !== back && e.key !== fwd) return;
+    const gb = G && e.key === (document.documentElement.dir === "rtl" ? "ArrowRight" : "ArrowLeft"), gf = G && e.key === (document.documentElement.dir === "rtl" ? "ArrowLeft" : "ArrowRight");
+    if (e.key !== back && e.key !== fwd && !gb && !gf) return;
     e.preventDefault();
     const row = rowOf(); if (!row) return;
-    const list = listOf(row), from = list.indexOf(row), to = from + (e.key === back ? -1 : 1);
+    const list = listOf(row), from = list.indexOf(row), to = from + (e.key === back || gb ? -1 : 1);
     if (from < 0 || to < 0 || to >= list.length) return;
     const p = finish(row, from, to);
     if (p) p.then(() => { if (h.isConnected) h.focus(); else if (o.refocus) o.refocus(row, to); });
@@ -485,13 +489,22 @@ function dragSort(h, o) {
     if (sc === document.body || sc === document.documentElement) sc = null;
     const scPos = () => (sc ? (X ? sc.scrollLeft : sc.scrollTop) : (X ? scrollX : scrollY));
     const p0 = X ? now.clientX : now.clientY, s0 = scPos();
-    let p = p0, to = from, raf = 0;
+    let p = p0, to = from, raf = 0, gx = now.clientX;
+    const gx0 = gx;
     const line = document.createElement("div");
-    line.className = "ds-line" + (X ? " x" : "");
+    line.className = "ds-line" + (X || G ? " x" : "");
     document.body.appendChild(line);
     row.classList.add("ds-lift");
     document.documentElement.classList.add("ds-on");
     const draw = () => {
+      if (G) {
+        row.style.transform = `translate(${gx - gx0}px, ${p - p0 + scPos() - s0}px)`;
+        const rects = others.map((x) => x.getBoundingClientRect()), rtl = document.documentElement.dir === "rtl";
+        to = rects.filter((r) => p >= r.bottom || (p >= r.top && (rtl ? r.left + r.width / 2 > gx : r.left + r.width / 2 < gx))).length;
+        const at = rects[Math.min(to, rects.length - 1)], x = to < rects.length ? (rtl ? at.right + 4 : at.left - 4) : (rtl ? at.left - 4 : at.right + 4);
+        Object.assign(line.style, { left: x - 1.5 + "px", top: at.top + "px", height: at.height + "px", width: "" });
+        return;
+      }
       row.style.transform = `translate${X ? "X" : "Y"}(${p - p0 + scPos() - s0}px)`;
       const mid = (r) => (X ? r.left + r.width / 2 : r.top + r.height / 2);
       const rects = others.map((x) => x.getBoundingClientRect());
@@ -520,7 +533,7 @@ function dragSort(h, o) {
     };
     draw();
     raf = requestAnimationFrame(edge);
-    const move = (ev) => { if (ev.pointerId === e.pointerId) p = X ? ev.clientX : ev.clientY; };
+    const move = (ev) => { if (ev.pointerId === e.pointerId) { p = X ? ev.clientX : ev.clientY; gx = ev.clientX; } };
     // While dragging, a finger moves the row, not the page.
     const noScroll = (ev) => { if (ev.cancelable) ev.preventDefault(); };
     const end = (ev) => {
@@ -1273,7 +1286,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 97; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 98; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -3031,9 +3044,7 @@ const T = {
   pkb_counted_some: { en: "{n} of {m} counted in Budgets" },
   pkb_how: { en: "How it's bought" },
   pkb_no_match: { en: "No packs match your search." },
-  pkb_ev_same: { en: "same dates" },
   pkb_ev_packs: { en: "{n} packs" },
-  pkb_tiers: { en: "{n} tiers" },
   pkb_ev_part: { en: "Part of {name}" },
   pkb_ev_from: { en: "Its dates come from that pack" },
   pkb_ev_lasts: { en: "Lasts {n} days" },
@@ -3049,11 +3060,93 @@ const T = {
   pkb_ev_follows: { en: "follows {pack} · ticking moves it" },
   pkb_ev_swap: { en: "leads {n} packs now · will follow {pack}" },
   pkb_ev_swap1: { en: "leads 1 pack now · will follow {pack}" },
-  pkb_ng_heroes: { en: "{n} heroes" },
-  pkb_ng_hero1: { en: "1 hero" },
   pkb_ng_shards: { en: "{n} shards" },
   pkb_ng_widgets: { en: "{n} widgets" },
   pkb_ng_made: { en: "Made by itself for each new hero (Gen {gen})" },
+  pkb_prices_in: { en: "Prices in {cur}" },
+  pkd_back: { en: "Comes back" },
+  pkd_days_k: { en: "Days" },
+  pkd_now_k: { en: "Now" },
+  pkd_buys_k: { en: "Buys" },
+  pkd_1day: { en: "1 day" },
+  pkd_days: { en: "{n} days" },
+  pkd_1week: { en: "1 week" },
+  pkd_weeks: { en: "{n} weeks" },
+  pkd_once: { en: "Once only" },
+  pkd_any_time: { en: "Any time" },
+  pkd_every_day: { en: "Every day" },
+  pkd_with_heroes: { en: "With new heroes" },
+  pkd_with_heroes_n: { en: "With new heroes (every {d})" },
+  pkd_when_appears: { en: "{d} when it appears" },
+  pkd_per_card: { en: "{d} per card" },
+  pkd_whole_month: { en: "the whole month" },
+  pkd_resets_daily: { en: "resets daily" },
+  pkd_lasts: { en: "lasts {d}" },
+  pkd_on_today: { en: "today" },
+  pkd_to: { en: "to {d}" },
+  pkd_last_day: { en: "last day" },
+  pkd_next: { en: "next {d}" },
+  pkd_trig_passed: { en: "passed · {e} Lv {n}" },
+  pkd_trig_at: { en: "at {e} Lv {n}" },
+  pkd_running: { en: "Running" },
+  pkd_running_left: { en: "{d} left ({n} cards)" },
+  pkd_not_running: { en: "Not running · can buy today" },
+  pkd_stack_buys: { en: "up to {d} ahead ({n} cards)" },
+  pkd_in_order: { en: "in order" },
+  pkd_any_order: { en: "any order" },
+  pkd_each_once: { en: "each once" },
+  pkd_up_to: { en: "up to {list}" },
+  pkd_one_day: { en: "one a day" },
+  pkd_one_of: { en: "one of them" },
+  pkd_one_day_all: { en: "one a day, or all {n} for {p}" },
+  pkd_choose_n: { en: "choose {n}" },
+  pkd_once_hero: { en: "once per hero" },
+  pkd_opt_step: { en: "1 option a step" },
+  pkd_side_step: { en: "1 side a step" },
+  pkd_ev_each: { en: "each pack has its own steps" },
+  pkd_l_order: { en: "Price steps · buy in order" },
+  pkd_l_free: { en: "Price steps · free first" },
+  pkd_l_any: { en: "Prices · any order" },
+  pkd_l_price: { en: "Price" },
+  pkd_l_times: { en: "Prices · with how many times each" },
+  pkd_l_choose_day: { en: "Choose one a day" },
+  pkd_l_choose: { en: "Choose one" },
+  pkd_l_pick: { en: "Price steps · choose {n} of these at each step" },
+  pkd_l_pick_any: { en: "Prices · choose {n} of these" },
+  pkd_l_opt: { en: "Price steps · pick one option at each step" },
+  pkd_l_side: { en: "Price steps · pick a side at each step" },
+  pkd_l_card: { en: "Card · one price" },
+  pkd_l_steps: { en: "Price steps" },
+  pkd_l_hero: { en: "Price · each hero" },
+  pkd_step: { en: "Step {n}" },
+  pkd_price_n: { en: "Price {n}" },
+  pkd_card: { en: "Card" },
+  pkd_each_hero: { en: "Each hero" },
+  pkd_pick_n: { en: "pick {n}" },
+  pkd_at_once: { en: "At once" },
+  pkd_then_daily: { en: "Then every day for {d}" },
+  pkd_at_lv: { en: "at Lv {n}" },
+  pkd_lv_done: { en: "✓ passed" },
+  pkd_lv_now: { en: "on now" },
+  pkd_trig_note: { en: "Appears when {e} reaches {list}" },
+  pkd_trig_lv: { en: "Lv {n} (step {s})" },
+  pkd_and: { en: "and" },
+  pkd_or: { en: "or" },
+  pkd_buy_all: { en: "Buy all {n}" },
+  pkd_save: { en: "save {p}" },
+  pkd_buy_all_note: { en: "Same as buying the {n} rows; counts as the day's buy" },
+  pkd_sh_normal: { en: "Normal" },
+  pkd_sh_first: { en: "First buy of the day" },
+  pkd_sh_a_day: { en: "{n} a day" },
+  pkd_sh_more_day: { en: "{n} more a day" },
+  pkd_sh_first_note: { en: "Only the first buy of each day" },
+  pkd_sh_per_day: { en: "per day: {list} (first one with the extra)" },
+  pkd_tomes: { en: "+{n} Glorious Tomes for the first buy each day" },
+  pkd_options: { en: "{n} options" },
+  pkd_sides: { en: "2 sides" },
+  pkd_part_of: { en: "Part of {name}" },
+  pkd_open: { en: "Open pack" },
+  pkd_count: { en: "Count in Budgets" },
   pk_active_label: { en: "Reward days left" },
   pk_active_hint: { en: "on cards you already bought" },
   pk_days_unit: { en: "days" },
@@ -3966,7 +4059,7 @@ window.addEventListener("popstate", (e) => {
   const tab = e.state && e.state.tab;
   if (!tab) return;
   // Packs B: Back / Forward close / reopen a pack's window.
-  if (tab === "packs" && TAB === "packs" && PKB_HOOK) { PKB_HOOK.history(e.state.pkb || null); return; }
+  if (tab === "packs" && TAB === "packs" && PKB_HOOK) { PKB_HOOK.history(e.state.pkb || null, e.state.pkbi || null); return; }
   // My packs: Back / Forward close / reopen a pack's window (visitors).
   if (tab === "mypacks" && TAB === "mypacks" && MPW_HOOK) { MPW_HOOK.history(e.state.mpw || null); return; }
   // Admin sections: Back / Forward between the Admin home and its sections.
@@ -11495,8 +11588,6 @@ const PACKS_OPEN = new Set((() => { try { const v = JSON.parse(sessionStorage.ge
 // outside the page (Back button, ⚙ in Pack dates, My Purchases' weekly cards).
 let PKB_QUERY = "";
 const PKB_MORE = new Set();
-// Event cards opened on the Packs page (events start folded), kept for the visit.
-const PKB_EV_OPEN = new Set();
 // The owner's "Arrange" fold (its category key, null = none), kept for the visit.
 let PKB_ARRANGE_CAT = null;
 // The owner's own order of rows in a fold / inside an event card, saved for
@@ -11519,7 +11610,8 @@ document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape" || TAB !== "packs" || document.querySelector(".pk-sheet-back")) return;
   const dp = document.getElementById("pkbDpSheet");
   if (dp && !dp.hidden) { dp.hidden = true; return; }
-  if (PKB_HOOK && document.querySelector("[data-pkbsheet]")) PKB_HOOK.closeUi();
+  if (PKB_HOOK && document.querySelector("[data-pkbsheet]")) { PKB_HOOK.closeUi(); return; }
+  if (PKB_HOOK && PKB_HOOK.infoOpen()) PKB_HOOK.closeInfo();
 });
 // Close any open pack ⋯ menu that a tap landed outside of.
 function pkCloseMenus(target) {
@@ -11627,6 +11719,14 @@ async function renderPacksPage() {
   // opens its pack's window; the window's ‹ / dim edge closes it.
   listEl.addEventListener("click", (e) => {
     if (e.target.closest(".pkb-tk") || e.target.closest(".pkb-cat .ds-h")) return;
+    // the details sheet: ✕ / the dim edge close it, "Open pack ›" opens the
+    // pack window, Shining City's Normal | First buy switch
+    if (e.target.closest("[data-pkbiclose]") || (e.target.matches && e.target.matches("[data-pkbinfoov]"))) { pkbInfoClose(false); return; }
+    const opn = e.target.closest("[data-pkbopen]");
+    if (opn) { pkbOpen(opn.dataset.pkbopen); return; }
+    const shn = e.target.closest("[data-pkdshine]");
+    if (shn) { PKB_SHINE_FIRST = shn.dataset.pkdshine === "1"; pkbInfoDraw(); return; }
+    if (e.target.closest(".pkd-sw")) return;
     const arrB = e.target.closest("[data-pkbarr]");
     if (arrB) {
       const k = arrB.dataset.pkbarr;
@@ -11648,14 +11748,7 @@ async function renderPacksPage() {
       return;
     }
     const evTap = e.target.closest("[data-pkbevtap]");
-    if (evTap) {
-      const k = evTap.dataset.pkbevtap, top0 = evTap.getBoundingClientRect().top;
-      if (PKB_EV_OPEN.has(k)) PKB_EV_OPEN.delete(k); else PKB_EV_OPEN.add(k);
-      renderAll();
-      const again = listEl.querySelector(`[data-pkbevtap="${window.CSS.escape(k)}"]`);
-      if (again) { const d = again.getBoundingClientRect().top - top0; if (Math.abs(d) > 1) window.scrollBy(0, d); }
-      return;
-    }
+    if (evTap) { if (!evTap.closest(".pkb-arranging")) pkbInfoOpen("ev:" + evTap.dataset.pkbevtap); return; }
     const fold = e.target.closest("[data-pkbfold]");
     if (fold) {
       const k = fold.dataset.pkbfold, wasOpen = fold.closest(".pkb-cat").classList.contains("open"), top0 = fold.getBoundingClientRect().top;
@@ -11674,10 +11767,10 @@ async function renderPacksPage() {
     const go = e.target.closest("[data-pkbgo]");
     if (go) { pkbOpen(go.dataset.pkbgo); return; }
     const row = e.target.closest("[data-pkrowid]");
-    if (row && !row.closest(".pkb-arranging")) pkbOpen(row.dataset.pkrowid);
+    if (row && !row.closest(".pkb-arranging")) pkbInfoOpen("t:" + row.dataset.pkrowid);
   });
   listEl.addEventListener("keydown", (e) => {
-    if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-pkrowid]")) { e.preventDefault(); if (!e.target.closest(".pkb-arranging")) pkbOpen(e.target.dataset.pkrowid); }
+    if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-pkrowid]")) { e.preventDefault(); if (!e.target.closest(".pkb-arranging")) pkbInfoOpen("t:" + e.target.dataset.pkrowid); }
     if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-pkbevtap]")) { e.preventDefault(); e.target.click(); }
   });
   // "How it's bought" dropdown in the window sets the same radio buttons as before.
@@ -12195,7 +12288,7 @@ async function renderPacksPage() {
     return out;
   }
   // Price range in the shown currency: "$4.99–99.99", "Free + $9.99".
-  function pkbPrice(tb, lk) {
+  function pkbPrice(tb, lk, bare) {
     const pc = lk.priceCol || 0, nums = [];
     let free = false;
     tb.rows.forEach((r) => {
@@ -12206,7 +12299,7 @@ async function renderPacksPage() {
     });
     if (!nums.length) return free ? t("pkb_free") : "—";
     const lo = Math.min(...nums), hi = Math.max(...nums), plain = (x) => String(x).replace(/[⁦-⁩]/g, "");
-    let txt = plain(packFmtMoney(lo, lk.currency));
+    let txt = bare ? Number(packConvert(lo, lk.currency).n).toLocaleString(pkbLoc, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : plain(packFmtMoney(lo, lk.currency));
     if (hi > lo) { const c = packConvert(hi, lk.currency); txt += `–${Number(c.n).toLocaleString(pkbLoc, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
     return bidiNum(free ? `${t("pkb_free")} + ${txt}` : txt);
   }
@@ -12215,7 +12308,7 @@ async function renderPacksPage() {
     const pc = lk.priceCol || 0, gc = gemsColOf(tb);
     for (let ci = 0; ci < tb.columns.length; ci++) {
       if (ci === pc || ci === gc) continue;
-      const n = pkColItem(tb, ci), ic = n ? pkIconHtml(n) : "";
+      const n = pkColItem(tb, ci), ic = n ? pkIconHtml(n) || (/^hero shards?$/i.test(n) ? pkIconHtml("Mythic General Hero Shard") : /^hero widgets?$/i.test(n) ? `<img src="${esc(HERO_ITEM_ICON.widget)}" alt="" loading="lazy" />` : "") : "";
       if (ic) return ic;
     }
     return "";
@@ -12229,7 +12322,7 @@ async function renderPacksPage() {
   // 2026): its dates are said once in the card's header, so the row shows how
   // often (leader) or "same dates" (follower) and its number of tiers.
   // The event's price range over all its packs, in the shown currency.
-  function pkbEvPrice(list) {
+  function pkbEvPrice(list, bare) {
     let lo = null, hi = null, free = false;
     list.forEach((tb) => {
       const lk = packLinkFor(tb.id), pc = lk.priceCol || 0;
@@ -12244,16 +12337,16 @@ async function renderPacksPage() {
       });
     });
     if (!lo) return free ? t("pkb_free") : "—";
-    let txt = String(packFmtMoney(lo.n, lo.cur)).replace(/[⁦-⁩]/g, "");
+    let txt = bare ? lo.c.toLocaleString(pkbLoc, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : String(packFmtMoney(lo.n, lo.cur)).replace(/[⁦-⁩]/g, "");
     if (hi.c > lo.c) txt += `–${hi.c.toLocaleString(pkbLoc, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     return bidiNum(free ? `${t("pkb_free")} + ${txt}` : txt);
   }
   // One tick for the whole event: ✓ all counted, – some, empty none; "2/3" under it.
-  function pkbEvTickHtml(list) {
+  function pkbEvTickHtml(list, lab) {
     const ids = list.filter((tb) => !packLinkFor(tb.id).template).map((tb) => String(tb.id));
     if (!ids.length) return "";
     const on = ids.filter((id) => packInBudgets(id)).length, st = on === ids.length ? "all" : on ? "part" : "none";
-    return `<button type="button" class="pkb-evtk ${st}" data-pkbevall="${esc(ids.join(","))}" title="${esc(t("pk_in_budgets_hint"))}" aria-label="${esc(t("pk_in_budgets"))} ${on}/${ids.length}"><span class="pkb-evtk-b" aria-hidden="true">${st === "all" ? "&#10003;" : st === "part" ? "&#8211;" : ""}</span><small>${on}/${ids.length}</small></button>`;
+    return `<button type="button" class="pkb-evtk ${st}${lab ? " pkd-sw" : ""}" data-pkbevall="${esc(ids.join(","))}"${lab ? " data-pkbevlbl" : ""} title="${esc(t("pk_in_budgets_hint"))}" aria-label="${esc(t("pk_in_budgets"))} ${on}/${ids.length}"><span class="pkb-evtk-b" aria-hidden="true">${st === "all" ? "&#10003;" : st === "part" ? "&#8211;" : ""}</span>${lab ? `<span>${esc(t("pkd_count"))}</span>` : ""}<small>${on}/${ids.length}</small></button>`;
   }
   // New Gen hero packs: the per-hero copies (ngHeroTables) of a pattern table
   // (Value Hero Pack / Widget Pack), shown under its row for the next Gen that
@@ -12281,42 +12374,305 @@ async function renderPacksPage() {
     });
     return out;
   }
-  const pkbNgCount = (n) => (n === 1 ? t("pkb_ng_hero1") : t("pkb_ng_heroes").replace("{n}", n));
-  function pkbNgListHtml(id) {
+  // The copies arrived after the list was drawn: an open details sheet shows them.
+  function pkbNgFill() {
+    if (PKB_NG && PKB_INFO) pkbInfoDraw();
+  }
+  // ---- Packs C: every pack is a mini card, two a row: picture with the
+  // Count in Budgets tick under it, name, price (the fold says the currency
+  // once) and on now / next. An event (a pack with "Same dates as" followers)
+  // is one card with its pictures 2 × 2 and one tick for all ("3/3").
+  // Tapping a card opens its details sheet (pkbInfoHtml); "Open pack ›"
+  // there opens the pack window as before.
+  const pkbCurCode = () => packConvert(4.99, "USD").code;
+  // "4 weeks", "1 week", "5 days": 7 days or a multiple of 7 are said in weeks.
+  function pkbDur(n) {
+    n = Math.round(Number(n)) || 0;
+    if (n > 0 && n % 7 === 0) return n === 7 ? t("pkd_1week") : t("pkd_weeks").replace("{n}", n / 7);
+    return n === 1 ? t("pkd_1day") : t("pkd_days").replace("{n}", n);
+  }
+  function pkbCardHtml(tb, ti, arr) {
+    const lk = packLinkFor(tb.id), inB = packInBudgets(tb.id), w = pkbWhen(lk), hid = IS_OWNER && lk.hideVisitors;
+    const st = w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : "";
+    return `<div class="pkb-card${inB || lk.template ? "" : " pkb-off"}${hid ? " pkb-hidv" : ""}" data-pkrow="${ti}" data-pkrowid="${esc(String(tb.id))}" role="button" tabindex="0">
+      ${arr ? dsHandleHtml("data-pkbdrag") : ""}<span class="pkb-cl"><span class="pkb-ic">${pkbIcon(tb, lk) || "&#127873;"}</span>${lk.template ? "" : `<label class="pkb-tk" title="${esc(t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbudrow="${esc(String(tb.id))}" ${inB ? "checked" : ""} aria-label="${esc(t("pk_in_budgets"))}" /></label>`}</span>
+      <span class="pkb-cm"><b>${esc(tb.title)}</b><span class="pkb-cp">${esc(pkbPrice(tb, lk, true))}</span>${st}${hid ? `<small class="pkb-hid">${esc(t("pk_hidden_tag"))}</small>` : ""}</span>
+    </div>`;
+  }
+  function pkbEvCardHtml(u, arr) {
+    const lt = u.lead.tb, w = pkbWhen(packLinkFor(lt.id)), id = String(lt.id), all = u.all;
+    const pics = all.slice(0, 4).map((x) => `<span>${pkbIcon(x.tb, packLinkFor(x.tb.id)) || "&#127873;"}</span>`).join("");
+    const st = w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : "";
+    const off = all.every((x) => !packInBudgets(x.tb.id) && !packLinkFor(x.tb.id).template);
+    return `<div class="pkb-card pkb-evc${off ? " pkb-off" : ""}" data-pkbev="${esc(id)}" data-pkbevtap="${esc(id)}" role="button" tabindex="0">
+      ${arr ? dsHandleHtml("data-pkbdrag") : ""}<span class="pkb-cl"><span class="pkb-ev-st">${pics}</span>${pkbEvTickHtml(all.map((x) => x.tb))}</span>
+      <span class="pkb-cm"><b>&#128279; ${esc(u.evName)}</b><span class="pkb-cp">${esc(pkbEvPrice(all.map((x) => x.tb), true))}</span>${st}</span>
+    </div>`;
+  }
+  // ---- The details sheet. PKB_INFO = "t:<id>" (a pack) or "ev:<leader id>"
+  // (an event card), kept while the list redraws; it has its own browser
+  // history entry, so Back closes it (and Back from the pack window comes
+  // back to it).
+  let PKB_INFO = (history.state && history.state.tab === "packs" && !history.state.pkb && history.state.pkbi) || null;
+  let PKB_SHINE_FIRST = true; // Shining City: "First buy of the day" shown (for the visit)
+  const PKB_UNITS = new Map(); // event leader id -> its packs in the shown order
+  const pkbVal = (row, ci) => packParseNum((row.cells || [])[ci]);
+  const pkbRowsOf = (tb, lk) => tb.rows.map((r, ri) => ({ r, ri })).filter((x) => String(x.r.cells[lk.priceCol || 0] ?? "").trim() !== "");
+  const pkbCap = (lk, ri) => { const m = Number((lk.rowMax || {})[ri]); return Number.isInteger(m) && m > 0 ? m : Math.max(1, Math.round(Number(lk.buys)) || 1); };
+  const pkbLocal = (tb, lk, ri) => { const n = parseNum(String(tb.rows[ri].cells[lk.priceCol || 0] ?? "")); return n > 0 ? Number(packConvert(n, lk.currency).n) || 0 : 0; };
+  const pkbMoneyL = (n, lk) => packFmtMoney(n, packLocalCode(lk.currency), false, true);
+  function pkbChip(name, n, extra) {
+    const label = materialDisplayName(name) || name;
+    let ic = pkIconHtml(name);
+    if (!ic && /hero shards?$/i.test(name)) ic = pkIconHtml("Mythic General Hero Shard");
+    if (!ic && /hero widgets?$/i.test(name)) ic = `<img src="${esc(HERO_ITEM_ICON.widget)}" alt="" loading="lazy" />`;
+    return `<span class="pkd-c${/^gems$/i.test(name) ? " gem" : ""}" title="${esc(label)}">${ic || `<i class="pkd-cn">${esc(label)}</i>`}<b>${esc(pkShortNum(n, true))}${extra || ""}</b></span>`;
+  }
+  // A row's items as picture chips (Gems last, dimmed); `only` = these columns;
+  // `strike` = { col: amount } shown struck through after the amount.
+  function pkbChips(tb, lk, ri, only, strike) {
+    const pc = lk.priceCol || 0, eff = packEffectiveCols(tb), row = tb.rows[ri];
+    const a = [], g = [];
+    tb.columns.forEach((c, ci) => {
+      if (ci === pc || (only && !only.includes(ci))) return;
+      const n = pkbVal(row, ci);
+      if (!(n > 0)) return;
+      const name = eff[ci] || String(c || "").trim();
+      const s0 = strike && strike[ci] != null && strike[ci] !== n ? ` <s>${esc(pkShortNum(strike[ci], true))}</s>` : "";
+      (/^gems$/i.test(name) ? g : a).push(pkbChip(name, n, s0));
+    });
+    return a.concat(g).join("");
+  }
+  function pkbPriceTag(tb, lk, ri) {
+    const raw = String(tb.rows[ri].cells[lk.priceCol || 0] ?? "").trim(), n = parseNum(raw);
+    return n > 0 ? `<b class="pkd-p">${esc(packFmtMoney(n, lk.currency))}</b>` : `<b class="pkd-p free">${esc(t("pkb_free"))}</b>`;
+  }
+  const pkbStep = (lab, price, chips, o = {}) => `<div class="pkd-s${o.cls ? " " + o.cls : ""}"><div class="pkd-sl"><span class="pkd-sk">${lab}</span>${o.mid || ""}<span class="pkd-sx"></span>${o.cap ? `<em class="pkd-cap">${o.cap}</em>` : ""}${price}</div>${chips ? `<div class="pkd-cs">${chips}</div>` : ""}${o.foot || ""}</div>`;
+  // Daily Deals: a row that gives exactly what all the other rows give together.
+  function pkbBuyAll(tb, lk, rows) {
+    if (!lk.choice || rows.length < 3) return -1;
+    const pc = lk.priceCol || 0, cols = tb.columns.map((_, ci) => ci).filter((ci) => ci !== pc);
+    for (const k of rows) {
+      const others = rows.filter((x) => x !== k);
+      if (cols.some((ci) => pkbVal(k.r, ci) > 0) && cols.every((ci) => Math.abs(pkbVal(k.r, ci) - others.reduce((s, x) => s + pkbVal(x.r, ci), 0)) < 1e-6)) return k.ri;
+    }
+    return -1;
+  }
+  // Shining City: two rows at one price in an event of N days whose buy limits
+  // are multiples of N — the bigger one is the first buy of the day.
+  function pkbShinePairs(tb, lk, rows) {
+    const N = Math.round(Number(lk.window) || 0);
+    if (!(N > 1) || lk.sequential || lk.choice || lk.pickCols > 0 || lk.option || lk.colOptions || rows.length < 2) return null;
+    const pc = lk.priceCol || 0, by = new Map();
+    rows.forEach((x) => { const k = String(parseNum(String(x.r.cells[pc]))); if (!by.has(k)) by.set(k, []); by.get(k).push(x); });
+    const pairs = [];
+    for (const list of by.values()) {
+      if (list.length !== 2) return null;
+      const sum = (x) => x.r.cells.reduce((s, c, ci) => (ci === pc || /^gems$/i.test(String(tb.columns[ci] || "").trim()) ? s : s + (packParseNum(c) || 0)), 0);
+      const [a, b] = list, ca = pkbCap(lk, a.ri), cb = pkbCap(lk, b.ri);
+      if (ca % N || cb % N || sum(a) === sum(b)) return null;
+      const [f, n] = sum(a) > sum(b) ? [a, b] : [b, a];
+      pairs.push({ f: f.ri, n: n.ri, cf: pkbCap(lk, f.ri), cn: pkbCap(lk, n.ri) });
+    }
+    return { N, pairs };
+  }
+  // The four boxes: Comes back / Days / Now / Buys.
+  function pkbFacts(tb, lk) {
+    const r = lk.reset, st = packStackInfo(r), trig = packTriggerOf(lk), ng = packIsNewGen(lk) || /^ng-/.test(String(tb.id));
+    const DAY = 86400000, win = Math.round(Number(lk.window) || 0), anchor = packParseDay(lk.resetDay), num = typeof r === "number" && r > 0;
+    const once = r === "once" || (num && r >= PACK_ONE_TIME_DAYS);
+    const on = (s) => `<span class="on">&#9679; ${esc(t("pkb_on_now"))}</span>${s ? ` · ${esc(s)}` : ""}`;
+    let back, days = "—", now = "—";
+    if (trig || (once && !ng)) back = t("pkd_once");
+    else if (st || r === "unlimited") back = t("pkd_any_time");
+    else if (ng) back = num && !once ? t("pkd_with_heroes_n").replace("{d}", pkbDur(r)) : t("pkd_with_heroes");
+    else if (r === 1) back = t("pkd_every_day");
+    else back = num ? packEveryText(r, lk.resetDay) : "—";
+    if (trig) days = t("pkd_when_appears").replace("{d}", pkbDur(trig.days));
+    else if (st) days = t("pkd_per_card").replace("{d}", pkbDur(st.days));
+    else if (r === 30) days = t("pkd_whole_month");
+    else if (r === 1) days = t("pkd_resets_daily");
+    else if (num) {
+      const w = win > 0 ? (once ? win : Math.min(win, r)) : r;
+      const a = anchor || (w === 7 ? packCurrentCycleStart(7, null) : null);
+      if (w <= 7 && a && !once) days = (w === 1 ? pkbWd(a) : `${pkbWd(a)} – ${pkbWd(new Date(a.getTime() + (w - 1) * DAY))}`) + (w >= 4 && w < 7 ? ` (${pkbDur(w)})` : "");
+      else if (w < PACK_ONE_TIME_DAYS) days = t("pkd_lasts").replace("{d}", pkbDur(w));
+    }
+    if (trig) {
+      const sts = Object.keys(trig.levels).map((ri) => packTriggerRowStatus(trig, Number(ri))), en = dataName(trig.expert);
+      if (sts.some((s) => s.state === "now")) now = on("");
+      else if (sts.length && sts.every((s) => s.state === "done")) now = `<span class="mut">${esc(t("pkd_trig_passed").replace("{e}", en).replace("{n}", packExpertLevel(trig.expert).current))}</span>`;
+      else { const nx = sts.find((s) => s.level); now = nx ? esc(t("pkd_trig_at").replace("{e}", en).replace("{n}", nx.level)) : "—"; }
+    } else if (st) {
+      const left = Math.round(Number(lk.activeDaysLeft) || 0), n = Math.round(Number(lk.activeBuys) || 0) || Math.ceil(left / st.days);
+      now = left > 0 ? `<span class="on">${esc(t("pkd_running"))}</span> · ${esc(t("pkd_running_left").replace("{d}", pkbDur(left)).replace("{n}", n))}` : esc(t("pkd_not_running"));
+    } else if (r === "unlimited") now = on("");
+    else if (r === 1) now = on(t("pkd_on_today"));
+    else if (num) {
+      const offs = packResetOffsets(r, lk.resetDay, 800, lk.window);
+      if (offs[0] === 0) {
+        let end = null;
+        if (r === 30) end = new Date(Date.UTC(pkbToday.getUTCFullYear(), pkbToday.getUTCMonth() + 1, 0));
+        else { const s0 = packCurrentCycleStart(r, lk.resetDay); if (s0) end = new Date(s0.getTime() + ((win > 0 ? Math.min(win, r) : r) - 1) * DAY); }
+        const eo = end ? Math.round((end - pkbToday) / DAY) : -1;
+        now = on(eo < 0 ? "" : eo === 0 ? t("pkd_last_day") : t("pkd_to").replace("{d}", eo < 7 ? pkbWd(end) : pkbFmtD(eo)));
+      } else {
+        const nx = offs.find((o) => o > 0);
+        if (nx != null) {
+          let s1 = t("pkd_next").replace("{d}", `${pkbWd(new Date(pkbToday.getTime() + nx * DAY))} ${pkbFmtD(nx)}`);
+          const g = ng ? purNextNewGen() : null;
+          if (g && g.gen && g.days === nx) s1 += ` · Gen ${g.gen}`;
+          now = esc(s1);
+        }
+      }
+    }
+    return { back: esc(back), days: esc(days), now };
+  }
+  // The buys box text from the rows' limits.
+  function pkbCapsText(lk, rows) {
+    const caps = [...new Set(rows.map((x) => pkbCap(lk, x.ri)).filter((n) => n > 1))].sort((a, b) => a - b);
+    return caps.length ? t("pkd_up_to").replace("{list}", caps.map((n) => "×" + n).join(" / ")) : t("pkd_each_once");
+  }
+  // One table's price steps: { lab, html, buys }.
+  function pkbTableSteps(tb, lk, o = {}) {
+    const rows = pkbRowsOf(tb, lk), st = packStackInfo(lk.reset), trig = packTriggerOf(lk), ng = !/^ng-/.test(String(tb.id)) && tb.columns.some((c) => /^hero (shards|widgets)$/i.test(String(c || "").trim()));
+    const order = lk.sequential ? t("pkd_in_order") : t("pkd_any_order");
+    if (st) {
+      const cap = Number(lk.stackCap) > 0 ? Math.round(Number(lk.stackCap)) : st.cap, d = lk.daily && Array.isArray(lk.daily.cols) && lk.daily.cols.length ? lk.daily : null;
+      const html = rows.map((x) => {
+        if (!d) return pkbStep(esc(t("pkd_card")), pkbPriceTag(tb, lk, x.ri), pkbChips(tb, lk, x.ri));
+        const now0 = tb.columns.map((_, ci) => ci).filter((ci) => !d.cols.includes(ci));
+        return pkbStep(esc(t("pkd_card")), pkbPriceTag(tb, lk, x.ri), `<small class="pkd-at">${esc(t("pkd_at_once"))}</small>${pkbChips(tb, lk, x.ri, now0)}`, { foot: `<div class="pkd-dly"><small>${esc(t("pkd_then_daily").replace("{d}", pkbDur(d.days || st.days)))}</small><div class="pkd-cs">${pkbChips(tb, lk, x.ri, d.cols)}</div></div>` });
+      }).join("");
+      return { lab: t("pkd_l_card"), html, buys: t("pkd_stack_buys").replace("{d}", pkbDur(cap)).replace("{n}", Math.ceil(cap / st.days)) };
+    }
+    // Daily Deals: choose one a day, or the row that is all of them.
+    if (lk.choice) {
+      const k = pkbBuyAll(tb, lk, rows), others = rows.filter((x) => x.ri !== k);
+      let html = others.map((x) => pkbStep('<span class="pkd-rad"></span>', pkbPriceTag(tb, lk, x.ri), pkbChips(tb, lk, x.ri))).join("");
+      let buys = lk.reset === 1 ? t("pkd_one_day") : t("pkd_one_of");
+      if (k >= 0) {
+        const sum = others.reduce((s, x) => s + pkbLocal(tb, lk, x.ri), 0), own = pkbLocal(tb, lk, k);
+        const save = sum - own > 0.004 ? `<em class="pkd-save">${esc(t("pkd_save").replace("{p}", pkbMoneyL(sum - own, lk)))}</em>` : "";
+        html += `<div class="pkd-or"><span>${esc(t("pkd_or"))}</span></div>` + pkbStep(`<b class="pkd-gk">${esc(t("pkd_buy_all").replace("{n}", others.length))}</b>${save}`, `${sum > own ? `<s class="pkd-was">${esc(pkbMoneyL(sum, lk))}</s>` : ""}${pkbPriceTag(tb, lk, k)}`, pkbChips(tb, lk, k), { cls: "pkd-gold", foot: `<small class="pkd-note">${esc(t("pkd_buy_all_note").replace("{n}", others.length))}</small>` });
+        if (lk.reset === 1) buys = t("pkd_one_day_all").replace("{n}", others.length).replace("{p}", packFmtMoney(parseNum(String(tb.rows[k].cells[lk.priceCol || 0])), lk.currency));
+      }
+      return { lab: lk.reset === 1 ? t("pkd_l_choose_day") : t("pkd_l_choose"), html, buys };
+    }
+    const sh = pkbShinePairs(tb, lk, rows);
+    if (sh) {
+      const first = PKB_SHINE_FIRST;
+      const seg = `<div class="pkd-seg" role="group"><button type="button" data-pkdshine="0" aria-pressed="${!first}"${first ? "" : ' class="on"'}>${esc(t("pkd_sh_normal"))}</button><button type="button" data-pkdshine="1" aria-pressed="${first}"${first ? ' class="on"' : ""}>${esc(t("pkd_sh_first"))}</button></div>`;
+      const html = sh.pairs.map((p, i) => {
+        const lab = esc(t("pkd_price_n").replace("{n}", i + 1));
+        if (!first) return pkbStep(lab, pkbPriceTag(tb, lk, p.n), pkbChips(tb, lk, p.n), { cap: esc(t("pkd_sh_more_day").replace("{n}", Math.round(p.cn / sh.N))) });
+        const strike = {}; tb.columns.forEach((_, ci) => { strike[ci] = pkbVal(tb.rows[p.n], ci); });
+        return pkbStep(lab, pkbPriceTag(tb, lk, p.f), pkbChips(tb, lk, p.f, null, strike), { cap: esc(t("pkd_sh_a_day").replace("{n}", Math.round(p.cf / sh.N))), foot: `<small class="pkd-note">${esc(t("pkd_sh_first_note"))}</small>` });
+      }).join("");
+      const perDay = sh.pairs.map((p) => Math.round((p.cf + p.cn) / sh.N)).join(" / ");
+      return { lab: t("pkd_l_times"), seg, html, buys: t("pkd_sh_per_day").replace("{list}", perDay) };
+    }
+    const free0 = rows.length > 1 && !(parseNum(String(rows[0].r.cells[lk.priceCol || 0])) > 0);
+    const lab = lk.pickCols > 0 ? t(lk.sequential || lk.pickOrder ? "pkd_l_pick" : "pkd_l_pick_any").replace("{n}", lk.pickCols)
+      : ng ? (lk.sequential ? t("pkd_l_order") : t("pkd_l_hero"))
+      : trig ? t("pkd_l_steps")
+      : lk.sequential ? (free0 ? t("pkd_l_free") : t("pkd_l_order"))
+      : rows.some((x) => pkbCap(lk, x.ri) > 1) ? t("pkd_l_times") : rows.length > 1 ? t("pkd_l_any") : t("pkd_l_price");
+    const html = rows.map((x, i) => {
+      const lab1 = ng && !lk.sequential ? t("pkd_each_hero") : lk.sequential || lk.pickOrder || trig ? t("pkd_step").replace("{n}", i + 1) : rows.length > 1 ? t("pkd_price_n").replace("{n}", i + 1) : "";
+      let mid = lk.pickCols > 0 ? `<span class="pkd-pick">${esc(t("pkd_pick_n").replace("{n}", lk.pickCols))}</span>` : "";
+      if (trig && trig.levels[x.ri]) {
+        const s = packTriggerRowStatus(trig, x.ri);
+        mid += `<span class="pkd-lv">${esc(t("pkd_at_lv").replace("{n}", trig.levels[x.ri]))}${s.state === "done" ? ` · ${esc(t("pkd_lv_done"))}` : s.state === "now" ? ` · <span class="on">${esc(t("pkd_lv_now"))}</span>` : ""}</span>`;
+      }
+      const cap = pkbCap(lk, x.ri);
+      return pkbStep(esc(lab1), pkbPriceTag(tb, lk, x.ri), pkbChips(tb, lk, x.ri), { mid, cap: cap > 1 && !trig ? "×" + cap : "" });
+    }).join("");
+    let buys = ng ? (lk.sequential ? `${t("pkd_in_order")} · ` : "") + t("pkd_once_hero")
+      : lk.pickCols > 0 ? `${lk.sequential || lk.pickOrder ? t("pkd_in_order") : t("pkd_any_order")} · ${t("pkd_choose_n").replace("{n}", lk.pickCols)}`
+      : trig ? t("pkd_each_once") : `${order} · ${pkbCapsText(lk, rows)}`;
+    if (o.opt) buys = `${order} · ${o.opt}`;
+    let note = "";
+    if (trig) {
+      const lvs = rows.map((x, i) => (trig.levels[x.ri] ? `<b>${esc(t("pkd_trig_lv").replace("{n}", trig.levels[x.ri]).replace("{s}", i + 1))}</b>` : "")).filter(Boolean);
+      if (lvs.length) note = `<div class="pkd-gnote"><span>&#9889; ${t("pkd_trig_note").replace("{e}", `<b>${esc(dataName(trig.expert))}</b>`).replace("{list}", lvs.length > 1 ? lvs.slice(0, -1).join(", ") + ` ${esc(t("pkd_and"))} ` + lvs[lvs.length - 1] : lvs[0])}</span></div>`;
+    }
+    return { lab, note, html, buys };
+  }
+  // Shining City Pack: the free Glorious Tomes for the first buy of each event day.
+  function pkbTomeNote(tb, lk) {
+    const b = packShiningBonusOf(tb, lk);
+    return b ? `<div class="pkd-gnote pkd-tome"><img src="icons/glorious-tome.png" alt="" loading="lazy" /><span>${esc(t("pkd_tomes").replace("{n}", b.qty.toLocaleString(pkbLoc)))}</span></div>` : "";
+  }
+  // New-hero pattern packs: the copy made for each hero of the next Gen.
+  function pkbNgSheetHtml(id) {
     const ng = PKB_NG && PKB_NG[String(id)];
     if (!ng || !ng.items.length) return "";
-    return `<div class="pkb-ngh" data-pkbng="${esc(String(id))}">${ng.items.map((h) => `<div class="pkb-ngh-r"><span class="pkb-ngh-f">${h.img ? `<img src="${esc(h.img)}" alt="" loading="lazy" />` : esc(h.name.charAt(0))}</span><b>${esc(h.name)}</b><small>${esc(h.amt)} · ${esc(h.price)}</small></div>`).join("")}<p class="pkb-ngh-n">${esc(t("pkb_ng_made").replace("{gen}", ng.gen))}</p></div>`;
+    return `<div class="pkd-lab">${esc(t("pkb_ng_made").replace("{gen}", ng.gen))}</div><div class="pkd-ngl">${ng.items.map((h) => `<div><span class="pkb-ngh-f">${h.img ? `<img src="${esc(h.img)}" alt="" loading="lazy" />` : esc(h.name.charAt(0))}</span><span class="pkd-ngn"><b>${esc(h.name)}</b><small>${esc(h.amt)} · ${esc(h.price)}</small></span></div>`).join("")}</div>`;
   }
-  // The copies arrived after the list was drawn: add them under the rows on screen.
-  function pkbNgFill() {
-    if (!PKB_NG) return;
-    Object.keys(PKB_NG).forEach((id) => {
-      const ng = PKB_NG[id];
-      if (!ng.items.length) return;
-      listEl.querySelectorAll(`.pkb-cats [data-pkrowid="${window.CSS.escape(id)}"]`).forEach((row) => {
-        if (row.nextElementSibling && row.nextElementSibling.matches("[data-pkbng]")) return;
-        const m = row.querySelector(".pkb-m");
-        if (m && !m.querySelector("[data-pkbngn]")) {
-          const sm = m.querySelector("small:not(.pkb-hid)");
-          if (sm) sm.insertAdjacentHTML("beforeend", `<span data-pkbngn> · ${esc(pkbNgCount(ng.items.length))}</span>`);
-          else { const b = m.querySelector("b"); if (b) b.insertAdjacentHTML("afterend", `<small><span data-pkbngn>${esc(pkbNgCount(ng.items.length))}</span></small>`); }
-        }
-        row.insertAdjacentHTML("afterend", pkbNgListHtml(id));
-      });
-    });
+  const pkbBoxes = (f, buys) => `<div class="pkd-g"><div><small>${esc(t("pkd_back"))}</small><span>${f.back}</span></div><div><small>${esc(t("pkd_days_k"))}</small><span>${f.days}</span></div><div><small>${esc(t("pkd_now_k"))}</small><span>${f.now}</span></div><div><small>${esc(t("pkd_buys_k"))}</small><span>${esc(buys)}</span></div></div>`;
+  const pkbUsedHtml = (names) => (names.length ? `<div class="pkd-used"><small>${esc(t("pack_used_for"))}</small>${names.map((n) => `<span>${esc(n)}</span>`).join("")}</div>` : "");
+  const pkbSwitchHtml = (tb) => (packLinkFor(tb.id).template ? "" : `<label class="pkd-sw"><input type="checkbox" data-pkbudrow="${esc(String(tb.id))}" ${packInBudgets(tb.id) ? "checked" : ""} /><span>${esc(t("pkd_count"))}</span></label>`);
+  const pkbSheetWrap = (title, icon, sub, body, foot) => `<div class="pkb-ov pkb-dov" data-pkbinfoov><div class="pkd" role="dialog" aria-modal="true" aria-label="${esc(title)}" tabindex="-1">
+      <div class="pkd-h"><span class="pkb-ic">${icon}</span><span class="pkd-t"><b>${esc(title)}</b>${sub ? `<small>${sub}</small>` : ""}</span>${closeXHtml("data-pkbiclose", "pkd-x")}</div>
+      <div class="pkd-b">${body}</div>${foot ? `<div class="pkd-f">${foot}</div>` : ""}</div></div>`;
+  const pkbOpenBtn = (id) => `<button type="button" class="btn pkd-open" data-pkbopen="${esc(String(id))}">${esc(t("pkd_open"))} &#8250;</button>`;
+  function pkbInfoHtml(key) {
+    if (!key) return "";
+    if (key.startsWith("t:")) {
+      const tb = tables.find((x) => String(x.id) === key.slice(2));
+      if (!tb) return "";
+      const lk = packLinkFor(tb.id), s = pkbTableSteps(tb, lk);
+      const leadTb = lk.dateWith ? tables.find((x) => String(x.id) === String(lk.dateWith)) : null;
+      const sub = leadTb ? `&#128279; ${esc(t("pkd_part_of").replace("{name}", packEventName(leadTb, tables)))}` : "";
+      const body = pkbBoxes(pkbFacts(tb, lk), s.buys) + pkbTomeNote(tb, lk) + (s.note || "") + `<div class="pkd-lab">${esc(s.lab)}</div>` + (s.seg || "") + `<div class="pkd-ss">${s.html}</div>` + pkbNgSheetHtml(tb.id) + pkbUsedHtml(packUsedForNames(tb));
+      return pkbSheetWrap(tb.title, pkbIcon(tb, lk) || "&#127873;", sub, body, pkbSwitchHtml(tb) + pkbOpenBtn(tb.id));
+    }
+    const u = PKB_UNITS.get(key.slice(3));
+    if (!u) return "";
+    const all = u.all.map((x) => x.tb), lt = u.lead.tb, llk = packLinkFor(lt.id), pc = (x) => packLinkFor(x.id).priceCol || 0;
+    const names = [...new Set(all.flatMap((x) => packUsedForNames(x)))];
+    const short = (x) => packEventShort(x.title, u.evNames);
+    const rowsL = pkbRowsOf(lt, llk);
+    // An option set: one price ladder, a table per option (Artisans Trove,
+    // Myriad Bazaar's two sides, Dawn Market …).
+    const opt = all.length > 1 && all.every((x) => { const l = packLinkFor(x.id), rs = pkbRowsOf(x, l); return l.option && l.linkSet && l.linkSet === llk.linkSet && rs.length === rowsL.length && rs.every((y, i) => parseNum(String(y.r.cells[pc(x)])) === parseNum(String(rowsL[i].r.cells[llk.priceCol || 0]))); });
+    const tick = pkbEvTickHtml(all, true);
+    if (opt) {
+      const optTxt = all.length === 2 ? t("pkd_side_step") : t("pkd_opt_step");
+      const sub = `&#128279; ${esc(all.length === 2 ? t("pkd_sides") : t("pkd_options").replace("{n}", all.length))} · ${esc(all.map(short).join(" / "))}`;
+      const html = rowsL.map((x, i) => pkbStep(esc(llk.sequential ? t("pkd_step").replace("{n}", i + 1) : t("pkd_price_n").replace("{n}", i + 1)), pkbPriceTag(lt, llk, x.ri), "", { foot: all.map((tb) => { const l = packLinkFor(tb.id), y = pkbRowsOf(tb, l)[i]; return `<div class="pkd-ol"><span class="pkd-on">${esc(short(tb))}</span><div class="pkd-cs">${pkbChips(tb, l, y.ri)}</div></div>`; }).join("") })).join("");
+      const body = pkbBoxes(pkbFacts(lt, llk), `${llk.sequential ? t("pkd_in_order") : t("pkd_any_order")} · ${optTxt}`) + `<div class="pkd-lab">${esc(all.length === 2 ? t("pkd_l_side") : t("pkd_l_opt"))}</div><div class="pkd-ss">${html}</div>` + pkbUsedHtml(names);
+      return pkbSheetWrap(u.evName, pkbIcon(lt, llk) || "&#127873;", sub, body, tick + pkbOpenBtn(lt.id));
+    }
+    // Other events: the leader's dates, then each pack with its own steps.
+    const secs = all.map((tb) => {
+      const l = packLinkFor(tb.id), s = pkbTableSteps(tb, l);
+      return `<section class="pkd-sec"><div class="pkd-sh"><span class="pkb-ic">${pkbIcon(tb, l) || "&#127873;"}</span><b title="${esc(tb.title)}">${esc(short(tb))}</b>${packLinkFor(tb.id).template ? "" : `<label class="pkb-tk pkd-stk" title="${esc(t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbudrow="${esc(String(tb.id))}" ${packInBudgets(tb.id) ? "checked" : ""} aria-label="${esc(t("pk_in_budgets"))}" /></label>`}<button type="button" class="pkd-go" data-pkbopen="${esc(String(tb.id))}" aria-label="${esc(t("pkd_open"))}: ${esc(tb.title)}">${esc(t("pkd_open"))} &#8250;</button></div>${pkbTomeNote(tb, l)}${s.note || ""}<div class="pkd-lab">${esc(s.lab)}</div>${s.seg || ""}<div class="pkd-ss">${s.html}</div>${pkbNgSheetHtml(tb.id)}</section>`;
+    }).join("");
+    const body = pkbBoxes(pkbFacts(lt, llk), t("pkd_ev_each")) + secs + pkbUsedHtml(names);
+    return pkbSheetWrap(u.evName, `<span class="pkb-ev-st">${all.slice(0, 4).map((x) => `<span>${pkbIcon(x, packLinkFor(x.id)) || "&#127873;"}</span>`).join("")}</span>`, `&#128279; ${esc(t("pkb_ev_packs").replace("{n}", all.length))}`, body, tick);
   }
-  function pkbRowHtml(tb, ti, ev, evNames, arr) {
-    const lk = packLinkFor(tb.id), inB = packInBudgets(tb.id), w = pkbWhen(lk), hid = IS_OWNER && lk.hideVisitors;
-    const tiers = ev ? tb.rows.filter((r) => String(r.cells[lk.priceCol || 0] ?? "").trim() !== "").length : 0;
-    const sub0 = ev === "in" ? "" : ev === "follow" ? t("pkb_ev_same") : ev === "lead" ? pkbResetText(lk.reset) : w.text;
-    const ngN = PKB_NG && PKB_NG[String(tb.id)] ? PKB_NG[String(tb.id)].items.length : 0;
-    const right = ev ? (tiers > 1 && ev !== "in" ? `<small>${esc(t("pkb_tiers").replace("{n}", tiers))}</small>` : "") : w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : "";
-    return `<div class="pkb-row${ev ? " pkb-evr" : ""}${inB || lk.template ? "" : " pkb-off"}${hid ? " pkb-hidv" : ""}" data-pkrow="${ti}" data-pkrowid="${esc(String(tb.id))}" role="button" tabindex="0">
-      ${arr ? dsHandleHtml("data-pkbdrag") : ""}<span class="pkb-ic">${pkbIcon(tb, lk) || "&#127873;"}</span>
-      <span class="pkb-m"><b${ev ? ` title="${esc(tb.title)}"` : ""}>${esc(ev ? packEventShort(tb.title, evNames) : tb.title)}</b>${sub0 || ngN ? `<small>${esc(sub0)}${ngN ? `<span data-pkbngn>${sub0 ? " · " : ""}${esc(pkbNgCount(ngN))}</span>` : ""}</small>` : ""}${hid ? `<small class="pkb-hid">${esc(t("pk_hidden_tag"))}</small>` : ""}</span>
-      ${ev === "in" ? "" : `<span class="pkb-r"><b>${esc(pkbPrice(tb, lk))}</b>${right}</span>`}
-      ${lk.template ? "" : `<label class="pkb-tk" title="${esc(t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbudrow="${esc(String(tb.id))}" ${inB ? "checked" : ""} aria-label="${esc(t("pk_in_budgets"))}" /></label>`}
-    </div>${ngN ? pkbNgListHtml(tb.id) : ""}`;
+  // Draws (or removes) the sheet at the end of the list; its scroll is kept.
+  function pkbInfoDraw() {
+    const old = listEl.querySelector("[data-pkbinfoov]"), y = old ? (old.querySelector(".pkd-b") || {}).scrollTop || 0 : 0;
+    if (old) old.remove();
+    if (!PKB_INFO) return;
+    const html = pkbInfoHtml(PKB_INFO);
+    if (!html) { PKB_INFO = null; return; }
+    listEl.insertAdjacentHTML("beforeend", html);
+    const b = listEl.querySelector("[data-pkbinfoov] .pkd-b");
+    if (b && y) b.scrollTop = y;
+  }
+  function pkbInfoOpen(key) {
+    PKB_INFO = key;
+    if (!(history.state && history.state.tab === "packs" && history.state.pkbi === key)) history.pushState({ tab: "packs", pkbi: key }, "", location.pathname + location.search);
+    pkbInfoDraw();
+  }
+  function pkbInfoClose(fromHistory) {
+    if (!fromHistory && history.state && history.state.tab === "packs" && history.state.pkbi) { history.back(); return; }
+    PKB_INFO = null;
+    pkbInfoDraw();
   }
   function pkbCatSub(list, key) {
     if (key === PACK_TEMPLATE_GROUP) return t("mp_template_note");
@@ -12374,25 +12730,15 @@ async function renderPacksPage() {
       });
       g.units = pkbByOrder(g.list.filter((x) => !taken.has(String(x.tb.id))).map((x) => ({ lead: x, fol: fol.get(String(x.tb.id)) || [] })), rowOrd[g.key], (u) => u.lead.tb.id);
     });
+    PKB_UNITS.clear();
     const unitHtml = (u, arr) => {
-      if (!u.fol.length) return pkbRowHtml(u.lead.tb, u.lead.ti, undefined, undefined, arr);
-      const lt = u.lead.tb, w = pkbWhen(packLinkFor(lt.id));
-      const evName = packEventName(lt, tables), evNames = [evName, packEventDefault(lt, packEventFollowers(lt, tables))];
-      const st = w.on ? `<span class="on">&#9679; ${esc(t("pkb_on_now"))}</span>` : w.next ? `<span>${esc(t("pkb_next").replace("{date}", w.next))}</span>` : "";
-      // A: one folded line — pictures, name, "N packs ·
-      // price range", days and on now / next, one tick for the whole event.
-      const id = String(lt.id), all = pkbByOrder([u.lead, ...u.fol], rowOrd["ev:" + id], (x) => x.tb.id), open = !!q || PKB_EV_OPEN.has(id);
-      const pics = all.slice(0, 4).map((x) => `<span>${pkbIcon(x.tb, packLinkFor(x.tb.id)) || "&#127873;"}</span>`).join("");
-      const when = w.days || w.text, line2 = when || st ? `<small>${esc(when)}${when && st ? " · " : ""}${st}</small>` : "";
-      return `<div class="pkb-ev pkb-eva${open ? " open" : ""}" data-pkbev="${esc(id)}">
-        <div class="pkb-ev-a" data-pkbevtap="${esc(id)}" role="button" tabindex="0" aria-expanded="${open}">
-          ${arr ? dsHandleHtml("data-pkbdrag") : ""}<span class="pkb-ev-st">${pics}</span>
-          <span class="pkb-ev-m"><b>&#128279; ${esc(evName)}</b><small>${esc(t("pkb_ev_packs").replace("{n}", all.length))} · ${esc(pkbEvPrice(all.map((x) => x.tb)))}</small>${line2}</span>
-          ${pkbEvTickHtml(all.map((x) => x.tb))}
-          <span class="pkb-chev" aria-hidden="true">${open ? "&#8963;" : "&#8250;"}</span>
-        </div>
-        ${open ? all.map((x) => pkbRowHtml(x.tb, x.ti, "in", evNames, arr)).join("") : ""}
-      </div>`;
+      if (!u.fol.length) return pkbCardHtml(u.lead.tb, u.lead.ti, arr);
+      const lt = u.lead.tb, id = String(lt.id);
+      u.evName = packEventName(lt, tables);
+      u.evNames = [u.evName, packEventDefault(lt, packEventFollowers(lt, tables))];
+      u.all = pkbByOrder([u.lead, ...u.fol].sort((a, b) => pkbOrder(a.tb.title, b.tb.title)), rowOrd["ev:" + id], (x) => x.tb.id);
+      PKB_UNITS.set(id, u);
+      return pkbEvCardHtml(u, arr);
     };
     const openKey = packsFilter === "none" ? "" : packsFilter.startsWith("cat:") ? packsFilter.slice(4) : packsFilter === "closed" ? null : (pkbCats[0] ? pkbCats[0].key : null);
     const html = pkbCats.map((g) => {
@@ -12410,21 +12756,25 @@ async function renderPacksPage() {
           <span class="pkb-cat-t"><b>${esc(g.label)}</b><small data-pkbcatsub>${esc(pkbCatSub(g.list, g.key))}</small></span>
           <span class="pkb-caret" aria-hidden="true">${open ? "&#9662;" : "&#9656;"}</span>
         </button>
-        ${open ? `${g.key === PACK_MINE_GROUP && IS_OWNER ? `<div class="meta pkb-note">${esc(t("mp_admin_mine_note"))}</div>` : ""}${arrBar}${g.units.slice(0, shownU).map((u) => unitHtml(u, arr)).join("")}${shown < g.list.length ? `<button type="button" class="pkb-more" data-pkbmore="${esc(g.key)}">${esc(t("pkb_show_more").replace("{n}", g.list.length - shown))} &#9662;</button>` : ""}` : ""}
+        ${open ? `${g.key === PACK_MINE_GROUP && IS_OWNER ? `<div class="meta pkb-note">${esc(t("mp_admin_mine_note"))}</div>` : ""}${arrBar}<div class="pkb-cur">${esc(t("pkb_prices_in").replace("{cur}", pkbCurCode()))}</div><div class="pkb-grid">${g.units.slice(0, shownU).map((u) => unitHtml(u, arr)).join("")}</div>${shown < g.list.length ? `<button type="button" class="pkb-more" data-pkbmore="${esc(g.key)}">${esc(t("pkb_show_more").replace("{n}", g.list.length - shown))} &#9662;</button>` : ""}` : ""}
       </section>`;
     }).join("");
     const openId = [...PACKS_OPEN][0];
     const sheetTi = openId != null ? tables.findIndex((tb) => String(tb.id) === String(openId)) : -1;
     listEl.innerHTML = `<div class="pkb-cats">${html || `<div class="empty">${esc(t("pkb_no_match"))}</div>`}</div><datalist id="packGroupNames">${order.map((g) => `<option value="${esc(g)}"></option>`).join("")}</datalist>${sheetTi >= 0 ? pkbSheetHtml(sheetTi) : ""}`;
     if (sheetTi >= 0) pkbBuildSheet(); else if (openId != null) PACKS_OPEN.clear();
+    // the details sheet of a unit not drawn (a closed fold, a search) still
+    // finds its event: every unit is known, drawn or not
+    pkbCats.forEach((g) => g.units.forEach((u) => { if (u.fol.length && !PKB_UNITS.has(String(u.lead.tb.id))) unitHtml(u, false); }));
+    if (sheetTi < 0) pkbInfoDraw();
     pkbWireArrange();
   }
   // Arrange (owner): each row / event card of the fold has a ⋮⋮ handle; rows
   // inside an open event card move among themselves. The drop saves the new
   // order for everyone (packs_links.__rowOrder) and draws the list again.
-  const pkbArrItem = (h) => (h.parentElement && h.parentElement.matches(".pkb-ev-a") ? h.closest(".pkb-ev") : h.closest(".pkb-row"));
-  const pkbArrList = (el) => [...el.parentElement.children].filter((x) => x.matches(".pkb-row, .pkb-ev"));
-  const pkbArrId = (el) => (el.matches(".pkb-ev") ? el.dataset.pkbev : el.dataset.pkrowid);
+  const pkbArrItem = (h) => h.closest(".pkb-card");
+  const pkbArrList = (el) => [...el.parentElement.children].filter((x) => x.matches(".pkb-card"));
+  const pkbArrId = (el) => (el.matches(".pkb-evc") ? el.dataset.pkbev : el.dataset.pkrowid);
   function pkbSaveRowOrder(change) {
     const o = { ...pkbRowOrder() };
     change(o);
@@ -12437,18 +12787,19 @@ async function renderPacksPage() {
     listEl.querySelectorAll(".pkb-arranging .ds-h[data-pkbdrag]").forEach((h) => dragSort(h, {
       item: pkbArrItem,
       items: pkbArrList,
+      grid: true,
       place: () => {},
       done: (el, from, to) => {
         const ids = pkbArrList(el).map(pkbArrId);
         const [moved] = ids.splice(from, 1);
         ids.splice(to, 0, moved);
-        const ev = el.parentElement.closest(".pkb-ev"), sec = el.closest("[data-pkbcat]");
-        if (!ev && !sec) return;
-        const key = ev ? "ev:" + ev.dataset.pkbev : sec.dataset.pkbcat;
+        const sec = el.closest("[data-pkbcat]");
+        if (!sec) return;
+        const key = sec.dataset.pkbcat;
         pkbSaveRowOrder((o) => { o[key] = ids; });
       },
       refocus: (el) => {
-        const id = pkbArrId(el), sel = el.matches(".pkb-ev") ? `.pkb-arranging [data-pkbev="${window.CSS.escape(id)}"] > .pkb-ev-a > .ds-h` : `.pkb-arranging [data-pkrowid="${window.CSS.escape(id)}"] > .ds-h`;
+        const id = pkbArrId(el), sel = el.matches(".pkb-evc") ? `.pkb-arranging [data-pkbev="${window.CSS.escape(id)}"] > .ds-h` : `.pkb-arranging [data-pkrowid="${window.CSS.escape(id)}"] > .ds-h`;
         const nh = listEl.querySelector(sel);
         if (nh) nh.focus();
       },
@@ -12464,15 +12815,16 @@ async function renderPacksPage() {
   // one, the row's look and the category's "counted" line follow.
   function pkbSyncBudget(id) {
     const on = packInBudgets(id);
-    listEl.querySelectorAll(`[data-pkbudrow="${window.CSS.escape(String(id))}"]`).forEach((cb) => { cb.checked = on; const row = cb.closest(".pkb-row"); if (row) row.classList.toggle("pkb-off", !on); });
+    listEl.querySelectorAll(`[data-pkbudrow="${window.CSS.escape(String(id))}"]`).forEach((cb) => { cb.checked = on; const row = cb.closest(".pkb-row, .pkb-card"); if (row) row.classList.toggle("pkb-off", !on); });
     listEl.querySelectorAll(`.pkb-panel[data-pkid="${window.CSS.escape(String(id))}"] [data-pkbud]`).forEach((cb) => { cb.checked = on; });
     listEl.querySelectorAll("[data-pkbevall]").forEach((b) => {
       const ids = b.dataset.pkbevall.split(",");
       if (!ids.includes(String(id))) return;
       const tmp = document.createElement("div");
-      tmp.innerHTML = pkbEvTickHtml(ids.map((x) => tables.find((tb) => String(tb.id) === x)).filter(Boolean));
+      tmp.innerHTML = pkbEvTickHtml(ids.map((x) => tables.find((tb) => String(tb.id) === x)).filter(Boolean), b.hasAttribute("data-pkbevlbl"));
       if (tmp.firstElementChild) b.replaceWith(tmp.firstElementChild);
     });
+    listEl.querySelectorAll(".pkb-evc").forEach((c) => { const b = c.querySelector("[data-pkbevall]"); if (b) c.classList.toggle("pkb-off", b.classList.contains("none")); });
     pkbCats.forEach((g) => {
       const sub = listEl.querySelector(`[data-pkbcat="${window.CSS.escape(g.key)}"] [data-pkbcatsub]`);
       if (sub) sub.textContent = pkbCatSub(g.list, g.key);
@@ -12569,6 +12921,7 @@ async function renderPacksPage() {
   }
   function pkbOpen(id) {
     id = String(id);
+    PKB_INFO = null;
     PACKS_OPEN.clear(); PACKS_OPEN.add(id);
     if (!(history.state && history.state.tab === "packs" && history.state.pkb === id)) history.pushState({ tab: "packs", pkb: id }, "", location.pathname + location.search);
     renderAll();
@@ -12585,7 +12938,13 @@ async function renderPacksPage() {
   PKB_HOOK = {
     open: pkbOpen,
     closeUi: () => pkbClose(false),
-    history: (id) => { if (id) { if (![...PACKS_OPEN].includes(String(id))) { PACKS_OPEN.clear(); PACKS_OPEN.add(String(id)); renderAll(); } } else if (PACKS_OPEN.size) pkbClose(true); },
+    history: (id, info) => {
+      if (id) { PKB_INFO = null; if (![...PACKS_OPEN].includes(String(id))) { PACKS_OPEN.clear(); PACKS_OPEN.add(String(id)); renderAll(); } return; }
+      if (PACKS_OPEN.size) { PACKS_OPEN.clear(); PKB_INFO = info || null; renderAll(); return; }
+      if (info) { if (PKB_INFO !== info) { PKB_INFO = info; pkbInfoDraw(); } } else if (PKB_INFO) pkbInfoClose(true);
+    },
+    infoOpen: () => !!PKB_INFO,
+    closeInfo: () => pkbInfoClose(false),
   };
   // Visitors: the tables are shown exactly as the owner set them, with every
   // editing control removed and the settings ("Used for") hidden.
