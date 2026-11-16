@@ -1917,6 +1917,10 @@ const T = {
   isl_rs_cant: { en: "{n} copies can't be reached by {d} (shards only)" },
   isl_rs_free: { en: "+{n} shards from packs you already buy for other pages ({c} copies)" },
   isl_rs_sh_buy: { en: "{n} copies (shards only) → {s} shards from packs" },
+  isl_rs_sh_none: { en: "No shard pack can be bought by {d} for the shards-only copies" },
+  isl_rs_sh_more: { en: "Shard packs give only {s} shards by {d}" },
+  isl_rs_sh_next: { en: "next shards from a pack: {d}" },
+  isl_rs_sh_notgt: { en: "Shard packs are planned only with a Budgets target date: without one, your free shards finish everything over time." },
   isl_tag_ev: { en: "\ud83c\udfaa {t}" },
   isl_tag_rk: { en: "\ud83c\udfc6 {t}" },
   isl_wk: { en: "{n} wk" },
@@ -19495,6 +19499,14 @@ function islFreeShardsRefresh(changed) {
   if (ISL_FREE_LOADING) return;
   ISL_FREE_LOADING = budgetSuggestedPlan().then(() => { const c = BUDGET_DATA && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending ? BUDGET_DATA.combined : PUR_GOAL_SRC && PUR_GOAL_SRC.combined; if (c) take(c); }).catch(() => {}).finally(() => { ISL_FREE_LOADING = null; });
 }
+// The first day after `days` on which the shard packs give more shards (null = not within the horizon).
+function islShardNextDay(days) {
+  const base = islShardSupplyMax(days);
+  let lo = Math.max(1, (Number(days) || 0) + 1), hi = PACK_HORIZON_DAYS;
+  if (islShardSupplyMax(hi) <= base) return null;
+  while (lo < hi) { const mid = Math.floor((lo + hi) / 2); if (islShardSupplyMax(mid) > base) hi = mid; else lo = mid + 1; }
+  return lo;
+}
 function tradeExtraNext() {
   const rules = expertKeysAll().map((k) => ({ from: "General Sigils", to: `${k} Sigils`, give: 1, get: 1, max: 0, hidden: true, silent: true }));
   const isl = islShardTradesNow();
@@ -26110,13 +26122,22 @@ async function renderIslandGallery() {
     const P = sharedPlan(true), pc = perCopy();
     const day = (d) => esc(islDay(d).toLocaleDateString(undefined, { month: "short", year: "numeric", timeZone: "UTC" }));
     if (!(P.need > 0)) return `<div class="isl-done ok">&#10003; ${esc(t("isl_box_none"))}</div>`;
-    if (P.days == null) return `<div class="isl-done">${P.done == null ? esc(t("isl_box_noinc")) : `${esc(t("isl_rs_done_c"))} <b>~${day(P.done)}</b> &middot; ${esc(t("isl_box_weeks").replace("{n}", Math.max(1, Math.ceil(P.done / 7))))}`}</div>`;
+    // (A pack used for Islands gives shards but there is no target date to plan them for.)
+    const noTgt = islShardPacksOn() ? `<div class="isl-done">${esc(t("isl_rs_sh_notgt"))}</div>` : "";
+    if (P.days == null) return noTgt + `<div class="isl-done">${P.done == null ? esc(t("isl_box_noinc")) : `${esc(t("isl_rs_done_c"))} <b>~${day(P.done)}</b> &middot; ${esc(t("isl_box_weeks").replace("{n}", Math.max(1, Math.ceil(P.done / 7))))}`}</div>`;
     const by = esc(islDateShort(P.tDay));
     const lines = [];
     if (P.marks > 0 || P.tomes > 0) lines.push(`<div class="isl-done am">${esc(t("isl_rs_by").replace("{d}", by))}: <b>${bidiNum(((P.mkCopiesAll + P.tmCopiesAll) * pc).toLocaleString())}</b> ${esc(t("isl_rs_short"))} &rarr; ${[P.marks > 0 ? `<b>${bidiNum(P.marks.toLocaleString())}</b> ${esc(t("isl_mk_name"))}` : "", P.tomes > 0 ? `<b>${bidiNum(P.tomes.toLocaleString())}</b> ${esc(t("isl_tm_name"))}` : ""].filter(Boolean).join(" + ")} &middot; <button type="button" class="isl-mkb" data-islpc><span data-islmkprice>${plxPriceLabel("islands")}</span></button></div>`);
     // Shards-only copies a shard pack can cover (a pack used for Islands gives shards).
     const buySh = P.shNeed > 0 ? Math.round(P.shNeed / pc) : 0;
     if (buySh > 0) lines.push(`<div class="isl-done am">${esc(t("isl_rs_by").replace("{d}", by))}: ${esc(t("isl_rs_sh_buy").replace("{n}", buySh.toLocaleString()).replace("{s}", P.shNeed.toLocaleString()))} &middot; <button type="button" class="isl-mkb" data-islpc><span data-islmkprice>${plxPriceLabel("islands")}</span></button></div>`);
+    // Shards-only copies the shard packs can't cover by the date: say why (none on sale by
+    // then, e.g. this run is already bought, or they give too few) and when more come.
+    if (islShardPacksOn() && P.cantSh > buySh) {
+      const sup = Math.max(0, islShardSupplyMax(P.days) - (P.free || 0)), nx = islShardNextDay(P.days);
+      const nd = nx != null ? ` &middot; ${esc(t("isl_rs_sh_next").replace("{d}", islDateShort(islDay(nx))))}` : "";
+      lines.push(`<div class="isl-done am">${esc(sup > 0 ? t("isl_rs_sh_more").replace("{s}", sup.toLocaleString()).replace("{d}", islDateShort(P.tDay)) : t("isl_rs_sh_none").replace("{d}", islDateShort(P.tDay)))}${nd}</div>`);
+    }
     if (P.cant - buySh > 0) lines.push(`<div class="isl-done bad">${esc(t("isl_rs_cant").replace("{n}", P.cant - buySh).replace("{d}", by))} &middot; ${esc(t("isl_rs_done"))} ~${P.done == null ? "?" : day(P.done)}</div>`);
     if (!lines.length) lines.push(`<div class="isl-done ok">&#10003; ${esc(t("isl_rs_by").replace("{d}", by))}: ${esc(t("isl_rs_all"))}</div>`);
     if (P.free > 0) lines.unshift(`<div class="isl-done ok">&#10003; ${esc(t("isl_rs_free").replace("{n}", P.free.toLocaleString()).replace("{c}", Math.floor(P.free / pc).toLocaleString()))}</div>`);
