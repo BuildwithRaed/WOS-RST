@@ -3768,7 +3768,7 @@ input,select,textarea{
   .exp-sigf > summary::-webkit-details-marker{ display:none; }
   .exp-sigf > summary .sh{ font-size:12.5px; font-weight:700; color:var(--danger); }
   .exp-sigf > summary .ok{ font-size:12.5px; font-weight:700; color:var(--good); }
-  .exp-sigf-c{ margin-inline-start:auto; color:var(--muted); transition:transform .15s; }
+  .exp-sigf-c{ margin-inline-start:auto; flex:none; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; line-height:1; color:var(--muted); transition:transform .15s; }
   .exp-sigf:not([open]) .exp-sigf-c{ transform:rotate(-90deg); }
   .exp-sigf > .bs-tiles{ margin:4px 0 6px; }
   /* Narrow phones: 4 stat boxes (ATK / DEF / LETH / HP) become 2 + 2, so each number
