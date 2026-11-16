@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "f40dc0339c";
+window.SCAN_BUILD = "63b88e6d67";
 
 
 // ---- Backpack: read game screenshots ----
@@ -1833,6 +1833,15 @@ async function scanPkAmount(worker, td) {
   const shapes = digits.length + (m[2] ? 1 : 0);
   return { value, sure: res.conf >= 65 && shapes === num.count && /^\d{1,3}([,.]\d{3})*[KM]?$|^\d+(\.\d)?[KM]$/.test(m[0]) };
 }
+// A pack lesson can be wrong (a tile taught as the nearest item the list had, e.g. the
+// Mythic Island Shards tile as XP 100 before the shards were a pack item): when the
+// site's own picture of another item is a near-exact, clear match, that item wins.
+function scanPkTrustIcon(m, td, ctx) {
+  if (!m.taught || !ctx.icons) return m;
+  const im = scanPkMatchIcons(td, ctx.icons);
+  if (!im.name || im.name === m.name || im.dist > 9 || im.next < im.dist * 2) return m;
+  return { name: im.name, dist: im.dist, next: im.next, mult: 1, taught: false, icon: true };
+}
 const SCAN_PK_SPEED = { 1: "1m", 3: "3m", 5: "5m", 60: "1h", 180: "3h", 480: "8h" };
 // One tile: what it is and how many. { name, value, sure, why, img, feat, label }.
 async function scanPkTile(worker, img, box, ctx) {
@@ -1848,7 +1857,7 @@ async function scanPkTile(worker, img, box, ctx) {
     // no number read (a busy picture behind it): still named when the picture is
     // a close match, so a saved pack can give its amount to check
     out.skip = "noamount";
-    const m0 = scanPkMatchRefs(feat, ctx.refs);
+    const m0 = scanPkTrustIcon(scanPkMatchRefs(feat, ctx.refs), td, ctx);
     if (m0.dist <= 15 && m0.next > m0.dist * 1.5 && m0.name !== SCAN_SKIP) out.name = m0.name;
     else if (ctx.icons) { const im = scanPkMatchIcons(td, ctx.icons); if (im.name && im.dist < 17 && im.next - im.dist > 4) out.name = im.name; }
     if (out.name) { out.noAmt = true; out.value = null; }
@@ -1860,11 +1869,11 @@ async function scanPkTile(worker, img, box, ctx) {
   // the label: as the whole-screen read saw it, else read on the tile
   const label = scanPkParseLabel(box.label) || (box.label ? null : await scanPkTopLabel(worker, td));
   out.label = label ? label.text : "";
-  const m = scanPkMatchRefs(feat, ctx.refs);
+  const m = scanPkTrustIcon(scanPkMatchRefs(feat, ctx.refs), td, ctx);
   if (m.name === SCAN_SKIP && m.taught && m.dist <= 14) {
     out.skip = "skip"; return out;
   } else if (m.dist <= 14) {
-    out.name = m.name; out.sure = amount.sure && m.dist <= 10 && m.next > m.dist * 1.3; out.why = m.taught ? "taught" : "picture";
+    out.name = m.name; out.sure = amount.sure && m.dist <= 10 && m.next > m.dist * 1.3; out.why = m.taught ? "taught" : m.icon ? "icon" : "picture";
     if (m.mult > 1) out.value *= m.mult;
   } else if (label && label.unit) {
     // A speedup: hours or minutes from the label, the size from the tile's
@@ -2215,6 +2224,8 @@ function openPackScanMain(opts) {
       const kept = [], dropped = [];
       g.items.forEach((it) => (scanPkKeep(it, ok) ? kept : dropped).push(it));
       g.items = kept.map((it) => ({ ...it, auto: it.name, tick: true }));
+      // a Gems tile with the gems the price shows (the same gems) needs no check
+      g.items.forEach((it) => { if (it.name === "Gems" && g.gems && Math.round(Number(it.value)) === Math.round(g.gems)) it.sure = true; });
       g.dropped = dropped;
       g.shots = new Set([si]);
       if (!g.title && s.groups.length === 1 && s.title) g.title = s.title;
@@ -2232,7 +2243,9 @@ function openPackScanMain(opts) {
   const prep = (c) => {
     if (c.fresh) {
       if (!opts.target && c.bazaar) c.m = bazaarMatch(c);
-      if (!opts.target && !c.m && typeof opts.match === "function" && c.title) c.m = opts.match(c.title);
+      // a Bazaar step is never matched by its name (every option table has the same
+      // one): no table decided by its items → the card asks "Which table?"
+      if (!opts.target && !c.m && !c.bazaar && typeof opts.match === "function" && c.title) c.m = opts.match(c.title);
       c.fresh = false;
       fillFromSaved(c); scaleDefault(c);
       c.open = needsLook(c);
@@ -2240,21 +2253,88 @@ function openPackScanMain(opts) {
     }
     if (c.changed) { c.changed = false; fillFromSaved(c); scaleDefault(c); if (needsLook(c)) c.open = true; }
   };
-  // Myriad Bazaar: the option table whose row at this price has the most of these items.
+  // How far a screenshot's step is from a saved row: over every item either has
+  // (Gems left out), 1 for an item only one of them has, else the share the amounts
+  // differ by. { d, shared }. Items Scan filled in from a saved row don't count.
+  const readTot = (g) => { const o = {}; g.items.forEach((it) => { if (it.tick && it.name && it.name !== "Gems" && !it.fill && !it.fillAmt && Number(it.value) > 0) { const k = it.name.toLowerCase(); o[k] = (o[k] || 0) + Number(it.value); } }); return o; };
+  const rowDist = (g, r) => {
+    const a = readTot(g), b = {};
+    Object.entries((r && r.items) || {}).forEach(([n, v]) => { if (Number(v) > 0) b[n.toLowerCase()] = (b[n.toLowerCase()] || 0) + Number(v); });
+    let d = 0, shared = 0;
+    new Set(Object.keys(a).concat(Object.keys(b))).forEach((k) => {
+      if (a[k] == null || b[k] == null) { d += 1; return; }
+      shared++; d += Math.abs(a[k] - b[k]) / Math.max(a[k], b[k]);
+    });
+    return { d, shared };
+  };
+  const sameUsd = (r, usd) => r && r.usd != null && usd != null && Math.abs(r.usd - usd) < 0.005;
+  // The saved rows at a group's price ([index in m.saved]); a pack with one row and no price: that row.
+  const rowsAtPrice = (m, g) => {
+    const usd = g.price && g.price.usd;
+    if (!m || !Array.isArray(m.saved)) return [];
+    const at = [];
+    m.saved.forEach((r, i) => { if (sameUsd(r, usd)) at.push(i); });
+    return at.length || usd ? at : m.saved.length === 1 ? [0] : [];
+  };
+  // Several rows at one price (Myriad Bazaar's three $99.99 steps): the one whose
+  // items fit the screenshot best, unless the person picked one (owner, 16 Nov 2026).
+  const bestRowAt = (m, g) => {
+    const at = rowsAtPrice(m, g);
+    if (at.length < 2) return at.length ? at[0] : -1;
+    return at.map((i) => ({ i, ...rowDist(g, m.saved[i]) })).sort((x, y) => x.d - y.d || y.shared - x.shared || x.i - y.i)[0].i;
+  };
+  const rowIdx = (c, g) => {
+    const m = cmpOf(c), at = rowsAtPrice(m, g);
+    if (!at.length) return -1;
+    if (g.rowPick != null && at.includes(g.rowPick)) return g.rowPick;
+    if (g.autoRow != null && at.includes(g.autoRow)) return g.autoRow;
+    return at[0];
+  };
+  const savedRow = (c, g) => { const i = rowIdx(c, g); return i >= 0 ? cmpOf(c).saved[i] : null; };
+  // "$99.99 · step 8 of 9" when the pack has more than one row at this price
+  const stepText = (c, g) => {
+    const m = cmpOf(c), at = rowsAtPrice(m, g), i = rowIdx(c, g);
+    if (at.length < 2 || i < 0) return "";
+    return t("pks_step").replace("{k}", i + 1).replace("{n}", m.saved.length);
+  };
+  // Myriad Bazaar: the option table with the saved row closest to this step
+  // (items compared, not the price alone). Needs a shared item and a clear win
+  // over the other tables, else null (the card asks which table).
   const BAZ = /baz+a+r/i;
   const bazaarMatch = (c) => {
     if (typeof opts.packs !== "function") return null;
     const g = c.groups[0], usd = g.price && g.price.usd;
-    const mine = new Set(g.items.filter((it) => it.tick && it.name).map((it) => it.name.toLowerCase()));
-    let best = null, bs = 0;
+    if (!Object.keys(readTot(g)).length) return null;
+    const per = [];
     (opts.packs() || []).filter((p) => BAZ.test(p.title || "")).forEach((p) => {
-      const rows = (p.saved || []).filter((r) => !usd || (r.usd != null && Math.abs(r.usd - usd) < 0.005));
-      const have = new Set(rows.flatMap((r) => Object.keys(r.items || {}).map((n) => n.toLowerCase())));
-      const sc = [...mine].filter((n) => have.has(n)).length;
-      if (sc > bs) { bs = sc; best = p; }
+      let best = null;
+      (p.saved || []).forEach((r) => { if (usd && !sameUsd(r, usd)) return; const x = rowDist(g, r); if (x.shared && (!best || x.d < best.d)) best = x; });
+      if (best) per.push({ p, ...best });
     });
-    return best;
+    per.sort((a, b) => a.d - b.d);
+    if (!per.length) return usd ? bazaarAnyPrice(c) : null;
+    if (per[1] && per[1].d - per[0].d < 0.5) return null;
+    return per[0].p;
   };
+  // A price read wrong (QAR 184.99 read as 128.99): no table has a row at it, so the
+  // row closest to the items at any price, when it's a near-exact fit; its price is
+  // put in and asked ("Read QAR 128.99 = $49.99. Is it right?").
+  const bazaarAnyPrice = (c) => {
+    const g = c.groups[0];
+    let best = null, second = null;
+    (opts.packs() || []).filter((p) => BAZ.test(p.title || "")).forEach((p) => (p.saved || []).forEach((r, i) => {
+      if (!(r.usd > 0)) return;
+      const x = { p, r, i, ...rowDist(g, r) };
+      if (!x.shared) return;
+      if (!best || x.d < best.d) { second = best; best = x; } else if (!second || x.d < second.d) second = x;
+    }));
+    if (!best || best.d > 0.35 || (second && second.d - best.d < 0.5)) return null;
+    g.price = { ...(g.price || { cur: "USD" }), usd: best.r.usd, sure: false };
+    g.priceOk = false;
+    if (!g.gemsSure && !g.gemsTyped && typeof mpGems === "function") g.gems = mpGems(best.r.usd);
+    return best.p;
+  };
+  const needTable = (c) => c.bazaar && !c.m && !c.asNew;
   // "Scale to the next prices" (the price steps) starts on unless the pack it
   // saves into is known not to be a Regular Packs ladder. A tap on the switch wins.
   const scaleDefault = (c) => {
@@ -2282,9 +2362,10 @@ function openPackScanMain(opts) {
     c.groups.forEach((g) => g.items.forEach((it) => { if (it.bySaved) { it.bySaved = false; it.sure = false; } if (it.fillAmt) { it.fillAmt = false; it.value = null; it.ok = false; } }));
     if (!m || !Array.isArray(m.saved) || !m.saved.length) return;
     const allowed = new Map(names().map((n) => [n.toLowerCase(), n]));
+    c.groups.forEach((g) => { g.autoRow = bestRowAt(m, g); });
     // an item read by its picture with the saved pack's amount for this price is taken as right
     c.groups.forEach((g) => {
-      const usd = g.price && g.price.usd, row = usd && m.saved.find((r) => r.usd != null && Math.abs(r.usd - usd) < 0.005);
+      const usd = g.price && g.price.usd, row = usd && savedRow(c, g);
       if (!row) return;
       const b = lc(row.items), tot = totOf(g);
       // a tile with no number read: the saved amount, to check
@@ -2292,16 +2373,19 @@ function openPackScanMain(opts) {
       g.items.forEach((it) => { const v = it.name && b[it.name.toLowerCase()]; if (v && !it.sure && !it.ok && !it.fill && !it.fillAmt && it.value != null && Math.round(v.v) === Math.round(tot[it.name.toLowerCase()] || 0)) { it.sure = true; it.bySaved = true; } });
     });
     c.groups.forEach((g) => {
-      const usd = g.price && g.price.usd;
-      const row = (usd && m.saved.find((r) => r.usd != null && Math.abs(r.usd - usd) < 0.005)) || (m.saved.length === 1 ? m.saved[0] : null);
+      const row = savedRow(c, g);
       if (!row) return;
       const have = new Set(g.items.filter((it) => it.name).map((it) => it.name.toLowerCase()));
-      const missing = Object.entries(row.items || {}).filter(([n]) => !have.has(n.toLowerCase()) && allowed.has(n.toLowerCase()));
+      // items the screenshot doesn't have, or has less of (a Bazaar step's second
+      // speedup tile Scan couldn't name): what's still missing of the saved amount
+      const tot = totOf(g);
+      const missing = Object.entries(row.items || {}).filter(([n, v]) => allowed.has(n.toLowerCase()) && (!have.has(n.toLowerCase()) || Math.round(tot[n.toLowerCase()] || 0) < Math.round(v)))
+        .map(([n, v]) => [n, have.has(n.toLowerCase()) ? v - (tot[n.toLowerCase()] || 0) : v, have.has(n.toLowerCase())]);
       const open = g.items.filter((it) => it.tick && !it.name && it.why !== "name");
       const claimed = new Set();
-      missing.forEach(([n, v]) => {
+      missing.forEach(([n, v, part]) => {
         const sameV = (it) => Number(it.value) > 0 && Math.round(it.value) === Math.round(v);
-        let cand = open.filter((it) => !claimed.has(it) && (sameV(it) || String(it.guess || "").toLowerCase() === n.toLowerCase()));
+        let cand = open.filter((it) => !claimed.has(it) && (sameV(it) || (!part && String(it.guess || "").toLowerCase() === n.toLowerCase())));
         let fromDrop = false;
         if (!cand.length) { cand = g.dropped.filter((it) => !it.name && !it.skip && sameV(it)); fromDrop = true; }
         if (cand.length !== 1) return;
@@ -2315,15 +2399,20 @@ function openPackScanMain(opts) {
   // ---- what a card would save ----
   const unsureIt = (it) => it.tick && (!it.name || (!it.sure && !it.ok));
   const priceUnsure = (g) => !g.price || !(g.price.usd > 0) || (!g.price.sure && !g.priceOk);
-  const toCheck = (c) => c.groups.reduce((a, g) => a + g.items.filter(unsureIt).length + (priceUnsure(g) ? 1 : 0), 0);
+  const toCheck = (c) => c.groups.reduce((a, g) => a + g.items.filter(unsureIt).length + (priceUnsure(g) ? 1 : 0), needTable(c) ? 1 : 0);
   // rows: [{ usd, gems, items, fromShot, kept, was }] — kept = a worked-out price step the saved
   // pack already has: its saved numbers stay (owner, 16 Nov 2026), shown as "saved".
   const rowsOf = (c) => {
-    const rows = c.groups.map((g) => {
+    const rows = c.groups.map((g, gi) => {
       const items = {};
-      let gems = Number(g.gems) || 0;
-      g.items.forEach((it) => { if (!it.tick || !it.name || !(Number(it.value) > 0)) return; if (it.name === "Gems") gems += Number(it.value); else items[it.name] = (items[it.name] || 0) + Number(it.value); });
-      return { usd: g.price && g.price.usd ? g.price.usd : null, gems, items, fromShot: true };
+      let tileGems = 0;
+      g.items.forEach((it) => { if (!it.tick || !it.name || !(Number(it.value) > 0)) return; if (it.name === "Gems") tileGems += Number(it.value); else items[it.name] = (items[it.name] || 0) + Number(it.value); });
+      // a Gems tile and the gems on the price button are the same gems (Myriad Bazaar:
+      // the purple 500 tile and the 500 bubble), so they count once
+      const bub = Number(g.gems) || 0;
+      const gems = tileGems && bub && (c.bazaar || Math.round(tileGems) === Math.round(bub)) ? Math.max(tileGems, bub) : bub + tileGems;
+      const s = savedRow(c, g);
+      return { usd: g.price && g.price.usd ? g.price.usd : null, gems, items, fromShot: true, gi, ri: s && s.ri != null ? s.ri : null, saved: s };
     });
     if (rows.length === 1 && c.scale && rows[0].usd) {
       const lad = ladderOf(rows[0].usd), m = cmpOf(c);
@@ -2349,7 +2438,7 @@ function openPackScanMain(opts) {
     let n = 0;
     rowsOf(c).forEach((r) => {
       if (r.kept) return;
-      const s = r.usd ? m.saved.find((x) => x.usd != null && Math.abs(x.usd - r.usd) < 0.005) : null;
+      const s = r.usd ? r.saved || null : null;
       if (!s) { if (!m.mine) n += Object.keys(r.items).length; return; }
       const a = lc(r.items), b = lc(s.items);
       Object.keys(a).forEach((k) => { if (!b[k]) { if (!m.mine) n++; } else if (Math.round(b[k].v) !== Math.round(a[k].v)) n++; });
@@ -2368,6 +2457,7 @@ function openPackScanMain(opts) {
     if (c.status === "saved") return ["done", t("pks_st_saved")];
     if (c.status === "skipped") return ["done", t("pks_st_skipped")];
     const n = toCheck(c);
+    if (needTable(c)) return ["amb", t("pks_st_table")];
     if (n) return ["amb", t("pks_st_check").replace("{n}", n)];
     if (isNew(c)) return ["ice", t("pks_st_new")];
     const ch = changesOf(c);
@@ -2392,7 +2482,8 @@ function openPackScanMain(opts) {
   const headSub = (c) => {
     const g = shotGroup(c);
     if (c.groups.length > 1) return esc(t("pks_n_prices").replace("{n}", c.groups.length));
-    return `${g.price ? esc(money(g.price.value, g.price.cur)) : esc(t("pks_price_none_s"))}${g.gems ? ` · ${gemsIc()} ${Math.round(g.gems).toLocaleString()}` : ""}`;
+    const step = cmpOf(c) ? stepText(c, g) : "";
+    return `${g.price ? esc(money(g.price.value, g.price.cur)) : esc(t("pks_price_none_s"))}${step ? ` · ${esc(step)}` : ""}${g.gems ? ` · ${gemsIc()} ${Math.round(g.gems).toLocaleString()}` : ""}`;
   };
   const stripHtml = (c) => {
     const its = [];
@@ -2424,12 +2515,14 @@ function openPackScanMain(opts) {
     let body = "";
     c.groups.forEach((g, gi) => {
       const usd = g.price && g.price.usd;
-      const s = (usd && m.saved.find((r) => r.usd != null && Math.abs(r.usd - usd) < 0.005)) || null;
+      const s = (usd && savedRow(c, g)) || null;
+      const step = stepText(c, g), at = rowsAtPrice(m, g);
       const b = s ? lc(s.items) : {}, tot = totOf(g);
       const cnt = {}, last = {};
       g.items.forEach((it, ii) => { if (it.tick && it.name) { const k = it.name.toLowerCase(); cnt[k] = (cnt[k] || 0) + 1; last[k] = ii; } });
       const seen = new Set();
-      if (c.groups.length > 1 || !s) body += `<tr class="pks-pr"><td colspan="3">${usd ? "$" + usd : "?"}${g.price ? ` · ${esc(money(g.price.value, g.price.cur))}` : ""}${s ? "" : ` · <em>${esc(t(m.mine ? "pks_diff_newprice_mine" : "pks_diff_newprice"))}</em>`}</td></tr>`;
+      if (c.groups.length > 1 || !s || step) body += `<tr class="pks-pr"><td colspan="3">${usd ? "$" + usd : "?"}${step ? ` · ${esc(step)}` : g.price ? ` · ${esc(money(g.price.value, g.price.cur))}` : ""}${s ? "" : ` · <em>${esc(t(m.mine ? "pks_diff_newprice_mine" : "pks_diff_newprice"))}</em>`}</td></tr>`;
+      if (at.length > 1) body += `<tr class="pks-rp"><td colspan="3"><div class="pks-ask"><span>${esc(t("pks_step_q"))}</span>${at.map((i) => `<button type="button" class="cg-bpbtn${i === rowIdx(c, g) ? " pks-yes" : ""}" data-pksrow="${ci}|${gi}|${i}" aria-pressed="${i === rowIdx(c, g) ? "true" : "false"}">${esc(t("pks_step_n").replace("{k}", i + 1))}</button>`).join("")}</div></td></tr>`;
       g.items.forEach((it, ii) => {
         const ik = `${gi}|${ii}`;
         const k = it.name ? it.name.toLowerCase() : null;
@@ -2439,6 +2532,7 @@ function openPackScanMain(opts) {
         if (!it.tick) { body += `<tr class="pks-off">${nameCell(tileIc(it, "xs"), it.name ? disp(it.name) : t("pks_unknown_t"))}<td>${sv != null ? amt(sv) : "—"}</td><td><button type="button" class="cg-bpbtn" data-pksuse="${ci}|${ik}">${esc(t("pks_left_out"))}</button></td></tr>`; return; }
         if (!it.name) { body += `<tr class="pks-unk">${nameCell(tileIc(it, "xs"), t("pks_unknown_t"))}<td>—</td><td>&times;${esc(amt(Number(it.value) || 0))}</td></tr><tr class="pks-unk2"><td colspan="3">${unknownHtml(c, ci, ik, it)}</td></tr>`; return; }
         const editing = c.edit === ik, unsure = unsureIt(it), sk = b[k] ? b[k].v : null, diff = sk != null ? Math.round(sk) !== Math.round(tot[k] || 0) : !m.mine;
+        if (k === "gems" && !editing && !unsure) return; // in the Gems line below
         const sum = cnt[k] > 1 && last[k] === ii ? ` <small class="pks-sum">= ${esc(amt(tot[k] || 0))}</small>` : "";
         const cls = editing || unsure ? "pks-q" : diff ? "pks-chg" : "";
         body += `<tr class="${cls}">${nameCell(tileIc(it, "xs"), shortName(it.name))}<td>${sv != null ? amt(sv) : again ? "" : "—"}</td><td>${editing ? "&#9998;" : `<b>${it.value == null ? "?" : esc(amt(Number(it.value) || 0)) + (unsure ? " ?" : "")}</b>${sum}`}${!editing && !unsure ? ` <button type="button" class="pks-pen" data-pksedit="${ci}|${ik}" aria-label="${esc(t("pks_edit"))}">&#9998;</button>` : ""}</td></tr>`;
@@ -2446,10 +2540,15 @@ function openPackScanMain(opts) {
         else if (unsure) body += `<tr class="pks-q2"><td colspan="3">${askHtml(ci, ik, it)}</td></tr>`;
       });
       if (s) Object.keys(b).forEach((k) => { if (!seen.has(k)) body += `<tr class="pks-miss">${nameCell(icHtml(b[k].n, "xs"), shortName(b[k].n))}<td>${amt(b[k].v)}</td><td><small>${esc(t("pks_diff_notin"))}</small></td></tr>`; });
-      const g0 = s ? Math.round(s.gems || 0) : null, g1 = Math.round(g.gems || 0);
+      const g0 = s ? Math.round(s.gems || 0) : null, g1 = Math.round((rowsOf(c)[gi] || {}).gems || 0);
       body += `<tr class="${s && g0 !== g1 && !m.mine ? "pks-chg" : ""}">${nameCell(`<span class="pks-ic xs">${gemsIc()}</span>`, "Gems")}<td>${g0 != null ? (g0 ? g0.toLocaleString() : "—") : "—"}</td><td><b>${g1 ? g1.toLocaleString() : "—"}</b></td></tr>`;
     });
     return `<table class="pks-tb"><thead><tr><th>${esc(t("pks_item"))}</th><th>${esc(t("pks_diff_saved"))}</th><th>${esc(t("pks_diff_scan"))}</th></tr></thead><tbody>${body}</tbody></table>`;
+  };
+  // A Myriad Bazaar step whose items don't say which option table it is: asked.
+  const tableAskHtml = (c, ci) => {
+    const list = (typeof opts.packs === "function" ? opts.packs() || [] : []).filter((p) => BAZ.test(p.title || ""));
+    return `<div class="pks-pq"><div class="pks-ask"><span>${esc(t("pks_which_table"))}</span>${list.map((p) => `<button type="button" class="cg-bpbtn" data-pksbaz="${ci}|${esc(String(p.id))}">${esc(p.title)}</button>`).join("")}</div></div>${stripHtml(c)}`;
   };
   // A new pack: name, category, its items (picture, name, amount).
   const newHtml = (c, ci) => {
@@ -2525,7 +2624,7 @@ function openPackScanMain(opts) {
       ${matchLine(c, ci)}
       ${savedHtml(c)}
       ${priceAskHtml(c, ci)}
-      ${isNew(c) ? newHtml(c, ci) : compareHtml(c, ci)}
+      ${needTable(c) ? tableAskHtml(c, ci) : isNew(c) ? newHtml(c, ci) : compareHtml(c, ci)}
       ${drop ? `<div class="meta pks-drop">${esc(t(drop === 1 ? "pks_dropped1" : "pks_dropped").replace("{n}", drop))}</div>` : ""}
       ${ladderHtml(c, ci)}
       ${learnable ? `<label class="pks-learn"><input type="checkbox" data-pkslearn ${st.learn ? "checked" : ""} /><span>${esc(t("pks_learn"))}<small class="meta">${esc(t("pks_learn_d"))}</small></span></label>` : ""}
@@ -2624,7 +2723,7 @@ function openPackScanMain(opts) {
     const m = cmpOf(c);
     const to = !m ? "new" : m === opts.target ? "this" : "match";
     const learn = learnOf(c);
-    const res = { to, id: m ? m.id : null, title: (to === "new" ? c.title : m.title || c.title || "").trim(), category: c.category, rows: rowsOf(c).filter((r) => !r.kept).map(({ usd, gems, items }) => ({ usd, gems, items })), learn };
+    const res = { to, id: m ? m.id : null, title: (to === "new" ? c.title : m.title || c.title || "").trim(), category: c.category, rows: rowsOf(c).filter((r) => !r.kept).map(({ usd, gems, items, ri }) => ({ usd, gems, items, ri })), learn };
     c.status = "saving";
     try {
       const out = await opts.onSave(res);
@@ -2694,6 +2793,13 @@ function openPackScanMain(opts) {
       fillFromSaved(c);
       draw();
     });
+    on("data-pksrow", (v) => { const [ci, gi, i] = v.split("|").map(Number), c = st.cards[ci]; markCheck(c); c.groups[gi].rowPick = i; c.edit = null; fillFromSaved(c); draw(); });
+    on("data-pksbaz", (v) => {
+      const [ci, ...rest] = v.split("|"), c = st.cards[Number(ci)], id = rest.join("|");
+      const p = (opts.packs() || []).find((x) => String(x.id) === id);
+      if (!p) return;
+      markCheck(c); c.m = p; c.asNew = false; c.edit = null; fillFromSaved(c); scaleDefault(c); draw();
+    });
     on("data-pkssaved", (v) => { const c = st.cards[Number(v)]; c.savedOpen = !c.savedOpen; draw(); });
     on("data-pkschange", (v) => { st.sheet = { ci: Number(v), q: "" }; draw(); const q = modal.querySelector("[data-pksq]"); if (q && matchMedia("(hover:hover)").matches) q.focus(); });
     on("data-pkslearn", (v, el) => { st.learn = el.checked; });
@@ -2720,6 +2826,7 @@ function openPackScanMain(opts) {
         if (p) {
           c.m = opts.target && String(opts.target.id) === String(p.id) ? opts.target : p;
           c.asNew = false; c.scaleTouched = false; c.savedOpen = false; c.edit = null;
+          c.groups.forEach((g) => { g.rowPick = null; });
           fillFromSaved(c); scaleDefault(c);
         }
         st.sheet = null; draw();

@@ -1774,6 +1774,11 @@ const T = {
   pks_no_number: { en: "No number read — type it" },
   pks_saved_q: { en: "No number read. The saved pack says {n}. Is it right?" },
   pks_not_table: { en: "Not this table? Change ›" },
+  pks_step: { en: "step {k} of {n}" },
+  pks_step_n: { en: "Step {k}" },
+  pks_step_q: { en: "Same price, which step?" },
+  pks_which_table: { en: "Which table is this step from?" },
+  pks_st_table: { en: "Which table?" },
   pks_long: { en: "A long pack? Pick all its screenshots together." },
   pks_reading_pct: { en: "Reading… {n}%" },
   pks_reading_sub: { en: "Finding packs · reading numbers" },
@@ -8114,7 +8119,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
         ? esc(used === 1 ? t("mpk_1_pack") : t("mpk_n_packs").replace("{n}", used))
         : `<b>${used}</b> ${esc(t("mpk_of_used").replace("{m}", limit))}`}</span></div>
       ${own || !limit ? "" : `<div class="mpk-bar"><i style="width:${pct}%;${full ? " background:var(--danger);" : ""}"></i></div>`}
-      <div class="mpk-btns"><button type="button" class="btn mpk-new" data-mpnew ${full || !templates.length ? "disabled" : ""}>+ ${esc(t("mpk_new"))}</button><button type="button" class="btn ghost mpk-scan" data-mpscan ${full ? "disabled" : ""}>&#128247; ${esc(t("pks_btn"))}</button></div>
+      ${packScanOn() ? `<div class="mpk-btns"><button type="button" class="btn mpk-new" data-mpnew ${full || !templates.length ? "disabled" : ""}>+ ${esc(t("mpk_new"))}</button><button type="button" class="btn ghost mpk-scan" data-mpscan ${full ? "disabled" : ""}>&#128247; ${esc(t("pks_btn"))}</button></div>` : `<button type="button" class="btn mpk-new" data-mpnew ${full || !templates.length ? "disabled" : ""}>+ ${esc(t("mpk_new"))}</button>`}
       <div class="meta mpk-d"${full ? ` style="color:var(--danger);"` : ""}>${esc(full ? t("mp_full").replace("{n}", limit) : t("mpk_new_d"))}</div>
     </div>
     <div class="mpk-h"><span>${esc(t("mpk_your_packs"))}</span>${used ? `<span>${esc(t("pk_in_budgets"))}</span>` : ""}</div>
@@ -8515,7 +8520,7 @@ function mpWindowHtml(mp) {
     </table></div>`;
   const when = [mpWhenText(link), mpKindText(link)].filter(Boolean).join(" · ");
   return `<div class="pkb-ov mpw-ov" data-mpwov><div class="pkb-panel mpw-panel" role="dialog" aria-label="${esc(mp.title)}" data-mpcard="${esc(mp.id)}"><div class="pk-body">
-    <div class="pk-ed-bar mpw-bar"><button type="button" class="pkb-back" data-mpwclose aria-label="${esc(t("close_button"))}">&#8249;</button><input data-mptitle value="${esc(mp.title)}" maxlength="60" aria-label="${esc(mp.title)}" /><span class="mpw-tag">${esc(t("mp_tag"))}</span><button type="button" class="btn small ghost mpw-scan" data-mpscanfill="${esc(mp.id)}">&#128247; ${esc(t("pks_fill_btn"))}</button><button type="button" class="btn small ghost mpw-del" data-mpdel="${esc(mp.id)}">${esc(t("mp_delete"))}</button>${when ? `<div class="pkb-when">${esc(when)}</div>` : ""}</div>
+    <div class="pk-ed-bar mpw-bar"><button type="button" class="pkb-back" data-mpwclose aria-label="${esc(t("close_button"))}">&#8249;</button><input data-mptitle value="${esc(mp.title)}" maxlength="60" aria-label="${esc(mp.title)}" /><span class="mpw-tag">${esc(t("mp_tag"))}</span>${packScanOn() ? `<button type="button" class="btn small ghost mpw-scan" data-mpscanfill="${esc(mp.id)}">&#128247; ${esc(t("pks_fill_btn"))}</button>` : ""}<button type="button" class="btn small ghost mpw-del" data-mpdel="${esc(mp.id)}">${esc(t("mp_delete"))}</button>${when ? `<div class="pkb-when">${esc(when)}</div>` : ""}</div>
     <div class="pkc-k">${esc(t("pkc_steps"))} · ${esc(mpKindText(link))}</div>
     ${table}
     <div class="pkc-acts"><button type="button" class="btn ghost" data-mpaddrow ${canRow ? "" : "disabled"}>+ ${esc(t("pkc_step"))}</button><button type="button" class="btn ghost pkc-sm" data-mpdelrow ${mp.rows.length <= 1 ? "disabled" : ""} aria-label="${esc(t("pkc_del_step"))}" title="${esc(t("pkc_del_step"))}">&minus;</button><button type="button" class="btn ghost" data-mpfill>${esc(t("pkc_fill"))}</button></div>
@@ -11626,7 +11631,7 @@ async function renderPacksPage() {
     </div>
     <div class="pk-zone-note">ℹ️ ${esc(t("pk_zone_note"))}</div>
     <div class="panel pkb-top">
-      <div class="pkb-srow"><label class="pkb-search"><span aria-hidden="true">&#128269;</span><input type="search" id="pkbSearch" placeholder="${esc(t("pkb_search"))}" value="${esc(PKB_QUERY)}" autocomplete="off" enterkeyhint="search" /></label>${IS_OWNER ? `<button type="button" class="btn pkb-scan" id="pkbScanBtn">&#128247; ${esc(t("pks_btn"))}</button>` : ""}</div>
+      ${IS_OWNER ? `<div class="pkb-srow">` : ""}<label class="pkb-search"><span aria-hidden="true">&#128269;</span><input type="search" id="pkbSearch" placeholder="${esc(t("pkb_search"))}" value="${esc(PKB_QUERY)}" autocomplete="off" enterkeyhint="search" /></label>${IS_OWNER ? `<button type="button" class="btn pkb-scan" id="pkbScanBtn">&#128247; ${esc(t("pks_btn"))}</button></div>` : ""}
       <div class="pkb-tri">
         <button type="button" class="pkb-tb" data-pkbdp="ng" hidden><span class="pkb-tb-ic" aria-hidden="true">&#11088;</span><span class="pkb-tb-t"><b>${esc(t("pkb_new_heroes"))}</b><small class="meta" data-pkbdpsub="ng"></small></span></button>
         <button type="button" class="pkb-tb" data-pkbdp="dates"><span class="pkb-tb-ic" aria-hidden="true">&#128197;</span><span class="pkb-tb-t"><b>${esc(t("pkb_dates_t"))}</b><small class="meta" data-pkbdpsub="dates"></small></span></button>
@@ -12658,7 +12663,7 @@ async function renderPacksPage() {
     const bar = body.querySelector(".pk-ed-bar");
     if (bar) {
       bar.insertAdjacentHTML("afterbegin", `<button type="button" class="pkb-back" data-pkbclose aria-label="${esc(t("close_button"))}">&#8249;</button>`);
-      if (!lk.template) bar.insertAdjacentHTML("beforeend", `<button type="button" class="btn small ghost pkb-scanfill" data-pkbscan="${esc(String(tb.id))}">&#128247; ${esc(t("pks_fill_btn"))}</button>`);
+      if (!lk.template && packScanOn()) bar.insertAdjacentHTML("beforeend", `<button type="button" class="btn small ghost pkb-scanfill" data-pkbscan="${esc(String(tb.id))}">&#128247; ${esc(t("pks_fill_btn"))}</button>`);
       const line = [w.text, w.on ? t("pkb_on_now") : w.next ? t("pkb_next").replace("{date}", w.next) : ""].filter(Boolean).join(" · ");
       const scn = packScannedHtml(tb.id, "span");
       if (line || scn) bar.insertAdjacentHTML("beforeend", `<div class="pkb-when">${esc(line)}${line && scn ? " · " : ""}${scn}</div>`);
@@ -14721,7 +14726,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=f40dc0339c";
+      s.src = "scan.min.js?v=63b88e6d67";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }
@@ -14770,6 +14775,7 @@ async function openIslandScan() {
 // Scan pack (Packs page, a pack window, My packs): loads scan.js (once), then
 // opens the sheet (openPackScanMain in scan.js). opts.onSave writes the pack.
 async function openPackScan(opts, btn) {
+  if (!packScanOn()) return;
   if (!SCAN_CODE_OK) {
     if (btn) btn.setAttribute("aria-busy", "true");
     try { await loadScanCode(); } catch (e) {
@@ -14804,27 +14810,40 @@ function packScanApply(columns, priceCol, res, colName, oldRows) {
   const gi = gemsAt();
   const usdOf = (o) => parseFloat(String(((o && o.cells) || [])[priceCol] ?? "").replace(/[^0-9.]/g, "")) || 0;
   const moved = (o) => columns.map((c, ci) => (src[ci] >= 0 ? String((o.cells || [])[src[ci]] ?? "") : ""));
+  // A new number is written the way the column already writes its numbers
+  // ("1,400" or "1400"); a number that didn't change keeps its text exactly.
+  const numOf = (v) => { const x = parseFloat(String(v ?? "").replace(/,/g, "").replace(/[^0-9.]/g, "")); return Number.isFinite(x) ? x : null; };
+  const plainCol = columns.map((c, ci) => {
+    if (src[ci] < 0) return false;
+    const big = (oldRows || []).map((o) => String(((o && o.cells) || [])[src[ci]] ?? "").trim()).filter((v) => /^\d[\d,]*$/.test(v) && numOf(v) >= 1000);
+    return big.length > 0 && big.every((v) => !v.includes(","));
+  });
+  const fmt = (ci, v) => (plainCol[ci] ? String(Math.round(v)) : Math.round(v).toLocaleString("en-US"));
   const out = res.rows.map((r) => {
     const cells = columns.map(() => "");
     cells[priceCol] = r.usd ? String(r.usd) : "";
-    if (gi >= 0 && r.gems) cells[gi] = Math.round(r.gems).toLocaleString("en-US");
-    Object.entries(r.items).forEach(([n, v]) => { const ci = colOf(n); if (ci >= 0) cells[ci] = Math.round(v).toLocaleString("en-US"); });
+    if (gi >= 0 && r.gems) cells[gi] = fmt(gi, r.gems);
+    Object.entries(r.items).forEach(([n, v]) => { const ci = colOf(n); if (ci >= 0) cells[ci] = fmt(ci, v); });
     // Items the screenshot didn't show (a tile hidden behind the buy button)
-    // keep the numbers the same price row had.
-    const was = (oldRows || []).find((o) => r.usd && !o.is_total && Math.abs(usdOf(o) - r.usd) < 0.005);
+    // keep the numbers the same row had: the row Scan matched (ri), else the same price.
+    const was = r.ri != null && oldRows && oldRows[r.ri] && !oldRows[r.ri].is_total ? oldRows[r.ri] : (oldRows || []).find((o) => r.usd && !o.is_total && Math.abs(usdOf(o) - r.usd) < 0.005);
     if (was) {
       const w = moved(was);
-      columns.forEach((c, ci) => { if (ci !== priceCol && ci !== gi && src[ci] >= 0 && cells[ci] === "" && w[ci] !== "") cells[ci] = w[ci]; });
+      columns.forEach((c, ci) => {
+        if (src[ci] < 0) return;
+        if (cells[ci] === "") { if (ci !== priceCol && ci !== gi && w[ci] !== "") cells[ci] = w[ci]; return; }
+        if (numOf(cells[ci]) != null && numOf(cells[ci]) === numOf(w[ci])) cells[ci] = w[ci];
+      });
     }
-    return { cells, is_total: false, usd: r.usd };
+    return { cells, is_total: false, usd: r.usd, ri: r.ri };
   });
   // Saved price rows the scan doesn't fill stay as they are (owner, 16 Nov 2026:
   // a scan of the $4.99 row must never delete the other prices); a scanned price
   // the pack didn't have goes in price order. Empty rows (a new table's blank row) go.
-  const rows = (oldRows || []).filter((o) => o && (o.is_total || (o.cells || []).some((v) => String(v ?? "").trim() !== "")))
-    .map((o) => ({ o, usd: usdOf(o) }));
-  const final = rows.map(({ o, usd }) => {
-    const k = o.is_total ? -1 : out.findIndex((x) => !x.used && x.usd && Math.abs(x.usd - usd) < 0.005);
+  const rows = (oldRows || []).map((o, oi) => ({ o, oi })).filter(({ o }) => o && (o.is_total || (o.cells || []).some((v) => String(v ?? "").trim() !== "")))
+    .map(({ o, oi }) => ({ o, oi, usd: usdOf(o) }));
+  const final = rows.map(({ o, oi, usd }) => {
+    const k = o.is_total ? -1 : out.findIndex((x) => !x.used && (x.ri != null ? x.ri === oi : x.usd && Math.abs(x.usd - usd) < 0.005));
     if (k < 0) return { cells: moved(o), is_total: !!o.is_total };
     out[k].used = true;
     return out[k];
@@ -16553,8 +16572,9 @@ function packApplyMyEdits(tables) {
 function packScanSavedRows(tb) {
   const lk = packLinkFor(tb.id), pc = typeof lk.priceCol === "number" ? lk.priceCol : 0, eff = packEffectiveCols(tb);
   const num = (v) => { const n = parseFloat(String(v ?? "").replace(/[^0-9.]/g, "")); return Number.isFinite(n) ? n : null; };
-  return (tb.rows || []).filter((r) => r && !r.is_total).map((r) => {
-    const out = { usd: num((r.cells || [])[pc]), gems: 0, items: {} };
+  // ri = the row's place in the table (several rows can share a price: Myriad Bazaar's $99.99 steps)
+  return (tb.rows || []).map((r, ri) => ({ r, ri })).filter(({ r }) => r && !r.is_total).map(({ r, ri }) => {
+    const out = { usd: num((r.cells || [])[pc]), gems: 0, items: {}, ri };
     (tb.columns || []).forEach((c, ci) => {
       if (ci === pc) return;
       const v = num((r.cells || [])[ci]), n = eff[ci] || String(c || "").trim();
@@ -16582,14 +16602,14 @@ function packScanSaveMine(tb, res) {
   const all = packMyEdits(), id = String(tb.id), mine = { ...(all[id] || {}) };
   (res.rows || []).forEach((r) => {
     if (!r.usd) return;
-    const ri = orig.findIndex((o) => !o.is_total && Math.abs((num((o.cells || [])[pc]) || 0) - r.usd) < 0.005);
+    const ri = r.ri != null && orig[r.ri] && !orig[r.ri].is_total ? r.ri : orig.findIndex((o) => !o.is_total && Math.abs((num((o.cells || [])[pc]) || 0) - r.usd) < 0.005);
     if (ri < 0) return;
     Object.entries(r.items || {}).forEach(([n, v]) => {
       const ci = colOf(n);
       if (ci < 0) return;
       const was = String(orig[ri].cells[ci] ?? ""), key = `${ri},${ci}`;
       if (num(was) === Math.round(v)) delete mine[key];
-      else mine[key] = { v: Math.round(v).toLocaleString("en-US"), was };
+      else mine[key] = { v: /^\d{4,}$/.test(was.trim()) ? String(Math.round(v)) : Math.round(v).toLocaleString("en-US"), was };
     });
   });
   if (Object.keys(mine).length) all[id] = mine; else delete all[id];
@@ -16601,6 +16621,9 @@ function packScanSaveMine(tb, res) {
 function packMyScanned() {
   try { const v = JSON.parse(localStorage.getItem("pack_my_scanned") || "{}"); return v && typeof v === "object" ? v : {}; } catch (e) { return {}; }
 }
+// Scan pack is owner-only until Admin → Visibility → Visitor access "packscan" is on
+// (owner, 16 Nov 2026): without it visitors get no Scan buttons and no scanned marks.
+function packScanOn() { return visitorCan("packscan"); }
 function packScannedDay(id) {
   const own = IS_OWNER ? "" : packValidDay(packMyScanned()[String(id)]) || "";
   const sh = packValidDay(packLinkRaw(id).l.scanned) || "";
@@ -16619,6 +16642,7 @@ function packMarkScanned(id) {
 }
 // "📷 Scanned Nov 16" ("" without a mark); `tag` wraps it (a row's small line, a span).
 function packScannedHtml(id, tag) {
+  if (!packScanOn()) return "";
   const day = packScannedDay(id);
   if (!day) return "";
   let lbl = day;
@@ -31963,7 +31987,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=05035033f2";
+      s.src = "admin.min.js?v=cb99e9a1c6";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
