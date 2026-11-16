@@ -1730,6 +1730,7 @@ const T = {
   scan_isl_open: { en: "Open Islands ›" },
   scan_isl_store_h: { en: "Island Storehouse · building copies" },
   scan_isl_store_now: { en: "In Storehouse · now {n}" },
+  scan_isl_placed: { en: "Lv {n} · your own building taken back, not a spare copy (not counted)" },
   scan_learn_buildings: { en: "Island buildings" },
   scan_learn_islitems: { en: "Island items" },
   scan_lab: { en: "Research Lab screen" },
@@ -14404,7 +14405,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=c23a7ee4ac";
+      s.src = "scan.min.js?v=ba2ec9ebca";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }
