@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "cee04c5b75";
+window.SCAN_BUILD = "c295168b38";
 
 
 // ---- Backpack: read game screenshots ----
@@ -1679,6 +1679,16 @@ function scanPkMatchRefs(feat, refs) {
 // The site's own item pictures (the Packs item list), as 10 × 10 colour grids
 // at three sizes, to compare with tiles no lesson knows.
 let SCAN_PK_ICONS = null;
+// Only Backpack items (owner, 16 Nov 2026): like the other Scans, a pack scan keeps
+// items that are in the Backpack list and can be a pack column; resources read from the
+// Summary screen (Meat, Wood, Coal, Iron, Steel, Food, Chief Stamina, Hero XP) and
+// anything else (VIP points, …) are left out. Gems are read on their own.
+function scanPkAllowed() {
+  const bp = new Set((typeof backpackItems === "function" ? backpackItems() : []).flatMap((g) => g.items.map((x) => x.name)).concat(typeof BP_ISLAND_ITEMS !== "undefined" ? BP_ISLAND_ITEMS : []));
+  const res = new Set((typeof SCAN_SUMMARY_ROWS !== "undefined" ? SCAN_SUMMARY_ROWS : []).map((r) => r[1]).filter((n) => n !== "Gems"));
+  const key = (n) => (typeof bpKeyFor === "function" ? bpKeyFor(n) : n);
+  return (typeof packResourceChoices === "function" ? packResourceChoices() : []).filter((n) => !res.has(n) && (bp.has(n) || bp.has(key(n))));
+}
 function scanPkIconSrc(name) {
   if (typeof itemRegIcon === "function" && itemRegIcon(name)) return itemRegIcon(name);
   if (String(name).toLowerCase() === "gems" && typeof MATERIAL_ICONS !== "undefined") return MATERIAL_ICONS.gems;
@@ -1686,6 +1696,8 @@ function scanPkIconSrc(name) {
 }
 function scanPkIcons() {
   if (SCAN_PK_ICONS) return SCAN_PK_ICONS;
+  // every pack item's picture is compared (a Meat tile must match Meat, not the nearest
+  // Backpack item); the ones that aren't Backpack items are dropped after.
   const names = (typeof packResourceChoices === "function" ? packResourceChoices() : []).filter((n) => !/speedup/i.test(n)).concat(["Gems"]);
   const bySrc = new Map();
   names.forEach((n) => { const s = scanPkIconSrc(n); if (!s) return; if (!bySrc.has(s)) bySrc.set(s, []); bySrc.get(s).push(n); });
@@ -1985,7 +1997,7 @@ function openPackScanMain(opts) {
     groups: [], pick: 0, // which pack / price of the screenshot (or "rows" for all prices as rows)
     skipped: { noamount: 0, unknown: 0 },
   };
-  const names = () => (typeof packResourceChoices === "function" ? packResourceChoices() : []).concat(["Gems"]).filter((n, i, a) => a.indexOf(n) === i);
+  const names = () => scanPkAllowed().concat(["Gems"]).filter((n, i, a) => a.indexOf(n) === i);
   const disp = (n) => (/^Speedup /.test(n) ? n.replace(/^Speedup/, "General Speedup") : materialDisplayName(n) || n);
   const iconOf = (n) => scanPkIconSrc(n);
   const money = (v, cur) => (typeof packFmtMoney === "function" ? packFmtMoney(v, cur || "USD") : `$${v}`);
@@ -2077,7 +2089,9 @@ function openPackScanMain(opts) {
     shots.forEach((s) => {
       st.skipped.noamount += s.skipped.noamount || 0; st.skipped.unknown += s.skipped.unknown || 0;
       s.groups.forEach((g) => {
-        g.items = g.items.map((it) => ({ ...it, auto: it.name, tick: it.why === "name" ? !!it.name : true }));
+        const ok = new Set(names());
+        // not a Backpack item (resources, VIP points, …): left out, not shown
+        g.items = g.items.filter((it) => (it.name ? ok.has(it.name) : it.why !== "name")).map((it) => ({ ...it, auto: it.name, tick: true }));
         const same = groups.find((x) => (x.price && g.price ? Math.abs(x.price.value - g.price.value) < 0.01 && (!x.title || !g.title || x.title === g.title) : !x.price && !g.price));
         if (same && shots.length > 1) {
           // the same tile in both screenshots (they overlap) counts once
