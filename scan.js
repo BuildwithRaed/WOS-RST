@@ -129,7 +129,7 @@ function scanMarkData() {
 
 // White game text with a dark outline, as black on white for the reader.
 // `digits` keeps only the characters sitting on the number's baseline.
-function scanTextMask(td, x0, y0, x1, y1, digits) {
+function scanTextMask(td, x0, y0, x1, y1, digits, dropCorner) {
   const w = x1 - x0, h = y1 - y0, mask = new Uint8Array(w * h);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const i = ((y0 + y) * 140 + x0 + x) * 4, r = td[i], g = td[i + 1], b = td[i + 2];
@@ -137,6 +137,8 @@ function scanTextMask(td, x0, y0, x1, y1, digits) {
     mask[y * w + x] = (r + g + b) / 3 > 175 && r >= b - 8 && g >= b - 15 && Math.max(r, g, b) - Math.min(r, g, b) < 55 ? 1 : 0;
   }
   let blobs = scanBlobs(mask, w, h, true).filter((b) => b.n > 2);
+  // Scan pack: the light page behind a tile's rounded bottom-right corner isn't a digit
+  if (dropCorner) blobs = blobs.filter((b) => !(b.x + b.w >= w - 1 && b.y + b.h >= h - 1));
   if (digits) {
     const big = blobs.filter((b) => b.h >= 12 && b.h <= 34 && b.w < 28);
     if (!big.length) return null;
@@ -1685,6 +1687,18 @@ function scanPkNameItem(raw) {
 
 // Pack items Scan was taught (site_config scan_learned entries with k: "pack").
 let SCAN_PK_LEARNED = [];
+// Pictures Scan pack knows from the start (owner's Daily Deals screenshot, 16 Nov 2026):
+// the Mystery Points tile as packs show it (the Backpack's own picture is too far), and the
+// big Mythic General Hero Shard drawn left of a Daily Deals row ("x1", read by its text).
+const SCAN_PK_BUILTIN = [
+  { n: "Mystery Points", f: "iEbNiEbMiEbMiEbNiEXMiEXMh0bMiEbMiEbLg0S+ajeOWC9NdE4inngfmGgC4a4g06gnsoojc0kiXC9nf0O4iEbMh0XMiEbMiEbMh0fMiUbNiEbNiEbMiEbNikrOikrNi0rNi0rOhUfBbj2Raz2NazyPZDl2YTs6i2cgxqgv48Y4060qo3AE6rMU2q4b5s1B07Uvl24XYzk1bz2PhknGikrNi0rPi0rNikrOikrNjEnNjEnPjU/QjE/PjU/QjE/PdUGjXEAqi3A9knlNmXkzxqIp4MAu0KcavIoGt4IDuYQN4KgdjVkDkmcQ1Lw65dI/vZkgfVQgXzhccUKXdUOifEaxik3Jjk/PjU/PjU7QkFTRkFTSkVTSkFTRilHEVDJFgVgJroUXtocGuocEtH4BuocGzqUr5chR4LpPw5IzxqU4q4YkfE4Cro4k48g8vJMsqI1EmoVAk4A7el87aT2DkVXRkFTRkVTTlVrUlVnTlVnTlVrTk1nOXTZhhV0Iz6UN3LUUy6ES0qUX58o61KxapGAqolclrms00alZ7Nla0LU2n3EQz5YXxJEL5M5L69lT3MFBo3YPZj5Cj1fGlFnTlljUmV7WmWDWmV/VmV/VlV7NXjpGwJkd0qgau4gVxJQcwZQU5ck117JXsXM6uH9Folcomkof0axZ5s4/1KMYwowCwpAC4cY83sRHqnoJkGEOXjlLkVvGmV/Vml/XnWXXnWTXnWTWnWXYkF6+bUor3rcnr3sOoGgKzaEdy6IZ4cQr5tBD6NRN6NZS2rRnnEsixJVQ1rYysngDpm8JvZMfwJkhpHIOiFcOXTs/hFWvm2PUnWTWnWTZoGnZoWrYoWnYoGrXelCUimQe4bkknGMFvY4U6Mge5sgg5col5csq5cwx6NBUvIdHm0wh07Ba5tVL59BSso0p5M5c17I1qG4LWzIegVaonWjUoGrXoWnYoWnapG/bpW/apW/Zom/Xa0dvrokl3LUfl18A164e5sYd5cYe5sgk5co34LxZsnQ7nFQmy51Z791p7eBa7eFes5Uq79lhy54cnmIJXTY/m2rMpG/ZpG/apW/apG/aqHXcqXXbqHXboXLRZ0VKuo8e0JoQu4II5b0a58Qf5cUe48Yh581Vpm03uoRJ4cdu7d5l7d5c7eBZ7uBdtpgt8N1dxJITiVIIYz5gpHPWqHXaqHXbqXXcqXXcrHrerHvcqHnXeVWHe1IYsYcP17Ul58o06so5zpoP5cEc48Yh5cxL6tJ+7N5o6t5Z7N1Y5tVV5M5X5c1dyapG6NBZwooTdkQKbEh1qnraq3vcq3vdrHrdrHrer4DfrH/adlR8dU8ZmmoGp34L49RB3cpDvIgW1qcW5ckp6tdcvpBRsXtB69xp7N5W7d1Y5NBQrIEfvpI9zKRFuIodtnsNbj4LeVWLr4Her4Dfr4Der4DesIDhs4bhqYHRWD0+eVIMjF4FlGYFyq0vvJgbmmQJ1K0x7dtP7d5gx5pYu4VF7t1s7N5W7d5X7txXxpkhrnMD1bEtu5APq3YHaz4cl3Gzs4fgs4fhs4fhtIbgtIXiuIvktIreknCtVDlAVTYQa0EIkWMJ2Lgt48hJr38cxJ8w6ddW38Jo0ags8NxU59NR2r9F0LQ64cVG0qgc5M026dE+z60ofloknnm4t4zht4vit4zit4vit4vkupHlupHjt47dpIDFiGidaU5qXTocjGEP1LlD7NdUvZIoyaBCy6JAw5MG2bg10bQ96tlV7tlQ6s474rUX364bxJkbyqIesIUefF1xuJHhupHkuZHjupLku5Hnvpfmv5fmv5flvZbjupPfso/WhGmYVTgrfVIOwKAx279GwJo1068zypwQ6c5C6dFE5L8p36oR15kLz4kHxXkJklkPelMUgFgWWD4ppYXDvpflvpflvpflvpfpwpzowp3nwp3nwp3nwp3nwZznu5jgmXy0XkFHckoPjWAJl3MW+e9o+elf4rgm150OyYkGunYHq2kKkFgQcUYmclVqgWmQf2eOg2mVtZPXwZzmwJzlwp3mw5zp" },
+  { n: "Mythic General Hero Shard", f: "/c5O/c5N+89O+89N+89O+s9O6cFMdmUv1r6k6rmn8tDA9ujZ6eTWxLyukXRUblEccVkjjnk0zrVM7tVb+N9g++Fe++Bg+uBh+OFh+OBj9+Bj9+Fl9d9n9OBn/c5M/M9M/c5N+89N+9BN+M9PpIgzpZd8982898yq+Ne7882s8Mut8c228cSc5bFnypdSpHg7gl8kfmMig24prJg+1b9V7dZg9t5i9+Bj+OBl9+Bl9t9m9d9n/NJM/NJM/NJM/NNP/NZR07VIemMr47uX9MSa/eLK/erY/evX/OjV+d3G9Mmj6rB53ZdM4ZpJ451M2JdKw4pFmWswgF0mclkikXwxuaZK3Mhf79ll9N1m9N5n/t9U/t5U/t9T/uFV8thVc2Afr38/3pNj+M64/OTT/erW/erW/uvX/efS/NzB982k6LJs4aBT2pI/2Io32Ic224s+2Y5F0IpIrnQ7hlspYUQfeGIomIU5y7hW/t9U/t9U/eBV/eFVuqM9d0oYvWMv0nNb7LK/9dXS/efU/unV/ujT/uTO/Nm69cib6bRw5axf46lT4aZO3qJI2Zg/1Yo20IEx0oA104I604ZEu3Q5lVMiX0cl/uBV/t9W/eBV+N1WiXMprW9IwGBPy2Nf2oqI7Lqz++DK/ufR/uPL/N3E+tOx88GQ6rV05axh4KlU4KdM4KdL36ZK4KhJ36ZH3J9D15E50YAvv2AcxGU1oHRp/uBU/t9V/eBV+d1Xo447jXJjw3htmVVUvm5V24pj9sun+9u+/NzB/Nq99suj6rZ45rBn4apZ4ahR4ahO36dL36ZK4KdJ4KhI4KhF4KdE25E3y2cjzntml2dk/uBU/t9V/t9W+99W4MxYa18vXUkwSDAWtGEw1ns577qC9syk+dW1+dCq7ryF7LZ5565l46lY4KlR4KhN36dL3qZK4KdJ4KhH4KhG3qNA0nYjzm46yoeAY0g2/uBU/t9U/OBV/Otk9vOJ3d2KvLlzakkbw2Yl3I1E7LV48L6J9MeY7buB7LRy6rJt46xd4alT4ahO4KhM4KhM4KdL4KhJ4KhI4KdF2pE1z2oh0n1hn25leGov/uBU/OBW++lj/fuE/PuX8/Sal5NXk1giznEl5KRR561m5q1l5Kxg5Kxe5a1i46xb4apV4alQ36lO3qlN36lN4KhM4KdJ4KhH4KND0HMjz25CyIWDa1E4yr1s89dVp5I5tbBb+vqM/PyZwcB5clIgxm4p4JdA4aZM4KdU4adV4qlX4qpX4apT36hR36lO36pO4KlO36pN36lN36lM3qlM4ahG2o42zmol03two29xbmVE4t6rnYYxbzsZbk0wtbRox8V4ZEweuWsn1oQz4aRJ3aRJ3qVK36ZL36dM4KdN4ahO36lO3qlO3qlN3qlO3qlN36lN36pO36pN36VHz3Qkz3E/2ZSVfVVEY0IlZFc7Z0ITpEgcuG5SY00ve1YhuWso14Qv46VJ3qNI3aRJ3qRK36ZL36ZM4KdM4KdM4KhN4KlO4KpO4KlO36lN36lO36pO36tP2Z5Gx2wjzW4uyWw4yXxC049fi1w3plgjvVUaxmEnvWQow2Yh0Hor4KNG3aNH3KNG3aRI3qVJ36ZL36ZL4KdL4KdM4KhN36lO36lO36lO36lO36lO3qpO3qxQ3alRz45CyHguz4Mz0YQ2yGwjxYJjwWkk0XwwxWUeyG0h1Yk03KBE3aRG3KJG3KJH3aRI3qVJ3qVJ3qVK36ZK4KdL36dL3qhM3qlN3qpO36pO3qpO3qtP3qxR3q1S365V4LBW37BT2JQ8zHAlz4531o463KFG2JxA3KFF3KNG26JG3aRH3KJG3KNG3aNH3aRI3qVJ3aRJ36ZK4KdJ36dK36hM36lO36pP36pO36pO36tN36xP369S37FX37BW361P14cwzXMwz5uU4qZJ259D2qBE26JF3KJG2qNG26NF26FD3KNH3KRH3aRI3KRI3aRI3qVJ3qhL3qhL3qhL3qlO36pO36lM36hH3Z0/0Ycx04054a1S4LBS3qBA1Hkn0YleuJuX", big: true },
+];
+let SCAN_PK_BUILTIN_G = null;
+function scanPkBuiltin() {
+  if (!SCAN_PK_BUILTIN_G) SCAN_PK_BUILTIN_G = SCAN_PK_BUILTIN.map((e) => ({ ...e, g: scanB64ToFeat(e.f) })).filter((e) => e.g.length === SCAN_FEAT_W * SCAN_FEAT_H * 3);
+  return SCAN_PK_BUILTIN_G;
+}
 async function scanPkLearnedLoad() {
   try { await ensureSiteConfigKey("scan_learned"); } catch (e) { return SCAN_PK_LEARNED; }
   SCAN_PK_LEARNED = (((siteConfig("scan_learned", null) || {}).items) || []).filter((e) => e && e.k === "pack" && e.n && e.f)
@@ -1693,13 +1707,14 @@ async function scanPkLearnedLoad() {
 }
 // Closest picture among the Backpack Scan's learned tiles and the pack lessons
 // (a Backpack "Skip" lesson isn't a reason to skip here: packs show other things).
-function scanPkMatchRefs(feat, refs) {
+function scanPkMatchRefs(feat, refs, big) {
   const n = feat.length, best = new Map();
   const put = (name, d, extra) => { const b = best.get(name); if (!b || d < b.d) best.set(name, { d, ...extra }); };
   const dist = (g, off, step) => { let sum = 0; for (let i = 0, j = off; i < n; i += 3, j += step) sum += Math.abs(feat[i] - g[j]) + Math.abs(feat[i + 1] - g[j + 1]) + Math.abs(feat[i + 2] - g[j + 2]); return sum / n; };
   SCAN_ITEM_NAMES.forEach((name, k) => { if ((k + 1) * (n / 3) * 4 <= refs.length) put(name, dist(refs, k * (n / 3) * 4, 4)); });
   SCAN_LEARNED.forEach((e) => { if (e.n !== SCAN_SKIP) put(e.n, dist(e.g, 0, 3)); });
   SCAN_PK_LEARNED.forEach((e) => put(e.n, dist(e.g, 0, 3), { mult: e.mult || 1, taught: true }));
+  scanPkBuiltin().forEach((e) => { if (!e.big || big) put(e.n, dist(e.g, 0, 3)); });
   const list = [...best.entries()].sort((a, b) => a[1].d - b[1].d);
   if (!list.length) return { name: null, dist: Infinity, next: Infinity };
   return { name: list[0][0], dist: list[0][1].d, next: list[1] ? list[1][1].d : Infinity, mult: list[0][1].mult || 1, taught: !!list[0][1].taught };
@@ -1823,7 +1838,7 @@ async function scanPkTopLabel(worker, td) {
 // The amount at a tile's bottom right ("25", "8,000", "10K"). Pack tiles read
 // best cut tight (a lone "5" read as a line can come out as "3").
 async function scanPkAmount(worker, td) {
-  const num = scanTextMask(td, 21, 87, 136, 136, true);
+  const num = scanTextMask(td, 21, 87, 136, 136, true, true);
   if (!num) return { value: null, sure: false };
   const wl = { tessedit_char_whitelist: "0123456789,.KM" };
   let res = null;
@@ -2050,11 +2065,40 @@ async function scanPackShot(worker, file, ctx) {
     else if (want) { g.gems = want; g.gemsSure = false; }
     g.items.sort((a, b) => ((a.box ? a.box.y : a.y) - (b.box ? b.box.y : b.y)) || ((a.box ? a.box.x : 0) - (b.box ? b.box.x : 0)));
   });
+  // A big picture drawn left of a row with "x1" / "x2" under it (Daily Deals: the
+  // Mythic General Hero Shard): read from the picture above that text; its amount is the text.
+  const xs = [];
+  all.forEach((l) => {
+    const m = /^[xX×]\s?(\d{1,3})$/.exec(String(l.text || "").trim());
+    if (!m || l.h < unitH * 0.12 || l.h > unitH * 0.45) return;
+    if (tiles.some((b) => l.x < b.x + b.w && b.x < l.x + l.w && l.y < b.y + b.h && b.y < l.y + l.h)) return;
+    if (xs.some((o) => Math.abs(o.cy - (l.y + l.h / 2)) < l.h && Math.abs(o.cx - (l.x + l.w / 2)) < l.w)) return;
+    xs.push({ l, n: Number(m[1]), cy: l.y + l.h / 2, cx: l.x + l.w / 2 });
+  });
+  for (const x of xs) {
+    const g = home(x.cy);
+    if (!g || !g.price) continue;
+    const boxes = g.items.filter((it) => it.box).map((it) => it.box);
+    if (!boxes.length || x.l.x + x.l.w > Math.min(...boxes.map((b) => b.x))) continue;
+    const S = unitH * 1.15, box = { x: Math.max(0, x.cx - S / 2), y: Math.max(0, x.l.y - S), w: S, h: S };
+    const t = scanCanvas(140, 140), tg = t.getContext("2d", { willReadFrequently: true });
+    tg.drawImage(img.c, box.x, box.y, box.w, box.h, 0, 0, 140, 140);
+    const td = tg.getImageData(0, 0, 140, 140).data, feat = scanTileFeature(td);
+    const pic = scanCanvas(96, 96); pic.getContext("2d").drawImage(t, 0, 0, 96, 96);
+    const m = scanPkMatchRefs(feat, ctx.refs, true);
+    const it = { feat, img: pic.toDataURL("image/jpeg", 0.85), name: null, value: x.n, amount0: x.n, sure: false, why: "big", big: true, box };
+    if (m.dist <= 14 && m.name !== SCAN_SKIP) it.name = m.name;
+    else if (ctx.icons) { const im = scanPkMatchIcons(td, ctx.icons); it.guess = im.name; it.gdist = Math.round(im.dist); if (im.name && im.dist < 17 && im.next - im.dist > 1.5) it.name = im.name; }
+    g.items.unshift(it);
+  }
   const out = groups.filter((g) => g.items.length || groups.length === 1);
   // the screenshot's own title (the biggest line in its upper part) for a lone pack
   const upper = titles.filter((l) => l.y < img.h * 0.45), big = (upper.some((l) => l.y > img.h * 0.135) ? upper.filter((l) => l.y > img.h * 0.135) : upper).sort((a, b) => b.h - a.h)[0];
   const tidy = (x) => String(x || "").replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9)'’!]+$/g, "").replace(/[|\\/]/g, " ").replace(/\s+/g, " ").trim();
   if (out.length === 1 && !out[0].title && big) out[0].title = tidy(big.text);
+  // Several prices and none with a title of its own (Daily Deals' rows under one banner):
+  // they are one pack, named by the screenshot's title (owner, 16 Nov 2026).
+  if (out.length > 1 && big && out.every((g) => !g.title && g.price && !g.bazaar)) out.forEach((g) => { g.title = tidy(big.text); });
   return { title: big ? tidy(big.text) : "", groups: out, skipped, tiles: tiles.length, names: useNames };
 }
 
@@ -2156,7 +2200,6 @@ function openPackScanMain(opts) {
       <div class="pks-h"><div><h2>${esc(t("pks_title"))}</h2><div class="pks-sub">${esc(t("pks_intro"))}</div></div>${closeX}</div>
       <div class="pks-rd">${thumbUrl ? `<img src="${esc(thumbUrl)}" alt="" />` : ""}<div class="pks-rd-t"><b data-pkspct>${esc(t("pks_reading_pct").replace("{n}", Math.round(pct)))}</b>
         <div class="pks-prog"><i data-pksbar style="width:${pct}%"></i></div><small data-pksrsub>${esc(sub || t("pks_reading_sub"))}</small></div></div>
-      <div class="pks-sk" aria-hidden="true"><i></i><i></i><i></i></div>
       <button class="btn ghost pks-big" type="button" data-pkscancel>${esc(t("cancel"))}</button>
     </div>`;
     modal.querySelector("[data-pksclose]").onclick = close;
@@ -2255,6 +2298,7 @@ function openPackScanMain(opts) {
       // a Bazaar step is never matched by its name (every option table has the same
       // one): no table decided by its items → the card asks "Which table?"
       if (!opts.target && !c.m && !c.bazaar && typeof opts.match === "function" && c.title) c.m = opts.match(c.title);
+      if (!opts.target && !c.m && !c.bazaar) c.m = itemsMatch(c);
       c.fresh = false;
       fillFromSaved(c); if (priceByItems(c)) fillFromSaved(c); scaleDefault(c);
       c.open = needsLook(c);
@@ -2323,6 +2367,37 @@ function openPackScanMain(opts) {
     per.sort((a, b) => a.d - b.d);
     if (!per.length) return usd ? bazaarAnyPrice(c) : null;
     if (per[1] && per[1].d - per[0].d < 0.5) return null;
+    return per[0].p;
+  };
+  // No name read (or a name no pack has): the saved pack with a row at each scanned
+  // price holding what was read, at the same amounts (items the scan missed don't
+  // count against it). Only a clear winner (owner, 16 Nov 2026: Daily Deals).
+  const itemsMatch = (c) => {
+    if (typeof opts.packs !== "function") return null;
+    const gs = c.groups.filter((g) => g.price && g.price.usd > 0 && Object.keys(readTot(g)).length);
+    if (!gs.length) return null;
+    const per = [];
+    (opts.packs() || []).forEach((p) => {
+      if (!p || BAZ.test(p.title || "") || !Array.isArray(p.saved) || !p.saved.length) return;
+      let tot = 0;
+      for (const g of gs) {
+        const a = readTot(g), keys = Object.keys(a);
+        let best = Infinity;
+        p.saved.forEach((r) => {
+          if (!sameUsd(r, g.price.usd)) return;
+          const b = {};
+          Object.entries((r && r.items) || {}).forEach(([n, v]) => { if (Number(v) > 0) b[n.toLowerCase()] = (b[n.toLowerCase()] || 0) + Number(v); });
+          let d = 0, shared = 0;
+          keys.forEach((k) => { if (b[k] == null) d += 1; else { shared++; d += Math.abs(a[k] - b[k]) / Math.max(a[k], b[k]); } });
+          if (shared && d / keys.length < best) best = d / keys.length;
+        });
+        if (best === Infinity) return;
+        tot += best;
+      }
+      per.push({ p, s: tot / gs.length });
+    });
+    per.sort((x, y) => x.s - y.s);
+    if (!per.length || per[0].s > 0.15 || (per[1] && per[1].s - per[0].s < 0.2)) return null;
     return per[0].p;
   };
   // A price read wrong (QAR 184.99 read as 128.99): no table has a row at it, so the
@@ -2432,14 +2507,26 @@ function openPackScanMain(opts) {
   const fillFromSaved = (c) => {
     c.groups.forEach((g) => {
       g.items.forEach((it) => { if (it.fill) { it.name = null; it.fill = false; it.sure = false; it.ok = false; } });
-      const back = g.items.filter((it) => it.fromDrop && !it.name);
+      const back = g.items.filter((it) => (it.fromDrop && !it.name) || it.colDrop);
       g.items = g.items.filter((it) => !back.includes(it));
-      back.forEach((it) => { it.fromDrop = false; g.dropped.push(it); });
+      back.forEach((it) => { it.fromDrop = false; if (it.colDrop) { it.colDrop = false; it.name = it.colName0; } g.dropped.push(it); });
     });
     const m = cmpOf(c);
+    // A tile left out (not a Backpack item) whose item is one of the matched pack's own
+    // columns comes back (Daily Deals' Mythic General Hero Lucky Box, owner 16 Nov 2026).
+    const cols = new Map();
+    if (m && Array.isArray(m.saved)) m.saved.forEach((r) => Object.keys((r && r.items) || {}).forEach((n) => cols.set(n.toLowerCase(), n)));
+    if (cols.size) c.groups.forEach((g) => {
+      const take = g.dropped.filter((it) => !it.skip && Number(it.value) > 0 && (it.name ? cols.has(it.name.toLowerCase()) : it.guess && cols.has(String(it.guess).toLowerCase()) && Number(it.gdist) <= SCAN_PK_GUESS_MAX));
+      if (!take.length) return;
+      g.dropped = g.dropped.filter((it) => !take.includes(it));
+      take.forEach((it) => { it.colName0 = it.name; it.name = cols.get((it.name || it.guess).toLowerCase()); it.colDrop = true; it.tick = true; if (!it.colName0) it.sure = false; g.items.push(it); });
+      g.items.sort((a, b) => ((a.box ? a.box.y : a.y || 0) - (b.box ? b.box.y : b.y || 0)) || ((a.box ? a.box.x : 0) - (b.box ? b.box.x : 0)));
+    });
     c.groups.forEach((g) => g.items.forEach((it) => { if (it.bySaved) { it.bySaved = false; it.sure = false; } if (it.fillAmt) { it.fillAmt = false; it.value = null; it.ok = false; } }));
     if (!m || !Array.isArray(m.saved) || !m.saved.length) return;
     const allowed = new Map(names().map((n) => [n.toLowerCase(), n]));
+    cols.forEach((n, k) => { if (!allowed.has(k) && k !== "gems") allowed.set(k, n); });
     c.groups.forEach((g) => { g.autoRow = bestRowAt(m, g); });
     // an item read by its picture with the saved pack's amount for this price is taken as right
     c.groups.forEach((g) => {
