@@ -4651,3 +4651,6 @@ span.mk.mk svg{flex:none}
   .dash-today .dt-ev{ color:var(--ice); }
   .dash-today .dt-go{ flex:none; color:var(--muted); font-size:18px; line-height:1; }
   [dir="rtl"] .dash-today .dt-go{ transform:scaleX(-1); }
+.isl-nbox .isl-lhn{color:var(--muted);font-size:11.5px;font-weight:400}
+.isl-im.sq{aspect-ratio:1/1;width:auto;object-fit:contain}
+.isl-tsh.lh .nw{white-space:nowrap}

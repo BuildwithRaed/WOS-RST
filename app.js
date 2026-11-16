@@ -1826,6 +1826,12 @@ const T = {
   isl_shards: { en: "Mythic Island Shards" },
   isl_target: { en: "Target" },
   isl_needs_ok: { en: "you have enough" },
+  isl_lh_ct: { en: "Construction Contract" },
+  isl_lh_need: { en: "{b} Blueprints = {c} Contracts" },
+  isl_lh_ess: { en: "Unlock with {e} Life Essence (spare after the other buildings)" },
+  isl_lh_short: { en: "{n} short" },
+  isl_lh_note: { en: "10 General Accessory Construction Contracts = 1 Blueprint of any lighthouse." },
+  isl_lh_tip: { en: "{b} Blueprints = {c} Construction Contracts" },
   isl_get_first: { en: "Not owned yet. Get it from an event or pack (Lv 1). Shards count from Lv 1." },
   isl_inc_title: { en: "Life Essence a day" },
   isl_chip_ev: { en: "\ud83c\udfaa Event" },
@@ -13809,7 +13815,7 @@ const BP_HERO_CURRENCIES = ["Marks of Valor", "Mystery Points"];
 // Islands: Life Essence, Mythic Island Shards, the Mark of Revival Shop's currency and the Storehouse's
 // General Accessory Construction Contracts (scrolls for the Lighthouse), always in the Backpack.
 const BP_ISLAND_ITEMS = ["Life Essence", "Mythic Island Shards", "General Accessory Construction Contract", "Mark of Revival", "Glorious Tome", "Lucky Glorious Tome Chest"];
-const BP_EXTRA_ICONS = { "Life Essence": "icons/life-essence.png", "Mythic Island Shards": "icons/island-shard.png", "General Accessory Construction Contract": "icons/construction-contract.svg", "Mark of Revival": "icons/mark-of-revival.png", "Glorious Tome": "icons/glorious-tome.png", "Lucky Glorious Tome Chest": "icons/lucky-glorious-tome-chest.png", "Marks of Valor": "icons/hall-marks.png", "Mystery Points": "icons/mystery-pts.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/mythic-hero-lucky-box.png" };
+const BP_EXTRA_ICONS = { "Life Essence": "icons/life-essence.png", "Mythic Island Shards": "icons/island-shard.png", "General Accessory Construction Contract": "icons/construction-contract.png", "Mark of Revival": "icons/mark-of-revival.png", "Glorious Tome": "icons/glorious-tome.png", "Lucky Glorious Tome Chest": "icons/lucky-glorious-tome-chest.png", "Marks of Valor": "icons/hall-marks.png", "Mystery Points": "icons/mystery-pts.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/mythic-hero-lucky-box.png" };
 function bpIcon(item) {
   if (item.icon) return item.icon;
   const name = item.name;
@@ -15013,7 +15019,7 @@ const PACK_RESOURCE_NAMES = [
   "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest",
   "Fire Crystal", "FC Chest", "FC Crate", "Pet Chest", "Common Marks", "Advanced Marks", "Gems",
   "Mythic General Hero Shard", "Epic General Hero Shard", "Rare General Hero Shard", "Mythic General Hero Lucky Box",
-  "Marks of Valor", "Widget Chest", "Mystery Points", "Mark of Revival", "Glorious Tome", "Lucky Glorious Tome Chest",
+  "Marks of Valor", "Widget Chest", "Mystery Points", "Mark of Revival", "Glorious Tome", "Lucky Glorious Tome Chest", "General Accessory Construction Contract",
   "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Expert Speedups (minutes)",
   "Expert Speedup 1m", "Expert Speedup 5m", "Expert Speedup 1h", "Expert Speedup 3h", "Expert Speedup 8h",
   "Research Speedup 1m", "Research Speedup 5m", "Research Speedup 1h", "Research Speedup 3h", "Research Speedup 8h",
@@ -19763,7 +19769,7 @@ async function heroShardBudget() {
 // Pages whose owned amounts live somewhere other than material_owned_<key>.
 async function budgetOwnedFor(calcKey) {
   if (calcKey === "hero_shards") return (await heroShardBudget()).owned;
-  if (calcKey === "islands") { const bp = (await loadCalcState("backpack").catch(() => null)) || {}; return { "Mark of Revival": Number(bp["Mark of Revival"]) || 0, "Glorious Tome": shiningTomesIn(bp) }; }
+  if (calcKey === "islands") { const bp = (await loadCalcState("backpack").catch(() => null)) || {}; return { "Mark of Revival": Number(bp["Mark of Revival"]) || 0, "Glorious Tome": shiningTomesIn(bp), [ISL_CONTRACT]: Number(bp[ISL_CONTRACT]) || 0 }; }
   if (calcKey === "shining_skins") return { "Glorious Tome": shiningTomesIn((await loadCalcState("backpack").catch(() => null)) || {}) };
   if (calcKey === "experts" || calcKey === "experts_research") {
     const inv = { ...((await loadCalcState("experts_inventory")) || {}) };
@@ -19934,7 +19940,7 @@ function budgetStatDeltas(calcKey) {
 // for Chief Gear, Charms and Heroes Gears). Current level → the page's own
 // target, read the way the Dashboard reads the current levels, so "now →
 // after" matches the Dashboard. Only Budgets asks for it (opts.stats).
-const BUDGET_STAT_MORE = new Set(["t12_research", "t11_helios", "research_center", "pets", "pets_refine", "experts", "experts_research", "hero_shards"]);
+const BUDGET_STAT_MORE = new Set(["t12_research", "t11_helios", "research_center", "pets", "pets_refine", "experts", "experts_research", "hero_shards", "islands"]);
 async function budgetStatDeltasMore(calcKey) {
   const out = [];
   const RAW = { Attack: "ATT", Defense: "DEF", Lethality: "DMG", Health: "HP" };
@@ -20072,6 +20078,26 @@ async function budgetStatDeltasMore(calcKey) {
         });
         add(tr, "ATT", sum.ATK); add(tr, "DEF", sum.DEF); add(tr, "DMG", sum.DMG); add(tr, "HP", sum.HP);
       });
+    } else if (calcKey === "islands") {
+      // Lighthouses (the only island buildings with a stat gain here for now): now → target,
+      // each bonus × level ÷ max (+1% LETH and HP a level), for every troop.
+      const [cats, isl] = await Promise.all([islandCatRows(), loadCalcState("island_shards").catch(() => null), ensureGalleryUncounted()]);
+      const catList = cats.length ? cats.map((c) => c.category) : ["Island"];
+      if (!catList.includes(ISL_LIGHT_CAT)) return out;
+      const rows = await keptRows("skins", `skins?user_id=eq.${USER_ID}&category=in.(${catList.map((c) => encodeURIComponent(c)).join(",")})&select=id,category,name,image_url,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level&order=sort_order.asc`);
+      const lt = (isl && isl.light) || {}, sum = {};
+      rows.filter((x) => islIsLight(x) && !GALLERY_UNCOUNTED.has(String(x.id))).forEach((x) => {
+        const mx = Number(x.max_level ?? 10) || 10, r = lt[x.id] || {}, now = Number.isFinite(Number(r.now)) && r.now != null ? Math.max(0, Math.min(mx, Number(r.now))) : x.owned ? Number(x.current_level) || 0 : 0;
+        const v = Number(r.to), to = Math.max(now, Math.min(mx, r.to != null && Number.isFinite(v) && v >= 0 ? v : mx));
+        if (to <= now) return;
+        [["bonus_type", "bonus_value", "bonus_level1"], ["bonus_type2", "bonus_value2", "bonus_level2"], ["bonus_type3", "bonus_value3", "bonus_level3"], ["bonus_type4", "bonus_value4", "bonus_level4"]].forEach(([tk, vk, lk]) => {
+          const st = bonusStatKey(x[tk]);
+          if (!RAW[st] || x[vk] == null) return;
+          const full = Number(x[vk]) || 0, at = (l) => (x[lk] != null ? (l >= x[lk] ? full : 0) : (full * l) / mx);
+          sum[st] = (sum[st] || 0) + at(to) - at(now);
+        });
+      });
+      TROOPS.forEach((tr) => addRaw(tr, sum));
     }
   } catch (e) { return []; }
   return out;
@@ -25155,6 +25181,27 @@ window.addEventListener("resize", () => { if (ISL_POP) ISL_POP.place(); });
 const ISL_SKIP_CATS = ["Lighthouse"];
 const ISL_SKIP_NAMES = ["Tree of Life"];
 const islCatTracked = (cat) => !!cat && cat !== "all" && !ISL_SKIP_CATS.includes(cat);
+// Lighthouse (owner, 16 Nov 2026): no copies; each lighthouse levels with its own Blueprint, and
+// 10 General Accessory Construction Contracts = 1 Blueprint of any lighthouse (the game's Redeem
+// screen). Same costs for all three (7 → 8 = 12 from the owner's screenshot; 8 → 9 / 9 → 10 from a guide). Rule islLighthouse: one row per level (row 1 = unlocking it,
+// which can also be paid with Life Essence). Index = level - 1.
+const ISL_LIGHT_CAT = "Lighthouse";
+const ISL_CONTRACT = "General Accessory Construction Contract";
+const ISL_LIGHT = [1, 2, 4, 6, 8, 10, 12, 12, 16, 18].map((bp, i) => ({ bp, ct: bp * 10, ess: i ? 0 : 50000 }));
+const islIsLight = (s) => !!s && s.category === ISL_LIGHT_CAT;
+// Each lighthouse's levels, shared with Scan (Storehouse → Accessory): calc_state island_shards.light =
+// { skinId: { now: 0..10 (0 = not unlocked), to: 0..10 } }. "now" is also written to the skin's level.
+const islLightRec = (id) => { const l = ISL_SHARDS && ISL_SHARDS.light; const r = l && typeof l === "object" ? l[id] : null; return r && typeof r === "object" ? r : null; };
+// Blueprints / Contracts from level `from` to `to`; with essUnlock the unlock step is paid in Life Essence.
+function islLightCost(from, to, essUnlock = false) {
+  let bp = 0, ct = 0, ess = 0;
+  for (let L = Math.max(1, from + 1); L <= to; L++) {
+    const r = ISL_LIGHT[L - 1] || {};
+    if (L === 1 && essUnlock && Number(r.ess) > 0) { ess += Number(r.ess); continue; }
+    bp += Number(r.bp) || 0; ct += Number(r.ct) || 0;
+  }
+  return { bp, ct, ess };
+}
 const ISL_COPIES = [0, 0, 2, 3, 4, 5, 6, 7, 8, 10, 12];
 const ISL_TREE = [0, 120, 150, 180, 210, 240, 270, 300, 330, 360, 420]; // Tree of Life essence an hour by level
 // Lumber Camp by level (index = level): workers, wood a second per worker, load.
@@ -25164,9 +25211,9 @@ const ISL_CAMP = [null,
   { workers: 2, wood: 14, load: 7560 }, { workers: 2, wood: 15, load: 9000 }];
 const ISL_RULES = { perCopy: 10, essence10: 60000, shopWeek: 300, copyLimit: 15, treeCap: 5000, millHour: 40, millCap: 2000, woodPerEssence: 720, allyEach: 200, allyMax: 3, markPrice: 250, tomePrice: 600, tomeMax: 3, shiningDays: 5, tomeFreeDay: 80, skinTomes: 10000 };
 const ISL_COLLECT_H = 12; // income counts collecting every 12 hours
-// calc_state "island_shards" = { targets: { skinId: level }, allPick, essence, shards, tree, camp1, camp2, ally, evPer: { skinId: n }, store: { skinId: spare Lv 1 copies }, hidden }
+// calc_state "island_shards" = { targets: { skinId: level }, light: { skinId: { now, to } } (lighthouses), allPick, essence, shards, tree, camp1, camp2, ally, evPer: { skinId: n }, store: { skinId: spare Lv 1 copies }, hidden }
 let ISL_SHARDS = null;
-const islDefault = () => ({ targets: {}, essence: 0, shards: 0, tree: 10, camp1: 10, camp2: 10, ally: 3, evPer: {}, store: {}, hidden: false });
+const islDefault = () => ({ targets: {}, light: {}, essence: 0, shards: 0, tree: 10, camp1: 10, camp2: 10, ally: 3, evPer: {}, store: {}, hidden: false });
 function islSave() { const rest = { ...ISL_SHARDS }; delete rest.essence; delete rest.shards; saveCalcState("island_shards", rest); }
 // Mythic = max level 10 or more (missing = 10); purple / blue ones stop at Lv 5.
 const islIsMythic = (s) => Number(s.max_level ?? 10) >= 10;
@@ -25480,6 +25527,7 @@ async function renderIslandGallery() {
   }
   if (!ISL_SHARDS.targets || typeof ISL_SHARDS.targets !== "object") ISL_SHARDS.targets = {};
   if (!ISL_SHARDS.store || typeof ISL_SHARDS.store !== "object") ISL_SHARDS.store = {};
+  if (!ISL_SHARDS.light || typeof ISL_SHARDS.light !== "object") ISL_SHARDS.light = {};
   ["every", "shop", "mill", "workers"].forEach((k) => { delete ISL_SHARDS[k]; }); // settings no longer used
   // Life Essence and Mythic Island Shards live in the Backpack (shared with the Backpack
   // page); amounts typed here before are moved there once.
@@ -25496,6 +25544,16 @@ async function renderIslandGallery() {
   const islands = await keptRows("skins",
     `skins?user_id=eq.${USER_ID}&category=in.(${catList.map((c) => encodeURIComponent(c)).join(",")})&select=id,category,name,image_url,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level&order=sort_order.asc`
   );
+  // A lighthouse level saved in island_shards.light (e.g. by Scan) that the skin doesn't have yet
+  // goes to the skin too, so the stats here and on the Dashboard follow it.
+  islands.filter(islIsLight).forEach((s) => {
+    const r = islLightRec(s.id), n = r && r.now != null && r.now !== "" ? Math.max(0, Math.min(Number(s.max_level ?? 10) || 10, Math.floor(Number(r.now)))) : null;
+    const cur = s.owned ? Number(s.current_level) || 0 : 0;
+    if (n == null || !Number.isFinite(n) || n === cur) return;
+    const patch = { current_level: n, ...(!!s.owned !== n > 0 ? { owned: n > 0 } : {}) };
+    Object.assign(s, patch);
+    patchSkinQueued(s.id, patch).catch(() => {});
+  });
   const TROOPS = ["Infantry", "Lancers", "Marksman"];
   const RAW_STATS = ["Attack", "Defense", "Lethality", "Health"];
   const STAT_SLOTS = [
@@ -25580,12 +25638,19 @@ async function renderIslandGallery() {
   const tracked = (s) => islCatTracked(s.category) && !ISL_SKIP_NAMES.includes(s.name);
   // The Life Essence shop sells only Islands Guide buildings (owner, 9 Nov 2026).
   const srcOf = (s) => { const src = islSource(s.name, islIsMythic(s)); return s.category === ISL_SHOP_CAT || !src.price ? src : { ...src, price: 0 }; };
+  // Lighthouses can stay at 0 (not unlocked): their target may be 0 too; missing = max like the others.
+  const tgtLo = (s) => (islIsLight(s) ? lvOf(s) : Math.max(1, lvOf(s)));
   const tgtOf = (s) => {
-    const mx = maxOf(s), lo = Math.max(1, lvOf(s));
-    const v = Number(ISL_SHARDS.targets[s.id]);
-    return Math.max(lo, Math.min(mx, Number.isFinite(v) && v > 0 ? v : mx));
+    const mx = maxOf(s), lo = tgtLo(s);
+    const raw = islIsLight(s) ? (islLightRec(s.id) || {}).to : ISL_SHARDS.targets[s.id], v = Number(raw);
+    const ok = islIsLight(s) ? raw != null && raw !== "" && Number.isFinite(v) && v >= 0 : Number.isFinite(v) && v > 0;
+    return Math.max(lo, Math.min(mx, ok ? v : mx));
   };
-  const setTgt = (s, v) => { ISL_SHARDS.targets[s.id] = Math.max(Math.max(1, lvOf(s)), Math.min(maxOf(s), v)); };
+  const setTgt = (s, v) => {
+    const to = Math.max(tgtLo(s), Math.min(maxOf(s), v));
+    if (islIsLight(s)) ISL_SHARDS.light = { ...ISL_SHARDS.light, [s.id]: { now: lvOf(s), ...(islLightRec(s.id) || {}), to } };
+    else ISL_SHARDS.targets[s.id] = to;
+  };
   const usesEssence = (s) => tracked(s) && srcOf(s).kind === "shop" && srcOf(s).price > 0;
   const usesShards = (s) => tracked(s) && srcOf(s).kind === "shop" && !srcOf(s).price;
   // Also in the Mark of Revival shop (an extra way to buy copies; free shards first).
@@ -25667,6 +25732,38 @@ async function renderIslandGallery() {
     return SP;
   };
   const mkAlloc = () => sharedPlan().mk;
+  // Lighthouses (outside the shards plan): Blueprints → General Accessory Construction Contracts,
+  // the Backpack's Contracts shared over them in page order. Unlocking (Lv 1) is paid with Life
+  // Essence only when the free Life Essence left after every other building's plan covers it
+  // (free first: in hand, plus the income up to the target date when there is one), else with
+  // its Contracts like the other levels.
+  const contractHave = () => Number((islBp || {})[ISL_CONTRACT]) || 0;
+  let lpSig = null, LP = null;
+  const lightPlan = () => {
+    const P = sharedPlan(), list = islands.filter(islIsLight), have = contractHave();
+    const sig = `${spSig}|${JSON.stringify(ISL_LIGHT)}|${have}|${list.map((x) => `${x.id}:${lvOf(x)}:${tgtOf(x)}`).join(",")}`;
+    if (sig === lpSig && LP) return LP;
+    lpSig = sig;
+    let spare = Math.max(0, ((P.days == null ? islHave(ISL_SHARDS) : P.pot) - P.need) * ePS());
+    const per = new Map();
+    let bp = 0, ct = 0, ess = 0;
+    list.forEach((x) => {
+      const from = lvOf(x), to = tgtOf(x), u = Number((ISL_LIGHT[0] || {}).ess) || 0;
+      const useEss = from < 1 && to >= 1 && u > 0 && spare >= u;
+      if (useEss) spare -= u;
+      const c = islLightCost(from, to, useEss);
+      const before = Math.max(0, ct - have);
+      bp += c.bp; ct += c.ct; ess += c.ess;
+      per.set(x.id, { ...c, short: Math.max(0, ct - have) - before });
+    });
+    LP = { per, bp, ct, ess, have, short: Math.max(0, ct - have) };
+    return LP;
+  };
+  const lightOf = (s) => lightPlan().per.get(s.id) || { bp: 0, ct: 0, ess: 0, short: 0 };
+  // Contracts to buy (Pack cost): the shortfall, unless Islands is unticked in Budgets.
+  const lightBuy = () => (BUDGET_SELECTED && BUDGET_SELECTED.islands === false ? 0 : lightPlan().ct);
+  const CT_ICON = BP_EXTRA_ICONS[ISL_CONTRACT];
+  const ctImg = `<img class="isl-im sq" src="${CT_ICON}" alt="" aria-hidden="true">`, bpImg = '<img class="isl-im sq" src="icons/lighthouse-blueprint.png" alt="" aria-hidden="true">';
   const mkCopies = (s) => (usesMarks(s) ? mkAlloc().get(s.id) || 0 : 0);
   const marksOf = (s) => mkCopies(s) * (usesMarks(s) ? srcOf(s).markPrice : 0);
   const tmCopies = (s) => (usesTomes(s) ? sharedPlan().tm.get(s.id) || 0 : 0);
@@ -25721,6 +25818,13 @@ async function renderIslandGallery() {
   const finLabel = (d) => { const at = islDay(d); return at.toLocaleDateString(undefined, { month: "short", timeZone: "UTC" }) + (d > 330 ? ` \u2019${String(at.getUTCFullYear()).slice(2)}` : ""); };
   // Option C: "→10" badge on the picture and the cost under the pill.
   const tileBits = (s) => {
+    if (islIsLight(s)) {
+      if (lvOf(s) >= maxOf(s) || tgtOf(s) <= lvOf(s)) return { badge: "", line: "" };
+      const c = lightOf(s), ct = c.ct ? `<span class="nw">${bidiNum(c.bp.toLocaleString())} ${bpImg}</span> <span class="nw">${bidiNum(c.ct.toLocaleString())} ${ctImg}</span>` : "";
+      const tip = esc(t("isl_lh_tip").replace("{b}", c.bp.toLocaleString()).replace("{c}", c.ct.toLocaleString()));
+      const line = `<span class="isl-tsh lh two" title="${tip}">${c.ess ? `<span class="nw">${bidiNum(shortAmount(c.ess))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true">${c.ct ? " +" : ""}</span> ` : ""}${ct}</span>`;
+      return { badge: `<span class="isl-tbg">&#8594;${tgtOf(s)}</span>`, line };
+    }
     if (!tracked(s) || lvOf(s) >= maxOf(s) || tgtOf(s) <= lvOf(s)) return { badge: "", line: "" };
     const kind = srcOf(s).kind;
     const st = storeOf(s) ? `<span class="nw">&#128230;${storeOf(s)} &middot;</span> ` : "";
@@ -25734,6 +25838,8 @@ async function renderIslandGallery() {
   };
   // One plan for the whole page: every tracked building of every category (chips only filter the cards).
   const planList = () => islands.filter(tracked);
+  // "Target all" also sets the lighthouses.
+  const tgtAllList = () => islands.filter((s) => tracked(s) || islIsLight(s));
   // The category's plan in Life Essence: shop copies + shards × essence a shard.
   const planTotals = (list) => {
     const st = ISL_SHARDS, sh = list.reduce((a, s) => a + needOf(s), 0), ess = list.reduce((a, s) => a + essOf(s), 0);
@@ -25769,16 +25875,16 @@ async function renderIslandGallery() {
   function drawPlan() {
     const host = document.getElementById("islandShardPlan");
     if (!host) return;
-    const list = planList();
-    if (!list.length) { host.innerHTML = ""; return; }
+    const list = planList(), tAll = tgtAllList();
+    if (!tAll.length) { host.innerHTML = ""; return; }
     const st = ISL_SHARDS;
-    const P = planTotals(list), left = P.left, short = P.short;
+    const P = planTotals(list), LPn = lightPlan(), left = P.left + LPn.ess, short = Math.max(0, P.left + LPn.ess - P.have);
     // The level last picked shows while every building still follows it (each one
     // capped at its own max and never below its level); else the shared target or Mixed.
-    const follows = (v) => list.every((s) => tgtOf(s) === Math.max(Math.max(1, lvOf(s)), Math.min(maxOf(s), v)));
-    const tg = list.map(tgtOf);
+    const follows = (v) => tAll.every((s) => tgtOf(s) === Math.max(tgtLo(s), Math.min(maxOf(s), v)));
+    const tg = tAll.map(tgtOf);
     const same = st.allPick && follows(st.allPick) ? st.allPick : tg.every((v) => v === tg[0]) ? tg[0] : 0;
-    const mxAll = Math.max(10, ...list.map(maxOf));
+    const mxAll = Math.max(10, ...tAll.map(maxOf));
     const opts = [];
     for (let l = 1; l <= mxAll; l++) opts.push(`<option value="${l}"${same === l ? " selected" : ""}>${esc(t("sg_lv").replace("{n}", l))}</option>`);
     // Backpack boxes like the planner pages: Life Essence and Mythic Island Shards, each with
@@ -25795,11 +25901,13 @@ async function renderIslandGallery() {
     // Glorious Tomes (Shining City shop): what the Backpack holds counts its Lucky Glorious Tome Chests at their average.
     const tmN = sharedPlan().tomes || 0;
     tiles.push(tile("tomes", "icons/glorious-tome.png", t("isl_tm_name"), tomeHave(), Math.max(0, tmN), Math.max(0, tmN - tomeHave())));
-    const boxesOn = BAR_SHOW_ALL.islands !== false, mkTotal = markSheetTotal() + (sharedPlan().tomes || 0);
+    // Lighthouse Blueprints as General Accessory Construction Contracts (owner, 16 Nov 2026).
+    tiles.push(tile("contracts", CT_ICON, t("isl_lh_ct"), LPn.have, LPn.ct, LPn.short));
+    const boxesOn = BAR_SHOW_ALL.islands !== false, mkTotal = markSheetTotal() + (sharedPlan().tomes || 0) + Math.max(0, lightBuy() - LPn.have);
     // The Pack cost button sits on the Target row, always there (greyed when nothing to buy).
     const canBuy = mkTotal > 0 && visitorCan("packcost");
     const priceBtn = canBuy ? `<button type="button" class="cg-bpbtn ice isl-pcb" data-islpc data-islmkprice>${plxPriceLabel("islands")}</button>` : `<button type="button" class="cg-bpbtn isl-pcb off" disabled>${esc(t("isl_pc_none"))}</button>`;
-    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.max(3, tiles.length)};">${tiles.join("")}</div>` : ""}</div>`;
+    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.min(4, Math.max(3, tiles.length))};">${tiles.join("")}</div>` : ""}</div>`;
     const inc = islIncome(st), sd = islShardsDay(st);
     const incLine = `<span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(sd)))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(inc.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span>`;
     host.innerHTML = `<div class="isl-pl"><div class="isl-row isl-tr"><label class="isl-tl"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>${priceBtn}</div>
@@ -25823,12 +25931,17 @@ async function renderIslandGallery() {
           plxAmountModal({ label: t("isl_tm_name"), icon: "icons/glorious-tome.png", value: cur, needBox: nd > 0 ? { need: nd, have: tomeHave() } : null, onSave: (v) => { loadCalcState("backpack").catch(() => null).then((b) => { islBp = { ...(b || islBp || {}), "Glorious Tome": Math.floor(v) }; saveCalcState("backpack", islBp); budgetInvalidate(); spSig = null; keepPlace(() => computeAndRender()); }); } });
           return;
         }
+        if (k === "contracts") {
+          const nd = lightPlan().ct;
+          plxAmountModal({ label: t("isl_lh_ct"), icon: CT_ICON, value: contractHave(), needBox: nd > 0 ? { need: nd, have: contractHave() } : null, onSave: (v) => { loadCalcState("backpack").catch(() => null).then((b) => { islBp = { ...(b || islBp || {}), [ISL_CONTRACT]: Math.floor(v) }; saveCalcState("backpack", islBp); budgetInvalidate(); keepPlace(() => computeAndRender()); }); } });
+          return;
+        }
         if (k === "marks") {
           const nd = planList().reduce((a, s) => a + marksOf(s), 0);
           plxAmountModal({ label: t("isl_mk_name"), icon: "icons/mark-of-revival.png", value: markHave(), needBox: nd > 0 ? { need: nd, have: markHave() } : null, onSave: (v) => { loadCalcState("backpack").catch(() => null).then((b) => { islBp = { ...(b || islBp || {}), "Mark of Revival": Math.floor(v) }; saveCalcState("backpack", islBp); budgetInvalidate(); drawPlan(); }); } });
           return;
         }
-        const P2 = planTotals(planList()), nd = k === "essence" ? Math.max(0, P2.left - (ISL_SHARDS.shards || 0) * ePS()) : P2.sh;
+        const P2 = planTotals(planList()), nd = k === "essence" ? Math.max(0, P2.left + lightPlan().ess - (ISL_SHARDS.shards || 0) * ePS()) : P2.sh;
         plxAmountModal({ label: t(k === "essence" ? "isl_essence" : "isl_shards"), icon: k === "essence" ? "icons/life-essence.png" : "icons/island-shard.png", value: ISL_SHARDS[k] || 0, needBox: nd > 0 ? { need: nd, have: ISL_SHARDS[k] || 0 } : null, onSave: (v) => { const n = k === "essence" ? "Life Essence" : "Mythic Island Shards", q = Math.floor(v); ISL_SHARDS[k] = q; loadCalcState("backpack").catch(() => null).then((b) => { islBp = { ...(b || islBp || {}), [n]: q }; saveCalcState("backpack", islBp); budgetInvalidate(); }); keepPlace(() => computeAndRender()); } });
         return;
       }
@@ -25841,7 +25954,7 @@ async function renderIslandGallery() {
       if (!sel || !sel.value) return;
       if (ISL_POP) ISL_POP.close(true);
       ISL_SHARDS.allPick = Number(sel.value);
-      planList().forEach((s) => setTgt(s, ISL_SHARDS.allPick));
+      tgtAllList().forEach((s) => setTgt(s, ISL_SHARDS.allPick));
       islSave();
       keepPlace(() => computeAndRender());
     };
@@ -25853,8 +25966,8 @@ async function renderIslandGallery() {
   // The Pack cost card: this category's Marks actually needed, else (no target) the optional amount.
   const markSheetTotal = () => planList().filter(usesMarks).reduce((a, s) => a + marksOf(s), 0);
   const markHave = () => Number((islBp || {})["Mark of Revival"]) || 0;
-  const buyTotals = () => { const o = {}, mk = markSheetTotal(), tm = sharedPlan().tomes || 0; if (mk) o["Mark of Revival"] = mk; if (tm) o["Glorious Tome"] = tm; return o; };
-  const buyOwned = () => ({ "Mark of Revival": markHave(), "Glorious Tome": tomeHave() });
+  const buyTotals = () => { const o = {}, mk = markSheetTotal(), tm = sharedPlan().tomes || 0, ct = lightBuy(); if (mk) o["Mark of Revival"] = mk; if (tm) o["Glorious Tome"] = tm; if (ct > contractHave()) o[ISL_CONTRACT] = ct; return o; };
+  const buyOwned = () => ({ "Mark of Revival": markHave(), "Glorious Tome": tomeHave(), [ISL_CONTRACT]: contractHave() });
   let mkSig = null;
   PACK_COST_HOOKS.islands = () => {
     if (ISL_MK_OPT) {
@@ -25895,7 +26008,7 @@ async function renderIslandGallery() {
     opt.hidden = true; if (main) main.hidden = false;
     const tt = document.querySelector("#islMkBuy [data-cgbuyt]");
     if (tt) tt.textContent = `${t("pack_cost_title")}`;
-    if (wrap && !markSheetTotal() && !(sharedPlan().tomes > 0)) wrap.hidden = true;
+    if (wrap && !markSheetTotal() && !(sharedPlan().tomes > 0) && !(lightBuy() > contractHave())) wrap.hidden = true;
   }
   // The Pack cost window, like the planner pages: on phones it opens over the page from
   // the "$ <price> ›" button on the Backpack line; on PC the card sits under the stats card.
@@ -25921,7 +26034,7 @@ async function renderIslandGallery() {
   function islMarkCard() {
     const host = document.getElementById("islMkPacks");
     if (!host) return;
-    const bt = buyTotals(), total = Object.values(bt).reduce((a, n) => a + n, 0), sig = `${JSON.stringify(bt)}|${markHave()}|${tomeHave()}`;
+    const bt = buyTotals(), total = Object.values(bt).reduce((a, n) => a + n, 0), sig = `${JSON.stringify(bt)}|${markHave()}|${tomeHave()}|${contractHave()}`;
     const wrap = document.getElementById("islMkWrap");
     if (!total) { mkSig = sig; host.innerHTML = ""; if (!ISL_MK_OPT) { if (wrap) wrap.hidden = true; islPacksTo(false); packCostShown("islands", null); } return; }
     if (ISL_MK_OPT) { ISL_MK_OPT = null; islMkOptClose(); mkSig = null; }
@@ -25997,7 +26110,7 @@ async function renderIslandGallery() {
       <div class="sg-pop-bt"><button type="button" class="sg-pop-sm" data-ipset="0" aria-label="${esc(t("sg_not_built"))}">0</button><button type="button" class="sg-pop-pm" data-ipstep="-1" aria-label="&#8722;">&#8722;</button><span class="sg-pop-num" data-popnum aria-live="polite"></span><button type="button" class="sg-pop-pm" data-ipstep="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-ipset="max">${esc(t("sg_max"))}</button></div>
       ${tracked(s) ? `<div class="isl-tg"><span class="l">${esc(t("isl_target"))}</span><button type="button" class="sg-pop-pm" data-iptg="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-poptg aria-live="polite"></span><button type="button" class="sg-pop-pm" data-iptg="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-iptg="max">${esc(t("sg_max"))}</button></div><div class="isl-tg isl-store" data-popstw hidden><span class="l2">&#128230; ${esc(t("isl_store"))}<small>${esc(t("isl_store_d"))}</small></span><button type="button" class="sg-pop-pm" data-ipst="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-popst aria-live="polite"></span><button type="button" class="sg-pop-pm" data-ipst="1" aria-label="+">+</button></div><div class="isl-get" data-popget hidden>${esc(t("isl_get_first"))}</div><div class="isl-need" data-popneed></div>${IS_OWNER && !islIsMythic(s) && s.category === ISL_SHOP_CAT ? `<div class="isl-src"><div class="isl-osl">${esc(t("isl_owner_set"))}</div><label data-ippricew><span>${esc(t("isl_src_price_s"))}</span><input type="number" inputmode="numeric" min="0" step="500" data-ipprice /></label></div>` : ""}${IS_OWNER && islIsMythic(s) ? `<div class="isl-src"><div class="isl-osl">${esc(t("isl_owner_set"))}</div><label><span>${esc(t("isl_src"))}</span><select class="keep-w" data-ipsrc><option value="shop">${esc(t("isl_src_shop"))}</option><option value="event">${esc(t("isl_src_event"))}</option><option value="ranked">${esc(t("isl_src_ranked"))}</option></select></label><label data-ipsrceachw><span>${esc(t("isl_src_each"))}</span><span class="isl-eachr"><select class="keep-w" data-ipsrceach><option value="0">${esc(t("isl_src_table"))}</option><option value="1">${esc(t("isl_src_same"))}</option></select><input type="number" inputmode="numeric" min="1" max="99" data-ipsrceachn hidden /></span></label><label data-ippricew><span>${esc(t("isl_src_price_s"))}</span><input type="number" inputmode="numeric" min="0" step="500" data-ipprice /></label><div class="isl-dt" data-ipsrcev hidden><div class="isl-dl">${esc(t("isl_dates_from"))}</div><div class="isl-seg"><button type="button" data-ipdates="pack">${esc(t("isl_dates_pack"))}</button><button type="button" data-ipdates="own">${esc(t("isl_dates_own"))}</button></div>
         <div class="isl-dpk" data-ipdpk hidden><div class="isl-dl">${esc(t("isl_dates_pick"))}</div><select class="keep-w" data-ippack></select><div class="isl-dsm" data-ippacknote></div></div>
-        <div class="isl-dow"><label data-ipdown hidden><span>${esc(t("isl_dates_next"))}</span><input type="date" class="keep-w" data-ipnext /></label></div></div><label data-ipsrcev hidden><span>${esc(t("isl_src_choices"))}</span><input type="text" inputmode="numeric" autocomplete="off" data-ipsrcch /></label></div>` : ""}` : ""}
+        <div class="isl-dow"><label data-ipdown hidden><span>${esc(t("isl_dates_next"))}</span><input type="date" class="keep-w" data-ipnext /></label></div></div><label data-ipsrcev hidden><span>${esc(t("isl_src_choices"))}</span><input type="text" inputmode="numeric" autocomplete="off" data-ipsrcch /></label></div>` : ""}` : ""}${!tracked(s) && islIsLight(s) ? `<div class="isl-tg"><span class="l">${esc(t("isl_target"))}</span><button type="button" class="sg-pop-pm" data-iptg="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-poptg aria-live="polite"></span><button type="button" class="sg-pop-pm" data-iptg="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-iptg="max">${esc(t("sg_max"))}</button></div><div class="isl-need" data-popneed></div>` : ""}
       <div class="isl-wb" data-popwb hidden></div>
       <div class="sg-pop-ft"><span>${esc(t("isl_pop_hold"))}</span><span>${esc(t("isl_pop_out"))}</span></div>`;
     sections.appendChild(pop);
@@ -26076,6 +26189,22 @@ async function renderIslandGallery() {
         if (pw && [...pw.querySelectorAll(".isl-mkc")].map((x) => x.outerHTML).join("") !== coin) { pw.querySelectorAll(".isl-mkc").forEach((x) => x.remove()); if (coin) pw.insertAdjacentHTML("beforeend", coin); pw.classList.toggle("has-x", !!coin); }
         drawPlan();
         requestAnimationFrame(() => place());
+      } else if (islIsLight(s)) {
+        // Lighthouse: Now / Target and the Blueprints → Contracts it still needs.
+        const tg = tgtOf(s), lo = tgtLo(s), c = lightOf(s);
+        pop.querySelector("[data-poptg]").textContent = tg;
+        pop.querySelector('[data-iptg="-1"]').disabled = tg <= lo;
+        pop.querySelector('[data-iptg="1"]').disabled = tg >= mx;
+        pop.querySelector('[data-iptg="max"]').disabled = tg >= mx;
+        pop.querySelector("[data-popneed]").innerHTML = tg <= lv ? "" : `<div class="isl-nbox">${c.bp ? esc(t("isl_lh_need")).replace("{b}", `<b class="gd">${bidiNum(c.bp.toLocaleString())} ${bpImg}</b>`).replace("{c}", `<b class="gd">${bidiNum(c.ct.toLocaleString())} ${ctImg}</b>`) : ""}${c.bp ? ` &middot; ${c.short ? `<span class="bs-sw">${esc(t("isl_lh_short").replace("{n}", c.short.toLocaleString()))}</span>` : esc(t("isl_needs_ok"))}` : ""}${c.ess ? `${c.bp ? "<br>" : ""}${esc(t("isl_lh_ess").replace("{e}", c.ess.toLocaleString()))}` : ""}<br><small class="isl-lhn">${esc(t("isl_lh_note"))}</small></div>`;
+        const bits = tileBits(s);
+        const bg = tileEl.querySelector(".isl-tbg"), ln = tileEl.querySelector(".isl-tsh");
+        if (bg) bg.outerHTML = bits.badge || "<span class=\"isl-tbg\" hidden></span>";
+        else if (bits.badge) tileEl.insertAdjacentHTML("beforeend", bits.badge);
+        if (ln) ln.outerHTML = bits.line || "<span class=\"isl-tsh\" hidden></span>";
+        else if (bits.line) tileEl.insertAdjacentHTML("beforeend", bits.line);
+        drawPlan();
+        requestAnimationFrame(() => place());
       }
     };
     // Where to buy copies: one switch per shop this building can be in (owner: the default
@@ -26106,7 +26235,7 @@ async function renderIslandGallery() {
     // Opens under the tile, or above it when there's no room below (placePop).
     const place = () => {
       if (!pop.isConnected || !tileEl.isConnected) return;
-      const w = Math.min(tracked(s) ? 360 : 300, sections.getBoundingClientRect().width);
+      const w = Math.min(tracked(s) || islIsLight(s) ? 360 : 300, sections.getBoundingClientRect().width);
       pop.style.width = `${w}px`;
       placePop(pop, tileEl, { align: "center", gap: 8, onPlace: ({ up, left, width }) => {
         pop.classList.toggle("up", up);
@@ -26126,6 +26255,8 @@ async function renderIslandGallery() {
       changed = true;
       // Raising the level past its target takes the target along.
       if (tracked(s) && ISL_SHARDS.targets[s.id] != null && Number(ISL_SHARDS.targets[s.id]) < lv) { setTgt(s, lv); islSave(); }
+      // Lighthouse: Now is also kept in island_shards.light (shared with Scan); the target never stays below it.
+      if (islIsLight(s)) { const r = islLightRec(s.id) || {}; ISL_SHARDS.light = { ...ISL_SHARDS.light, [s.id]: { ...r, now: lv, to: r.to != null && r.to !== "" && Number.isFinite(Number(r.to)) ? Math.max(lv, Number(r.to)) : maxOf(s) } }; islSave(); }
       patchSkinQueued(s.id, patch).catch(() => {
         if (Object.keys(patch).every((k) => s[k] === patch[k])) {
           Object.assign(s, before);
@@ -26273,9 +26404,17 @@ async function renderIslandGallery() {
           lv.push({ label: String(L), totals: { ...(m ? { "Mark of Revival": m * mp } : {}), ...(tm ? { "Glorious Tome": tm * tp } : {}) } });
         }
         return { k: String(s.id), n: s.name, img: s.image_url || "", a: String(now), lv };
-      }).filter(Boolean));
+      }).filter(Boolean).concat(islands.filter(islIsLight).map((s) => {
+        // Lighthouses: the Contracts to each level (an unlock paid in Life Essence costs none).
+        const now = lvOf(s), to = tgtOf(s), c = lightOf(s);
+        if (to <= now || !c.ct) return null;
+        const lv = [];
+        for (let L = now + 1; L <= to; L++) { const n = islLightCost(now, L, c.ess > 0).ct; lv.push({ label: String(L), totals: n ? { [ISL_CONTRACT]: n } : {} }); }
+        return { k: String(s.id), n: s.name, img: s.image_url || "", a: String(now), lv };
+      }).filter(Boolean)));
     }
-    recordBudgetNeeds("islands", [{ label: null, totals: { ...(mkAll ? { "Mark of Revival": mkAll } : {}), ...(tmAll ? { "Glorious Tome": tmAll } : {}) } }]);
+    const ctAll = lightPlan().ct;
+    recordBudgetNeeds("islands", [{ label: null, totals: { ...(mkAll ? { "Mark of Revival": mkAll } : {}), ...(tmAll ? { "Glorious Tome": tmAll } : {}), ...(ctAll ? { [ISL_CONTRACT]: ctAll } : {}) } }]);
     islMarkCard();
     galMenuToTools("island", "islandCatSwitcher");
 
@@ -31509,6 +31648,10 @@ function gameRules() {
       cols: [{ key: "level", label: "Level", type: "auto" }, { key: "workers", label: "Workers", type: "num" }, { key: "wood", label: "Wood / s per worker", type: "num" }, { key: "load", label: "Load", type: "num" }],
       get: () => ISL_CAMP.slice(1).map((c, i) => ({ level: i + 1, workers: c.workers, wood: c.wood, load: c.load })),
       set: (rows) => ruleSetArray(ISL_CAMP, [null, ...rows.map((r) => ({ workers: Number(r.workers) || 0, wood: Number(r.wood) || 0, load: Number(r.load) || 0 }))]) },
+    { key: "islLighthouse", group: "islands", label: "Lighthouse blueprints per level", help: "Blueprints (and General Accessory Construction Contracts, 10 = 1 Blueprint of any lighthouse) to reach each Lighthouse level; the same for all three lighthouses. Level 1 = unlocking it, which can also be paid with Life Essence. The Islands page counts the Contracts.",
+      cols: [{ key: "level", label: "Level", type: "auto" }, { key: "blueprints", label: "Blueprints", type: "num" }, { key: "contracts", label: "Contracts", type: "num" }, { key: "essence", label: "Or Life Essence", type: "num" }],
+      get: () => ISL_LIGHT.map((r, i) => ({ level: i + 1, blueprints: r.bp, contracts: r.ct, essence: r.ess || "" })),
+      set: (rows) => ruleSetArray(ISL_LIGHT, rows.map((r) => { const bp = Number(r.blueprints) || 0, ct = r.contracts === "" || r.contracts == null ? bp * 10 : Number(r.contracts) || 0; return { bp, ct, ess: Number(r.essence) || 0 }; })) },
   ];
   // The built-in values, kept for "Reset" and to show what changed.
   GAME_RULES.forEach((r) => { r.def = JSON.parse(JSON.stringify(r.get())); });
