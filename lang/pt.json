@@ -2602,5 +2602,10 @@
 "t:isl_ct_free_ok":"Grátis até {d}: {f} · suficiente ✓",
 "t:isl_ct_done":"Pronto ~{d} só com Contratos grátis",
 "t:isl_ct_never":"Nenhum Contrato grátis definido",
-"t:isl_ct_years":"Só Contratos grátis: ~{y} anos · o pacote é mais rápido"
+"t:isl_ct_years":"Só Contratos grátis: ~{y} anos · o pacote é mais rápido",
+"t:isl_free_card":"grátis ~{d}",
+"t:isl_free_now":"agora",
+"t:isl_free_never":"20+ anos",
+"t:isl_free_title":"Sem gastar:",
+"t:isl_free_lv":"Nv {n} ~{d}"
 }

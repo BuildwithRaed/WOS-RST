@@ -2602,5 +2602,10 @@
 "t:isl_ct_free_ok":"{d}까지 무료: {f} · 충분 ✓",
 "t:isl_ct_done":"무료 계약서만으로 ~{d} 완료",
 "t:isl_ct_never":"무료 계약서가 설정되지 않음",
-"t:isl_ct_years":"무료 계약서만으로: ~{y}년 · 팩이 더 빠름"
+"t:isl_ct_years":"무료 계약서만으로: ~{y}년 · 팩이 더 빠름",
+"t:isl_free_card":"무료 ~{d}",
+"t:isl_free_now":"지금",
+"t:isl_free_never":"20년+",
+"t:isl_free_title":"과금 없이:",
+"t:isl_free_lv":"Lv {n} ~{d}"
 }

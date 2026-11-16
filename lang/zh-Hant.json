@@ -2602,5 +2602,10 @@
 "t:isl_ct_free_ok":"截至{d}免費：{f} · 足夠 ✓",
 "t:isl_ct_done":"僅靠免費契約約 {d} 完成",
 "t:isl_ct_never":"未設定免費契約",
-"t:isl_ct_years":"僅靠免費契約：約 {y} 年 · 禮包更快"
+"t:isl_ct_years":"僅靠免費契約：約 {y} 年 · 禮包更快",
+"t:isl_free_card":"免費 ~{d}",
+"t:isl_free_now":"現在",
+"t:isl_free_never":"20年以上",
+"t:isl_free_title":"不花錢：",
+"t:isl_free_lv":"Lv {n} ~{d}"
 }

@@ -2602,5 +2602,10 @@
 "t:isl_ct_free_ok":"Miễn phí trước {d}: {f} · đủ ✓",
 "t:isl_ct_done":"Xong ~{d} chỉ với Hợp đồng miễn phí",
 "t:isl_ct_never":"Chưa đặt Hợp đồng miễn phí",
-"t:isl_ct_years":"Chỉ Hợp đồng miễn phí: ~{y} năm · gói nhanh hơn"
+"t:isl_ct_years":"Chỉ Hợp đồng miễn phí: ~{y} năm · gói nhanh hơn",
+"t:isl_free_card":"miễn phí ~{d}",
+"t:isl_free_now":"bây giờ",
+"t:isl_free_never":"20+ năm",
+"t:isl_free_title":"Không chi tiền:",
+"t:isl_free_lv":"Cấp {n} ~{d}"
 }

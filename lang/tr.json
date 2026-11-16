@@ -2602,5 +2602,10 @@
 "t:isl_ct_free_ok":"{d} itibarıyla ücretsiz: {f} · yeterli ✓",
 "t:isl_ct_done":"Yalnızca ücretsiz Sözleşmelerle ~{d} biter",
 "t:isl_ct_never":"Ücretsiz Sözleşme ayarlanmadı",
-"t:isl_ct_years":"Yalnızca ücretsiz Sözleşmeler: ~{y} yıl · paket daha hızlı"
+"t:isl_ct_years":"Yalnızca ücretsiz Sözleşmeler: ~{y} yıl · paket daha hızlı",
+"t:isl_free_card":"ücretsiz ~{d}",
+"t:isl_free_now":"şimdi",
+"t:isl_free_never":"20+ yıl",
+"t:isl_free_title":"Harcamadan:",
+"t:isl_free_lv":"Sv {n} ~{d}"
 }

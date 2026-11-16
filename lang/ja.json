@@ -2603,5 +2603,10 @@
 "t:isl_ct_free_ok":"{d}までの無料分: {f} · 足りる ✓",
 "t:isl_ct_done":"無料の契約書だけで ~{d} 完了",
 "t:isl_ct_never":"無料の契約書が未設定",
-"t:isl_ct_years":"無料の契約書だけ: ~{y} 年 · パックの方が速い"
+"t:isl_ct_years":"無料の契約書だけ: ~{y} 年 · パックの方が速い",
+"t:isl_free_card":"無料 ~{d}",
+"t:isl_free_now":"今",
+"t:isl_free_never":"20年以上",
+"t:isl_free_title":"課金なし:",
+"t:isl_free_lv":"Lv {n} ~{d}"
 }

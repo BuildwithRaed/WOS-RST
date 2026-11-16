@@ -2603,5 +2603,10 @@
 "t:isl_ct_free_ok":"Gratis bis {d}: {f} · reicht ✓",
 "t:isl_ct_done":"Fertig ~{d} nur mit Gratis-Verträgen",
 "t:isl_ct_never":"Keine Gratis-Verträge eingestellt",
-"t:isl_ct_years":"Nur Gratis-Verträge: ~{y} Jahre · das Paket ist schneller"
+"t:isl_ct_years":"Nur Gratis-Verträge: ~{y} Jahre · das Paket ist schneller",
+"t:isl_free_card":"gratis ~{d}",
+"t:isl_free_now":"jetzt",
+"t:isl_free_never":"20+ J.",
+"t:isl_free_title":"Ohne Ausgaben:",
+"t:isl_free_lv":"Lv {n} ~{d}"
 }

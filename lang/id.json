@@ -2602,5 +2602,10 @@
 "t:isl_ct_free_ok":"Gratis sampai {d}: {f} · cukup ✓",
 "t:isl_ct_done":"Selesai ~{d} hanya dengan Kontrak gratis",
 "t:isl_ct_never":"Belum ada Kontrak gratis",
-"t:isl_ct_years":"Hanya Kontrak gratis: ~{y} tahun · paket lebih cepat"
+"t:isl_ct_years":"Hanya Kontrak gratis: ~{y} tahun · paket lebih cepat",
+"t:isl_free_card":"gratis ~{d}",
+"t:isl_free_now":"sekarang",
+"t:isl_free_never":"20+ thn",
+"t:isl_free_title":"Tanpa belanja:",
+"t:isl_free_lv":"Lv {n} ~{d}"
 }
