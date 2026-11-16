@@ -19438,8 +19438,7 @@ const HALL_OF_HEROES_HERO = { 2: "Alonso", 3: "Logan", 4: "Reina", 5: "Gwen", 6:
 // for building copies the Mark of Revival / Shining City shops would sell:
 // shards per copy -> one copy's Marks / Tomes (hidden, no weekly limit). Only
 // when a pack used for Islands gives shards, so without one nothing changes.
-// `islFree`: Budgets' shares don't charge Islands for a step another page
-// needs (its shards come free); only steps bought for Islands alone.
+// (`islFree` only marks them as the Islands shard trades.)
 let ISL_SHARD_TRADES = [];
 const ISL_SHARD_ITEM = "Mythic Island Shards";
 function islShardTradesNow() {
@@ -21199,31 +21198,21 @@ function budgetShares(plan, inc) {
     const costBy = {}, fracBy = {};
     units.forEach((u, ui) => {
       const w = {}; let sum = 0;
-      // Islands' Mythic Island Shards (its own need, or traded into Marks / Tomes): the
-      // step is free for Islands when the other pages need it at least as much (it is
-      // bought for them); else Islands takes its part like any need.
-      let islSh = 0;
       inc.forEach((pg) => {
         let x = 0;
         const rates = TRADE_RATES_CACHE ? tradeRatesFor(pg.calcKey) : [];
         Object.keys(u.gives).forEach((n) => {
-          if (pg.calcKey === "islands" && n === "Mythic Island Shards") {
-            if (total[n] > 0 && pg.need[n] > 0) islSh += Math.min(1, (u.gives[n] * r.count) / total[n]) * (pg.need[n] / total[n]);
-            rates.forEach((rt) => { if (rt.islFree && rt.from === n && pg.need[rt.to] > 0 && total[rt.to] > 0) islSh += Math.min(1, (u.gives[n] * (rt.get / rt.give) * r.count) / total[rt.to]) * (pg.need[rt.to] / total[rt.to]); });
-            return;
-          }
           if (total[n] > 0 && pg.need[n] > 0) { x += Math.min(1, (u.gives[n] * r.count) / total[n]) * (pg.need[n] / total[n]); return; }
           // Also counts when this page only uses the item through one of its
           // own trades (general Speedups -> Research Speedups, Fire Crystal ->
           // FC Shard), so a page that trades for it gets its fair part too.
           rates.forEach((rt) => {
-            if (rt.islFree || rt.from !== n || !(pg.need[rt.to] > 0) || !(total[rt.to] > 0)) return;
+            if (rt.from !== n || !(pg.need[rt.to] > 0) || !(total[rt.to] > 0)) return;
             x += Math.min(1, (u.gives[n] * (rt.get / rt.give) * r.count) / total[rt.to]) * (pg.need[rt.to] / total[rt.to]);
           });
         });
         w[pg.calcKey] = x; sum += x;
       });
-      if (islSh > 0 && islSh > sum - (w.islands || 0)) { w.islands = (w.islands || 0) + islSh; sum += islSh; }
       // Packs that give Fire Crystal (usually with speedups): research pages
       // come first. If a research page uses this purchase, Experts pay no
       // part of it; Experts only share it when no research page needs it.
@@ -21236,7 +21225,6 @@ function budgetShares(plan, inc) {
         const rates = TRADE_RATES_CACHE ? tradeRatesFor(pg.calcKey) : [];
         let x = 0;
         Object.keys(u.gives).forEach((n) => rates.forEach((r) => { if (r.from === n && pg.need[r.to] > 0 && total[r.to] > 0) x += pg.need[r.to] / total[r.to]; }));
-        if (pg.calcKey === "islands" && (u.gives["Mythic Island Shards"] || 0) > 0 && pg.need["Mythic Island Shards"] > 0) x += 1;
         w[pg.calcKey] = x; sum += x;
       });
       // Last resort: the pages whose packs sell those items.
