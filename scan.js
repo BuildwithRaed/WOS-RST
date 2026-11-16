@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "c295168b38";
+window.SCAN_BUILD = "1815ea1f3e";
 
 
 // ---- Backpack: read game screenshots ----
@@ -1681,11 +1681,11 @@ function scanPkMatchRefs(feat, refs) {
 let SCAN_PK_ICONS = null;
 // Only Backpack items (owner, 16 Nov 2026): like the other Scans, a pack scan keeps
 // items that are in the Backpack list and can be a pack column; resources read from the
-// Summary screen (Meat, Wood, Coal, Iron, Steel, Food, Chief Stamina, Hero XP) and
-// anything else (VIP points, …) are left out. Gems are read on their own.
+// Summary screen (Meat, Wood, Coal, Iron) and anything else (VIP points, …) are left out;
+// Steel and Pet Food are kept (owner: the pages use them). Gems are read on their own.
 function scanPkAllowed() {
   const bp = new Set((typeof backpackItems === "function" ? backpackItems() : []).flatMap((g) => g.items.map((x) => x.name)).concat(typeof BP_ISLAND_ITEMS !== "undefined" ? BP_ISLAND_ITEMS : []));
-  const res = new Set((typeof SCAN_SUMMARY_ROWS !== "undefined" ? SCAN_SUMMARY_ROWS : []).map((r) => r[1]).filter((n) => n !== "Gems"));
+  const res = new Set(["Meat", "Wood", "Coal", "Iron", "Meat/Wood"]); // Steel and Pet Food stay (owner)
   const key = (n) => (typeof bpKeyFor === "function" ? bpKeyFor(n) : n);
   return (typeof packResourceChoices === "function" ? packResourceChoices() : []).filter((n) => !res.has(n) && (bp.has(n) || bp.has(key(n))));
 }
