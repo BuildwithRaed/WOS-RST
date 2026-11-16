@@ -1787,6 +1787,25 @@ const T = {
   pks_save: { en: "Save to pack" },
   pks_saved: { en: "Pack filled from the screenshot" },
   pks_full: { en: "You have used all your packs. Delete one first." },
+  pks_dup: { en: "This pack is already on the Packs page: {name}" },
+  pks_dup_d: { en: "Saving updates its amounts. Check what changes below." },
+  pks_dup_mine: { en: "Saving changes your own copy of its amounts (only you see it)." },
+  pks_as_new: { en: "Save as a new pack instead" },
+  pks_as_match: { en: "Update {name} instead" },
+  pks_diff: { en: "Differences from the saved pack" },
+  pks_diff_saved: { en: "Saved" },
+  pks_diff_scan: { en: "Scan" },
+  pks_diff_none: { en: "No differences — same as saved" },
+  pks_diff_new: { en: "new" },
+  pks_diff_notin: { en: "not in scan · kept" },
+  pks_diff_newprice: { en: "new price" },
+  pks_diff_newprice_mine: { en: "price not in this pack · left out" },
+  pks_diff_same: { en: "{n} the same" },
+  pks_diff_gone: { en: "{n} saved price rows aren't in the scan and will be removed" },
+  pks_diff_gone_mine: { en: "{n} saved price rows aren't in the scan · yours stay as they are" },
+  pks_diff_mine_note: { en: "Your copy only changes amounts the pack already has; new items or prices are left out." },
+  pk_scanned: { en: "Scanned {date}" },
+  pk_scanned_tip: { en: "Amounts scanned from a game screenshot on {date}" },
   scan_lab_title: { en: "Research Lab" },
   scan_lab_weekly: { en: "Weekly super refinements" },
   scan_lab_note: { en: "Saved to the Research Lab (\"Game says\" for this week), not to the Backpack." },
@@ -7893,7 +7912,7 @@ async function packSeedTemplates(tables) {
     try {
       const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
       const l = JSON.parse(JSON.stringify(PACK_LINKS[String(from.id)] || { priceCol: 0, cols: {} }));
-      delete l.linkSet; delete l.visitorDate; delete l.hideVisitors; delete l.dateWith; delete l.eventName;
+      delete l.linkSet; delete l.visitorDate; delete l.hideVisitors; delete l.dateWith; delete l.eventName; delete l.scanned;
       PACK_LINKS[String(saved.id)] = { ...l, group: PACK_TEMPLATE_GROUP, pages: [] };
       made++;
     } catch (e) { /* skip this one */ }
@@ -7956,7 +7975,7 @@ function mpPagesUsed(link) {
 function mpRowHtml(o) {
   return `<div class="pkb-row mpk-row${o.inB ? "" : " pkb-off"}" data-mprow="${esc(o.id)}" role="button" tabindex="0">
     <span class="pkb-ic">${mpRowIcon(o.names)}</span>
-    <span class="pkb-m"><b>${esc(o.title)}</b><small>${esc([mpWhenText(o.link), mpKindText(o.link)].filter(Boolean).join(" · "))}</small><small class="mpk-used">${esc(o.used.join(" · "))}</small></span>
+    <span class="pkb-m"><b>${esc(o.title)}</b><small>${esc([mpWhenText(o.link), mpKindText(o.link)].filter(Boolean).join(" · "))}</small><small class="mpk-used">${esc(o.used.join(" · "))}</small>${packScannedHtml(o.id)}</span>
     <span class="pkb-r"><b>${esc(o.price)}</b></span>
     <label class="pkb-tk" title="${esc(t("pk_in_budgets_hint"))}"><input type="checkbox" data-mpbud="${esc(o.id)}" ${o.inB ? "checked" : ""} aria-label="${esc(t("pk_in_budgets"))}" /></label>
   </div>`;
@@ -8170,7 +8189,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
       const payload = { title, columns: built.columns, rows: built.rows, sort_order: (allTables || []).length, scale_enabled: false, updated_at: new Date().toISOString() };
       try {
         const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
-        PACK_LINKS[String(saved.id)] = { ...built.link, group: PACK_MINE_GROUP, hideVisitors: true, pages };
+        PACK_LINKS[String(saved.id)] = { ...built.link, group: PACK_MINE_GROUP, hideVisitors: true, pages }; delete PACK_LINKS[String(saved.id)].scanned;
         await savePackLinks();
         PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
         PACK_PLAN_CACHE.clear();
@@ -8183,7 +8202,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     }
     if (MY_PACKS.length >= packMyPacksLimit()) { MP_NEW = null; redraw(); return; }
     const link = built.link;
-    delete link.group; delete link.linkSet; delete link.visitorDate; delete link.hideVisitors; delete link.dateWith; delete link.eventName;
+    delete link.group; delete link.linkSet; delete link.visitorDate; delete link.hideVisitors; delete link.dateWith; delete link.eventName; delete link.scanned;
     const mp = { id: "my-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), from: tb.title, title, columns: built.columns, rows: built.rows.map((r) => ({ cells: r.cells })), link: { ...link, pages } };
     MY_PACKS.push(mp);
     MP_NEW = null;
@@ -8196,16 +8215,24 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
   const scanBase = () => {
     const tb = templates.find((x) => packTemplateKind(packLinkForBase(x.id)) === "regular") || templates[0];
     const src = JSON.parse(JSON.stringify(tb ? (PACK_LINKS || {})[String(tb.id)] || {} : { reset: 7 }));
-    delete src.group; delete src.linkSet; delete src.visitorDate; delete src.hideVisitors; delete src.dateWith; delete src.eventName; delete src.rowMax; delete src.daily; delete src.template;
+    delete src.group; delete src.linkSet; delete src.visitorDate; delete src.hideVisitors; delete src.dateWith; delete src.eventName; delete src.rowMax; delete src.daily; delete src.template; delete src.scanned;
     return { ...src, priceCol: 0, cols: {}, pages: [] };
   };
   async function mpScanSave(res, mp) {
     const nameOf = (cols) => (ci) => packResourceByName(cols[ci]) || String(cols[ci] || "");
+    if (res.to === "match") {
+      const tb = packApplyMyEdits((allTables || []).filter((x) => String(x.id) === String(res.id)))[0];
+      if (!tb) throw new Error("Couldn't open the pack");
+      packScanSaveMine(tb, res);
+      toast(t("pks_saved"));
+      return;
+    }
     if (res.to === "this" && mp) {
       const pc = typeof (mp.link || {}).priceCol === "number" ? mp.link.priceCol : 0;
       const got = packScanApply(mp.columns, pc, res, nameOf(mp.columns), mp.rows);
       mp.columns = got.columns;
       mp.rows = got.rows.map((r) => ({ cells: r.cells }));
+      packMarkScanned(mp.id);
       changed(true);
       toast(t("pks_saved"));
       return;
@@ -8215,7 +8242,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     if (own) {
       const payload = { title, columns: got.columns, rows: got.rows, sort_order: (allTables || []).length, scale_enabled: false, updated_at: new Date().toISOString() };
       const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
-      PACK_LINKS[String(saved.id)] = { ...scanBase(), group: PACK_MINE_GROUP, hideVisitors: true };
+      PACK_LINKS[String(saved.id)] = { ...scanBase(), group: PACK_MINE_GROUP, hideVisitors: true, scanned: packDayKey(packStartOfToday()) };
       await savePackLinks();
       PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
       PACK_PLAN_CACHE.clear();
@@ -8227,11 +8254,18 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     if (MY_PACKS.length >= packMyPacksLimit()) throw new Error(t("pks_full"));
     const np = { id: "my-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), from: title, title, columns: got.columns, rows: got.rows.map((r) => ({ cells: r.cells })), link: scanBase() };
     MY_PACKS.push(np);
+    packMarkScanned(np.id);
     changed(false);
     toast(t("pks_saved"));
     mpwOpen(np.id);
   }
-  const scanOpts = (mp) => ({ target: mp ? { title: mp.title } : null, canNew: own || MY_PACKS.length < packMyPacksLimit(), categories: [], onSave: (res) => mpScanSave(res, mp) });
+  // A visitor's scan whose name is a Packs-page pack can go into their copy of it.
+  const scanMatch = (title) => {
+    const m = packScanFind(title, (allTables || []).filter((x) => { const l = packLinkFor(x.id); return !l.template && !l.hideVisitors; }));
+    if (!m) return null;
+    return { id: m.id, title: m.title, saved: packScanSavedRows(packApplyMyEdits([m])[0]), onPage: true, mine: true };
+  };
+  const scanOpts = (mp) => ({ target: mp ? { id: mp.id, title: mp.title, saved: packScanSavedRows(mp) } : null, canNew: own || MY_PACKS.length < packMyPacksLimit(), categories: [], match: own || mp ? null : scanMatch, onSave: (res) => mpScanSave(res, mp) });
   const scanBtn = el.querySelector("[data-mpscan]");
   if (scanBtn) scanBtn.addEventListener("click", () => openPackScan(scanOpts(null), scanBtn));
   el.querySelectorAll("[data-mpscanfill]").forEach((b) => b.addEventListener("click", () => { const mp = packMineFind(b.dataset.mpscanfill); if (mp) openPackScan(scanOpts(mp), b); }));
@@ -8263,6 +8297,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
       try {
         const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
         const src = JSON.parse(JSON.stringify(PACK_LINKS[String(tb.id)] || { priceCol: 0, cols: {} }));
+        delete src.scanned;
         PACK_LINKS[String(saved.id)] = { ...src, group: PACK_MINE_GROUP, hideVisitors: true, pages: [] };
         await savePackLinks();
         PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
@@ -8277,7 +8312,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     const tb = templates.find((x) => String(x.id) === b.dataset.mpdup);
     if (!tb) return;
     const src = JSON.parse(JSON.stringify((PACK_LINKS || {})[String(tb.id)] || {}));
-    delete src.group; delete src.linkSet; delete src.visitorDate; delete src.hideVisitors; delete src.dateWith; delete src.eventName;
+    delete src.group; delete src.linkSet; delete src.visitorDate; delete src.hideVisitors; delete src.dateWith; delete src.eventName; delete src.scanned;
     const mp = { id: "my-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), from: tb.title, title: defName(tb), columns: tb.columns.slice(), rows: tb.rows.map((r) => ({ cells: (r.cells || []).slice() })), link: { ...src, pages: [], cols: {} } };
     MY_PACKS.push(mp);
     MY_PACKS_OPEN.add(mp.id);
@@ -11564,14 +11599,26 @@ async function renderPacksPage() {
   // Scan pack: a new pack from a screenshot (the top card), or the open pack
   // filled from one (its window's "Fill from screenshot"). The table is changed
   // through its editor (pkscanfill in wireTable), so it saves like any edit.
+  const pkbScanTarget = (tb) => ({ id: tb.id, title: tb.title, saved: packScanSavedRows(tb), onPage: true, mine: !IS_OWNER });
   const pkbScanOpts = (tb) => ({
-    target: tb ? { title: tb.title } : null,
-    canNew: true,
-    categories: categoryOrder().filter((c) => c !== PACK_TEMPLATE_GROUP),
+    target: tb ? pkbScanTarget(tb) : null,
+    canNew: IS_OWNER,
+    categories: IS_OWNER ? categoryOrder().filter((c) => c !== PACK_TEMPLATE_GROUP) : [],
     category: tb ? categoryOf(tb) : (String(packsFilter).startsWith("cat:") ? String(packsFilter).slice(4) : ""),
+    match: tb ? null : (title) => { const m = packScanFind(title, tables.filter((x) => !packLinkFor(x.id).template)); return m ? pkbScanTarget(m) : null; },
     onSave: (res) => pkbScanSave(res, tb),
   });
   async function pkbScanSave(res, tb) {
+    if (res.to === "match") tb = tables.find((x) => String(x.id) === String(res.id)) || null;
+    // Visitors: their own copy of the pack's amounts.
+    if (!IS_OWNER) {
+      if (!tb) throw new Error("Couldn't open the pack");
+      packScanSaveMine(tb, res);
+      tb.rows = packApplyMyEdits([{ ...tb, rows: tb._orig || tb.rows }])[0].rows;
+      renderAll();
+      toast(t("pks_saved"));
+      return;
+    }
     let id = tb ? String(tb.id) : null;
     if (res.to === "new" || !tb) {
       // last in the order (its category lists it by name), so no other table moves
@@ -12331,7 +12378,7 @@ async function renderPacksPage() {
     const right = ev ? (tiers > 1 && ev !== "in" ? `<small>${esc(t("pkb_tiers").replace("{n}", tiers))}</small>` : "") : w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : "";
     return `<div class="pkb-row${ev ? " pkb-evr" : ""}${inB || lk.template ? "" : " pkb-off"}${hid ? " pkb-hidv" : ""}" data-pkrow="${ti}" data-pkrowid="${esc(String(tb.id))}" role="button" tabindex="0">
       ${arr ? dsHandleHtml("data-pkbdrag") : ""}<span class="pkb-ic">${pkbIcon(tb, lk) || "&#127873;"}</span>
-      <span class="pkb-m"><b${ev ? ` title="${esc(tb.title)}"` : ""}>${esc(ev ? packEventShort(tb.title, evNames) : tb.title)}</b>${sub0 || ngN ? `<small>${esc(sub0)}${ngN ? `<span data-pkbngn>${sub0 ? " · " : ""}${esc(pkbNgCount(ngN))}</span>` : ""}</small>` : ""}${hid ? `<small class="pkb-hid">${esc(t("pk_hidden_tag"))}</small>` : ""}</span>
+      <span class="pkb-m"><b${ev ? ` title="${esc(tb.title)}"` : ""}>${esc(ev ? packEventShort(tb.title, evNames) : tb.title)}</b>${sub0 || ngN ? `<small>${esc(sub0)}${ngN ? `<span data-pkbngn>${sub0 ? " · " : ""}${esc(pkbNgCount(ngN))}</span>` : ""}</small>` : ""}${hid ? `<small class="pkb-hid">${esc(t("pk_hidden_tag"))}</small>` : ""}${packScannedHtml(tb.id)}</span>
       ${ev === "in" ? "" : `<span class="pkb-r"><b>${esc(pkbPrice(tb, lk))}</b>${right}</span>`}
       ${lk.template ? "" : `<label class="pkb-tk" title="${esc(t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbudrow="${esc(String(tb.id))}" ${inB ? "checked" : ""} aria-label="${esc(t("pk_in_budgets"))}" /></label>`}
     </div>${ngN ? pkbNgListHtml(tb.id) : ""}`;
@@ -12514,9 +12561,10 @@ async function renderPacksPage() {
     const bar = body.querySelector(".pk-ed-bar");
     if (bar) {
       bar.insertAdjacentHTML("afterbegin", `<button type="button" class="pkb-back" data-pkbclose aria-label="${esc(t("close_button"))}">&#8249;</button>`);
-      if (IS_OWNER && !lk.template) bar.insertAdjacentHTML("beforeend", `<button type="button" class="btn small ghost pkb-scanfill" data-pkbscan="${esc(String(tb.id))}">&#128247; ${esc(t("pks_fill_btn"))}</button>`);
+      if (!lk.template) bar.insertAdjacentHTML("beforeend", `<button type="button" class="btn small ghost pkb-scanfill" data-pkbscan="${esc(String(tb.id))}">&#128247; ${esc(t("pks_fill_btn"))}</button>`);
       const line = [w.text, w.on ? t("pkb_on_now") : w.next ? t("pkb_next").replace("{date}", w.next) : ""].filter(Boolean).join(" · ");
-      if (line) bar.insertAdjacentHTML("beforeend", `<div class="pkb-when">${esc(line)}</div>`);
+      const scn = packScannedHtml(tb.id, "span");
+      if (line || scn) bar.insertAdjacentHTML("beforeend", `<div class="pkb-when">${esc(line)}${line && scn ? " · " : ""}${scn}</div>`);
       const hint = body.querySelector("[data-pack-visitor-hint]");
       if (hint) bar.after(hint);
       // D: a follower says which pack its dates come from.
@@ -13392,8 +13440,8 @@ async function renderPacksPage() {
           if (res.group) {
             const l = (PACK_LINKS[String(t.id)] = PACK_LINKS[String(t.id)] || { pages: [], priceCol: 0, cols: {} });
             l.group = res.group;
-            await savePackLinks();
           }
+          packMarkScanned(t.id);
           PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
           renderAll();
         })();
@@ -14576,7 +14624,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=1815ea1f3e";
+      s.src = "scan.min.js?v=0bf6d7e099";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }
@@ -16384,6 +16432,84 @@ function packApplyMyEdits(tables) {
     });
     return { ...tb, rows, _orig: orig };
   });
+}
+// ---- Scan pack: saved rows, a pack found by name, the scanned mark ----
+// A pack's rows in the scan's shape: [{ usd, gems, items: { name: amount } }].
+function packScanSavedRows(tb) {
+  const lk = packLinkFor(tb.id), pc = typeof lk.priceCol === "number" ? lk.priceCol : 0, eff = packEffectiveCols(tb);
+  const num = (v) => { const n = parseFloat(String(v ?? "").replace(/[^0-9.]/g, "")); return Number.isFinite(n) ? n : null; };
+  return (tb.rows || []).filter((r) => r && !r.is_total).map((r) => {
+    const out = { usd: num((r.cells || [])[pc]), gems: 0, items: {} };
+    (tb.columns || []).forEach((c, ci) => {
+      if (ci === pc) return;
+      const v = num((r.cells || [])[ci]), n = eff[ci] || String(c || "").trim();
+      if (!(v > 0) || !n) return;
+      if (/gem/i.test(String(c || "")) || n === "Gems") out.gems += v; else out.items[n] = (out.items[n] || 0) + v;
+    });
+    return out;
+  }).filter((r) => r.usd != null || Object.keys(r.items).length);
+}
+// The pack in `list` whose name is the scanned title (letters and digits only).
+function packScanFind(title, list) {
+  const key = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const k = key(title);
+  if (k.length < 4) return null;
+  return (list || []).find((tb) => key(tb.title) === k) || (list || []).find((tb) => { const x = key(tb.title); return x.length >= 6 && k.length >= 6 && (x.includes(k) || k.includes(x)); }) || null;
+}
+// A visitor's scan of a Packs-page pack goes into their own copy of its amounts
+// (pack_my_edits, like typing in its boxes): matched by price row and item column.
+// Prices or items the pack has no row / column for are left out; price and Gems stay.
+function packScanSaveMine(tb, res) {
+  const lk = packLinkFor(tb.id), pc = typeof lk.priceCol === "number" ? lk.priceCol : 0, eff = packEffectiveCols(tb);
+  const orig = tb._orig || tb.rows || [];
+  const num = (v) => { const n = parseFloat(String(v ?? "").replace(/[^0-9.]/g, "")); return Number.isFinite(n) ? n : null; };
+  const colOf = (n) => (tb.columns || []).findIndex((c, ci) => ci !== pc && !/gem/i.test(String(c || "")) && String(eff[ci] || c || "").trim().toLowerCase() === String(n).toLowerCase());
+  const all = packMyEdits(), id = String(tb.id), mine = { ...(all[id] || {}) };
+  (res.rows || []).forEach((r) => {
+    if (!r.usd) return;
+    const ri = orig.findIndex((o) => !o.is_total && Math.abs((num((o.cells || [])[pc]) || 0) - r.usd) < 0.005);
+    if (ri < 0) return;
+    Object.entries(r.items || {}).forEach(([n, v]) => {
+      const ci = colOf(n);
+      if (ci < 0) return;
+      const was = String(orig[ri].cells[ci] ?? ""), key = `${ri},${ci}`;
+      if (num(was) === Math.round(v)) delete mine[key];
+      else mine[key] = { v: Math.round(v).toLocaleString("en-US"), was };
+    });
+  });
+  if (Object.keys(mine).length) all[id] = mine; else delete all[id];
+  packSaveMyEdits(all);
+  packMarkScanned(id);
+}
+// The scanned mark: the owner's in the shared packs_links (seen by everyone), a
+// visitor's own in this browser (localStorage pack_my_scanned); the newer counts.
+function packMyScanned() {
+  try { const v = JSON.parse(localStorage.getItem("pack_my_scanned") || "{}"); return v && typeof v === "object" ? v : {}; } catch (e) { return {}; }
+}
+function packScannedDay(id) {
+  const own = IS_OWNER ? "" : packValidDay(packMyScanned()[String(id)]) || "";
+  const sh = packValidDay(packLinkRaw(id).l.scanned) || "";
+  return own > sh ? own : sh;
+}
+function packMarkScanned(id) {
+  const day = packDayKey(packStartOfToday());
+  if (IS_OWNER && !String(id).startsWith("my-")) {
+    if (!PACK_LINKS) return;
+    const l = (PACK_LINKS[String(id)] = PACK_LINKS[String(id)] || { pages: [], priceCol: 0, cols: {} });
+    l.scanned = day;
+    savePackLinks();
+    return;
+  }
+  try { const all = packMyScanned(); all[String(id)] = day; localStorage.setItem("pack_my_scanned", JSON.stringify(all)); } catch (e) {}
+}
+// "📷 Scanned Nov 16" ("" without a mark); `tag` wraps it (a row's small line, a span).
+function packScannedHtml(id, tag) {
+  const day = packScannedDay(id);
+  if (!day) return "";
+  let lbl = day;
+  try { lbl = packParseDay(day).toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "short", day: "numeric", timeZone: "UTC" }); } catch (e) {}
+  const el = tag || "small";
+  return `<${el} class="mpk-used pk-scn" title="${esc(t("pk_scanned_tip").replace("{date}", lbl))}">&#128247; ${esc(t("pk_scanned").replace("{date}", lbl))}</${el}>`;
 }
 // Callers at the same time (Budgets asks for every page at once) share one load.
 let PACK_TABLES_LOADING = null;
