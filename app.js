@@ -4586,7 +4586,7 @@ function applyMenuIcons() {
   document.querySelectorAll("#topnavGroups [data-tab] .ic").forEach((ic) => {
     const tab = ic.closest("[data-tab]").dataset.tab;
     if (ic.dataset.sym == null) ic.dataset.sym = ic.textContent;
-    if (QUICK_ICONS[tab]) ic.innerHTML = `<img src="${esc(QUICK_ICONS[tab])}" alt="" loading="lazy" />`;
+    if (QUICK_ICONS[tab]) { if (!ic.querySelector("img")) ic.innerHTML = `<img src="${esc(QUICK_ICONS[tab])}" alt="" decoding="async" />`; }
     else ic.textContent = QUICK_EMOJI[tab] || ic.dataset.sym;
   });
 }
@@ -32208,6 +32208,9 @@ function bootLangPack() {
   if (LANG !== "en" && LANG_BUILTIN.some((l) => l.code === LANG && l.file)) loadLangPack(LANG);
 }
 (async function boot() {
+  // The Menu's pictures are fixed files: put them in at once, so a Menu opened
+  // while the settings still load doesn't show the plain symbols (owner, 16 Nov 2026).
+  try { applyMenuIcons(); } catch (e) {}
   // A first visit (no saved login) waits about a second for its guest
   // sign-in: the reads that are the same for everyone start now. The pages
   // ask for them again later and share these loads.
