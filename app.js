@@ -3287,6 +3287,7 @@ const T = {
   cg_set6_short: { en: "6-piece" },
   cg_reset: { en: "Reset" },
   pca_done: { en: "Done" },
+  pca_packs_by: { en: "Packs bought by {d}" },
   pca_in_days: { en: "in {n} days" },
   pca_packs: { en: "{n} packs" },
   pca_target: { en: "Target" },
@@ -18394,12 +18395,15 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         const shown = plans.filter((c) => !plans.some((x) => plans.indexOf(x) < plans.indexOf(c) && x.plan && c.plan && x.plan.total === c.plan.total && x.plan.days === c.plan.days));
         let pick = shown.find((c) => c.key === PACK_PLAN_PICK[calcKey] && c.plan) || shown.find((c) => c.key === "target" && c.plan) || shown.find((c) => c.plan);
         const label = (c) => t(c.key === "fastest" ? "pc_fastest" : c.key === "target" ? "pc_by_target" : "pc_cheapest");
+        const packsByDate = (c) => calcKey === "islands" && c && c.key === "fastest";
         const planCard = (c) => {
           if (!c.plan) return `<div class="pc-plan off"><div class="pc-k">${esc(label(c))}</div><small style="color:var(--danger);">${esc(t("pack_not_reachable"))}</small></div>`;
           const late = targetDays != null && c.plan.days > targetDays;
           const d = new Date(today.getTime() + c.plan.days * 86400000);
           let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }) + packYearMark(d); } catch (e) { short = fmtDate(c.plan.days); }
-          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(c.plan.days === 0 ? t("pack_ready_now") : `${short} · ${c.plan.days}d`)}</small></button>`;
+          // Islands' Fastest date is when its packs are bought (free income does the rest later).
+          const when = c.plan.days === 0 ? t("pack_ready_now") : packsByDate(c) ? t("pca_packs_by").replace("{d}", short) : `${short} · ${c.plan.days}d`;
+          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(when)}</small></button>`;
         };
         const p = pick && pick.plan;
         if (p) pickedTotalText = packFmtLocal(Math.ceil(packPlanLocal(p)), currency, true, p.rows[0]?.price);
@@ -18415,7 +18419,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           aBuilt = true;
           const shortDay = (days) => { const d = new Date(today.getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }) + packYearMark(d); } catch (e) { return fmtDate(days); } };
           const late = targetDays != null && p.days > targetDays;
-          const done = p.days === 0 ? t("pack_ready_now") : `${t("pca_done")} ${shortDay(p.days)} \u00b7 ${t("pca_in_days").replace("{n}", p.days)}`;
+          const done = p.days === 0 ? t("pack_ready_now") : `${packsByDate(pick) ? t("pca_packs_by").replace("{d}", shortDay(p.days)) : `${t("pca_done")} ${shortDay(p.days)}`} \u00b7 ${t("pca_in_days").replace("{n}", p.days)}`;
           const sumA = `<div class="pca-sum${late ? " late" : ""}"><div><b class="pca-big">${pcaCur(pickedTotalText)}</b><span class="pca-done">${esc(done)}</span></div><span class="pca-n">${esc(t("pca_packs").replace("{n}", byPack.length))}</span></div>`;
           const targetA = `<div class="pca-tg"><span aria-hidden="true">&#127919;</span><span>${esc(t("pca_target"))}</span><input type="date" data-packtarget value="${esc(targetDate)}" aria-label="${esc(t("pack_target_by"))}" />${targetDays != null ? `<span class="${targetDays < 0 ? "bad" : "left"}">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : `<span>${esc(t("pack_no_date"))}</span>`}${targetDate ? `<button type="button" class="pca-x" data-packtargetclear title="${esc(t("pack_no_date"))}" aria-label="${esc(t("pack_no_date"))}">&times;</button>` : ""}</div>`;
           const rowsA = pcaRows(byPack, p.rows, packRowLocal, null);
