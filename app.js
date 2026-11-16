@@ -25468,6 +25468,11 @@ const ISL_LIGHT_CAT = "Lighthouse";
 const ISL_CONTRACT = "General Accessory Construction Contract";
 const ISL_LIGHT = [1, 2, 4, 6, 8, 10, 12, 12, 12, 16].map((bp, i) => ({ bp, ct: bp * 10, ess: i ? 0 : 50000 }));
 const islIsLight = (s) => !!s && s.category === ISL_LIGHT_CAT;
+// How each lighthouse is unlocked (Lv 1), by name: Marks of Revival from the Mark of Revival shop
+// (its first blueprint, bought once; owner, 16 Nov 2026), else the free unlock (Life Essence when
+// spare, else Contracts). Rule islLightUnlock.
+const ISL_LIGHT_UNLOCK = { "Celestial Journey": 2000, "Harbor of Hope": 2000 };
+const islLightUnlockMarks = (s) => Math.max(0, Number(ISL_LIGHT_UNLOCK[s && s.name]) || 0);
 // Each lighthouse's levels, shared with Scan (Storehouse → Accessory): calc_state island_shards.light =
 // { skinId: { now: 0..10 (0 = not unlocked), to: 0..10 } }. "now" is also written to the skin's level.
 const islLightRec = (id) => { const l = ISL_SHARDS && ISL_SHARDS.light; const r = l && typeof l === "object" ? l[id] : null; return r && typeof r === "object" ? r : null; };
@@ -26078,26 +26083,28 @@ async function renderIslandGallery() {
   const lightPlan = (forBud) => {
     const P = sharedPlan(false, forBud), list = islands.filter(islIsLight), free = P.days != null ? islFreeContracts(P.days) : 0, have = contractHave() + free;
     const c = LPC[modeKey(forBud)] || (LPC[modeKey(forBud)] = { sig: null, P: null });
-    const sig = `${SPC[`0${modeKey(forBud)}`].sig}|${JSON.stringify(ISL_LIGHT)}|${have}|${list.map((x) => `${x.id}:${lvOf(x)}:${tgtOf(x)}`).join(",")}`;
+    const sig = `${SPC[`0${modeKey(forBud)}`].sig}|${JSON.stringify(ISL_LIGHT)}|${JSON.stringify(ISL_LIGHT_UNLOCK)}|${have}|${list.map((x) => `${x.id}:${lvOf(x)}:${tgtOf(x)}`).join(",")}`;
     if (sig === c.sig && c.P) { if (forBud === undefined || forBud === false) lpSig = sig; return c.P; }
     c.sig = sig;
     let spare = Math.max(0, ((P.days == null ? islHave(ISL_SHARDS) : P.pot) - P.need) * ePS());
     const per = new Map();
-    let bp = 0, ct = 0, ess = 0;
+    let bp = 0, ct = 0, ess = 0, mkAll = 0;
     list.forEach((x) => {
       const from = lvOf(x), to = tgtOf(x), u = Number((ISL_LIGHT[0] || {}).ess) || 0;
-      const useEss = from < 1 && to >= 1 && u > 0 && spare >= u;
+      // Unlocked with Marks (Mark of Revival shop): Lv 1 costs only those Marks.
+      const mku = from < 1 && to >= 1 ? islLightUnlockMarks(x) : 0;
+      const useEss = !mku && from < 1 && to >= 1 && u > 0 && spare >= u;
       if (useEss) spare -= u;
-      const c = islLightCost(from, to, useEss);
+      const c = islLightCost(mku ? 1 : from, to, useEss);
       const before = Math.max(0, ct - have);
-      bp += c.bp; ct += c.ct; ess += c.ess;
-      per.set(x.id, { ...c, short: Math.max(0, ct - have) - before });
+      bp += c.bp; ct += c.ct; ess += c.ess; mkAll += mku;
+      per.set(x.id, { ...c, mk: mku, short: Math.max(0, ct - have) - before });
     });
-    c.P = { per, bp, ct, ess, have, free, short: Math.max(0, ct - have) };
+    c.P = { per, bp, ct, ess, mk: mkAll, have, free, short: Math.max(0, ct - have) };
     if (forBud === undefined || forBud === false) lpSig = sig;
     return c.P;
   };
-  const lightOf = (s) => lightPlan().per.get(s.id) || { bp: 0, ct: 0, ess: 0, short: 0 };
+  const lightOf = (s) => lightPlan().per.get(s.id) || { bp: 0, ct: 0, ess: 0, mk: 0, short: 0 };
   // Option C (owner, 16 Nov 2026): when each lighthouse level comes with free Contracts only
   // (no spending). Levels are done cheapest first over all lighthouses, paid from the Backpack's
   // Contracts, then from the weekly / KOI / SvS ones. { id: [{ lv, day | null }] } (null = over 20 years).
@@ -26107,7 +26114,7 @@ async function renderIslandGallery() {
     if (sig === lfSig && LF) return LF;
     lfSig = sig;
     const steps = [];
-    islands.filter(islIsLight).forEach((x) => { for (let L = lvOf(x) + 1; L <= tgtOf(x); L++) steps.push({ id: x.id, lv: L, ct: islLightCost(L - 1, L).ct }); });
+    islands.filter(islIsLight).forEach((x) => { for (let L = lvOf(x) + 1; L <= tgtOf(x); L++) { if (L === 1 && islLightUnlockMarks(x)) continue; steps.push({ id: x.id, lv: L, ct: islLightCost(L - 1, L).ct }); } });
     steps.sort((a, b) => a.ct - b.ct || a.lv - b.lv);
     const out = new Map(), have = contractHave();
     let cum = 0;
@@ -26171,7 +26178,8 @@ async function renderIslandGallery() {
       const c = lightOf(s), ct = c.ct ? `<span class="nw">${bidiNum(c.bp.toLocaleString())} ${bpImg}</span> <span class="nw">${bidiNum(c.ct.toLocaleString())} ${ctImg}</span>` : "";
       const tip = esc(t("isl_lh_tip").replace("{b}", c.bp.toLocaleString()).replace("{c}", c.ct.toLocaleString()));
       const fl = freeLast(s), free = `<span class="isl-free">${esc(t("isl_free_card").replace("{d}", fl ? freeMon(fl) : t("isl_free_now")))}</span>`;
-      const line = `<span class="isl-tsh lh two" title="${tip}">${c.ess ? `<span class="nw">${bidiNum(shortAmount(c.ess))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true">${c.ct ? " +" : ""}</span> ` : ""}${ct}${c.ct ? free : ""}</span>`;
+      const mkU = c.mk ? `<span class="nw"><img class="isl-mki" src="icons/mark-of-revival.png" alt="" /> ${bidiNum(c.mk.toLocaleString())}${c.ct ? " +" : ""}</span> ` : "";
+      const line = `<span class="isl-tsh lh two" title="${tip}">${mkU}${c.ess ? `<span class="nw">${bidiNum(shortAmount(c.ess))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true">${c.ct ? " +" : ""}</span> ` : ""}${ct}${c.ct ? free : ""}</span>`;
       return { badge: `<span class="isl-tbg">&#8594;${tgtOf(s)}</span>`, line };
     }
     if (!tracked(s) || lvOf(s) >= maxOf(s) || tgtOf(s) <= lvOf(s)) return { badge: "", line: "" };
@@ -26257,7 +26265,7 @@ async function renderIslandGallery() {
       tile("shards", "icons/island-shard.png", t("isl_shards"), st.shards || 0, shNeed, Math.max(0, shNeed - (st.shards || 0)))];
     // Mark of Revival (bought with packs, after the free shards): need = what the plan
     // buys with Marks, or with no Budgets target the optional amount.
-    const mk = list.reduce((a, s) => a + marksOf(s), 0);
+    const mk = list.reduce((a, s) => a + marksOf(s), 0) + (lightPlan().mk || 0);
     // Always three slots so the card keeps one height on every category (faded "—" when not needed).
     tiles.push(tile("marks", "icons/mark-of-revival.png", t("isl_mk_name"), markHave(), mk, Math.max(0, mk - markHave())));
     // Glorious Tomes (Shining City shop): what the Backpack holds counts its Lucky Glorious Tome Chests at their average.
@@ -26346,7 +26354,7 @@ async function renderIslandGallery() {
   // The Pack cost card: this category's Marks actually needed, else (no target) the optional amount.
   const markSheetTotal = () => planList().filter(usesMarks).reduce((a, s) => a + (sharedPlan().mk.get(s.id) || 0) * srcOf(s).markPrice, 0);
   const markHave = () => Number((islBp || {})["Mark of Revival"]) || 0;
-  const buyTotals = () => { const o = {}, mk = markSheetTotal(), tm = sharedPlan().tomes || 0, ct = lightBuy(), sh = sharedPlan().shNeed || 0; if (mk) o["Mark of Revival"] = mk; if (tm) o["Glorious Tome"] = tm; if (ct > contractHave()) o[ISL_CONTRACT] = ct; if (sh) o[ISL_SHARD_ITEM] = sh; return o; };
+  const buyTotals = () => { const o = {}, mk = markSheetTotal() + (lightPlan().mk || 0), tm = sharedPlan().tomes || 0, ct = lightBuy(), sh = sharedPlan().shNeed || 0; if (mk) o["Mark of Revival"] = mk; if (tm) o["Glorious Tome"] = tm; if (ct > contractHave()) o[ISL_CONTRACT] = ct; if (sh) o[ISL_SHARD_ITEM] = sh; return o; };
   const buyOwned = () => ({ "Mark of Revival": markHave(), "Glorious Tome": tomeHave(), [ISL_CONTRACT]: contractHave() });
   let mkSig = null;
   PACK_COST_HOOKS.islands = () => {
@@ -26357,7 +26365,7 @@ async function renderIslandGallery() {
   // pack covers (a date is only good when it leaves no more of them than "as soon as possible").
   PACK_NEED_BY_DATE.islands = (d) => {
     const P = sharedPlan(false, d), L = lightPlan(d), o = {};
-    const mk = planList().filter(usesMarks).reduce((a, s) => a + (P.mk.get(s.id) || 0) * srcOf(s).markPrice, 0), tm = P.tomes || 0, ct = Math.max(0, L.ct - L.free), sh = P.shNeed || 0;
+    const mk = planList().filter(usesMarks).reduce((a, s) => a + (P.mk.get(s.id) || 0) * srcOf(s).markPrice, 0) + (L.mk || 0), tm = P.tomes || 0, ct = Math.max(0, L.ct - L.free), sh = P.shNeed || 0;
     if (mk) o["Mark of Revival"] = mk; if (tm) o["Glorious Tome"] = tm; if (ct > contractHave()) o[ISL_CONTRACT] = ct; if (sh) o[ISL_SHARD_ITEM] = sh;
     const B = sharedPlan(false);
     const unc = (x) => Math.max(0, x.cant - Math.round((x.shNeed || 0) / (perCopy() || 1)));
@@ -26744,7 +26752,7 @@ async function renderIslandGallery() {
     }), ISLAND_FILTER.bonusType, onIslandCatSelect);
     drawPlan();
     // Budgets' Islands page: the Marks every Mark-shop building still needs (only saved when it changed).
-    const mkAll = markNeedAll(), tmAll = sharedPlan(false, true).tomes || 0;
+    const mkAll = markNeedAll() + (lightPlan(true).mk || 0), tmAll = sharedPlan(false, true).tomes || 0;
     // Goals per upgrade: each Mark / Shining City shop building with copies to buy, one
     // level at a time; the free copies come first, the bought ones (Marks, then Tomes) last.
     {
@@ -26763,9 +26771,9 @@ async function renderIslandGallery() {
       }).filter(Boolean).concat(islands.filter(islIsLight).map((s) => {
         // Lighthouses: the Contracts to each level (an unlock paid in Life Essence costs none).
         const now = lvOf(s), to = tgtOf(s), c = lightOf(s);
-        if (to <= now || !c.ct) return null;
+        if (to <= now || !(c.ct || c.mk)) return null;
         const lv = [];
-        for (let L = now + 1; L <= to; L++) { const n = islLightCost(now, L, c.ess > 0).ct; lv.push({ label: String(L), totals: n ? { [ISL_CONTRACT]: n } : {} }); }
+        for (let L = now + 1; L <= to; L++) { const n = islLightCost(c.mk ? 1 : now, L, c.ess > 0).ct; lv.push({ label: String(L), totals: { ...(n ? { [ISL_CONTRACT]: n } : {}), ...(c.mk ? { "Mark of Revival": c.mk } : {}) } }); }
         return { k: String(s.id), n: s.name, img: s.image_url || "", a: String(now), lv };
       }).filter(Boolean)));
     }
@@ -32016,6 +32024,10 @@ function gameRules() {
       cols: [{ key: "level", label: "Level", type: "auto" }, { key: "blueprints", label: "Blueprints", type: "num" }, { key: "contracts", label: "Contracts", type: "num" }, { key: "essence", label: "Or Life Essence", type: "num" }],
       get: () => ISL_LIGHT.map((r, i) => ({ level: i + 1, blueprints: r.bp, contracts: r.ct, essence: r.ess || "" })),
       set: (rows) => ruleSetArray(ISL_LIGHT, rows.map((r) => { const bp = Number(r.blueprints) || 0, ct = r.contracts === "" || r.contracts == null ? bp * 10 : Number(r.contracts) || 0; return { bp, ct, ess: Number(r.essence) || 0 }; })) },
+    { key: "islLightUnlock", group: "islands", label: "Lighthouse unlock (Lv 1)", help: "How each lighthouse is unlocked. Unlock Marks = Mark of Revival for its first blueprint in the Mark of Revival shop (bought once); empty or 0 = the free unlock (Life Essence when spare, else Contracts, as in the table above).",
+      cols: [{ key: "name", label: "Lighthouse", type: "text" }, { key: "marks", label: "Unlock Marks (0 = free)", type: "num" }],
+      get: () => Object.entries(ISL_LIGHT_UNLOCK).map(([name, marks]) => ({ name, marks })),
+      set: (rows) => ruleSetObject(ISL_LIGHT_UNLOCK, Object.fromEntries(rows.filter((r) => r.name && Number(r.marks) > 0).map((r) => [String(r.name).trim(), Number(r.marks)]))) },
   ];
   // The built-in values, kept for "Reset" and to show what changed.
   GAME_RULES.forEach((r) => { r.def = JSON.parse(JSON.stringify(r.get())); });
