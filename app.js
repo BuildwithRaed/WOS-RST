@@ -1710,6 +1710,58 @@ const T = {
   scan_tab_lab: { en: "Research Lab" },
   scan_lab: { en: "Research Lab screen" },
   scan_lab_hint: { en: "Reads Weekly Super Refinements (and the Refined FC / Fire Crystal at the top)." },
+  pks_btn: { en: "Scan pack" },
+  pks_fill_btn: { en: "Fill from screenshot" },
+  pks_title: { en: "Scan a pack" },
+  pks_intro: { en: "Read on your phone — the picture is never uploaded." },
+  pks_s1: { en: "Screenshot the pack in the game" },
+  pks_s1_hint: { en: "Whole pack: every item with its number and the price button. A row that scrolls sideways can take 2 screenshots." },
+  pks_choose: { en: "Choose screenshot" },
+  pks_s2: { en: "Save it to" },
+  pks_this: { en: "This pack: {name}" },
+  pks_this_d: { en: "Its numbers are replaced after you check them; items the screenshot doesn't show keep theirs." },
+  pks_new: { en: "New pack" },
+  pks_name: { en: "Name" },
+  pks_name_ph: { en: "from the screenshot title" },
+  pks_cat: { en: "Category" },
+  pks_scale: { en: "Scale to the next prices" },
+  pks_scale_d: { en: "The screenshot fills the first row; the others are worked out." },
+  pks_scale_note: { en: "Regular Packs ladder. Off = only the screenshot's row." },
+  pks_reading: { en: "Reading screenshot {n} of {m}…" },
+  pks_reading_items: { en: "Reading… {n} of {m} tiles" },
+  pks_check: { en: "Check before saving" },
+  pks_to: { en: "To:" },
+  pks_n_check: { en: "{n} to check" },
+  pks_nothing: { en: "Nothing was read in this screenshot. Try one that shows the whole pack and its price button." },
+  pks_which: { en: "Which pack?" },
+  pks_pack_n: { en: "Pack {n}" },
+  pks_n_items: { en: "{n} items" },
+  pks_all_rows: { en: "All as price rows" },
+  pks_all_rows_d: { en: "{n} prices → {n} rows" },
+  pks_items: { en: "Items in the screenshot" },
+  pks_no_items: { en: "No items read." },
+  pks_use: { en: "Use this item" },
+  pks_item: { en: "Item" },
+  pks_pick_item: { en: "— pick item —" },
+  pks_amount: { en: "Amount" },
+  pks_unknown: { en: "pick the item" },
+  pks_not_listed: { en: "not in the Packs item list · skipped" },
+  pks_label: { en: "size label {n}" },
+  pks_price: { en: "Price (US $)" },
+  pks_store: { en: "store {p}" },
+  pks_price_none: { en: "no price read — type the US $ price" },
+  pks_gems_guess: { en: "from the price, please check" },
+  pks_skipped: { en: "{n} tiles without a number (empty slots, hidden behind a button) were skipped." },
+  pks_learn: { en: "Remember the pictures I picked" },
+  pks_learn_d: { en: "Scan pack knows them next time (for everyone)." },
+  pks_learn_failed: { en: "The pictures couldn't be saved; the pack was saved." },
+  pks_rows: { en: "These rows will be filled" },
+  pks_rows_note: { en: "Blue = from the screenshot, the others × 2 / × 4 / × 10 / × 20. You can change any box in the pack after saving." },
+  pks_rows_note1: { en: "Blue = from the screenshot. You can change any box in the pack after saving." },
+  pks_other: { en: "Other screenshot" },
+  pks_save: { en: "Save to pack" },
+  pks_saved: { en: "Pack filled from the screenshot" },
+  pks_full: { en: "You have used all your packs. Delete one first." },
   scan_lab_title: { en: "Research Lab" },
   scan_lab_weekly: { en: "Weekly super refinements" },
   scan_lab_note: { en: "Saved to the Research Lab (\"Game says\" for this week), not to the Backpack." },
@@ -7955,7 +8007,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
         ? esc(used === 1 ? t("mpk_1_pack") : t("mpk_n_packs").replace("{n}", used))
         : `<b>${used}</b> ${esc(t("mpk_of_used").replace("{m}", limit))}`}</span></div>
       ${own || !limit ? "" : `<div class="mpk-bar"><i style="width:${pct}%;${full ? " background:var(--danger);" : ""}"></i></div>`}
-      <button type="button" class="btn mpk-new" data-mpnew ${full || !templates.length ? "disabled" : ""}>+ ${esc(t("mpk_new"))}</button>
+      <div class="mpk-btns"><button type="button" class="btn mpk-new" data-mpnew ${full || !templates.length ? "disabled" : ""}>+ ${esc(t("mpk_new"))}</button><button type="button" class="btn ghost mpk-scan" data-mpscan ${full ? "disabled" : ""}>&#128247; ${esc(t("pks_btn"))}</button></div>
       <div class="meta mpk-d"${full ? ` style="color:var(--danger);"` : ""}>${esc(full ? t("mp_full").replace("{n}", limit) : t("mpk_new_d"))}</div>
     </div>
     <div class="mpk-h"><span>${esc(t("mpk_your_packs"))}</span>${used ? `<span>${esc(t("pk_in_budgets"))}</span>` : ""}</div>
@@ -8097,6 +8149,50 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     toast(t("mpk_made"));
     mpwOpen(mp.id);
   }
+  // Scan pack: a new pack of yours from a game screenshot, or an open pack
+  // filled from one. Same shapes a template copy has (price, items, Gems).
+  const scanBase = () => {
+    const tb = templates.find((x) => packTemplateKind(packLinkForBase(x.id)) === "regular") || templates[0];
+    const src = JSON.parse(JSON.stringify(tb ? (PACK_LINKS || {})[String(tb.id)] || {} : { reset: 7 }));
+    delete src.group; delete src.linkSet; delete src.visitorDate; delete src.hideVisitors; delete src.dateWith; delete src.eventName; delete src.rowMax; delete src.daily; delete src.template;
+    return { ...src, priceCol: 0, cols: {}, pages: [] };
+  };
+  async function mpScanSave(res, mp) {
+    const nameOf = (cols) => (ci) => packResourceByName(cols[ci]) || String(cols[ci] || "");
+    if (res.to === "this" && mp) {
+      const pc = typeof (mp.link || {}).priceCol === "number" ? mp.link.priceCol : 0;
+      const got = packScanApply(mp.columns, pc, res, nameOf(mp.columns), mp.rows);
+      mp.columns = got.columns;
+      mp.rows = got.rows.map((r) => ({ cells: r.cells }));
+      changed(true);
+      toast(t("pks_saved"));
+      return;
+    }
+    const got = packScanApply(["$"], 0, res, () => "");
+    const title = (String(res.title || "").trim() || "My pack").slice(0, 60);
+    if (own) {
+      const payload = { title, columns: got.columns, rows: got.rows, sort_order: (allTables || []).length, scale_enabled: false, updated_at: new Date().toISOString() };
+      const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
+      PACK_LINKS[String(saved.id)] = { ...scanBase(), group: PACK_MINE_GROUP, hideVisitors: true };
+      await savePackLinks();
+      PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
+      PACK_PLAN_CACHE.clear();
+      if (typeof budgetInvalidate === "function") budgetInvalidate();
+      toast(t("pks_saved"));
+      mpOpenOnPacks(saved.id);
+      return;
+    }
+    if (MY_PACKS.length >= packMyPacksLimit()) throw new Error(t("pks_full"));
+    const np = { id: "my-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), from: title, title, columns: got.columns, rows: got.rows.map((r) => ({ cells: r.cells })), link: scanBase() };
+    MY_PACKS.push(np);
+    changed(false);
+    toast(t("pks_saved"));
+    mpwOpen(np.id);
+  }
+  const scanOpts = (mp) => ({ target: mp ? { title: mp.title } : null, canNew: own || MY_PACKS.length < packMyPacksLimit(), categories: [], onSave: (res) => mpScanSave(res, mp) });
+  const scanBtn = el.querySelector("[data-mpscan]");
+  if (scanBtn) scanBtn.addEventListener("click", () => openPackScan(scanOpts(null), scanBtn));
+  el.querySelectorAll("[data-mpscanfill]").forEach((b) => b.addEventListener("click", () => { const mp = packMineFind(b.dataset.mpscanfill); if (mp) openPackScan(scanOpts(mp), b); }));
   const newBtn = el.querySelector("[data-mpnew]");
   if (newBtn) newBtn.addEventListener("click", () => {
     if (!templates.length || (!own && MY_PACKS.length >= packMyPacksLimit())) return;
@@ -8286,7 +8382,7 @@ function mpWindowHtml(mp) {
     </table></div>`;
   const when = [mpWhenText(link), mpKindText(link)].filter(Boolean).join(" · ");
   return `<div class="pkb-ov mpw-ov" data-mpwov><div class="pkb-panel mpw-panel" role="dialog" aria-label="${esc(mp.title)}" data-mpcard="${esc(mp.id)}"><div class="pk-body">
-    <div class="pk-ed-bar mpw-bar"><button type="button" class="pkb-back" data-mpwclose aria-label="${esc(t("close_button"))}">&#8249;</button><input data-mptitle value="${esc(mp.title)}" maxlength="60" aria-label="${esc(mp.title)}" /><span class="mpw-tag">${esc(t("mp_tag"))}</span><button type="button" class="btn small ghost mpw-del" data-mpdel="${esc(mp.id)}">${esc(t("mp_delete"))}</button>${when ? `<div class="pkb-when">${esc(when)}</div>` : ""}</div>
+    <div class="pk-ed-bar mpw-bar"><button type="button" class="pkb-back" data-mpwclose aria-label="${esc(t("close_button"))}">&#8249;</button><input data-mptitle value="${esc(mp.title)}" maxlength="60" aria-label="${esc(mp.title)}" /><span class="mpw-tag">${esc(t("mp_tag"))}</span><button type="button" class="btn small ghost mpw-scan" data-mpscanfill="${esc(mp.id)}">&#128247; ${esc(t("pks_fill_btn"))}</button><button type="button" class="btn small ghost mpw-del" data-mpdel="${esc(mp.id)}">${esc(t("mp_delete"))}</button>${when ? `<div class="pkb-when">${esc(when)}</div>` : ""}</div>
     <div class="pkc-k">${esc(t("pkc_steps"))} · ${esc(mpKindText(link))}</div>
     ${table}
     <div class="pkc-acts"><button type="button" class="btn ghost" data-mpaddrow ${canRow ? "" : "disabled"}>+ ${esc(t("pkc_step"))}</button><button type="button" class="btn ghost pkc-sm" data-mpdelrow ${mp.rows.length <= 1 ? "disabled" : ""} aria-label="${esc(t("pkc_del_step"))}" title="${esc(t("pkc_del_step"))}">&minus;</button><button type="button" class="btn ghost" data-mpfill>${esc(t("pkc_fill"))}</button></div>
@@ -11397,7 +11493,7 @@ async function renderPacksPage() {
     </div>
     <div class="pk-zone-note">ℹ️ ${esc(t("pk_zone_note"))}</div>
     <div class="panel pkb-top">
-      <label class="pkb-search"><span aria-hidden="true">&#128269;</span><input type="search" id="pkbSearch" placeholder="${esc(t("pkb_search"))}" value="${esc(PKB_QUERY)}" autocomplete="off" enterkeyhint="search" /></label>
+      <div class="pkb-srow"><label class="pkb-search"><span aria-hidden="true">&#128269;</span><input type="search" id="pkbSearch" placeholder="${esc(t("pkb_search"))}" value="${esc(PKB_QUERY)}" autocomplete="off" enterkeyhint="search" /></label>${IS_OWNER ? `<button type="button" class="btn pkb-scan" id="pkbScanBtn">&#128247; ${esc(t("pks_btn"))}</button>` : ""}</div>
       <div class="pkb-tri">
         <button type="button" class="pkb-tb" data-pkbdp="ng" hidden><span class="pkb-tb-ic" aria-hidden="true">&#11088;</span><span class="pkb-tb-t"><b>${esc(t("pkb_new_heroes"))}</b><small class="meta" data-pkbdpsub="ng"></small></span></button>
         <button type="button" class="pkb-tb" data-pkbdp="dates"><span class="pkb-tb-ic" aria-hidden="true">&#128197;</span><span class="pkb-tb-t"><b>${esc(t("pkb_dates_t"))}</b><small class="meta" data-pkbdpsub="dates"></small></span></button>
@@ -11423,6 +11519,33 @@ async function renderPacksPage() {
     clearTimeout(pkbSearchT);
     pkbSearchT = setTimeout(() => { PKB_QUERY = pkbSearchIn.value; if (pkbReady) renderAll(); }, 150);
   });
+  // Scan pack: a new pack from a screenshot (the top card), or the open pack
+  // filled from one (its window's "Fill from screenshot"). The table is changed
+  // through its editor (pkscanfill in wireTable), so it saves like any edit.
+  const pkbScanOpts = (tb) => ({
+    target: tb ? { title: tb.title } : null,
+    canNew: true,
+    categories: categoryOrder().filter((c) => c !== PACK_TEMPLATE_GROUP),
+    category: tb ? categoryOf(tb) : (String(packsFilter).startsWith("cat:") ? String(packsFilter).slice(4) : ""),
+    onSave: (res) => pkbScanSave(res, tb),
+  });
+  async function pkbScanSave(res, tb) {
+    let id = tb ? String(tb.id) : null;
+    if (res.to === "new" || !tb) {
+      // last in the order (its category lists it by name), so no other table moves
+      tables.push({ id: `new-${Date.now()}`, title: res.title || "Table name here", columns: ["$", "Gems"], rows: [blankRow(2)], sort_order: tables.length, scale_enabled: false });
+      id = String(tables[tables.length - 1].id);
+      pkbOpen(id);
+    } else if (![...PACKS_OPEN].includes(id)) pkbOpen(id);
+    const panel = listEl.querySelector(`.pkb-panel[data-pkid="${window.CSS.escape(id)}"]`);
+    if (!panel) throw new Error("Couldn't open the pack");
+    const ev = new CustomEvent("pkscanfill", { detail: { ...res, group: res.to === "new" ? res.category : null } });
+    panel.dispatchEvent(ev);
+    await ev.detail.done;
+    toast(t("pks_saved"));
+  }
+  const pkbScanBtn = document.getElementById("pkbScanBtn");
+  if (pkbScanBtn) pkbScanBtn.addEventListener("click", () => openPackScan(pkbScanOpts(null), pkbScanBtn));
   const pkbDp = document.getElementById("pkbDpSheet");
   // Three boxes (New heroes / Pack dates / Prices), each opening the same
   // window with only its own part showing.
@@ -11525,6 +11648,8 @@ async function renderPacksPage() {
     if (e.target.closest("[data-pkbclose]") || (e.target.matches && e.target.matches("[data-pkbsheet]"))) { pkbClose(false); return; }
     const go = e.target.closest("[data-pkbgo]");
     if (go) { pkbOpen(go.dataset.pkbgo); return; }
+    const scanB = e.target.closest("[data-pkbscan]");
+    if (scanB) { const tb = tables.find((x) => String(x.id) === scanB.dataset.pkbscan); if (tb) openPackScan(pkbScanOpts(tb), scanB); return; }
     const row = e.target.closest("[data-pkrowid]");
     if (row && !row.closest(".pkb-arranging")) pkbOpen(row.dataset.pkrowid);
   });
@@ -12347,6 +12472,7 @@ async function renderPacksPage() {
     const bar = body.querySelector(".pk-ed-bar");
     if (bar) {
       bar.insertAdjacentHTML("afterbegin", `<button type="button" class="pkb-back" data-pkbclose aria-label="${esc(t("close_button"))}">&#8249;</button>`);
+      if (IS_OWNER && !lk.template) bar.insertAdjacentHTML("beforeend", `<button type="button" class="btn small ghost pkb-scanfill" data-pkbscan="${esc(String(tb.id))}">&#128247; ${esc(t("pks_fill_btn"))}</button>`);
       const line = [w.text, w.on ? t("pkb_on_now") : w.next ? t("pkb_next").replace("{date}", w.next) : ""].filter(Boolean).join(" · ");
       if (line) bar.insertAdjacentHTML("beforeend", `<div class="pkb-when">${esc(line)}</div>`);
       const hint = body.querySelector("[data-pack-visitor-hint]");
@@ -13196,6 +13322,40 @@ async function renderPacksPage() {
         refreshTotals();
       });
       panel.addEventListener("change", (e) => { if (e.target.closest("[data-pt-cell]")) refreshTotals(); });
+      // Scan pack: the screenshot's rows replace the table's rows; items without a
+      // column get one before Gems (column settings move with their columns, as
+      // "+ Column" does); a new pack is filed under the picked category.
+      panel.addEventListener("pkscanfill", (e) => {
+        const res = e.detail;
+        res.done = (async () => {
+          syncFromDom();
+          const pc = priceColOf(t);
+          const got = packScanApply(t.columns, pc, res, (ci) => pkColItem(t, ci), t.rows);
+          await ensurePackLinks();
+          const l0 = PACK_LINKS[String(t.id)];
+          if (l0 && got.added.length) {
+            got.added.forEach((at) => {
+              const shift = (n) => (n >= at ? n + 1 : n);
+              if (typeof l0.priceCol === "number") l0.priceCol = shift(l0.priceCol);
+              const cols = {}; Object.entries(l0.cols || {}).forEach(([k, v]) => { cols[shift(Number(k))] = v; }); l0.cols = cols;
+              if (l0.daily && Array.isArray(l0.daily.cols)) l0.daily.cols = l0.daily.cols.map(shift);
+            });
+            await savePackLinks();
+          }
+          t.columns = got.columns;
+          t.rows = got.rows;
+          t.scale_enabled = false;
+          if (res.to === "new" && res.title) t.title = res.title;
+          await persistTable();
+          if (res.group) {
+            const l = (PACK_LINKS[String(t.id)] = PACK_LINKS[String(t.id)] || { pages: [], priceCol: 0, cols: {} });
+            l.group = res.group;
+            await savePackLinks();
+          }
+          PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
+          renderAll();
+        })();
+      });
 
       // Persist on blur (change), not every keystroke - covers title,
       // column names, and cell edits (including whatever applyScale just
@@ -14358,7 +14518,7 @@ async function scanLearnedLoad() {
   // Items read from the Summary screen (Meat, Wood, Coal, Iron, Gems, Steel, Pet
   // Food, Chief Stamina, Hero XP) are never taught from tiles: a tile of them is
   // a bundle, and its count isn't the total.
-  SCAN_LEARNED = all.filter((e) => e && e.n && e.f && !SCAN_SUMMARY_ROWS.some(([, n]) => n === e.n)).map((e) => ({ ...e, g: scanB64ToFeat(e.f) })).filter((e) => e.g.length === SCAN_FEAT_W * SCAN_FEAT_H * 3);
+  SCAN_LEARNED = all.filter((e) => e && e.n && e.f && e.k !== "pack" && !SCAN_SUMMARY_ROWS.some(([, n]) => n === e.n)).map((e) => ({ ...e, g: scanB64ToFeat(e.f) })).filter((e) => e.g.length === SCAN_FEAT_W * SCAN_FEAT_H * 3);
   return SCAN_LEARNED;
 }
 // "Resource & Speedup Summary", Resources tab: the last number on each row
@@ -14373,7 +14533,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=1f20cd0ec0";
+      s.src = "scan.min.js?v=fa667f1711";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }
@@ -14409,6 +14569,57 @@ async function openBackpackScan(groups, bp, done, more) {
     if (btn && !btn.isConnected) return;
   }
   return openBackpackScanMain(groups, bp, done, more);
+}
+
+// Scan pack (Packs page, a pack window, My packs): loads scan.js (once), then
+// opens the sheet (openPackScanMain in scan.js). opts.onSave writes the pack.
+async function openPackScan(opts, btn) {
+  if (!SCAN_CODE_OK) {
+    if (btn) btn.setAttribute("aria-busy", "true");
+    try { await loadScanCode(); } catch (e) {
+      if (btn) btn.removeAttribute("aria-busy");
+      toast(t(e && e.stale ? "scan_update_reload" : "no_connection_retry"), true);
+      return;
+    }
+    if (btn) btn.removeAttribute("aria-busy");
+    if (btn && !btn.isConnected) return;
+  }
+  return openPackScanMain(opts);
+}
+// A scanned pack into a table's columns and rows (the way the editors keep them:
+// price as "4.99", amounts as whole numbers). Items the table has no column for
+// get one before Gems; colName(ci) says which item a column is.
+function packScanApply(columns, priceCol, res, colName, oldRows) {
+  const oldCols = columns;
+  columns = columns.slice();
+  const names = columns.map((c, ci) => String((ci === priceCol ? "" : colName(ci)) || "").toLowerCase());
+  const gemsAt = () => columns.findIndex((c) => /gem/i.test(String(c || "")));
+  const colOf = (n) => names.indexOf(String(n).toLowerCase());
+  if (gemsAt() < 0) { columns.push("Gems"); names.push("gems"); }
+  const added = [];
+  res.rows.forEach((r) => Object.keys(r.items).forEach((n) => {
+    if (colOf(n) >= 0) return;
+    const at = gemsAt();
+    columns.splice(at, 0, n); names.splice(at, 0, n.toLowerCase());
+    added.push(at);
+  }));
+  const gi = gemsAt();
+  const out = res.rows.map((r) => {
+    const cells = columns.map(() => "");
+    cells[priceCol] = r.usd ? String(r.usd) : "";
+    if (gi >= 0 && r.gems) cells[gi] = Math.round(r.gems).toLocaleString("en-US");
+    Object.entries(r.items).forEach(([n, v]) => { const ci = colOf(n); if (ci >= 0) cells[ci] = Math.round(v).toLocaleString("en-US"); });
+    // Items the screenshot didn't show (a tile hidden behind the buy button)
+    // keep the numbers the same price row had.
+    const was = (oldRows || []).find((o) => r.usd && Math.abs((parseFloat(String((o.cells || [])[priceCol]).replace(/[^0-9.]/g, "")) || 0) - r.usd) < 0.005);
+    if (was) oldCols.forEach((c, oi) => {
+      if (oi === priceCol || /gem/i.test(String(c || ""))) return;
+      const ni = columns.indexOf(c, oi);
+      if (ni >= 0 && cells[ni] === "" && String(was.cells[oi] ?? "") !== "") cells[ni] = String(was.cells[oi]);
+    });
+    return { cells, is_total: false };
+  });
+  return { columns, rows: out, added };
 }
 
 // ============================================================

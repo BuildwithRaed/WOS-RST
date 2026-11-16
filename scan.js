@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "1f20cd0ec0";
+window.SCAN_BUILD = "fa667f1711";
 
 
 // ---- Backpack: read game screenshots ----
@@ -1029,6 +1029,843 @@ function openBackpackScanMain(groups, bp, done, more) {
       if (added.length) more.added(added); else done();
       // The Backpack's Research Lab row shows the new count.
       if (labSave && document.getElementById("bpScan")) render();
+    };
+  };
+  showStart();
+}
+
+
+// =====================================================================
+// ---- Scan pack: fill a pack table from a game screenshot ----
+// (Packs page "📷 Scan pack" / a pack window's "Fill from screenshot", and
+// My packs for visitors' own packs.) Same reader as the Backpack's Scan, all
+// on the phone. openPackScanMain(opts) is called by openPackScan() in app.js.
+// Kept in its own block so it merges apart from the Backpack Scan above.
+// =====================================================================
+const SCAN_PK_W = 1248; // screenshots are worked on at this width (the game's tiles are ~120 px then)
+
+// The screenshot at the working width, with its pixels.
+function scanPkImage(src) {
+  const k = SCAN_PK_W / src.width, w = SCAN_PK_W, h = Math.max(1, Math.round(src.height * k));
+  const c = scanCanvas(w, h), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(src, 0, 0, w, h);
+  return { c, w, h, d: g.getImageData(0, 0, w, h).data };
+}
+
+// Item tiles: each has a rounded frame drawn as a closed outline, so the
+// outline (with the picture inside joined to it) is one patch of strong
+// colour edges whose box is a square. Worked out on a 520 px copy.
+function scanPkEdges(img) {
+  const s = 520 / img.w, w = 520, h = Math.round(img.h * s), W = img.w, d = img.d;
+  const R = new Float32Array(w * h), G = new Float32Array(w * h), B = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    const sy = Math.floor(y / s), ey = Math.max(sy + 1, Math.min(img.h, Math.floor((y + 1) / s)));
+    for (let x = 0; x < w; x++) {
+      const sx = Math.floor(x / s), ex = Math.max(sx + 1, Math.min(W, Math.floor((x + 1) / s)));
+      let r = 0, g = 0, b = 0, c = 0;
+      for (let yy = sy; yy < ey; yy++) for (let xx = sx; xx < ex; xx++) { const i = (yy * W + xx) * 4; r += d[i]; g += d[i + 1]; b += d[i + 2]; c++; }
+      R[y * w + x] = r / c; G[y * w + x] = g / c; B[y * w + x] = b / c;
+    }
+  }
+  const mask = new Uint8Array(w * h);
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    let m = 0;
+    for (const A of [R, G, B]) { const v = Math.abs(A[y * w + x + 1] - A[y * w + x - 1]) + Math.abs(A[(y + 1) * w + x] - A[(y - 1) * w + x]); if (v > m) m = v; }
+    mask[y * w + x] = m > 40 ? 1 : 0;
+  }
+  return { mask, w, h, s };
+}
+// How much of a box's four sides lies on edges (0–1 for the weakest side).
+function scanPkFrame(E, b) {
+  const x0 = Math.round(b.x * E.s), y0 = Math.round(b.y * E.s), x1 = Math.round((b.x + b.w) * E.s) - 1, y1 = Math.round((b.y + b.h) * E.s) - 1;
+  if (x0 < 1 || y0 < 1 || x1 >= E.w - 1 || y1 >= E.h - 1) return 0;
+  const hit = (x, y) => { for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < E.w && yy < E.h && E.mask[yy * E.w + xx]) return 1; } return 0; };
+  const side = (pts) => pts.reduce((a, p) => a + hit(p[0], p[1]), 0) / pts.length;
+  const xs = [], ys = [];
+  // the corners are rounded: only the middle 70% of each side counts
+  for (let x = x0 + Math.round((x1 - x0) * 0.15); x <= x1 - Math.round((x1 - x0) * 0.15); x++) xs.push(x);
+  for (let y = y0 + Math.round((y1 - y0) * 0.15); y <= y1 - Math.round((y1 - y0) * 0.15); y++) ys.push(y);
+  return Math.min(side(xs.map((x) => [x, y0])), side(xs.map((x) => [x, y1])), side(ys.map((y) => [x0, y])), side(ys.map((y) => [x1, y])));
+}
+function scanPkFindTiles(img) {
+  const E = scanPkEdges(img), w = E.w;
+  let boxes = scanBlobs(E.mask, E.w, E.h, true).filter((b) => b.w >= w * 0.045 && b.w <= w * 0.17 && b.w / b.h > 0.8 && b.w / b.h < 1.25).filter((b) => {
+    const side = [0, 0, 0, 0];
+    b.px.forEach((p) => { const x = p % w, y = (p - x) / w; if (x - b.x <= 2) side[0]++; if (b.x + b.w - 1 - x <= 2) side[1]++; if (y - b.y <= 2) side[2]++; if (b.y + b.h - 1 - y <= 2) side[3]++; });
+    return Math.min(side[0] / b.h, side[1] / b.h, side[2] / b.w, side[3] / b.w) >= 0.9;
+  }).map((b) => ({ x: b.x / E.s, y: b.y / E.s, w: b.w / E.s, h: b.h / E.s }));
+  // a box inside another one is part of that tile
+  boxes = boxes.filter((b) => !boxes.some((o) => o !== b && o.w > b.w && b.x >= o.x - 2 && b.y >= o.y - 2 && b.x + b.w <= o.x + o.w + 2 && b.y + b.h <= o.y + o.h + 2));
+  // Rows: tiles of one size side by side. A tile whose outline joined
+  // something next to it (a picture touching it) is found by stepping along
+  // its row by the row's spacing and checking the frame is there.
+  const overlaps = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  const rows = [];
+  boxes.slice().sort((a, b) => a.x - b.x).forEach((b) => {
+    const r = rows.find((r) => Math.abs(r.y - b.y) < b.h * 0.25 && Math.abs(r.sz - b.w) < b.w * 0.15);
+    if (r) r.list.push(b); else rows.push({ y: b.y, sz: b.w, list: [b] });
+  });
+  rows.forEach((r) => {
+    const gaps = [];
+    for (let i = 1; i < r.list.length; i++) gaps.push(r.list[i].x - r.list[i - 1].x);
+    const ok = gaps.filter((g) => g < r.sz * 1.6).sort((a, b) => a - b);
+    const pitch = ok.length ? ok[Math.floor(ok.length / 2)] : r.sz * 1.12;
+    const h = r.list.reduce((a, b) => a + b.h, 0) / r.list.length;
+    for (const dir of [-1, 1]) {
+      let from = dir < 0 ? r.list[0] : r.list[r.list.length - 1];
+      for (let k = 0; k < 8; k++) {
+        const c = { x: from.x + dir * pitch, y: from.y, w: from.w, h };
+        if (c.x < 0 || c.x + c.w > img.w || boxes.some((o) => overlaps(o, c))) break;
+        if (scanPkFrame(E, c) < 0.6) break;
+        boxes.push(c); from = c;
+      }
+    }
+  });
+  // Tiles on a busy panel (their outline joins the panel's own edges) are
+  // found by sliding a square of each size already seen over the picture and
+  // keeping the places where all four sides lie on edges.
+  const sizes = [];
+  boxes.forEach((b) => { if (!sizes.some((z) => Math.abs(z - b.w) < b.w * 0.08)) sizes.push(b.w); });
+  if (sizes.length) {
+    const dil = new Uint8Array(E.w * E.h);
+    for (let y = 0; y < E.h; y++) for (let x = 0; x < E.w; x++) {
+      if (!E.mask[y * E.w + x]) continue;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < E.w && yy < E.h) dil[yy * E.w + xx] = 1; }
+    }
+    // running sums along rows and columns: a side's coverage in O(1)
+    const rowS = new Uint32Array((E.w + 1) * E.h), colS = new Uint32Array(E.w * (E.h + 1));
+    for (let y = 0; y < E.h; y++) for (let x = 0; x < E.w; x++) { rowS[y * (E.w + 1) + x + 1] = rowS[y * (E.w + 1) + x] + dil[y * E.w + x]; colS[(y + 1) * E.w + x] = colS[y * E.w + x] + dil[y * E.w + x]; }
+    const hRun = (y, x0, x1) => (rowS[y * (E.w + 1) + x1 + 1] - rowS[y * (E.w + 1) + x0]) / (x1 - x0 + 1);
+    const vRun = (x, y0, y1) => (colS[(y1 + 1) * E.w + x] - colS[y0 * E.w + x]) / (y1 - y0 + 1);
+    const found = [];
+    sizes.forEach((sz) => {
+      const S = Math.round(sz * E.s), m = Math.round(S * 0.15), cands = [];
+      for (let y = 1; y + S < E.h - 1; y++) for (let x = 1; x + S < E.w - 1; x++) {
+        const sc = Math.min(hRun(y, x + m, x + S - 1 - m), hRun(y + S - 1, x + m, x + S - 1 - m), vRun(x, y + m, y + S - 1 - m), vRun(x + S - 1, y + m, y + S - 1 - m));
+        if (sc < 0.9) continue;
+        // inside the frame the tile is mostly smooth fill; busy art is edges all over
+        const ring = (hRun(y + Math.round(S * 0.08), x + m, x + S - 1 - m) + vRun(x + Math.round(S * 0.08), y + m, y + S - 1 - m) + vRun(x + S - 1 - Math.round(S * 0.08), y + m, y + S - 1 - m)) / 3;
+        if (ring > 0.55) continue;
+        cands.push({ x, y, S, sc: sc - ring * 0.2 });
+      }
+      cands.sort((a, b) => b.sc - a.sc);
+      cands.forEach((c) => {
+        const b = { x: c.x / E.s, y: c.y / E.s, w: c.S / E.s, h: c.S / E.s };
+        const pad = b.w * 0.2;
+        if (boxes.concat(found).some((o) => b.x < o.x + o.w - pad && o.x < b.x + b.w - pad && b.y < o.y + o.h - pad && o.y < b.y + b.h - pad)) return;
+        found.push(b);
+      });
+    });
+    found.forEach((b) => boxes.push(b));
+  }
+  boxes.sort((a, b) => (Math.abs(a.y - b.y) < a.h / 2 ? a.x - b.x : a.y - b.y));
+  return boxes;
+}
+
+// Text lines of the whole screenshot ({ text, x, y, w, h }). Two reads: the
+// game's white outlined text (titles, prices, gems, tile labels) as black on
+// white, and the plain picture (dark text on light lists and pop-ups).
+async function scanPkText(worker, img) {
+  const lines = (r) => {
+    const out = [];
+    (r.data.blocks || []).forEach((b) => (b.paragraphs || []).forEach((p) => (p.lines || []).forEach((l) => {
+      const text = String(l.text || "").replace(/\s+/g, " ").trim();
+      if (text) out.push({ text, x: l.bbox.x0, y: l.bbox.y0, w: l.bbox.x1 - l.bbox.x0, h: l.bbox.y1 - l.bbox.y0, conf: l.confidence || 0 });
+    })));
+    return out;
+  };
+  const c = scanCanvas(img.w, img.h), g = c.getContext("2d"), id = g.createImageData(img.w, img.h), d = img.d, o = id.data;
+  for (let i = 0; i < img.w * img.h; i++) {
+    const r = d[i * 4], gg = d[i * 4 + 1], b = d[i * 4 + 2];
+    const v = (r + gg + b) / 3 > 200 && Math.max(r, gg, b) - Math.min(r, gg, b) < 60 ? 0 : 255;
+    o[i * 4] = o[i * 4 + 1] = o[i * 4 + 2] = v; o[i * 4 + 3] = 255;
+  }
+  g.putImageData(id, 0, 0);
+  await worker.setParameters({ tessedit_pageseg_mode: "11", tessedit_char_whitelist: "" });
+  const white = lines(await worker.recognize(c, {}, { blocks: true, text: true }));
+  const plain = lines(await worker.recognize(img.c, {}, { blocks: true, text: true }));
+  return { white, plain };
+}
+const SCAN_PK_CUR = () => (typeof PACK_CURRENCIES !== "undefined" ? PACK_CURRENCIES.map((c) => c.code) : ["USD", "QAR", "SAR", "AED", "EUR", "GBP"]);
+// Prices: a line naming a currency ("QAR 17.99", "US$4.99", "$4.99"), and the
+// game's orange buy buttons; each is read again on its own (the first read
+// often cuts the last digit). Store prices end in .99 almost always.
+async function scanPkReadPrice(worker, img, x0, y0, x1, y1, codes) {
+  x0 = Math.max(0, Math.round(x0)); y0 = Math.max(0, Math.round(y0)); x1 = Math.min(img.w, Math.round(x1)); y1 = Math.min(img.h, Math.round(y1));
+  for (const th of [200, 170]) {
+    const cw = x1 - x0, ch = y1 - y0;
+    if (cw < 10 || ch < 6) return null;
+    const k = 2, c = scanCanvas(cw * k + 32, ch * k + 32), g = c.getContext("2d");
+    g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.fillStyle = "#000";
+    for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+      const i = ((y0 + y) * img.w + x0 + x) * 4, r = img.d[i], gg = img.d[i + 1], b = img.d[i + 2];
+      if ((r + gg + b) / 3 > th && Math.max(r, gg, b) - Math.min(r, gg, b) < 70) g.fillRect(16 + x * k, 16 + y * k, k, k);
+    }
+    const tx = (await scanRead(worker, c, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: `${codes.join("")}US$0123456789., ` })).text.replace(/\s/g, "");
+    const nm = /(\d{1,4})[.,](\d{1,2})/.exec(tx);
+    if (!nm) continue;
+    const cm = new RegExp(`(${codes.join("|")})`, "i").exec(tx);
+    return { value: scanPkCents(nm[1], nm[2]), cur: cm ? cm[1].toUpperCase() : /\$/.test(tx) ? "USD" : null };
+  }
+  return null;
+}
+function scanPkCents(whole, cents) {
+  let c = String(cents);
+  if (c.length === 1) c += "9";
+  if (c !== "99" && (c[1] === "9" || c[0] === "9")) c = "99";
+  return Number(`${whole}.${c}`);
+}
+// The orange buy buttons: wide rounded bars of the game's orange-yellow.
+function scanPkButtons(img) {
+  const s = 312 / img.w, w = 312, h = Math.round(img.h * s), mask = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (Math.floor(y / s) * img.w + Math.floor(x / s)) * 4, r = img.d[i], g = img.d[i + 1], b = img.d[i + 2];
+    mask[y * w + x] = r > 215 && g > 130 && g < 215 && b < 100 && r - g > 30 ? 1 : 0;
+  }
+  return scanBlobs(mask, w, h).filter((b) => b.w >= w * 0.15 && b.w <= w * 0.5 && b.h >= w * 0.03 && b.h <= w * 0.1 && b.w / b.h >= 1.8 && b.n > b.w * b.h * 0.45)
+    .map((b) => ({ x: b.x / s, y: b.y / s, w: b.w / s, h: b.h / s }));
+}
+async function scanPkPrices(worker, img, text) {
+  const codes = SCAN_PK_CUR(), re = new RegExp(`\\b(${codes.join("|")})\\b|US\\$|\\$\\s*\\d`, "i");
+  const found = [];
+  const near = (x, y) => found.some((p) => Math.abs(p.cx - x) < 140 && Math.abs(p.cy - y) < 40);
+  for (const l of text.white.concat(text.plain)) {
+    if (!re.test(l.text) || /remaining|limit/i.test(l.text) || near(l.x + l.w / 2, l.y + l.h / 2)) continue;
+    const m = re.exec(l.text);
+    let got = await scanPkReadPrice(worker, img, l.x - 20, l.y - l.h * 0.35, l.x + l.w * 1.45 + 30, l.y + l.h * 1.35, codes);
+    if (!got) { const nm = /(\d{1,4})[.,:](\d{1,2})/.exec(l.text.replace(/\s/g, "")); if (nm) got = { value: scanPkCents(nm[1], nm[2]), cur: null }; }
+    if (!got || !(got.value > 0)) continue;
+    found.push({ cur: got.cur || (m[1] || "USD").toUpperCase(), value: got.value, x: l.x, y: l.y, w: l.w, h: l.h, cy: l.y + l.h / 2, cx: l.x + l.w / 2 });
+  }
+  for (const b of scanPkButtons(img)) {
+    if (near(b.x + b.w / 2, b.y + b.h / 2)) continue;
+    const got = await scanPkReadPrice(worker, img, b.x + b.w * 0.06, b.y + b.h * 0.12, b.x + b.w * 0.94, b.y + b.h * 0.88, codes);
+    if (!got || !(got.value > 0) || !got.cur) continue;
+    found.push({ cur: got.cur, value: got.value, x: b.x, y: b.y, w: b.w, h: b.h, cy: b.y + b.h / 2, cx: b.x + b.w / 2 });
+  }
+  // a crossed-out old price ("QAR 22.99" over the real one) sits just above another price
+  return found.filter((p) => !found.some((q) => q !== p && Math.abs(q.cx - p.cx) < 140 && q.y > p.y && q.y - p.y < p.h * 1.6));
+}
+// A store price back to its US $ step: the site's own store prices first,
+// then the exchange rate. { usd, sure }.
+function scanPkUsd(value, cur) {
+  if (!(value > 0)) return { usd: null, sure: false };
+  if (!cur || cur === "USD") return { usd: value, sure: true };
+  const slots = (typeof currencyPriceSlots === "function" ? currencyPriceSlots() : ["0.99", "1.99", "2.99", "4.99", "9.99", "19.99", "49.99", "99.99"]).map(Number);
+  const rate = typeof currencyRates === "function" ? Number(currencyRates()[cur]) || 0 : 0;
+  const mine = typeof myStorePrices === "function" ? (myStorePrices()[cur] || {}) : {};
+  let best = null;
+  slots.forEach((u) => {
+    const sp = Number(mine[u.toFixed(2)]) || (typeof currencySlotPrice === "function" ? currencySlotPrice(u, cur) : null) || (rate > 0 ? u * rate : null);
+    if (!sp) return;
+    const off = Math.abs(sp - value) / value;
+    if (!best || off < best.off) best = { usd: u, off };
+  });
+  if (best && best.off < 0.08) return { usd: best.usd, sure: best.off < 0.03 };
+  if (rate > 0) { const u = value / rate; return { usd: Math.max(0.99, Math.round(u) - 0.01), sure: false }; }
+  return { usd: null, sure: false };
+}
+// A game name ("Charm Guide", "100K Meat", "Fire Crystal Chest") as a Packs
+// item, with the bundle size it carries ({ name, mult }) or null.
+function scanPkNameItem(raw) {
+  let s = String(raw || "").replace(/[^A-Za-z0-9 ,.'’-]/g, " ").replace(/\s+/g, " ").trim();
+  let mult = 1;
+  const bm = /^(\d[\d,.]*)\s*([KM])?\s+(.+)$/i.exec(s);
+  if (bm) { mult = Number(bm[1].replace(/,/g, "")) * ({ k: 1e3, m: 1e6 }[(bm[2] || "").toLowerCase()] || 1); s = bm[3]; }
+  s = s.replace(/^[^A-Za-z]+/, "").replace(/\s+[a-z]$/i, "").trim();
+  if (s.length < 3) return null;
+  const tryName = (x) => (typeof packResourceByName === "function" ? packResourceByName(x) : "");
+  let n = tryName(s) || tryName(s + "s") || tryName(s.replace(/s$/i, ""));
+  if (!n) {
+    const norm = (x) => String(x).toLowerCase().replace(/[^a-z ]/g, "").split(" ").filter(Boolean).map((w) => w.replace(/s$/, "")).join(" ");
+    const want = norm(s);
+    const all = typeof packAllResourceNames === "function" ? packAllResourceNames() : [];
+    n = all.find((x) => norm(x) === want || norm(materialDisplayName(x)) === want) || "";
+  }
+  return n ? { name: n, mult } : null;
+}
+
+// Pack items Scan was taught (site_config scan_learned entries with k: "pack").
+let SCAN_PK_LEARNED = [];
+async function scanPkLearnedLoad() {
+  try { await ensureSiteConfigKey("scan_learned"); } catch (e) { return SCAN_PK_LEARNED; }
+  SCAN_PK_LEARNED = (((siteConfig("scan_learned", null) || {}).items) || []).filter((e) => e && e.k === "pack" && e.n && e.f)
+    .map((e) => ({ ...e, g: scanB64ToFeat(e.f) })).filter((e) => e.g.length === SCAN_FEAT_W * SCAN_FEAT_H * 3);
+  return SCAN_PK_LEARNED;
+}
+// Closest picture among the Backpack Scan's learned tiles and the pack lessons
+// (a Backpack "Skip" lesson isn't a reason to skip here: packs show other things).
+function scanPkMatchRefs(feat, refs) {
+  const n = feat.length, best = new Map();
+  const put = (name, d, extra) => { const b = best.get(name); if (!b || d < b.d) best.set(name, { d, ...extra }); };
+  const dist = (g, off, step) => { let sum = 0; for (let i = 0, j = off; i < n; i += 3, j += step) sum += Math.abs(feat[i] - g[j]) + Math.abs(feat[i + 1] - g[j + 1]) + Math.abs(feat[i + 2] - g[j + 2]); return sum / n; };
+  SCAN_ITEM_NAMES.forEach((name, k) => { if ((k + 1) * (n / 3) * 4 <= refs.length) put(name, dist(refs, k * (n / 3) * 4, 4)); });
+  SCAN_LEARNED.forEach((e) => { if (e.n !== SCAN_SKIP) put(e.n, dist(e.g, 0, 3)); });
+  SCAN_PK_LEARNED.forEach((e) => put(e.n, dist(e.g, 0, 3), { mult: e.mult || 1, taught: true }));
+  const list = [...best.entries()].sort((a, b) => a[1].d - b[1].d);
+  if (!list.length) return { name: null, dist: Infinity, next: Infinity };
+  return { name: list[0][0], dist: list[0][1].d, next: list[1] ? list[1][1].d : Infinity, mult: list[0][1].mult || 1, taught: !!list[0][1].taught };
+}
+// The site's own item pictures (the Packs item list), as 10 × 10 colour grids
+// at three sizes, to compare with tiles no lesson knows.
+let SCAN_PK_ICONS = null;
+function scanPkIconSrc(name) {
+  if (typeof itemRegIcon === "function" && itemRegIcon(name)) return itemRegIcon(name);
+  if (String(name).toLowerCase() === "gems" && typeof MATERIAL_ICONS !== "undefined") return MATERIAL_ICONS.gems;
+  return (typeof bpIcon === "function" && bpIcon({ name })) || (typeof materialIconSrc === "function" && materialIconSrc(name)) || "";
+}
+function scanPkIcons() {
+  if (SCAN_PK_ICONS) return SCAN_PK_ICONS;
+  const names = (typeof packResourceChoices === "function" ? packResourceChoices() : []).filter((n) => !/speedup/i.test(n)).concat(["Gems"]);
+  const bySrc = new Map();
+  names.forEach((n) => { const s = scanPkIconSrc(n); if (!s) return; if (!bySrc.has(s)) bySrc.set(s, []); bySrc.get(s).push(n); });
+  SCAN_PK_ICONS = Promise.all([...bySrc.entries()].map(([src, list]) => new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    const t = setTimeout(() => resolve(null), 20000);
+    img.onload = () => {
+      clearTimeout(t);
+      try {
+        const sizes = [0.62, 0.74, 0.86].map((sc) => {
+          const S = 60, c = scanCanvas(S, S), g = c.getContext("2d", { willReadFrequently: true });
+          const k = Math.min(S * sc / img.width, S * sc / img.height), dw = img.width * k, dh = img.height * k;
+          g.drawImage(img, (S - dw) / 2, S * 0.47 - dh / 2, dw, dh);
+          const d = g.getImageData(0, 0, S, S).data, cell = new Float32Array(100 * 4);
+          for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+            const i = (y * S + x) * 4, a = d[i + 3] / 255, k2 = (Math.floor(y / 6) * 10 + Math.floor(x / 6)) * 4;
+            cell[k2] += d[i] * a; cell[k2 + 1] += d[i + 1] * a; cell[k2 + 2] += d[i + 2] * a; cell[k2 + 3] += a;
+          }
+          for (let j = 0; j < 400; j++) cell[j] /= 36;
+          return cell;
+        });
+        resolve({ names: list, sizes });
+      } catch (e) { resolve(null); }
+    };
+    img.onerror = () => { clearTimeout(t); resolve(null); };
+    img.src = src;
+  }))).then((all) => all.filter(Boolean));
+  return SCAN_PK_ICONS;
+}
+// A tile (140 × 140) against the item pictures: { name, dist, next }.
+function scanPkMatchIcons(td, icons) {
+  const cell = new Float32Array(300);
+  for (let y = 0; y < 140; y++) for (let x = 0; x < 140; x++) {
+    const i = (y * 140 + x) * 4, k = (Math.min(9, Math.floor(y / 14)) * 10 + Math.min(9, Math.floor(x / 14))) * 3;
+    cell[k] += td[i]; cell[k + 1] += td[i + 1]; cell[k + 2] += td[i + 2];
+  }
+  for (let j = 0; j < 300; j++) cell[j] /= 196;
+  // the tile's own colour behind the picture, row by row (its inner left / right edge)
+  const bg = [];
+  for (let r = 0; r < 10; r++) bg.push([0, 1, 2].map((c) => (cell[(r * 10 + 1) * 3 + c] + cell[(r * 10 + 8) * 3 + c]) / 2));
+  const scores = [];
+  icons.forEach((ic) => {
+    let best = Infinity;
+    ic.sizes.forEach((sz) => {
+      let sum = 0, n = 0;
+      for (let r = 1; r < 9; r++) for (let c = 1; c < 9; c++) {
+        if (r >= 7 && c >= 5) continue; // the amount
+        const k = (r * 10 + c), a = sz[k * 4 + 3];
+        for (let ch = 0; ch < 3; ch++) sum += Math.abs(sz[k * 4 + ch] + (1 - a) * bg[r][ch] - cell[k * 3 + ch]);
+        n += 3;
+      }
+      if (sum / n < best) best = sum / n;
+    });
+    scores.push([ic.names[0], best, ic.names.length > 1]);
+  });
+  scores.sort((a, b) => a[1] - b[1]);
+  const first = scores[0] || [null, Infinity, false], second = scores[1] || [null, Infinity];
+  return { name: first[0], dist: first[1], next: second[1], shared: first[2] };
+}
+// The size label on top of a tile ("1 hr(s)", "5 min", "10 K", "100"):
+// { unit: "h" | "m", n } for speedups, { mult } for bundles, or null.
+function scanPkParseLabel(lt) {
+  lt = String(lt || "").replace(/\s/g, "").replace(/[{\[]/g, "(");
+  if (!lt) return null;
+  if (/hr|\(s|r\(|hris/i.test(lt)) { const m = /(\d+)/.exec(lt); return { unit: "h", n: m ? Number(m[1]) : null, text: lt }; }
+  if (/min|mi$|in$/i.test(lt)) { const m = /(\d+)/.exec(lt); return { unit: "m", n: m ? Number(m[1]) : null, text: lt }; }
+  const nm = /^\W*(\d[\d,.]*)\s*([KM])?\W*$/i.exec(lt.replace(/O/g, "0"));
+  if (nm) { const v = Number(nm[1].replace(/[,.]/g, "")) * ({ k: 1e3, m: 1e6 }[(nm[2] || "").toLowerCase()] || 1); if (v >= 10) return { mult: v, text: lt }; }
+  return null;
+}
+async function scanPkTopLabel(worker, td) {
+  const label = scanTextMask(td, 10, 0, 130, 38, false);
+  if (!label) return null;
+  return scanPkParseLabel((await scanRead(worker, label, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "0123456789KMkminhrs(),. " })).text);
+}
+// The amount at a tile's bottom right ("25", "8,000", "10K"). Pack tiles read
+// best cut tight (a lone "5" read as a line can come out as "3").
+async function scanPkAmount(worker, td) {
+  const num = scanTextMask(td, 21, 87, 136, 136, true);
+  if (!num) return { value: null, sure: false };
+  const wl = { tessedit_char_whitelist: "0123456789,.KM" };
+  let res = null;
+  for (const [c, mode] of [[num.tight, "7"], [num.tight, "8"], [num, "7"]]) {
+    const r = await scanRead(worker, c, { ...wl, tessedit_pageseg_mode: mode });
+    if (/\d/.test(r.text)) { res = r; break; }
+  }
+  if (!res) return scanTileAmount(worker, td);
+  let raw = res.text.replace(/\s/g, "");
+  if (num.ones && raw.replace(/\D/g, "") !== num.ones && !/[KM]/.test(raw)) raw = num.ones;
+  const m = /(\d[\d,.]*)([KM])?/.exec(raw);
+  if (!m) return { value: null, sure: false };
+  const digits = m[1].replace(/\D/g, "");
+  let value = Number(digits);
+  if (m[2]) value = Number(m[1].replace(/,/g, "")) * (m[2] === "K" ? 1e3 : 1e6);
+  const shapes = digits.length + (m[2] ? 1 : 0);
+  return { value, sure: res.conf >= 65 && shapes === num.count && /^\d{1,3}([,.]\d{3})*[KM]?$|^\d+(\.\d)?[KM]$/.test(m[0]) };
+}
+const SCAN_PK_SPEED = { 1: "1m", 3: "3m", 5: "5m", 60: "1h", 180: "3h", 480: "8h" };
+// One tile: what it is and how many. { name, value, sure, why, img, feat, label }.
+async function scanPkTile(worker, img, box, ctx) {
+  const t = scanCanvas(140, 140), tg = t.getContext("2d", { willReadFrequently: true });
+  tg.drawImage(img.c, box.x, box.y, box.w, box.h, 0, 0, 140, 140);
+  const td = tg.getImageData(0, 0, 140, 140).data;
+  const feat = scanTileFeature(td);
+  const pic = scanCanvas(96, 96); pic.getContext("2d").drawImage(t, 0, 0, 96, 96);
+  const out = { feat, img: pic.toDataURL("image/jpeg", 0.85), name: null, value: null, sure: false };
+  const amount = await scanPkAmount(worker, td);
+  out.value = amount.value; out.amount0 = amount.value;
+  if (!amount.value) { out.skip = "noamount"; return out; }
+  // the label: as the whole-screen read saw it, else read on the tile
+  const label = scanPkParseLabel(box.label) || (box.label ? null : await scanPkTopLabel(worker, td));
+  out.label = label ? label.text : "";
+  const m = scanPkMatchRefs(feat, ctx.refs);
+  if (m.name === SCAN_SKIP && m.taught && m.dist <= 14) {
+    out.skip = "skip"; return out;
+  } else if (m.dist <= 14) {
+    out.name = m.name; out.sure = amount.sure && m.dist <= 10 && m.next > m.dist * 1.3; out.why = m.taught ? "taught" : "picture";
+    if (m.mult > 1) out.value *= m.mult;
+  } else if (label && label.unit) {
+    // A speedup: hours or minutes from the label, the size from the tile's
+    // colour (the game's size colours; the small "1" / "5" often don't read),
+    // the kind from the corner mark.
+    let r = 0, g = 0, b = 0;
+    for (let y = 60; y < 80; y++) for (let x = 3; x < 9; x++) { const i = (y * 140 + x) * 4; r += td[i]; g += td[i + 1]; b += td[i + 2]; }
+    r /= 120; g /= 120; b /= 120;
+    const said = label.n ? SCAN_PK_SPEED[label.n * (label.unit === "h" ? 60 : 1)] : null;
+    const fits = SCAN_SIZE_COLORS.filter(([z]) => z.endsWith(label.unit)).map(([z, c]) => [z, Math.abs(c[0] - r) + Math.abs(c[1] - g) + Math.abs(c[2] - b)]).sort((a, z) => a[1] - z[1]);
+    const size = fits.length ? fits[0][0] : said;
+    let kind = "", best = Infinity;
+    if (ctx.marks) {
+      const mc = scanCanvas(32, 32), mg = mc.getContext("2d", { willReadFrequently: true });
+      mg.drawImage(t, 0, 70, 70, 70, 0, 0, 32, 32);
+      const md = mg.getImageData(0, 0, 32, 32).data, marks = ctx.marks;
+      SCAN_MARKS.forEach((name, k) => {
+        let sum = 0, n = 0;
+        for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) {
+          const j = (y * marks.width + k * 32 + x) * 4;
+          if (marks.data[j + 3] < 128) continue;
+          const i = (y * 32 + x) * 4;
+          sum += Math.abs(md[i] - marks.data[j]) + Math.abs(md[i + 1] - marks.data[j + 1]) + Math.abs(md[i + 2] - marks.data[j + 2]);
+          n++;
+        }
+        const sc = n ? sum / n : Infinity;
+        if (sc < best) { best = sc; kind = name; }
+      });
+      if (best > 150 || kind === "Healing") kind = "";
+    }
+    out.name = size ? `${kind ? kind + " " : ""}Speedup ${size}` : null;
+    out.sure = !!size && amount.sure && (!said || said === size) && fits.length > 0 && fits[0][1] < 90;
+    out.why = "speedup";
+  } else if (ctx.icons) {
+    const im = scanPkMatchIcons(td, ctx.icons);
+    out.guess = im.name; out.gdist = Math.round(im.dist);
+    if (im.name && im.dist < 17 && im.next - im.dist > 1.5) { out.name = im.name; out.why = "icon"; }
+    out.sure = false;
+  }
+  // a size label on a bundle (10 K Meat × 1,000)
+  if (label && label.mult && out.name && /^(Meat|Wood|Coal|Iron|Steel|Gems|Food)$/.test(out.name)) out.value *= label.mult;
+  else if (label && label.mult && !out.name) out.mult = label.mult;
+  return out;
+}
+
+// One screenshot: { title, groups: [{ title, price: { cur, value, usd, sure }, gems, items: [...] }], skipped }.
+const SCAN_PK_NOT_TITLE = /remaining|limit|claimed|contains|purchase|event ends|buy to get|login daily|select items|confirm|great value|weekly\/monthly|get gems|pick up|traveling|brought you|customize|support the|level up|all over|^\W*\d/i;
+async function scanPackShot(worker, file, ctx) {
+  const src = await createImageBitmap(file);
+  const img = scanPkImage(src);
+  const text = await scanPkText(worker, img);
+  const prices = await scanPkPrices(worker, img, text);
+  // tiles, minus anything sitting on a price button
+  let tiles = scanPkFindTiles(img).filter((b) => !prices.some((p) => b.x < p.x + p.w * 1.3 && p.x - 20 < b.x + b.w && b.y < p.y + p.h && p.y < b.y + b.h));
+  // each tile's size label as the whole-screen read saw it (top of the tile)
+  tiles.forEach((b) => {
+    const ls = text.white.filter((l) => l.x + l.w / 2 > b.x && l.x + l.w / 2 < b.x + b.w && l.y + l.h / 2 > b.y - b.h * 0.08 && l.y + l.h / 2 < b.y + b.h * 0.33 && l.h < b.h * 0.3);
+    b.label = ls.map((l) => l.text).join("");
+  });
+  const read = [];
+  for (const b of tiles) {
+    const r = await scanPkTile(worker, img, b, ctx);
+    r.box = b;
+    read.push(r);
+    if (ctx.progress) ctx.progress(read.length, tiles.length);
+  }
+  // Lists that write each item's name ("Fire Crystal Chest   x10", "Charm Guide X24").
+  const all = text.plain.concat(text.white);
+  const bands = [];
+  all.forEach((l) => {
+    const cy = l.y + l.h / 2, b = bands.find((x) => x.parts.some((p) => Math.abs(p.y + p.h / 2 - cy) < Math.max(12, Math.min(p.h, l.h) * 0.6)));
+    if (b) { if (!b.parts.some((p) => Math.min(p.x + p.w, l.x + l.w) - Math.max(p.x, l.x) > Math.min(p.w, l.w) * 0.5)) b.parts.push(l); } else bands.push({ cy, parts: [l] });
+  });
+  const named = [];
+  bands.forEach((b) => {
+    const parts = b.parts.sort((a, c) => a.x - c.x), line = parts.map((p) => p.text).join(" ");
+    const m = /([A-Za-z][A-Za-z0-9 ,.'’-]*?[A-Za-z])\s*[xX×]\s?(\d[\d,]*)\s*$/.exec(line.replace(/\b(\d[\d,.]*)\s*([KM])\b/g, "$1$2"));
+    if (!m) return;
+    const pre = /(\d[\d,.]*[KM]?)\s+[A-Za-z][^]*$/.exec(line.slice(0, m.index + m[1].length));
+    const nameRaw = (pre && /[KM]$/.test(pre[1]) ? pre[0] : m[1]).trim();
+    const it = scanPkNameItem(nameRaw);
+    const count = Number(m[2].replace(/,/g, ""));
+    if (!(count > 0)) return;
+    named.push({ raw: nameRaw.replace(/^[^A-Za-z0-9]+/, ""), name: it ? it.name : null, value: count * (it ? it.mult : 1), sure: !!it, why: "name", cy: b.cy, y: Math.min(...parts.map((p) => p.y)) });
+  });
+  // Gems: a big number on its own (not inside a tile, not the top bar).
+  const gemsLines = text.white.filter((l) => l.h >= 30 && l.y > img.h * 0.06 && !/%/.test(l.text) && /^\W{0,3}\d{1,3}([,.]\d{3})+\W{0,2}$|^\W{0,3}\d{3,6}\W{0,2}$/.test(l.text)
+    && !tiles.some((b) => l.x < b.x + b.w && b.x < l.x + l.w && l.y < b.y + b.h && b.y < l.y + l.h));
+  const titles = text.white.concat(text.plain).filter((l) => l.h >= 34 && l.conf >= 55 && !named.some((n) => Math.abs(n.cy - (l.y + l.h / 2)) < l.h * 0.6) && /[A-Za-z]{3,}.*[A-Za-z]{3,}/.test(l.text) && !SCAN_PK_NOT_TITLE.test(l.text) && l.y > img.h * 0.04);
+  // Groups: each price with the tile rows (and named lines) around it.
+  const unitH = tiles.length ? tiles.reduce((a, b) => a + b.h, 0) / tiles.length : img.w * 0.1;
+  const groups = prices.sort((a, b) => a.cy - b.cy).map((p) => ({ price: p, items: [], top: p.y, bottom: p.y + p.h }));
+  const home = (cy) => {
+    let best = null, bd = Infinity;
+    groups.forEach((g) => {
+      const dy = g.price.cy - cy; // the price sits level with or under its items
+      if (dy < -unitH * 1.3 || dy > unitH * 4.5) return;
+      const d = dy < 0 ? -dy * 2 : dy;
+      if (d < bd) { bd = d; best = g; }
+    });
+    return best;
+  };
+  if (!groups.length) groups.push({ price: null, items: [], top: img.h, bottom: 0 });
+  const useNames = named.filter((n) => n.name || n.raw).length >= 2;
+  const skipped = { noamount: 0, unknown: 0, notlisted: [] };
+  if (useNames) {
+    named.forEach((n) => { const g = groups.length === 1 && !groups[0].price ? groups[0] : home(n.cy) || groups[0]; g.items.push(n); g.top = Math.min(g.top, n.y); });
+  }
+  read.forEach((r) => {
+    if (r.skip) { if (r.skip === "noamount") skipped.noamount++; return; }
+    const cy = r.box.y + r.box.h / 2;
+    // with names, the small pictures at the start of each named line are those items
+    if (useNames && named.some((n) => Math.abs(n.cy - cy) < r.box.h * 0.7)) return;
+    const g = groups.length === 1 && !groups[0].price ? groups[0] : home(cy);
+    if (!g) { skipped.unknown++; return; }
+    g.items.push(r); g.top = Math.min(g.top, r.box.y);
+  });
+  groups.forEach((g) => { g.bottom = Math.max(g.bottom, ...g.items.map((it) => (it.box ? it.box.y + it.box.h : it.y + 20))); });
+  // One pack is one block of rows: a row far from the others (more than ~1.7
+  // tiles of space) belongs to something else on the screen (a free gift above).
+  groups.forEach((g) => {
+    if (g.items.length < 2 || !g.price || useNames) return;
+    const yOf = (it) => (it.box ? it.box.y + it.box.h / 2 : it.cy);
+    const rows = [];
+    g.items.slice().sort((a, b) => yOf(a) - yOf(b)).forEach((it) => { const r = rows.find((x) => Math.abs(x.y - yOf(it)) < unitH * 0.5); if (r) r.list.push(it); else rows.push({ y: yOf(it), list: [it] }); });
+    let k = rows.reduce((bi, r, i) => (Math.abs(r.y - g.price.cy) < Math.abs(rows[bi].y - g.price.cy) ? i : bi), 0), lo = k, hi = k;
+    while (lo > 0 && rows[lo].y - rows[lo - 1].y < unitH * 1.7) lo--;
+    while (hi < rows.length - 1 && rows[hi + 1].y - rows[hi].y < unitH * 1.7) hi++;
+    const keep = new Set(rows.slice(lo, hi + 1).flatMap((r) => r.list));
+    g.items = g.items.filter((it) => keep.has(it));
+    g.top = Math.min(g.price.y, ...g.items.map((it) => (it.box ? it.box.y : it.y)));
+  });
+  const usedGems = new Set();
+  groups.forEach((g, gi) => {
+    const above = gi > 0 ? groups[gi - 1].bottom : 0;
+    if (g.price) Object.assign(g.price, scanPkUsd(g.price.value, g.price.cur));
+    // the title: the nearest big text line above the items, not past the group before
+    const cands = titles.filter((l) => l.y + l.h <= g.top + 4 && l.y >= Math.max(above - 4, g.top - unitH * 3.6) && l.h >= 30);
+    const tl = cands.sort((a, b) => b.y - a.y)[0];
+    g.title = tl ? tl.text.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9)'’!]+$/g, "").replace(/[|\\/]/g, " ").replace(/\s+/g, " ").trim() : "";
+    // gems: the big number in this pack (the one that fits the price first)
+    const want = g.price && g.price.usd ? mpGems(g.price.usd) : null;
+    const gl = gemsLines.filter((l) => !usedGems.has(l) && l.y > Math.max(above, g.top - unitH * 4) - 10 && l.y < Math.max(g.bottom, g.price ? g.price.y + g.price.h : 0) + 4)
+      .map((l) => ({ l, v: Number(l.text.replace(/\D/g, "")) })).filter((x) => !want || x.v === want).sort((a, b) => b.l.h - a.l.h)[0];
+    if (gl) { usedGems.add(gl.l); g.gems = gl.v; g.gemsSure = gl.v === want; }
+    else if (want) { g.gems = want; g.gemsSure = false; }
+    g.items.sort((a, b) => ((a.box ? a.box.y : a.y) - (b.box ? b.box.y : b.y)) || ((a.box ? a.box.x : 0) - (b.box ? b.box.x : 0)));
+  });
+  const out = groups.filter((g) => g.items.length || groups.length === 1);
+  // the screenshot's own title (the biggest line in its upper part) for a lone pack
+  const upper = titles.filter((l) => l.y < img.h * 0.45), big = (upper.some((l) => l.y > img.h * 0.135) ? upper.filter((l) => l.y > img.h * 0.135) : upper).sort((a, b) => b.h - a.h)[0];
+  const tidy = (x) => String(x || "").replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9)'’!]+$/g, "").replace(/[|\\/]/g, " ").replace(/\s+/g, " ").trim();
+  if (out.length === 1 && !out[0].title && big) out[0].title = tidy(big.text);
+  return { title: big ? tidy(big.text) : "", groups: out, skipped, tiles: tiles.length, names: useNames };
+}
+
+// ---- Scan pack: the sheet ----
+// opts: { target: { title } | null (a pack window's "Fill from screenshot"),
+//   canNew, categories: [names], category, onSave(result) }.
+// result = { to: "this" | "new", title, category, rows: [{ usd, gems, items: { name: amount } }], learn: [entries] }.
+// Nothing is saved here; onSave (app.js) writes the pack the way its editor does.
+const SCAN_PK_LADDER = [[4.99, 1], [9.99, 2], [19.99, 4], [49.99, 10], [99.99, 20]];
+const SCAN_PK_BUNDLE = /^(Meat|Wood|Coal|Iron|Steel|Gems|Food)$/;
+function openPackScanMain(opts) {
+  opts = opts || {};
+  let modal = document.getElementById("pkScanModal");
+  if (!modal) { modal = document.createElement("div"); modal.id = "pkScanModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
+  modal.style.display = "flex";
+  const run = {};
+  modal._scanRun = run;
+  const live = () => modal._scanRun === run && modal.style.display !== "none";
+  const close = () => { modal.style.display = "none"; modal.innerHTML = ""; };
+  modal.onclick = (ev) => { if (ev.target === modal) close(); };
+  const st = {
+    to: opts.target ? "this" : "new",
+    title: "", titleTyped: false,
+    category: opts.category || (opts.categories || [])[0] || "",
+    scale: true,
+    groups: [], pick: 0, // which pack / price of the screenshot (or "rows" for all prices as rows)
+    skipped: { noamount: 0, unknown: 0 },
+  };
+  const names = () => (typeof packResourceChoices === "function" ? packResourceChoices() : []).concat(["Gems"]).filter((n, i, a) => a.indexOf(n) === i);
+  const disp = (n) => (/^Speedup /.test(n) ? n.replace(/^Speedup/, "General Speedup") : materialDisplayName(n) || n);
+  const iconOf = (n) => scanPkIconSrc(n);
+  const money = (v, cur) => (typeof packFmtMoney === "function" ? packFmtMoney(v, cur || "USD") : `$${v}`);
+  const exampleSvg = `<svg viewBox="0 0 74 92" width="74" height="92" aria-hidden="true"><rect width="74" height="92" fill="#4b2a6e"/><rect x="5" y="6" width="64" height="14" rx="3" fill="#f0c46a"/><text x="37" y="16" font-size="7" text-anchor="middle" fill="#3a1d00" font-weight="700">Charm Craftsman</text>
+    <rect x="6" y="44" width="18" height="18" rx="3" fill="#a65fe0"/><rect x="28" y="44" width="18" height="18" rx="3" fill="#a65fe0"/><rect x="50" y="44" width="18" height="18" rx="3" fill="#4d9de0"/>
+    <text x="22" y="60" font-size="5" text-anchor="end" fill="#fff">18</text><text x="44" y="60" font-size="5" text-anchor="end" fill="#fff">6</text><text x="66" y="60" font-size="5" text-anchor="end" fill="#fff">2500</text>
+    <rect x="14" y="70" width="46" height="12" rx="6" fill="#44c06a"/><text x="37" y="79" font-size="7" text-anchor="middle" fill="#fff" font-weight="700">$4.99</text></svg>`;
+  const ladderOf = (usd) => {
+    const i = SCAN_PK_LADDER.findIndex(([p]) => Math.abs(p - usd) < 0.005);
+    return i < 0 ? null : SCAN_PK_LADDER.slice(i).map(([p, m]) => [p, m / SCAN_PK_LADDER[i][1]]);
+  };
+  const showStart = () => {
+    const cats = (opts.categories || []).filter(Boolean);
+    const p0 = st.groups.length ? st.groups[0] : null, base = p0 && p0.price && p0.price.usd ? p0.price.usd : 4.99;
+    const lad = ladderOf(base) || ladderOf(4.99);
+    modal.innerHTML = `<div class="modal-box pks-box" role="dialog" aria-label="${esc(t("pks_title"))}">
+      <div class="pks-h"><h2>&#128247; ${esc(t("pks_title"))}</h2><button type="button" class="pks-x" data-pksclose aria-label="${esc(t("close_button"))}">&times;</button></div>
+      <p class="desc pks-d">${esc(t("pks_intro"))}</p>
+      <div class="scan-step"><b>1</b><div><div>${esc(t("pks_s1"))}</div><div class="meta">${esc(t("pks_s1_hint"))}</div>
+        <button class="btn pks-choose" type="button" data-pkspick>&#128444; ${esc(t("pks_choose"))}</button></div>
+        <span class="scan-ex pks-ex" aria-hidden="true">${exampleSvg}</span></div>
+      <div class="scan-step"><b>2</b><div><div>${esc(t("pks_s2"))}</div>
+        ${opts.target ? `<label class="pks-opt${st.to === "this" ? " on" : ""}"><input type="radio" name="pksto" value="this" ${st.to === "this" ? "checked" : ""} /><span><b>${esc(t("pks_this").replace("{name}", opts.target.title || ""))}</b><small class="meta">${esc(t("pks_this_d"))}</small></span></label>` : ""}
+        ${opts.canNew !== false ? `<label class="pks-opt${st.to === "new" ? " on" : ""}"><input type="radio" name="pksto" value="new" ${st.to === "new" ? "checked" : ""} /><span><b>${esc(t("pks_new"))}</b>
+          <span class="pks-f"><span class="meta">${esc(t("pks_name"))}</span><input type="text" data-pksname maxlength="60" value="${esc(st.title)}" placeholder="${esc(t("pks_name_ph"))}" autocomplete="off" /></span>
+          ${cats.length ? `<span class="pks-f"><span class="meta">${esc(t("pks_cat"))}</span><select data-pkscat class="keep-w">${cats.map((c) => `<option value="${esc(c)}" ${c === st.category ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></span>` : ""}</span></label>` : ""}
+      </div></div>
+      <div class="scan-step"><b>3</b><div><div class="pks-scl"><span>${esc(t("pks_scale"))}</span><input type="checkbox" class="bset-sw" data-pksscale ${st.scale ? "checked" : ""} aria-label="${esc(t("pks_scale"))}" /></div>
+        <div class="meta">${esc(t("pks_scale_d"))}</div>
+        <div class="pks-lad">${lad.map(([p, m]) => `<span><b>$${p}</b><small>&times;${m}</small></span>`).join("")}</div>
+        <div class="meta">${esc(t("pks_scale_note"))}</div></div></div>
+      <div class="pks-foot"><button class="btn ghost" type="button" data-pksclose>${esc(t("cancel"))}</button></div>
+    </div>`;
+    wireStart();
+  };
+  const wireStart = () => {
+    modal.querySelectorAll("[data-pksclose]").forEach((b) => b.onclick = close);
+    modal.querySelector("[data-pkspick]").onclick = picker;
+    modal.querySelectorAll("input[name=pksto]").forEach((r) => r.onchange = () => { st.to = r.value; modal.querySelectorAll(".pks-opt").forEach((l) => l.classList.toggle("on", l.querySelector("input").checked)); });
+    const nm = modal.querySelector("[data-pksname]");
+    if (nm) nm.oninput = () => { st.title = nm.value; st.titleTyped = true; };
+    const ct = modal.querySelector("[data-pkscat]");
+    if (ct) ct.onchange = () => { st.category = ct.value; };
+    const sc = modal.querySelector("[data-pksscale]");
+    if (sc) sc.onchange = () => { st.scale = sc.checked; };
+  };
+  const picker = () => {
+    const input = document.createElement("input");
+    input.type = "file"; input.accept = "image/*"; input.multiple = true;
+    input.onchange = () => { if (input.files.length) readAll([...input.files]); };
+    input.click();
+  };
+  const progress = (msg, sub) => {
+    if (!live()) return;
+    modal.innerHTML = `<div class="modal-box" style="max-width:360px; text-align:center;"><div class="scan-spin"></div><div>${esc(msg)}</div><div class="meta" data-scanpct>${esc(sub || "")}</div>
+      <div style="margin-top:12px;"><button class="btn ghost" type="button" data-pksclose>${esc(t("cancel"))}</button></div></div>`;
+    modal.querySelector("[data-pksclose]").onclick = close;
+  };
+  const readAll = async (files) => {
+    progress(t("scan_loading"));
+    SCAN_PROGRESS = (m) => { const el = live() && modal.querySelector("[data-scanpct]"); if (el && m && typeof m.progress === "number") el.textContent = `${m.status || ""} ${Math.round(m.progress * 100)}%`; };
+    let ctx;
+    try {
+      const [worker, marks, refs, icons] = await Promise.all([scanWorker(), scanMarkData(), scanItemData(), scanPkIcons(), scanLearnedLoad().catch(() => []), scanPkLearnedLoad()]);
+      ctx = { worker, marks, refs, icons };
+    } catch (e) {
+      SCAN_PROGRESS = null;
+      if (!live()) return;
+      modal.innerHTML = `<div class="modal-box" style="max-width:360px;"><p>${esc(t("scan_failed"))}</p><div style="text-align:end;"><button class="btn" type="button" data-pksclose>${esc(t("close_button"))}</button></div></div>`;
+      modal.querySelector("[data-pksclose]").onclick = close;
+      return;
+    }
+    SCAN_PROGRESS = null;
+    const shots = [];
+    for (let i = 0; i < files.length; i++) {
+      if (!live()) return;
+      progress(t("pks_reading").replace("{n}", i + 1).replace("{m}", files.length));
+      ctx.progress = (k, n) => { const el = live() && modal.querySelector("[data-scanpct]"); if (el) el.textContent = t("pks_reading_items").replace("{n}", k).replace("{m}", n); };
+      try { shots.push(await scanPackShot(ctx.worker, files[i], ctx)); } catch (e) { shots.push({ groups: [], skipped: { noamount: 0, unknown: 0 }, title: "" }); }
+    }
+    if (!live()) return;
+    merge(shots);
+    showCheck();
+  };
+  // Several screenshots of one pack (a row that scrolls) add up: same price →
+  // one pack, items it didn't have yet are added.
+  const merge = (shots) => {
+    const groups = [];
+    shots.forEach((s) => {
+      st.skipped.noamount += s.skipped.noamount || 0; st.skipped.unknown += s.skipped.unknown || 0;
+      s.groups.forEach((g) => {
+        g.items = g.items.map((it) => ({ ...it, auto: it.name, tick: it.why === "name" ? !!it.name : true }));
+        const same = groups.find((x) => (x.price && g.price ? Math.abs(x.price.value - g.price.value) < 0.01 && (!x.title || !g.title || x.title === g.title) : !x.price && !g.price));
+        if (same && shots.length > 1) {
+          // the same tile in both screenshots (they overlap) counts once
+          const near = (a, b) => { if (!a.feat || !b.feat) return false; let d = 0; for (let i = 0; i < a.feat.length; i++) d += Math.abs(a.feat[i] - b.feat[i]); return d / a.feat.length < 12; };
+          g.items.forEach((it) => { if (!same.items.some((o) => o.value === it.value && ((o.name && o.name === it.name) || near(o, it)))) same.items.push(it); });
+          if (!same.gems && g.gems) same.gems = g.gems;
+        } else groups.push(g);
+      });
+      if (!st.titleTyped && !st.title && s.title) st.title = s.title;
+    });
+    st.groups = groups;
+    // the pack window's own pack first, else the first one
+    const want = String((opts.target && opts.target.title) || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const k = want ? groups.findIndex((g) => String(g.title || "").toLowerCase().replace(/[^a-z0-9]/g, "").includes(want.slice(0, 12))) : -1;
+    const titled = new Set(groups.map((g) => g.title || ""));
+    st.pick = k >= 0 ? k : groups.length > 1 && titled.size === 1 && groups.every((g) => g.price) ? "rows" : 0;
+    const g0 = groups[typeof st.pick === "number" ? st.pick : 0];
+    if (!st.titleTyped && g0 && g0.title) st.title = g0.title;
+    // more than one price on screen: each is its own row, no ladder
+    if (st.pick === "rows") st.scale = false;
+  };
+  const chosen = () => (st.pick === "rows" ? st.groups : st.groups[st.pick] ? [st.groups[st.pick]] : []);
+  // The rows Save will fill: [{ usd, gems, items: { name: amount }, fromShot }].
+  const buildRows = () => {
+    const gs = chosen();
+    const rows = gs.map((g) => {
+      const items = {};
+      let gems = Number(g.gems) || 0;
+      // a Gems tile in the pack adds to the pack's gems
+      g.items.forEach((it) => { if (!it.tick || !it.name || !(Number(it.value) > 0)) return; if (it.name === "Gems") gems += Number(it.value); else items[it.name] = (items[it.name] || 0) + Number(it.value); });
+      return { usd: g.price && g.price.usd ? g.price.usd : null, gems, items, fromShot: true };
+    });
+    if (rows.length === 1 && st.scale && rows[0].usd) {
+      const lad = ladderOf(rows[0].usd);
+      if (lad) lad.slice(1).forEach(([p, m]) => {
+        const items = {};
+        Object.entries(rows[0].items).forEach(([n, v]) => { items[n] = Math.round(v * m); });
+        rows.push({ usd: p, gems: typeof mpGems === "function" ? mpGems(p) : Math.round(rows[0].gems * m), items, fromShot: false });
+      });
+    }
+    return rows;
+  };
+  const toCheck = () => chosen().reduce((a, g) => a + g.items.filter((it) => it.tick && (!it.name || !it.sure)).length + (g.price && !g.price.sure ? 1 : 0), 0);
+  const canSave = () => chosen().length && chosen().every((g) => g.items.every((it) => !it.tick || it.name) && g.price && g.price.usd > 0) && chosen().some((g) => g.items.some((it) => it.tick && it.name));
+  const itemRow = (it, gi, ii) => {
+    const ic = it.img || (it.name && iconOf(it.name));
+    const unknown = !it.name;
+    const off = !it.tick;
+    const note = it.why === "name" && !it.auto ? t("pks_not_listed") : unknown ? t("pks_unknown") : !it.sure ? t("scan_please_check") : "";
+    const opts2 = names().map((n) => `<option value="${esc(n)}" ${n === it.name ? "selected" : ""}>${esc(disp(n))}</option>`).join("");
+    return `<div class="scan-row pks-row${unknown || !it.sure ? " unsure" : ""}${off ? " off" : ""}" data-pksrow="${gi}|${ii}">
+      <input type="checkbox" data-pkstick ${it.tick ? "checked" : ""} aria-label="${esc(t("pks_use"))}" />
+      ${ic ? `<img src="${esc(ic)}" alt="" class="${it.img ? "pks-tile" : ""}" />` : `<span class="scan-img"></span>`}
+      <span class="scan-name"><select data-pksitem class="keep-w" aria-label="${esc(t("pks_item"))}"><option value="">${esc(t("pks_pick_item"))}</option>${opts2}</select>
+        <span class="meta">${it.raw && !it.auto ? esc(it.raw) + " · " : ""}${note ? `<em>${esc(note)}</em>` : "&#10003;"}${it.mult && !SCAN_PK_BUNDLE.test(it.name || "") ? ` · ${esc(t("pks_label").replace("{n}", Number(it.mult).toLocaleString()))}` : ""}</span></span>
+      <input type="text" inputmode="numeric" data-pksval value="${it.value == null ? "" : Number(it.value).toLocaleString("en-US")}" aria-label="${esc(t("pks_amount"))}" />
+    </div>`;
+  };
+  const previewHtml = () => {
+    const rows = buildRows();
+    if (!rows.length) return "";
+    const cols = [];
+    rows.forEach((r) => Object.keys(r.items).forEach((n) => { if (!cols.includes(n)) cols.push(n); }));
+    return `<div class="scan-lab-h">${esc(t("pks_rows"))}</div>
+      <div class="pks-pv-wrap"><table class="pks-pv"><thead><tr><th>$</th>${cols.map((n) => { const ic = iconOf(n); return `<th title="${esc(disp(n))}">${ic ? `<img src="${esc(ic)}" alt="${esc(disp(n))}" />` : esc(disp(n).slice(0, 4))}</th>`; }).join("")}<th title="Gems">${iconOf("Gems") ? `<img src="${esc(iconOf("Gems"))}" alt="Gems" />` : "Gems"}</th></tr></thead>
+      <tbody>${rows.map((r) => `<tr class="${r.fromShot ? "shot" : ""}"><td><b>${r.usd ? r.usd : "?"}</b></td>${cols.map((n) => `<td>${r.items[n] ? (typeof shortAmount === "function" && r.items[n] >= 1e5 ? shortAmount(r.items[n]) : r.items[n].toLocaleString()) : "—"}</td>`).join("")}<td>${r.gems ? r.gems.toLocaleString() : "—"}</td></tr>`).join("")}</tbody></table></div>
+      <div class="meta pks-pv-n">${esc(t(st.scale && rows.length > 1 && chosen().length === 1 ? "pks_rows_note" : "pks_rows_note1"))}</div>`;
+  };
+  const showCheck = () => {
+    if (!live()) return;
+    const gs = chosen();
+    const any = st.groups.length;
+    const n = toCheck();
+    const many = st.groups.length > 1;
+    const learnable = IS_OWNER && gs.some((g) => g.items.some((it) => it.feat && it.tick && it.name && it.name !== it.auto));
+    const where = st.to === "this" && opts.target ? opts.target.title : (st.title || t("pks_new"));
+    modal.innerHTML = `<div class="modal-box pks-box" role="dialog" aria-label="${esc(t("pks_check"))}">
+      <div class="pks-h"><h2>${esc(t("pks_check"))}</h2><button type="button" class="pks-x" data-pksclose aria-label="${esc(t("close_button"))}">&times;</button></div>
+      <div class="meta pks-to">${esc(t("pks_to"))} <b>${esc(where)}</b>${n ? ` · ${esc(t("pks_n_check").replace("{n}", n))}` : ""}</div>
+      ${!any ? `<p class="desc">${esc(t("pks_nothing"))}</p>` : ""}
+      ${many ? `<div class="scan-lab-h">${esc(t("pks_which"))}</div><div class="pks-groups">${st.groups.map((g, i) => `<button type="button" class="pks-g${st.pick === i ? " on" : ""}" data-pksgroup="${i}"><b>${esc(g.title || t("pks_pack_n").replace("{n}", i + 1))}</b><small>${g.price ? esc(money(g.price.value, g.price.cur)) : "?"} · ${esc(t("pks_n_items").replace("{n}", g.items.length))}</small></button>`).join("")}
+        ${st.groups.every((g) => g.price) ? `<button type="button" class="pks-g${st.pick === "rows" ? " on" : ""}" data-pksgroup="rows"><b>${esc(t("pks_all_rows"))}</b><small>${esc(t("pks_all_rows_d").replace(/\{n\}/g, st.groups.length))}</small></button>` : ""}</div>` : ""}
+      ${st.to === "new" ? `<label class="pks-f pks-f2"><span class="meta">${esc(t("pks_name"))}</span><input type="text" data-pksname2 maxlength="60" value="${esc(st.title)}" placeholder="${esc(t("pks_name_ph"))}" autocomplete="off" /></label>` : ""}
+      ${gs.map((g, gi0) => { const gi = st.pick === "rows" ? gi0 : st.pick; return `
+        ${gs.length > 1 ? `<div class="scan-lab-h">${esc(g.title || t("pks_pack_n").replace("{n}", gi + 1))}</div>` : `<div class="scan-lab-h">${esc(t("pks_items"))}</div>`}
+        ${g.items.map((it, ii) => itemRow(it, gi, ii)).join("") || `<div class="meta">${esc(t("pks_no_items"))}</div>`}
+        <div class="scan-row pks-row pks-price${g.price && g.price.sure ? "" : " unsure"}" data-pksprice="${gi}">
+          <span class="pks-cur">$</span>
+          <span class="scan-name"><b>${esc(t("pks_price"))}</b><span class="meta">${g.price ? esc(t("pks_store").replace("{p}", money(g.price.value, g.price.cur))) : esc(t("pks_price_none"))}${g.price && g.price.sure ? "" : ` · <em>${esc(t("scan_please_check"))}</em>`}</span></span>
+          <input type="text" inputmode="decimal" data-pksusd value="${g.price && g.price.usd ? g.price.usd : ""}" placeholder="4.99" aria-label="US $" />
+        </div>
+        <div class="scan-row pks-row${g.gemsSure === false ? " unsure" : ""}" data-pksgems="${gi}">
+          ${iconOf("Gems") ? `<img src="${esc(iconOf("Gems"))}" alt="" />` : `<span class="scan-img"></span>`}
+          <span class="scan-name"><b>Gems</b><span class="meta">${g.gemsSure === false ? `<em>${esc(t("pks_gems_guess"))}</em>` : "&#10003;"}</span></span>
+          <input type="text" inputmode="numeric" data-pksgemsv value="${g.gems ? Number(g.gems).toLocaleString("en-US") : ""}" aria-label="Gems" />
+        </div>`; }).join("")}
+      ${st.skipped.noamount || st.skipped.unknown ? `<div class="meta pks-skip">&#9888; ${esc(t("pks_skipped").replace("{n}", st.skipped.noamount + st.skipped.unknown))}</div>` : ""}
+      ${learnable ? `<label class="pks-learn"><input type="checkbox" data-pkslearn ${st.learn !== false ? "checked" : ""} /><span>${esc(t("pks_learn"))}<small class="meta">${esc(t("pks_learn_d"))}</small></span></label>` : ""}
+      <div id="pksPreview">${previewHtml()}</div>
+      <div class="pks-foot">
+        <button class="btn ghost" type="button" data-pksclose>${esc(t("cancel"))}</button>
+        <button class="btn ghost" type="button" data-pksback>${esc(t("pks_other"))}</button>
+        <button class="btn" type="button" data-pkssave ${canSave() ? "" : "disabled"}>${esc(t("pks_save"))}</button>
+      </div></div>`;
+    wireCheck();
+  };
+  const refresh = () => {
+    const pv = modal.querySelector("#pksPreview");
+    if (pv) pv.innerHTML = previewHtml();
+    const sv = modal.querySelector("[data-pkssave]");
+    if (sv) sv.disabled = !canSave();
+  };
+  const num = (v) => { const n = parseFloat(String(v).replace(/,/g, "").replace(/[^0-9.]/g, "")); return Number.isFinite(n) ? n : null; };
+  const wireCheck = () => {
+    modal.querySelectorAll("[data-pksclose]").forEach((b) => b.onclick = close);
+    modal.querySelector("[data-pksback]").onclick = () => { st.groups = []; st.skipped = { noamount: 0, unknown: 0 }; showStart(); };
+    modal.querySelectorAll("[data-pksgroup]").forEach((b) => b.onclick = () => {
+      const v = b.dataset.pksgroup;
+      st.pick = v === "rows" ? "rows" : Number(v);
+      if (st.pick === "rows") st.scale = false;
+      const g = st.groups[typeof st.pick === "number" ? st.pick : 0];
+      if (!st.titleTyped && g && g.title) st.title = g.title;
+      showCheck();
+    });
+    const nm = modal.querySelector("[data-pksname2]");
+    if (nm) nm.oninput = () => { st.title = nm.value; st.titleTyped = true; };
+    const rowOf = (el) => { const [gi, ii] = el.closest("[data-pksrow]").dataset.pksrow.split("|").map(Number); return st.groups[gi].items[ii]; };
+    modal.querySelectorAll("[data-pksrow]").forEach((row) => {
+      row.querySelector("[data-pkstick]").onchange = (e) => { rowOf(row).tick = e.target.checked; row.classList.toggle("off", !e.target.checked); refresh(); };
+      row.querySelector("[data-pksitem]").onchange = (e) => {
+        const it = rowOf(row);
+        it.name = e.target.value || null; it.sure = !!it.name; it.tick = true;
+        // a bundle tile (10 K Meat): the label times the number on the tile
+        if (it.mult && it.name && SCAN_PK_BUNDLE.test(it.name) && !it.typed) it.value = it.amount0 != null ? it.amount0 * it.mult : it.value * it.mult;
+        showCheck();
+      };
+      row.querySelector("[data-pksval]").oninput = (e) => { const it = rowOf(row); it.value = num(e.target.value); it.typed = true; it.sure = true; refresh(); };
+    });
+    modal.querySelectorAll("[data-pksprice]").forEach((row) => row.querySelector("[data-pksusd]").oninput = (e) => {
+      const g = st.groups[Number(row.dataset.pksprice)];
+      g.price = g.price || { cur: "USD", value: null };
+      g.price.usd = num(e.target.value); g.price.sure = true;
+      if (!g.gemsTyped && typeof mpGems === "function" && g.price.usd) { g.gems = mpGems(g.price.usd); const gi = modal.querySelector(`[data-pksgems="${row.dataset.pksprice}"] input`); if (gi) gi.value = g.gems.toLocaleString("en-US"); }
+      refresh();
+    });
+    modal.querySelectorAll("[data-pksgems]").forEach((row) => row.querySelector("input").oninput = (e) => { const g = st.groups[Number(row.dataset.pksgems)]; g.gems = num(e.target.value); g.gemsTyped = true; g.gemsSure = true; refresh(); });
+    const ln = modal.querySelector("[data-pkslearn]");
+    if (ln) ln.onchange = () => { st.learn = ln.checked; };
+    modal.querySelector("[data-pkssave]").onclick = async (e) => {
+      if (!canSave()) return;
+      e.target.disabled = true;
+      const learn = IS_OWNER && st.learn !== false ? chosen().flatMap((g) => g.items.filter((it) => it.feat && it.tick && it.name && it.name !== it.auto).map((it) => ({ k: "pack", n: it.name, f: scanFeatToB64(it.feat) }))) : [];
+      const res = { to: st.to, title: (st.title || "").trim(), category: st.category, rows: buildRows().map(({ usd, gems, items }) => ({ usd, gems, items })), learn };
+      try {
+        await opts.onSave(res);
+        if (learn.length) { try { await scanLearnedSave(learn); await scanPkLearnedLoad(); } catch (err) { toast(t("pks_learn_failed"), true); } }
+        close();
+      } catch (err) { e.target.disabled = false; toast((err && err.message) || "Couldn't save", true); }
     };
   };
   showStart();
