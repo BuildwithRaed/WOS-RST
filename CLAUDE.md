@@ -524,7 +524,7 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 
 ## Open questions for the owner
 - (7 Nov 2026, owner: "remember it for later") The full open list was read out on 7 Nov: gift codes pick (A / B / C / D), Scan pack screenshots, Gen 18 heroes, Max stars field, Cloudflare, New Gen heroes card, Dashboard Stats | Plan tabs, G4 budget card, the dated plan in Pack cost / My budget, Scan pictures still to learn, the "Table name here" pack table, the unlinked city-skin picture in Storage. Bring it up again when the owner is back.
-- Research Lab: the owner's "Game says" was 45, then 53 refinements in a week, but the plan does ~26 a week. Does the game count extra refinements beyond the daily ones?
+- Research Lab (answered 16 Nov 2026): the game's weekly count (45–53) is higher than the plan's ~26 because the owner sometimes refines beyond the plan, up to the top tier, to push one upgrade; most weeks follow the picked tier at the cheapest pace. No change: the plan keeps the usual pace, extra Refined FC counts once it is in the Backpack, the This week box shows "ahead", and Can do now counts only the week's refinements still left.
 - The `heroes` table stops at Gen 17, while the timeline (`HALL_OF_HEROES_HERO`) has Gen 18 (Jordan). Add the Gen 18 heroes?
 - The heroes' "Max stars" field is not used outside Admin. Keep or drop it?
 
