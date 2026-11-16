@@ -25955,7 +25955,7 @@ async function renderIslandGallery() {
     // The Pack cost button sits on the Target row, always there (greyed when nothing to buy).
     const canBuy = mkTotal > 0 && visitorCan("packcost");
     const priceBtn = canBuy ? `<button type="button" class="cg-bpbtn ice isl-pcb" data-islpc data-islmkprice>${plxPriceLabel("islands")}</button>` : `<button type="button" class="cg-bpbtn isl-pcb off" disabled>${esc(t("isl_pc_none"))}</button>`;
-    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.min(5, Math.max(3, tiles.length))}; --nm:${Math.min(4, Math.max(3, tiles.length))};">${tiles.join("")}</div>` : ""}</div>`;
+    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.min(5, Math.max(3, tiles.length))}; --nm:${Math.min(5, Math.max(3, tiles.length))}; --ns:${Math.min(4, Math.max(3, tiles.length))};">${tiles.join("")}</div>` : ""}</div>`;
     const inc = islIncome(st), sd = islShardsDay(st);
     // Free Construction Contracts (owner, 16 Nov 2026): weekly + each KOI / SvS, counted before the pack.
     let ctLine = "";
