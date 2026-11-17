@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "a4395dc668";
+window.ADMIN_BUILD = "7b5328ac82";
 
 // ============================================================
 // ADMIN PAGE
@@ -293,7 +293,8 @@ async function renderAdminMenu(body) {
   const draw = () => {
     body.innerHTML = `
       <p class="desc" style="margin:0 0 12px;">Rename menu groups and pages, change their order, move a page to another group, and add a note under a page's title. To hide a page from visitors use <a href="#" data-admingo="visibility">Visibility</a>. Nothing changes until you press Save.</p>
-      ${draft.map((g, gi) => `<div class="mn-group">
+      ${arrangeBarHtml("adm:menu")}
+      <div class="mn-groups"${arrangeHostAttr("adm:menu")}>${draft.map((g, gi) => `<div class="mn-group">
         <div class="mn-ghead">
           ${dsHandleHtml(`data-gdrag="${gi}"`)}
           <input type="text" class="mn-gname" data-gname="${gi}" value="${esc(g.label.en || g.key)}" aria-label="Group name" />
@@ -310,7 +311,7 @@ async function renderAdminMenu(body) {
           <div data-plangs="${gi}|${pi}">${langInputs(pg.label, "data-plang")}</div>
           ${openNote === pg.tab ? `<div class="mn-note">${L.map((k) => `<label><span>Note · ${LN[k]}</span><textarea rows="2" data-pnotetext="${gi}|${pi}|${k}" dir="${langDir(k)}">${esc(pg.note[k] || "")}</textarea></label>`).join("")}<div class="meta" style="font-size:11px;">Shown in a box under the page title. Empty = no note.</div></div>` : ""}
         </div>`).join("") : `<div class="meta" style="font-size:12px; padding:6px 0;">No pages — move pages here or delete the group.</div>`}
-      </div>`).join("")}
+      </div>`).join("")}</div>
       <div class="mn-foot">
         <button type="button" class="btn ghost small" data-gadd>+ Add group</button>
         <span style="flex:1"></span>
@@ -326,8 +327,8 @@ async function renderAdminMenu(body) {
     body.querySelectorAll("[data-pnotetext]").forEach((ta) => ta.addEventListener("input", () => { const [gi, pi, k] = ta.dataset.pnotetext.split("|"); draft[+gi].pages[+pi].note[k] = ta.value; dirty = true; }));
     // Drag ⋮⋮ to change the order of groups / of pages in a group (saved with Save).
     const reorder = (list, from, to) => { const [x] = list.splice(from, 1); list.splice(to, 0, x); dirty = true; draw(); };
-    body.querySelectorAll("[data-gdrag]").forEach((h) => dragSort(h, { row: ".mn-group", done: (r, from, to) => reorder(draft, from, to), refocus: (r, to) => body.querySelectorAll("[data-gdrag]")[to]?.focus() }));
-    body.querySelectorAll("[data-pdrag]").forEach((h) => dragSort(h, { row: ".mn-page", done: (r, from, to) => reorder(draft[+h.dataset.pdrag].pages, from, to), refocus: (r, to) => body.querySelectorAll(`[data-pdrag="${h.dataset.pdrag}"]`)[to]?.focus() }));
+    body.querySelectorAll("[data-gdrag]").forEach((h) => dragSort(h, { row: ".mn-group", arrange: "adm:menu", done: (r, from, to) => reorder(draft, from, to), refocus: (r, to) => body.querySelectorAll("[data-gdrag]")[to]?.focus() }));
+    body.querySelectorAll("[data-pdrag]").forEach((h) => dragSort(h, { row: ".mn-page", arrange: "adm:menu", done: (r, from, to) => reorder(draft[+h.dataset.pdrag].pages, from, to), refocus: (r, to) => body.querySelectorAll(`[data-pdrag="${h.dataset.pdrag}"]`)[to]?.focus() }));
     body.querySelectorAll("[data-gdel]").forEach((b) => b.addEventListener("click", () => { draft.splice(+b.dataset.gdel, 1); dirty = true; draw(); }));
     body.querySelectorAll("[data-pgroup]").forEach((sel) => sel.addEventListener("change", () => { const [gi, pi] = sel.dataset.pgroup.split("|").map(Number); const [x] = draft[gi].pages.splice(pi, 1); draft[+sel.value].pages.push(x); dirty = true; draw(); }));
     body.querySelectorAll("[data-pnote]").forEach((b) => b.addEventListener("click", () => { openNote = openNote === b.dataset.pnote ? null : b.dataset.pnote; draw(); }));
@@ -750,7 +751,7 @@ function admRuleCard(host, key, back) {
         ed.querySelectorAll("[data-rfield]").forEach((inp) => inp.addEventListener("input", () => { val[inp.dataset.rfield] = inp.value === "" ? "" : Number(inp.value); }));
         return;
       }
-      ed.innerHTML = `<div class="rl-table-wrap"><table class="rl-table"><thead><tr><th></th>${r.cols.map((c) => `<th>${esc(c.label)}</th>`).join("")}<th></th></tr></thead><tbody>
+      ed.innerHTML = `${val.length > 1 ? arrangeBarHtml("rule:" + r.key) : ""}<div class="rl-table-wrap"><table class="rl-table"${arrangeHostAttr("rule:" + r.key)}><thead><tr><th></th>${r.cols.map((c) => `<th>${esc(c.label)}</th>`).join("")}<th></th></tr></thead><tbody>
         ${val.map((row, ri) => `<tr data-rrow="${ri}"><td class="rl-dragcell">${dsHandleHtml("data-rdrag")}</td>${r.cols.map((c) => `<td>${cell(c, row[c.key], ri, row)}</td>`).join("")}<td class="rl-rowbtns"><button type="button" data-rdel="${ri}" aria-label="delete">&#10005;</button></td></tr>`).join("")}
         </tbody></table></div><button type="button" class="btn ghost small" data-radd style="margin-top:8px;">+ Add row</button>`;
       ed.querySelectorAll("[data-rcell]").forEach((inp) => inp.addEventListener(inp.type === "checkbox" || inp.tagName === "SELECT" ? "change" : "input", () => {
@@ -760,7 +761,7 @@ function admRuleCard(host, key, back) {
         if (c.redraw) drawEditor();
       }));
       // Drag ⋮⋮ to change the order (saved with Save).
-      ed.querySelectorAll("[data-rdrag]").forEach((h) => dragSort(h, { row: "tr[data-rrow]", refocus: (tr, to) => ed.querySelectorAll("[data-rdrag]")[to]?.focus(), done: (tr, from, to) => { const [x] = val.splice(from, 1); val.splice(to, 0, x); if (r.cols.some((c) => c.type === "auto")) val.forEach((row, i) => { r.cols.filter((c) => c.type === "auto").forEach((c) => { row[c.key] = i + 1; }); }); drawEditor(); } }));
+      ed.querySelectorAll("[data-rdrag]").forEach((h) => dragSort(h, { row: "tr[data-rrow]", arrange: "rule:" + r.key, refocus: (tr, to) => ed.querySelectorAll("[data-rdrag]")[to]?.focus(), done: (tr, from, to) => { const [x] = val.splice(from, 1); val.splice(to, 0, x); if (r.cols.some((c) => c.type === "auto")) val.forEach((row, i) => { r.cols.filter((c) => c.type === "auto").forEach((c) => { row[c.key] = i + 1; }); }); drawEditor(); } }));
       ed.querySelectorAll("[data-rdel]").forEach((b) => b.addEventListener("click", () => { val.splice(+b.dataset.rdel, 1); r.cols.filter((c) => c.type === "auto").forEach((c) => val.forEach((row, i) => { row[c.key] = i + 1; })); drawEditor(); }));
       ed.querySelector("[data-radd]").addEventListener("click", () => {
         const row = {}; r.cols.forEach((c) => { const first = c.type === "select" ? ((typeof c.options === "function" ? c.options(row) : c.options) || [""])[0] : ""; row[c.key] = c.type === "auto" ? val.length + 1 : c.type === "check" ? false : c.type === "select" ? (Array.isArray(first) ? first[0] : first) : ""; });
@@ -1748,10 +1749,10 @@ async function renderAdminDashSources(body) {
   const draw = () => {
     body.innerHTML = `<p class="desc" style="margin:0 0 10px;">The Dashboard adds these up for each troop and stat (top numbers and the breakdown pop-up). Pages count from their own data; special-skill heroes by their stars. When the game adds a new kind of bonus, add it below as a simple bonus source and type its numbers: it counts on everyone's Dashboard.</p>
       <div class="rl-card"><div class="rl-h"><b>Sources, in breakdown order</b></div>
-        <div style="margin-top:6px;">${order.map((k) => `<div class="ds-row">${dsHandleHtml("data-dsdrag")}<span class="ds-n"><b>${esc(displaySourceName(k))}</b>${displaySourceName(k) !== k ? ` <span class="meta">(${esc(k)})</span>` : ""}<small>${esc(kindOf(k))}</small></span>
+        <div style="margin-top:6px;"${arrangeHostAttr("adm:dashsrc")}>${order.map((k) => `<div class="ds-row">${dsHandleHtml("data-dsdrag")}<span class="ds-n"><b>${esc(displaySourceName(k))}</b>${displaySourceName(k) !== k ? ` <span class="meta">(${esc(k)})</span>` : ""}<small>${esc(kindOf(k))}</small></span>
           <span class="rl-rowbtns">${extra.includes(k) ? `<button type="button" data-dsedit="${esc(k)}" title="Numbers" aria-label="numbers">&#9998;</button><button type="button" data-dsoff="${esc(k)}" title="Stop counting" aria-label="stop counting">&#10005;</button>` : ""}</span></div>
           ${open === k ? numbersHtml(k) : ""}`).join("")}</div>
-        <div class="rl-foot"><span class="meta" style="font-size:11.5px;">${esc(t("drag_order_hint"))}</span><span style="flex:1"></span><button type="button" class="btn ghost small" data-dsreset ${cfg.order.length ? "" : "disabled"}>Built-in order</button></div>
+        <div class="rl-foot">${arrangeBarHtml("adm:dashsrc", t("drag_order_hint"))}<span style="flex:1"></span><button type="button" class="btn ghost small" data-dsreset ${cfg.order.length ? "" : "disabled"}>Built-in order</button></div>
       </div>
       <div class="rl-card" style="margin-top:12px;"><div class="rl-h"><b>Add a simple bonus source</b></div>
         <p class="desc" style="margin:4px 0 8px;">A new bonus with fixed numbers per troop and stat (e.g. a new building or event buff). After adding it, tap &#9998; to type its numbers.</p>
@@ -1760,7 +1761,7 @@ async function renderAdminDashSources(body) {
       </div>`;
     // Drag ⋮⋮ to change the order; it saves by itself ("✓ Order saved").
     body.querySelectorAll("[data-dsdrag]").forEach((h) => dragSort(h, {
-      row: ".ds-row", place: () => {},
+      row: ".ds-row", place: () => {}, arrange: "adm:dashsrc",
       refocus: (r, to) => body.querySelectorAll("[data-dsdrag]")[to]?.focus(),
       done: async (r, from, to) => {
         const [x] = order.splice(from, 1); order.splice(to, 0, x); draw();
@@ -2529,14 +2530,33 @@ function adminReorderCellHtml(id) {
 // handle showing all the time (no "⇅ Sort" mode, no ▲▼); dragging it
 // (dragSort) moves the row, then onReorder gets the new id order and the
 // order saves by itself with a short "✓ Order saved" note.
+// Arrange key of an Admin list (per section and row kind).
+const admArrKey = (rowAttr) => `adm:${ADMIN_ACTIVE_TABLE || ""}:${rowAttr}`;
 function wireAdminReorder(container, rowAttr, onReorder) {
   const st = container.__reorder || (container.__reorder = { q: Promise.resolve() });
   const rowsOf = () => [...container.querySelectorAll(`[${rowAttr}]`)].filter((x) => !x.matches("[data-grip]"));
   const idOf = (tr) => tr.getAttribute(rowAttr);
+  // "⇅ Arrange": the list's box is its host (a template may have set it with
+  // its own button, e.g. admListHtml); otherwise the button goes above it.
+  const rows0 = rowsOf().filter((x) => x.querySelector("[data-grip]"));
+  let arrKey = null;
+  if (rows0.length) {
+    const par = rows0[0].parentElement;
+    const host = rows0[0].closest("[data-arrhost]") || (rows0.every((x) => x.parentElement === par) ? (par.tagName === "TBODY" ? par.closest("table") : par) : container);
+    arrKey = host.dataset.arrhost || admArrKey(rowAttr);
+    if (!host.dataset.arrhost) arrangeHost(host, arrKey);
+    if (rows0.length > 1 && !container.querySelector(`[data-arrbtn="${window.CSS.escape(arrKey)}"]`)) {
+      const box = host.closest(".adm-scroll");
+      const tmp = document.createElement("div");
+      tmp.innerHTML = arrangeBarHtml(arrKey, "", "adm-arr");
+      if (box && container.contains(box)) box.prepend(tmp.firstChild); else host.before(tmp.firstChild);
+    }
+  }
   // Safe to call again after rows are added: already-wired handles are skipped.
   [...container.querySelectorAll("[data-grip]")].filter((el) => !el.dataset.rw && (el.dataset.rw = "1")).forEach((g) => dragSort(g, {
     item: (h) => h.closest(`[${rowAttr}]`),
     items: () => rowsOf(),
+    arrange: arrKey || admArrKey(rowAttr),
     refocus: (tr) => { const g2 = tr.querySelector("[data-grip]"); if (g2) g2.focus(); },
     done: () => {
       if (!onReorder) return null;
@@ -2771,7 +2791,7 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
     pl.addEventListener("click", (e) => {
       const r = e.target.closest("[data-plrow]");
       if (r) { openRow(rows()[+r.dataset.plrow]); return; }
-      if (e.target.closest("[data-plreorder]")) { st.tbl = !st.tbl; apply(); draw(); return; }
+      if (e.target.closest("[data-plreorder]")) { st.tbl = !st.tbl; wrap.querySelectorAll("[data-arrhost]").forEach((h) => arrangeSet(h.dataset.arrhost, st.tbl)); apply(); draw(); return; }
       const c = e.target.closest("[data-plchip]");
       if (c) {
         const [a, n] = c.dataset.plchip.split("|").map(Number), gs = (pl.__groups || []).slice(a, a + n);
@@ -3245,8 +3265,8 @@ async function renderAdminVip(body) {
 // ⋮⋮ handle on every row, always showing: drag it to move (wireAdminReorder).
 function admListHtml(items, o) {
   return `<div class="admc-bar"><span class="admc-t">${esc(o.title || "")}${o.count !== false ? ` <span class="meta">(${items.length})</span>` : ""}</span>${o.add !== false ? `<button type="button" class="btn small admc-add" data-admcadd>+ Add</button>` : ""}</div>
-    ${o.sortable && items.length > 1 ? `<div class="admc-hint meta">${DS_HANDLE} ${esc(t("admc_sort_hint"))}</div>` : ""}
-    <div class="admc-list">${items.map((r) => `<div class="admc-row" ${o.attr}="${esc(String(r.id))}">
+    ${o.sortable && items.length > 1 ? arrangeBarHtml(admArrKey(o.attr), t("admc_sort_hint"), "admc-hint") : ""}
+    <div class="admc-list"${o.sortable ? arrangeHostAttr(admArrKey(o.attr)) : ""}>${items.map((r) => `<div class="admc-row" ${o.attr}="${esc(String(r.id))}">
       <button type="button" class="admc-open" data-admcedit="${esc(String(r.id))}" aria-label="${esc(t("admc_edit").replace("{name}", o.name(r) || ""))}"><span class="admc-pic">${o.img && o.img(r) ? `<img src="${esc(o.img(r))}" alt="" loading="lazy" />` : `<i>${esc(String(o.name(r) || "?").charAt(0))}</i>`}</span>
       <span class="admc-txt"><b>${esc(o.name(r) || "—")}</b>${o.sub && o.sub(r) ? `<small>${esc(o.sub(r))}</small>` : ""}</span></button>
       ${o.sortable ? dsHandleHtml(`data-grip="${esc(String(r.id))}"`) : ""}</div>`).join("") || `<div class="meta" style="padding:8px;">Nothing here yet.</div>`}</div>`;
@@ -4061,8 +4081,16 @@ function wireAdminCategoryReorder(container, page, cats, onChange) {
     if (ok) dsSaved();
     onChange();
   };
+  const arrKey = "adm:cats:" + page;
+  container.querySelectorAll(".admc-cats").forEach((box) => {
+    const row = box.querySelector(".adm-chips-row");
+    if (!row || row.querySelectorAll("[data-catid]").length < 2) return;
+    arrangeHost(row, arrKey);
+    const menu = box.querySelector(".admc-catmenu");
+    if (menu && !box.querySelector("[data-arrbtn]")) menu.insertAdjacentHTML("beforebegin", arrangeBtnHtml(arrKey));
+  });
   container.querySelectorAll(".admc-cats [data-catid]").forEach((chip) => dragSort(chip, {
-    hold: true, axis: "x", item: (h) => h, row: "[data-catid]",
+    hold: true, axis: "x", item: (h) => h, row: "[data-catid]", arrange: arrKey,
     done: (r, from, to) => move(from, to),
     refocus: (r) => { const c = container.querySelector(`.admc-cats [data-catid="${window.CSS.escape(r.dataset.catid)}"]`); if (c) c.focus(); },
   }));

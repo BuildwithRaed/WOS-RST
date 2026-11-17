@@ -414,8 +414,36 @@ function dsHandleHtml(attrs = "", label = "") {
   const l = esc(label || t("drag_to_move"));
   return `<span class="ds-h" role="button" tabindex="0" ${attrs} aria-label="${l}" title="${l}">${DS_HANDLE}</span>`;
 }
+// "⇅ Arrange" (owner, 17 Nov 2026: drag kept starting while scrolling): every
+// sortable list is still until its Arrange button is on. One switch per list
+// key, kept for the visit. A list's box carries arrangeHostAttr(key) (its ⋮⋮
+// handles are hidden while off, CSS) and dragSort(h, { arrange: key }) does
+// nothing while it is off (touch, mouse, hold and ↑ / ↓ alike). Packs keep
+// their own Arrange modes (no key).
+const ARRANGE_ON = new Set();
+const arrangeOn = (key) => ARRANGE_ON.has(key);
+function arrangeHostAttr(key) { return ` data-arrhost="${esc(key)}"${arrangeOn(key) ? " data-arron" : ""}`; }
+function arrangeHost(el, key) { if (!el) return; el.setAttribute("data-arrhost", key); el.toggleAttribute("data-arron", arrangeOn(key)); }
+function arrangeBtnInner(on) { return on ? `&#10003; ${esc(t("pkb_arrange_done"))}` : `&#8645; ${esc(t("pkb_arrange"))}`; }
+function arrangeBtnHtml(key) { const on = arrangeOn(key); return `<button type="button" class="arr-btn${on ? " on" : ""}" data-arrbtn="${esc(key)}" aria-pressed="${on}">${arrangeBtnInner(on)}</button>`; }
+// The button with a short hint beside it (shown only while arranging).
+function arrangeBarHtml(key, hint = t("pkb_arrange_hint"), cls = "") { return `<div class="arr-bar${cls ? " " + cls : ""}"${arrangeOn(key) ? " data-arron" : ""}>${arrangeBtnHtml(key)}${hint ? `<span class="arr-hint">${esc(hint)}</span>` : ""}</div>`; }
+function arrangeSet(key, on) {
+  if (on) ARRANGE_ON.add(key); else ARRANGE_ON.delete(key);
+  document.querySelectorAll("[data-arrhost]").forEach((el) => { if (el.dataset.arrhost === key) el.toggleAttribute("data-arron", on); });
+  document.querySelectorAll("[data-arrbtn]").forEach((b) => {
+    if (b.dataset.arrbtn !== key) return;
+    b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); b.innerHTML = arrangeBtnInner(on);
+    const bar = b.closest(".arr-bar"); if (bar) bar.toggleAttribute("data-arron", on);
+  });
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest("[data-arrbtn]");
+  if (b) arrangeSet(b.dataset.arrbtn, !arrangeOn(b.dataset.arrbtn));
+}, true);
 function dragSort(h, o) {
   if (!h) return;
+  const still = () => o.arrange != null && !arrangeOn(o.arrange);
   const X = o.axis === "x";
   // o.grid: items wrap in rows (cards two a row): the row moves both ways and
   // the line stands at the side of the card it lands before.
@@ -434,6 +462,7 @@ function dragSort(h, o) {
   };
   if (!o.hold) h.classList.add("ds-h");
   h.onkeydown = (e) => {
+    if (still()) return;
     const back = X ? (document.documentElement.dir === "rtl" ? "ArrowRight" : "ArrowLeft") : "ArrowUp";
     const fwd = X ? (document.documentElement.dir === "rtl" ? "ArrowLeft" : "ArrowRight") : "ArrowDown";
     const gb = G && e.key === (document.documentElement.dir === "rtl" ? "ArrowRight" : "ArrowLeft"), gf = G && e.key === (document.documentElement.dir === "rtl" ? "ArrowLeft" : "ArrowRight");
@@ -449,7 +478,7 @@ function dragSort(h, o) {
   // once it moves 6 px, a finger after holding still for 350 ms (moving
   // sooner scrolls as usual); a plain tap stays a tap.
   h.onpointerdown = (e) => {
-    if (e.button > 0) return;
+    if (e.button > 0 || still()) return;
     if (!o.hold) { e.preventDefault(); start(e, e); return; }
     const x0 = e.clientX, y0 = e.clientY, mouse = e.pointerType === "mouse";
     let timer = 0, last = e;
@@ -473,7 +502,7 @@ function dragSort(h, o) {
     document.addEventListener("pointercancel", off);
     if (!mouse) timer = setTimeout(go, 350);
   };
-  if (o.hold) h.addEventListener("contextmenu", (ev) => { if (h.classList.contains("ds-lift") || ev.pointerType !== "mouse") ev.preventDefault(); });
+  if (o.hold) h.addEventListener("contextmenu", (ev) => { if (still()) return; if (h.classList.contains("ds-lift") || ev.pointerType !== "mouse") ev.preventDefault(); });
   function start(e, now) {
     const row = rowOf(); if (!row) return false;
     const list = listOf(row), from = list.indexOf(row);
@@ -4778,8 +4807,8 @@ async function openQuickSheet(after) {
     modal.innerHTML = `<div class="modal-box qk-box">
       <div class="bd-head"><h2>${esc(t("qk_edit"))}</h2><button type="button" class="btn small" data-qkdone>${esc(t("qk_done"))}</button></div>
       <div class="meta" style="font-size:11.5px;">${esc(t("qk_hint"))}</div>
-      <div class="qk-k">${esc(t("qk_pinned"))} (${pins.length})</div>
-      <div class="qk-list">${pins.length ? pins.map((tb) => row(tb, true)).join("") : `<div class="meta" style="font-size:12px; padding:8px;">${esc(t("qk_none"))}</div>`}</div>
+      <div class="qk-k${pins.length > 1 ? " arr-row" : ""}"><span>${esc(t("qk_pinned"))} (${pins.length})</span>${pins.length > 1 ? arrangeBtnHtml("quick") : ""}</div>
+      <div class="qk-list"${arrangeHostAttr("quick")}>${pins.length ? pins.map((tb) => row(tb, true)).join("") : `<div class="meta" style="font-size:12px; padding:8px;">${esc(t("qk_none"))}</div>`}</div>
       ${groups.map((g) => `<div class="qk-k">${esc(g.name)}</div><div class="qk-list">${g.tabs.map((tb) => row(tb)).join("")}</div>`).join("")}
     </div>`;
     modal.querySelector("[data-qkdone]").addEventListener("click", done);
@@ -4792,7 +4821,7 @@ async function openQuickSheet(after) {
     }));
     // Drag ⋮⋮ to change the order (saved with Done, like the stars).
     modal.querySelectorAll("[data-qkdrag]").forEach((h) => dragSort(h, {
-      row: "[data-qkrow]",
+      row: "[data-qkrow]", arrange: "quick",
       done: () => { pins = [...modal.querySelectorAll("[data-qkrow]")].map((x) => x.dataset.qkrow); },
     }));
   };
@@ -7729,12 +7758,12 @@ function cdaOrderSheet() {
   const draw = () => {
     m.innerHTML = `<div class="modal-box adm-sheet cando-box" role="dialog" aria-modal="true" aria-label="${esc(t("cando_order"))}">
       <div class="cando-hd"><b>${esc(t("cando_order"))}</b>${closeXHtml("data-cdx")}</div>
-      <div class="cando-oh"><span class="meta cando-desc">${esc(t("cando_drag_hint"))}</span><button type="button" class="btn ghost small" data-cdreset>${esc(t("rch_order_reset"))}</button></div>
-      <div class="cando-ord">${UPGRADE_ORDER.rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-cdrow="${i}" data-cdkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>${dsHandleHtml("data-cddrag")}</div>`).join("")}</div>
+      <div class="cando-oh"><span class="meta cando-desc">${esc(t("cando_drag_hint"))}</span><span class="cando-ob">${arrangeBtnHtml("upgrade_order")}<button type="button" class="btn ghost small" data-cdreset>${esc(t("rch_order_reset"))}</button></span></div>
+      <div class="cando-ord"${arrangeHostAttr("upgrade_order")}>${UPGRADE_ORDER.rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-cdrow="${i}" data-cdkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>${dsHandleHtml("data-cddrag")}</div>`).join("")}</div>
       <div class="cando-foot"><button type="button" class="btn cando-done" data-cdx>${esc(t("gs_done"))}</button></div>
     </div>`;
     m.querySelectorAll("[data-cddrag]").forEach((h) => dragSort(h, {
-      row: "[data-cdrow]",
+      row: "[data-cdrow]", arrange: "upgrade_order",
       done: () => { const old = UPGRADE_ORDER.rows; UPGRADE_ORDER.rows = [...m.querySelectorAll("[data-cdrow]")].map((x) => old[Number(x.dataset.cdrow)]); changed(); },
       refocus: (row) => { const r2 = [...m.querySelectorAll("[data-cdkey]")].find((x) => x.dataset.cdkey === row.dataset.cdkey), hh = r2 && r2.querySelector("[data-cddrag]"); if (hh) hh.focus(); },
     }));
@@ -23053,7 +23082,7 @@ function wireBudgetGoals(box) {
   // Drag a row by its ⋮⋮ handle (dragSort): the only way to move a goal
   // ↑ / ↓ on the focused handle move it too.
   box.querySelectorAll("[data-goaldrag]").forEach((h) => dragSort(h, {
-    row: "[data-goal]",
+    row: "[data-goal]", arrange: "goals",
     done: () => saveOrder(ids()),
     refocus: (li) => { const gid = li.dataset.goal, row = [...content.querySelectorAll("[data-goal]")].find((x) => x.dataset.goal === gid), nh = row && row.querySelector("[data-goaldrag]"); if (nh) nh.focus(); },
   }));
@@ -23644,7 +23673,7 @@ async function renderBudgetsPage(opts = {}) {
       : `<div class="bud-g-sum">${esc(t("goal_same_path").replace("{v}", money(total)).replace("{date}", fmtDate(plan.days || 0)))}</div>`;
     const goalsCard = `<div class="t12x-card bud-goals" style="margin-top:12px;">
       <button type="button" class="bud-g-head" data-goalsfold aria-expanded="${BUDGET_GOALS_OPEN}"><span class="t12x-title" style="margin:0;">${esc(t("goals_title"))}</span>${adminOnlyTagOn("goals") ? `<span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span>` : ""}<span class="bud-g-arrow">${BUDGET_GOALS_OPEN ? "&#9662;" : "&#9656;"}</span></button>
-      ${BUDGET_GOALS_OPEN ? `${nGoals ? `<ol class="bud-g-list">${goals.map(rowHtml).join("")}</ol>` : `<div class="meta gu-empty">${esc(t("gu_empty"))}</div>`}
+      ${BUDGET_GOALS_OPEN ? `${nGoals ? `${goals.filter((g) => !g.rest).length > 1 ? arrangeBarHtml("goals", "", "bud-g-arr") : ""}<ol class="bud-g-list"${arrangeHostAttr("goals")}>${goals.map(rowHtml).join("")}</ol>` : `<div class="meta gu-empty">${esc(t("gu_empty"))}</div>`}
       ${restHtml()}
       ${addHtml()}
       ${heroEdHtml()}`
@@ -32386,7 +32415,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=a4395dc668";
+      s.src = "admin.min.js?v=7b5328ac82";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }

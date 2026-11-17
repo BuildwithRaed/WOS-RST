@@ -1940,6 +1940,20 @@ input,select,textarea{
   .ds-h:hover{ color:var(--ice); }
   .ds-h:focus-visible{ outline:2px solid var(--ice); outline-offset:-2px; }
   .ds-lift{ position:relative; z-index:40; box-shadow:0 10px 26px rgba(0,0,0,.5), 0 0 0 2px var(--ice); background:var(--panel-2); transition:none; }
+  [data-arrhost]:not([data-arron]) .ds-h:not([data-arron] .ds-h), [data-arrhost]:not([data-arron]) [data-goaldrag]:not([data-arron] [data-goaldrag]){ display:none !important; }
+  .rl-table[data-arrhost]:not([data-arron]) tr > :first-child{ display:none; }
+  [data-arron] > .admc-catchip{ border-style:dashed; cursor:grab; }
+  .arr-bar{ display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin:0 0 8px; }
+  .arr-bar.adm-arr{ position:sticky; inset-inline-start:0; }
+  .arr-hint{ font-size:12px; color:var(--muted); }
+  .arr-bar:not([data-arron]) .arr-hint{ display:none; }
+  .arr-btn{ box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; gap:5px; height:30px; min-height:30px; margin:0; padding:0 11px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12.5px; font-weight:700; line-height:1; white-space:nowrap; cursor:pointer; flex:none; }
+  .arr-btn.on{ border-color:var(--ice); background:rgba(111,211,242,.10); color:var(--ice); }
+  .arr-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .qk-k.arr-row .arr-btn{ text-transform:none; letter-spacing:0; }
+  .cando-ob{ display:inline-flex; align-items:center; gap:6px; flex:none; }
+  .rl-foot .arr-bar{ margin:0; }
+  @media (max-width: 900px){ .arr-btn{ height:40px; min-height:40px; padding:0 13px; } }
   .ds-lift .ds-h{ cursor:grabbing; color:var(--ice); background:rgba(111,211,242,.1); }
   .ds-on, .ds-on *{ cursor:grabbing !important; user-select:none !important; -webkit-user-select:none !important; }
   .ds-line{ position:fixed; z-index:2000; height:3px; border-radius:3px; background:var(--ice); box-shadow:0 0 0 1px rgba(15,20,27,.6); pointer-events:none; }
