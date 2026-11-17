@@ -14191,10 +14191,13 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     const star = Math.min(5, Math.floor(v)), sub = Math.min(6, Math.round((v - star) * 10));
     const step = Math.min(30, star * 6 + sub);
     const tStep = T.later ? step : Math.max(step, Math.min(30, T.stars != null ? Number(T.stars) * 6 : 30));
-    let need = 0;
+    // A hero not unlocked yet (not in the roster, no saved stars) takes HERO_UNLOCK_SHARDS
+    // shards before its first star step (owner, 17 Nov 2026: 10 + 1,065 = 1,075 to 5★).
+    const unlock = !inRoster && !phBy[hero.id] && !T.later ? HERO_UNLOCK_SHARDS : 0;
+    let need = unlock;
     const cum = {}; // shards from now to each whole star (mini targets)
     for (let k = step + 1; k <= tStep; k++) { need += heroShardStepCost(costByGen, hero.generation, k); if (k % 6 === 0) cum[k / 6] = need; }
-    let next = 0;
+    let next = unlock;
     const nextStep = step >= 30 ? 30 : (Math.floor(step / 6) + 1) * 6;
     for (let k = step + 1; k <= nextStep; k++) next += heroShardStepCost(costByGen, hero.generation, k);
     const own = Number((bp || {})[`${hero.name} Shards`]) || 0;
@@ -14203,8 +14206,8 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     pool[rarity] = (pool[rarity] || 0) - fromGeneral;
     const have = own + fromGeneral;
     // How far the shards you have would take this hero.
-    let reach = step, left = have;
-    while (reach < 30 && left >= heroShardStepCost(costByGen, hero.generation, reach + 1)) { left -= heroShardStepCost(costByGen, hero.generation, reach + 1); reach++; }
+    let reach = step, left = have - unlock;
+    while (left >= 0 && reach < 30 && left >= heroShardStepCost(costByGen, hero.generation, reach + 1)) { left -= heroShardStepCost(costByGen, hero.generation, reach + 1); reach++; }
     // Widgets (mythic heroes): from the roster's widget level to 10.
     const e = inRoster ? (roster || {})[troop] : null;
     const wLevel = e && typeof e === "object" ? Math.max(0, Math.min(widgetMaxLevel(), Number(e.widget) || 0)) : Math.max(0, Math.min(widgetMaxLevel(), Number(T.wNow) || 0));
@@ -14221,12 +14224,14 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     const wShort = Math.max(0, wNeed - wOwn);
     let wReach = wLevel, wLeft = wOwn;
     while (hasWidget && wReach < widgetMaxLevel() && wLeft >= WIDGET_LEVEL_COST[wReach + 1]) { wLeft -= WIDGET_LEVEL_COST[wReach + 1]; wReach++; }
-    return { troop, inRoster, tStep, tW, hero, step, need, cum, next, own, fromGeneral, short: Math.max(0, need - have), reach, rarity, hasWidget, wLevel, wNeed, wOwn, wMine, gKey, wShort, wReach, wCost: widgetCostFor(wShort) };
+    return { troop, inRoster, tStep, tW, hero, step, unlock, need, cum, next, own, fromGeneral, short: Math.max(0, need - have), reach, rarity, hasWidget, wLevel, wNeed, wOwn, wMine, gKey, wShort, wReach, wCost: widgetCostFor(wShort) };
   }).filter(Boolean);
   return { rows, general, generalLeft: pool, notOut };
 }
 // Widgets for each Exclusive Gear (widget) level 1..10: 5, 10 ... 50 (275 in all).
 // Assumed from community tables; widgets cost $4.99 for 5.
+// Shards to unlock (recruit) a hero before its first star step.
+const HERO_UNLOCK_SHARDS = 10;
 const WIDGET_LEVEL_COST = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 const WIDGET_PACK = { count: 5, price: 4.99 };
 // Top widget level = the Rules "Widgets per widget level" table's length (10 built in).
