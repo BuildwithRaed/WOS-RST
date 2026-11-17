@@ -3085,6 +3085,8 @@ const T = {
   pkb_free: { en: "Free" },
   pkb_show_more: { en: "Show {n} more" },
   pkb_arrange: { en: "Arrange" },
+  rv_adv: { en: "Advanced (page structure)" },
+  rv_adv_warn: { en: "These set how the research pages are built. A wrong edit can break those pages." },
   pkb_arrange_done: { en: "Done" },
   pkb_arrange_reset: { en: "Reset to A–Z" },
   pkb_arrange_hint: { en: "Hold ⋮⋮ and drag" },
@@ -32415,7 +32417,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=7b5328ac82";
+      s.src = "admin.min.js?v=e56c20d72e";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }

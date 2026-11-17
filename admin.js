@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "7b5328ac82";
+window.ADMIN_BUILD = "e56c20d72e";
 
 // ============================================================
 // ADMIN PAGE
@@ -678,7 +678,8 @@ const ADMIN_RULE_HOME = {
   vip: { groups: [["", ["vipShards"]]] },
   experts: { groups: [["", ["affinity"]]] },
   pets: { groups: [["", ["advancedMark"]]] },
-  centerresearch: { groups: [["T12", ["t12Tree"]], ["Research Center", ["rcTracks", "rcTiers"]], ["Unlock rules", ["researchLocks"]], ["Research Lab", ["rfcLab"]]] },
+  // adv: inside the folded "Advanced (page structure)" heading (owner, 17 Nov 2026).
+  centerresearch: { groups: [["T12", ["t12Tree"], "adv"], ["Research Center", ["rcTracks", "rcTiers"], "adv"], ["Unlock rules", ["researchLocks"]], ["Research Lab", ["rfcLab"]]] },
   skins: { groups: [["Skin Gallery", ["galleryBig", "globeLevels"]], ["Islands", ["islCopies", "islTree", "islShop", "islCamp", "islLighthouse", "islLightUnlock"]]] },
   packres: { groups: [["", ["gems"]]] },
   items: { groups: [["", ["trades", "bundles", "resChests"]]] },
@@ -820,12 +821,18 @@ async function admRulesPanel(p, sec) {
   const subLabel = sec === "skins" ? ({ skingallery: "Skin Gallery", islands: "Islands" })[ADMIN_ACTIVE_SKINS_SUBTAB] : sec === "centerresearch" ? (ADMIN_ACTIVE_RESEARCH === "T12" ? "T12" : /Research Center/i.test(ADMIN_ACTIVE_RESEARCH || "") ? "Research Center" : "") : "";
   const groups = home.groups.slice().sort((a, b) => (b[0] === subLabel) - (a[0] === subLabel));
   const n = admRuleKeysOf(sec).length;
+  const grpHtml = ([g, keys]) => `${g ? `<div class="adm-gk">${esc(g)}</div>` : ""}${admRuleRowsHtml(keys.map(byKey).filter(Boolean))}`;
+  const adv = groups.filter((g) => g[2] === "adv");
   p.innerHTML = `<div class="rv-hd"><b>&#9881; ${esc(t("rv_sec_rules").replace("{name}", ADMIN_TABLES[sec].label))}</b> <span class="meta">${n}</span></div>
-    ${groups.map(([g, keys]) => `${g ? `<div class="adm-gk">${esc(g)}</div>` : ""}${admRuleRowsHtml(keys.map(byKey).filter(Boolean))}`).join("")}
+    ${groups.filter((g) => g[2] !== "adv").map(grpHtml).join("")}
+    ${adv.length ? `<details class="rv-adv"${ADM_RULE_ADV_OPEN ? " open" : ""}><summary>${esc(t("rv_adv"))}</summary><p class="rv-warn">&#9888; ${esc(t("rv_adv_warn"))}</p>${adv.map(grpHtml).join("")}</details>` : ""}
     ${home.links ? `<div class="adm-gk">${esc(t("rv_also"))}</div>${admRuleRowsHtml(home.links.map(byKey).filter(Boolean), (r) => ({ link: admRuleSecName(admRuleSection(r.key)) }))}` : ""}
     <p class="meta rv-note">${esc(t("rv_note"))}</p>`;
   admWireRuleRows(p);
+  const fold = p.querySelector("details.rv-adv");
+  if (fold) fold.addEventListener("toggle", () => { ADM_RULE_ADV_OPEN = fold.open; });
 }
+let ADM_RULE_ADV_OPEN = false; // the Advanced fold (kept for the visit, starts closed)
 // Puts the "⚙ Rules N" chip at the end of the section's own chip row (or a small row of its own),
 // and while the rules view is on shows only that row + the rules panel.
 function admRulesSync(body) {

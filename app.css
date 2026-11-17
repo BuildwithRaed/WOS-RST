@@ -1943,6 +1943,10 @@ input,select,textarea{
   [data-arrhost]:not([data-arron]) .ds-h:not([data-arron] .ds-h), [data-arrhost]:not([data-arron]) [data-goaldrag]:not([data-arron] [data-goaldrag]){ display:none !important; }
   .rl-table[data-arrhost]:not([data-arron]) tr > :first-child{ display:none; }
   [data-arron] > .admc-catchip{ border-style:dashed; cursor:grab; }
+  .rv-adv{ margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:0 10px; }
+  .rv-adv > summary{ cursor:pointer; padding:10px 0; font-weight:700; color:var(--frost); }
+  .rv-adv[open]{ padding-bottom:10px; }
+  .rv-warn{ margin:0 0 6px; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,190,90,.45); background:rgba(255,190,90,.10); color:var(--amber); font-size:12.5px; line-height:1.35; }
   .arr-bar{ display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin:0 0 8px; }
   .arr-bar.adm-arr{ position:sticky; inset-inline-start:0; }
   .arr-hint{ font-size:12px; color:var(--muted); }
