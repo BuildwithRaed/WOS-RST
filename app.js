@@ -12111,7 +12111,9 @@ async function renderPacksPage() {
     const fixed = ci === link.priceCol || (packIsNonResourceColumn(cur) && cur.toLowerCase() !== "gems");
     if (fixed) return `<div class="pk-hd">${packColumnControlHtml(tb, ci)}</div>`;
     const name = pkColItem(tb, ci), label = materialDisplayName(name) || name, tm = pkSpeedTime(name);
-    const face = pkIconHtml(name) || `<b>${esc(String(label || "?").slice(0, 3))}</b>`;
+    // A hero's own shards / widgets: the hero's face in the corner (two heroes' shards look alike).
+    const hm = /^(.+) (Shards|Widgets)$/.exec(String(name)), hImg = hm && HERO_IMG_BY_NAME[hm[1]];
+    const face = (pkIconHtml(name) || `<b>${esc(String(label || "?").slice(0, 3))}</b>`) + (hImg ? `<img class="pk-hface" src="${esc(hImg)}" alt="" loading="lazy" />` : "");
     if (cur.toLowerCase() === "gems") {
       return `<div class="pk-hd"><span class="pk-hdi" title="${esc(label)}">${face}${IS_OWNER ? `<button type="button" class="pk-hdx" data-pt-gemsdel data-col="${ci}" title="${esc(t("pack_remove_column"))}">&times;</button>` : ""}</span></div>`;
     }
@@ -14230,6 +14232,16 @@ async function renderPacksPage() {
   pkbDpSub();
   renderAll();
   pkbReady = true;
+  // Tables with a hero's own shards column (VIP Special Packs …): the heroes'
+  // pictures for those columns; drawn again once they're known.
+  const heroCol = /^(.+) (shards|widgets)$/i;
+  if (tables.some((tb) => Object.values(packEffectiveCols(tb)).some((c) => heroCol.test(String(c)) && !/general hero/i.test(String(c)) && !HERO_IMG_BY_NAME[heroCol.exec(String(c))[1]]))) {
+    ngHeroRows().then((heroes) => {
+      const before = Object.keys(HERO_IMG_BY_NAME).length;
+      noteHeroImages(heroes);
+      if (seq === RENDER_SEQ && listEl.isConnected && Object.keys(HERO_IMG_BY_NAME).length !== before) renderAll();
+    }).catch(() => {});
+  }
   // The New Gen hero copies of the pattern tables, under their rows.
   ngHeroTables(tables).then((copies) => {
     if (seq !== RENDER_SEQ || !listEl.isConnected) return;
@@ -14461,7 +14473,7 @@ const BP_HERO_CURRENCIES = ["Marks of Valor", "Mystery Points"];
 // Islands: Life Essence, Mythic Island Shards, the Mark of Revival Shop's currency and the Storehouse's
 // General Accessory Construction Contracts (scrolls for the Lighthouse), always in the Backpack.
 const BP_ISLAND_ITEMS = ["Life Essence", "Mythic Island Shards", "General Accessory Construction Contract", "Mark of Revival", "Glorious Tome", "Lucky Glorious Tome Chest"];
-const BP_EXTRA_ICONS = { "Life Essence": "icons/life-essence.png", "Mythic Island Shards": "icons/island-shard.png", "General Accessory Construction Contract": "icons/construction-contract.png", "Mark of Revival": "icons/mark-of-revival.png", "Glorious Tome": "icons/glorious-tome.png", "Lucky Glorious Tome Chest": "icons/lucky-glorious-tome-chest.png", "Marks of Valor": "icons/hall-marks.png", "Mystery Points": "icons/mystery-pts.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/mythic-hero-lucky-box.png" };
+const BP_EXTRA_ICONS = { "Life Essence": "icons/life-essence.png", "Mythic Island Shards": "icons/island-shard.png", "General Accessory Construction Contract": "icons/construction-contract.png", "Mark of Revival": "icons/mark-of-revival.png", "Glorious Tome": "icons/glorious-tome.png", "Lucky Glorious Tome Chest": "icons/lucky-glorious-tome-chest.png", "Marks of Valor": "icons/hall-marks.png", "Mystery Points": "icons/mystery-pts.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/mythic-hero-lucky-box.png", "Hero XP": "icons/hero-xp.png" };
 function bpIcon(item) {
   if (item.icon) return item.icon;
   const name = item.name;
@@ -15669,7 +15681,7 @@ const PACK_RESOURCE_NAMES = [
   "Food", "Manual", "Potion", "Serum",
   "Books of Knowledge", "Affinity", "Sail of Conquest", "Fiery Heart", "Compass", "General Sigils", "Speedups (minutes)",
   "Speedup 1m", "Speedup 3m", "Speedup 5m", "Speedup 1h", "Speedup 3h", "Speedup 8h",
-  "XP 10", "XP 100",
+  "XP 10", "XP 100", "Hero XP",
   "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest",
   "Fire Crystal", "FC Chest", "FC Crate", "Pet Chest", "Common Marks", "Advanced Marks", "Gems",
   "Mythic General Hero Shard", "Epic General Hero Shard", "Rare General Hero Shard", "Mythic General Hero Lucky Box",
@@ -15786,11 +15798,18 @@ function packAllResourceNames() {
 // localeCompare with the same locale/options.
 const PACK_RESOURCE_COLLATOR = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 let PACK_RESOURCE_SORTED = { key: null, list: [] };
+// Each hero's own shards ("<hero> Shards") as pack items: the VIP pack heroes
+// and every hero known so far (the heroes table, once read). Only in the
+// column lists and the name match, not in the Pack Resources list.
+function packHeroShardNames() {
+  const heroes = [...new Set([...VIP_PACK_HEROES, ...Object.keys(HERO_IMG_BY_NAME)])].sort();
+  return heroes.map((h) => `${h} Shards`);
+}
 function packResourceChoices(current) {
   const cfg = packResourceConfig();
   const hiddenLower = new Set([...cfg.hidden, ...cfg.removed].map((n) => String(n).toLowerCase()));
   const cur = current ? String(current).toLowerCase() : "";
-  const names = packAllResourceNames();
+  const names = packAllResourceNames().concat(packHeroShardNames());
   const key = `${LANG}\u0001${cfg.order.join("\u0002")}\u0001${names.join("\u0002")}`;
   if (PACK_RESOURCE_SORTED.key !== key) {
     const orderOf = new Map();
@@ -15846,7 +15865,8 @@ function packResourceByName(name) {
   if (!raw || packIsNonResourceColumn(raw)) return "";
   const lower = raw.toLowerCase();
   if (PACK_RESOURCE_ALIASES[lower]) return PACK_RESOURCE_ALIASES[lower];
-  return packAllResourceNames().find((r) => r.toLowerCase() === lower || materialDisplayName(r).toLowerCase() === lower) || "";
+  return packAllResourceNames().find((r) => r.toLowerCase() === lower || materialDisplayName(r).toLowerCase() === lower)
+    || packHeroShardNames().find((r) => r.toLowerCase() === lower) || "";
 }
 // What each column actually grants: worked out from the column names, with
 // any manual choice from the "Used for" box taking precedence.
@@ -16484,61 +16504,47 @@ async function ngHeroTables(baseTables) {
   });
   return out;
 }
-// ---- VIP Special Packs (built here, not in the pack tables) ----
-// One pack per VIP level (owner, 17 Nov 2026, from the game): bought once,
-// as soon as you reach that VIP level. They are the only way to unlock and
-// star up Natalia (VIP 1-6) and Jeronimo (VIP 7-12): [VIP level, price, hero,
-// that hero's shards, Hero XP bottles of 10K]. Each also gives 1 Research,
-// 1 Troop and 1 Construction Speedup of N hours (counted in minutes) and the
-// usual 500 gems a dollar; the gold item isn't counted. Only levels up to the
-// tier picked on the VIP page (calc_state "vip_tier") are offered; with no
-// tier picked none are. Used only by Budgets' "Hero shards & widgets".
-// Also the game's "Reward for first purchase" (any pack bought once; the
-// cheapest pack, a Daily Deals row, is $0.99), open to everyone (VIP 0). Two
-// purchases in order: the first unlocks Natalia (counted as her 10 unlock
-// shards) with 10 Hero XP bottles, a second one (the next day or later) gives
-// 10 of her shards; the keys, gems and books aren't counted.
-const VIP_FIRST_BUY = { hero: "Natalia", steps: [[0.99, 10, 10], [0.99, 10, 0]] };
-const VIP_PACK_ROWS = [
-  [1, 4.99, "Natalia", 20, 10], [2, 9.99, "Natalia", 40, 20], [3, 19.99, "Natalia", 80, 30],
-  [4, 49.99, "Natalia", 180, 60], [5, 99.99, "Natalia", 360, 100], [6, 99.99, "Natalia", 375, 100],
-  [7, 19.99, "Jeronimo", 75, 30], [8, 49.99, "Jeronimo", 150, 60], [9, 49.99, "Jeronimo", 150, 60],
-  [10, 49.99, "Jeronimo", 150, 100], [11, 99.99, "Jeronimo", 280, 100], [12, 99.99, "Jeronimo", 300, 100],
-];
+// ---- VIP Special Packs and the First Purchase Reward (real pack tables) ----
+// Two tables on the Packs page, group "Heroes packs" (owner, 17 Nov 2026, from
+// the game; rows in pack_tables, settings in the owner's packs_links like any
+// pack, so the owner edits them there):
+//  - "VIP Special Packs": one row per VIP level 1-12, each bought once, as soon
+//    as you reach that level. Its packs_links entry has `vipRows` = the VIP
+//    level of each row ([1, 2, ... 12]): rows above the tier picked on the VIP
+//    page (calc_state "vip_tier") aren't offered (packOffersFor); with no tier
+//    picked none are. VIP 1-6 give Natalia's shards, 7-12 Jeronimo's.
+//  - "First Purchase Reward": the game's reward for any first purchase (the
+//    cheapest pack, a Daily Deals row, is $0.99), open at VIP 0; two $0.99
+//    steps in order: the first unlocks Natalia (10 of her shards = her unlock)
+//    + 10 Hero XP bottles, the second gives 10 of her shards. Its entry has
+//    `firstBuy: true`; Budgets plans it only while Natalia still needs
+//    unlocking (vipFirstBuyOpen).
+const VIP_FIRST_BUY_HERO = "Natalia";
 // Heroes whose shards come only from these packs: they need the unlock shards
 // and General Hero Shards (or anything that trades into "a mythic hero's
 // shards") never go to them.
 const VIP_PACK_HEROES = ["Natalia", "Jeronimo"];
-const VIP_PACK_LINKS = {}; // table id -> link (read by packLinkRaw)
 function vipPackHero(name) { return VIP_PACK_HEROES.includes(String(name || "")); }
 // The VIP tier number picked on the VIP page (0 = none), from the saved states.
 function vipTierNow() {
   const v = CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID ? CALC_STATE_CACHE.vip_tier : null;
   return (v && vipTierNumber(v.name)) || 0;
 }
-function vipPackTables() {
-  const tier = vipTierNow(), out = [];
-  const cols = ["$", null, "Hero XP", "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Gems"];
-  const f = VIP_FIRST_BUY;
-  VIP_PACK_LINKS["vip-0"] = { group: NG_HERO_GROUP, pages: ["hero_shards"], priceCol: 0, cols: { 1: `${f.hero} Shards`, 2: "Hero XP" }, reset: "once", buys: 1, sequential: true, vip: 0 };
-  out.push({ id: "vip-0", title: "First Purchase Reward", columns: ["$", `${f.hero} Shards`, "Hero XP"], rows: f.steps.map(([p, n, xp]) => ({ cells: [p, n, xp * 10000].map(String) })), sort_order: 210000 });
-  VIP_PACK_ROWS.forEach(([lv, price, hero, shards, xp]) => {
-    if (lv > tier) return;
-    const id = `vip-${lv}`, c = cols.slice();
-    c[1] = `${hero} Shards`;
-    VIP_PACK_LINKS[id] = { group: NG_HERO_GROUP, pages: ["hero_shards"], priceCol: 0, cols: Object.fromEntries(c.map((n, i) => [i, n]).slice(1)), reset: "once", buys: 1, vip: lv };
-    out.push({ id, title: `VIP ${lv} Special Pack`, columns: c, rows: [{ cells: [price, shards, xp * 10000, lv * 60, lv * 60, lv * 60, ngGems(price)].map(String) }], sort_order: 210000 + lv });
-  });
-  return out;
+// A row's VIP level from its table's `vipRows` (0 = not a VIP row).
+function vipRowLevel(tableId, ri) {
+  const v = packLinkRaw(tableId).l.vipRows;
+  return Array.isArray(v) ? Number(v[ri]) || 0 : 0;
 }
+function packIsFirstBuy(tableId) { return packLinkRaw(tableId).l.firstBuy === true; }
 // The first purchase reward is planned only while its hero still needs unlocking
 // (the last hero shard plan has her with unlock shards): anyone who has her
 // already made a first purchase.
 function vipFirstBuyOpen() {
   const rows = (HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || [];
-  return rows.some((r) => r.hero && r.hero.name === VIP_FIRST_BUY.hero && r.unlock > 0);
+  return rows.some((r) => r.hero && r.hero.name === VIP_FIRST_BUY_HERO && r.unlock > 0);
 }
-// What the built-in packs (new heroes' copies, VIP packs) were made from.
+// What the built pack list depends on besides the tables (new heroes' copies,
+// the VIP tier for the VIP rows).
 function packBuiltSig() { return `${ngHeroSig()}|vip${vipTierNow()}`; }
 const PACK_TEMPLATE_SOURCES = [
   { title: "Wishful type", from: ["Wishfull", "Wishful"] },
@@ -16651,7 +16657,7 @@ function packTriggerRowStatus(trig, ri) {
 // table, or the admin's packs_links entry).
 function packLinkRaw(tableId) {
   const mine = String(tableId).startsWith("my-") ? packMineFind(tableId) : null;
-  const ng = String(tableId).startsWith("ng-") ? NG_HERO_LINKS[String(tableId)] : String(tableId).startsWith("vip-") ? VIP_PACK_LINKS[String(tableId)] : null;
+  const ng = String(tableId).startsWith("ng-") ? NG_HERO_LINKS[String(tableId)] : null;
   return { mine, l: ng || (mine ? { ...(mine.link || {}), group: PACK_MINE_GROUP } : (PACK_LINKS || {})[String(tableId)]) || {} };
 }
 // packLinkFor(tableId).linkSet without working out the whole link.
@@ -16667,7 +16673,7 @@ function packLinkSetOf(tableId) {
 // Returns the leader's table id, or "".
 function packDateLeader(tableId) {
   const start = String(tableId);
-  if (start.startsWith("my-") || start.startsWith("ng-") || start.startsWith("vip-")) return "";
+  if (start.startsWith("my-") || start.startsWith("ng-")) return "";
   // A New Gen pack follows only New Gen packs, a normal pack only normal
   // packs: a mixed link is ignored.
   const kind = packIsNewGen((PACK_LINKS || {})[start]);
@@ -16914,7 +16920,7 @@ async function ensurePackTables() {
       const baseTables = packApplyMyEdits((await rowsP).map((tb) => ({ id: tb.id, title: tb.title, columns: tb.columns, rows: tb.rows, sort_order: tb.sort_order })))
         .filter((tb) => (IS_OWNER || !packLinkFor(tb.id).hideVisitors) && !packLinkFor(tb.id).template)
         .concat(IS_OWNER ? [] : MY_PACKS.map((x, i) => ({ id: x.id, title: x.title, columns: x.columns, rows: x.rows, sort_order: 100000 + i })));
-      PACK_TABLES_CACHE = baseTables.concat(await ngHeroTables(baseTables), vipPackTables());
+      PACK_TABLES_CACHE = baseTables.concat(await ngHeroTables(baseTables));
       PACK_TABLES_CACHE._ngSig = packBuiltSig();
       PACK_TABLES_CACHE._inSig = inSig; PACK_TABLES_CACHE._rows = rowRefs;
     } catch (e) {
@@ -16957,6 +16963,9 @@ function packOffersFor(table, keepEmpty) {
         if (!st.counted) return null;
         label += ` · ${link.trigger.expert} Lv ${st.level}`;
       }
+      // VIP Special Packs: only the levels the person's VIP tier has reached.
+      const vipLv = vipRowLevel(table.id, ri);
+      if (vipLv && vipLv > vipTierNow()) return null;
       return { price, gives, label, row: ri };
     })
     .filter((o) => o && o.price > 0 && (keepEmpty || Object.keys(o.gives).length));
@@ -17511,7 +17520,7 @@ function packShiningBonusOf(tb, link) {
 // most tables, so each table is built once and reused (kept with the other
 // built groups in PACK_GROUPS_CACHE; the key covers labels, currency and day).
 function packTableGroups(tb) {
-  const cacheKey = [tb.id, LANG, DISPLAY_CURRENCY, new Date().toDateString()].join("|");
+  const cacheKey = [tb.id, LANG, DISPLAY_CURRENCY, new Date().toDateString(), vipTierNow()].join("|");
   const per = PACK_GROUPS_CACHE.perTable;
   if (per && per.has(cacheKey)) return per.get(cacheKey);
   const groups = [];
@@ -21171,7 +21180,7 @@ async function budgetForPage(calcKey, targetDays, opts = {}) {
   else if (calcKey === "hero_shards") {
     const hb = await heroShardBudget(); groups = hb.groups; vipNote = hb.vip;
     // The first purchase reward only while Natalia isn't unlocked yet.
-    if (!vipFirstBuyOpen()) tables = tables.filter((tb) => tb.id !== "vip-0");
+    if (!vipFirstBuyOpen()) tables = tables.filter((tb) => !packIsFirstBuy(tb.id));
   }
   else if (calcKey === "shining_skins") { shInfo = await shiningSkinsNeed(); groups = shInfo.groups; }
   else {

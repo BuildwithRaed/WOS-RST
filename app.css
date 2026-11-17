@@ -317,6 +317,7 @@
   .pk-hdi img{ width:26px; height:26px; object-fit:contain; }
   .pk-hdi b{ font-size:10px; }
   .pk-hdi i{ position:absolute; inset-inline-end:-4px; bottom:-4px; font-size:8px; font-style:normal; line-height:13px; width:13px; height:13px; border-radius:50%; background:var(--ice-dim); color:var(--frost); }
+  .pk-hdi img.pk-hface{ position:absolute; inset-inline-start:-5px; top:-5px; width:16px; height:16px; border-radius:50%; object-fit:cover; border:1.5px solid var(--panel); }
   .pk-hdx{ position:absolute; inset-inline-end:-5px; top:-5px; width:15px; height:15px; border-radius:50%; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-size:10px; line-height:12px; padding:0; cursor:pointer; }
   .pk-arr{ display:none; justify-content:center; gap:2px; margin-top:3px; }
   .pk-hdi.pk-ring, .pk-sheet-ic .pk-tmw{ box-shadow:0 0 0 2px var(--ring) inset; }
