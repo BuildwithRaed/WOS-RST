@@ -707,6 +707,22 @@
   .bn-lvh em{ font-style:normal; color:var(--ice); font-weight:700; white-space:nowrap; }
   .bn-lvh em.ok{ color:var(--good); }
   .bn-lc{ display:flex; gap:4px; }
+  /* Level slider (owner picked B, 17 Nov 2026): a dot per level on a track, % under each dot */
+  .bn-sl{ position:relative; margin:2px 0 6px; }
+  .bn-sl-tr{ position:absolute; left:18px; right:18px; top:14px; height:4px; border-radius:3px; background:rgba(255,255,255,.12); }
+  .bn-sl-tr i{ position:absolute; inset-inline-start:0; top:0; bottom:0; width:var(--fill); border-radius:3px; background:var(--ice); }
+  .bn-sl.max .bn-sl-tr i{ background:var(--good); }
+  .bn-sl-d{ position:relative; display:flex; justify-content:space-between; }
+  .bn-sl-d button{ width:36px; min-height:44px; padding:0; border:0; background:none; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; font:inherit; color:var(--muted); }
+  .bn-sl-d .dot{ width:14px; height:14px; margin-top:9px; border-radius:50%; background:#2a3442; border:2px solid rgba(255,255,255,.22); box-sizing:border-box; }
+  .bn-sl-d button.lo .dot{ background:var(--ice); border-color:var(--ice); }
+  .bn-sl-d button.on .dot{ width:22px; height:22px; margin-top:5px; background:var(--ice); border:3px solid #dff4ff; box-shadow:0 0 0 3px rgba(111,211,242,.25); }
+  .bn-sl.max .bn-sl-d button.on .dot, .bn-sl.max .bn-sl-d button.lo .dot{ background:var(--good); border-color:var(--good); }
+  .bn-sl.max .bn-sl-d button.on .dot{ border-color:#e3fff0; box-shadow:0 0 0 3px rgba(126,230,168,.25); }
+  .bn-sl-d button.up .dot{ border-style:dashed; border-color:rgba(232,162,60,.7); }
+  .bn-sl-d small{ font-size:12px; font-weight:700; line-height:1; }
+  .bn-sl-d button.on small{ color:var(--frost); font-size:13px; font-weight:800; }
+  .bn-sl-d button.up small{ color:var(--amber); }
   .bn-lc button{ font-size:13px; border-radius:9px; }
   .bn-lc button.lo{ color:#a9c9d6; background:rgba(111,211,242,.07); border-color:rgba(111,211,242,.25); }
   .bn-lc button.z{ flex:.8; }

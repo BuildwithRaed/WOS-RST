@@ -543,6 +543,8 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 **State Timeline troop badges (owner picked design A, 17 Nov 2026):** each hero's picture has its troop symbol on the bottom-left corner (`troopBadge` / `troopKey` in `renderStateTimelinePage`, `img.tl-tr`, 14 px; title = `troop_infantry` / `troop_lancers` / `troop_marksman`); pictures `icons/troop-infantry.png`, `icons/troop-lancer.png`, `icons/troop-marksman.png` = the owner's own symbols with the background (checker pattern + a watermark) cut away, 64 × 64 (owner OK'd removing the background). Pets / experts / unlocks get none; the Hall ★ stays top-right.
 **Footer + Backpack on the iPhone (owner, 17 Nov 2026):** the footer's last line is two parts (`renderFooter`: `.ft-copy` © line + `.ft-links` About us · Contact us · Privacy, kept together with `white-space:nowrap`): one line on wide screens, two lines under 640 px (it used to break in the middle, leaving "· Contact us · Privacy" alone). Backpack page tiles are 4 a row on phones (≤ 440 px, was 3; gap 6 px; long names cut to 2 lines, e.g. "Custom Resource…"); the top card's "N chests to open" no longer pushes to the right (`.bp-chests` margin-inline-start 0), so when it wraps it starts on the left.
 
+**Tundra Album / Collection Gallery level slider (owner picked B, 17 Nov 2026):** `bnLevelRowHtml` draws each stat as a slider (`.bn-sl`: a track `.bn-sl-tr` filled to the current level `--fill`, one dot button per level `.bn-sl-d button` with its % under it; the current dot big, passed dots filled, all green at max `.bn-sl.max`, upcoming dots dashed amber); same `data-bnlv` buttons, so the click / save / Max code is unchanged (was a row of % buttons `.bn-lc`).
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit (since Speed plan Step 5 it also writes the .min copies the site loads).
@@ -708,3 +710,4 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - State Timeline: every coming day shown, heroes Infantry / Lancer / Marksman
 - State Timeline: troop symbol on each hero's picture
 - Footer links on their own line on phones; Backpack 4 tiles a row
+- Tundra Album / Collection Gallery: level slider
