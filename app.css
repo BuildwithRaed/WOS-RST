@@ -2837,6 +2837,7 @@ input,select,textarea{
   .rv-note{ font-size:12px; margin:8px 2px 0; color:var(--muted); }
   .rv-panel{ margin-top:8px; }
   .rv-own{ margin-bottom:10px; }
+  .rv-line{ display:flex; justify-content:flex-end; margin-bottom:8px; }
   #adminBody.adm-rv > :not(.rv-path):not(.rv-keep), #adminBody.adm-rv .rv-path > :not(.rv-path):not(.rv-keep){ display:none !important; }
   .rl-card{ border:1px solid var(--line); border-radius:14px; background:var(--panel); padding:12px 14px; }
   .rl-h b{ font-size:16px; }

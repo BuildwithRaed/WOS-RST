@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "909417829e";
+window.ADMIN_BUILD = "6bacfd2fa8";
 
 // ============================================================
 // ADMIN PAGE
@@ -891,22 +891,31 @@ function admRulesSync(body) {
     own.querySelector("[data-rvsec]").classList.toggle("on", !rv);
   }
   const isBtn = !!row.querySelector("[data-researchsub]");
-  let chip = row.querySelector(":scope > [data-rvopen]");
-  if (!chip) {
-    row.insertAdjacentHTML("beforeend", `<button type="button" class="${isBtn ? "btn small" : "adm-chip"} rv-chip" data-rvopen>&#9881; ${esc(t("rv_rules_chip"))} <span class="meta">${n}</span></button>`);
+  const keep = row.closest(".adm-chips") || row;
+  const chipHtml = `<button type="button" class="${isBtn ? "btn small" : "adm-chip"} rv-chip" data-rvopen>&#9881; ${esc(t("rv_rules_chip"))} <span class="meta">${n}</span></button>`;
+  let chip, line = null;
+  if (own) {
+    // No chip row of its own: the chip sits beside the section's name chip (as before).
     chip = row.querySelector(":scope > [data-rvopen]");
+    if (!chip) { row.insertAdjacentHTML("beforeend", chipHtml); chip = row.querySelector(":scope > [data-rvopen]"); }
+  } else {
+    // Its own line above the section's chip row, so it is always in sight (the row scrolls sideways on phones).
+    line = [...body.querySelectorAll(".rv-line")].find(outside) || null;
+    if (!line) { line = document.createElement("div"); line.className = "rv-line"; line.innerHTML = chipHtml; }
+    if (line.nextElementSibling !== keep) keep.parentNode.insertBefore(line, keep);
+    chip = line.querySelector("[data-rvopen]");
   }
   if (isBtn) chip.classList.toggle("ghost", !rv); else chip.classList.toggle("on", !!rv);
   // The picked Rules chip stays in sight (the row scrolls sideways on phones).
-  if (rv && chip.dataset.seen !== "1") { chip.dataset.seen = "1"; const y = window.scrollY; try { chip.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) { /* old browser */ } window.scrollTo(window.scrollX, y); }
+  if (rv && !line && chip.dataset.seen !== "1") { chip.dataset.seen = "1"; const y = window.scrollY; try { chip.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) { /* old browser */ } window.scrollTo(window.scrollX, y); }
   if (!rv) delete chip.dataset.seen;
   // Rules view: only the chip row and the panel show; the row's own chips look not picked.
   body.querySelectorAll(".rv-path, .rv-keep").forEach((el) => el.classList.remove("rv-path", "rv-keep"));
   body.classList.toggle("adm-rv", !!rv);
   let p = body.querySelector(":scope > .rv-panel");
   if (!rv) { if (p) p.remove(); return; }
-  const keep = row.closest(".adm-chips") || row;
   keep.classList.add("rv-keep");
+  if (line) line.classList.add("rv-keep");
   for (let el = keep.parentElement; el && el !== body; el = el.parentElement) el.classList.add("rv-path");
   row.querySelectorAll(":scope > :not([data-rvopen])").forEach((b) => { if (b.classList.contains("btn")) b.classList.add("ghost"); else b.classList.remove("on"); });
   if (!p) { p = document.createElement("div"); p.className = "rv-panel rv-keep"; body.appendChild(p); }
@@ -3843,7 +3852,7 @@ async function renderAdminHeroes(body) {
   };
   function drawHeroes() {
     const list = rows.filter((r) => (r.generation ?? -1) === ADMIN_HERO_GEN);
-    listWrap.innerHTML = `<div class="adm-chips"><div class="adm-chips-row">${gens.map((g) => `<button type="button" class="adm-chip${g === ADMIN_HERO_GEN ? " on" : ""}" data-herogen="${g}">${g < 0 ? "No gen" : `Gen ${g}`} <span class="meta">· ${((n) => `${n} ${n === 1 ? "hero" : "heroes"}`)(rows.filter((r) => (r.generation ?? -1) === g).length)}</span></button>`).join("")}</div></div>`
+    listWrap.innerHTML = `<div class="adm-chips"><div class="adm-chips-row">${gens.map((g) => `<button type="button" class="adm-chip${g === ADMIN_HERO_GEN ? " on" : ""}" data-herogen="${g}">${g < 0 ? "No gen" : `Gen ${g}`} <span class="meta">(${rows.filter((r) => (r.generation ?? -1) === g).length})</span></button>`).join("")}</div></div>`
       + admListHtml(list, { title: ADMIN_HERO_GEN < 0 ? "No gen" : `Gen ${ADMIN_HERO_GEN} heroes`, attr: "data-herorow", img: (r) => r.image_url, name: (r) => r.name, sub: (r) => [r.troop_type, r.rarity === "Legendary" ? "Mythic" : r.rarity].filter(Boolean).join(" · ") });
     listWrap.querySelectorAll("[data-herogen]").forEach((b) => b.addEventListener("click", () => { ADMIN_HERO_GEN = Number(b.dataset.herogen); keepBoxes(listWrap, drawHeroes); }));
     wireAdmList(listWrap, {
