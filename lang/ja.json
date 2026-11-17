@@ -2708,6 +2708,8 @@
 "t:pkd_part_of":"{name}の一部",
 "t:pkd_open":"パックを開く",
 "t:pkd_count":"予算に含める",
+"t:pkd_first_done":"✓ Natalia 解放済み",
+"t:pkd_hero_maxed":"✓ {hero} 最大",
 "t:rule_hall_unlock":"英雄の殿堂の英雄の解放",
 "t:rule_hall_unlock_help":"新しい世代ごとの英雄の殿堂の英雄は、欠片を10個買って解放する必要があります（お得な英雄パックまたは勇気の証）。ほかの新英雄は幸運のルーレット／イベントで無料で解放されます。パックの数値は、パックページにお得な英雄パックの表がない場合にのみ使われます。",
 "t:rule_hall_unlock_shards":"殿堂英雄の解放に必要な欠片",

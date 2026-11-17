@@ -2707,6 +2707,8 @@
 "t:pkd_part_of":"{name} etkinliğinin parçası",
 "t:pkd_open":"Paketi aç",
 "t:pkd_count":"Bütçelerde say",
+"t:pkd_first_done":"✓ Natalia açıldı",
+"t:pkd_hero_maxed":"✓ {hero} maksimumda",
 "t:rule_hall_unlock":"Kahramanlar Salonu kahramanı kilit açma",
 "t:rule_hall_unlock_help":"Her yeni Gen'in Kahramanlar Salonu kahramanının kilidini açmak için 10 parça alınmalı (Değerli Kahraman Paketi veya Cesaret Nişanları); diğer yeni kahramanlar Şans Çarkı / etkinliklerden ücretsiz açılır. Paket sayıları yalnızca Paketler sayfasında Değerli Kahraman Paketi tablosu yoksa kullanılır.",
 "t:rule_hall_unlock_shards":"Salon kahramanının kilidini açan parçalar",

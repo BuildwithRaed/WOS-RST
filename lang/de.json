@@ -2708,6 +2708,8 @@
 "t:pkd_part_of":"Teil von {name}",
 "t:pkd_open":"Paket öffnen",
 "t:pkd_count":"In Budgets zählen",
+"t:pkd_first_done":"✓ Natalia freigeschaltet",
+"t:pkd_hero_maxed":"✓ {hero} maximiert",
 "t:rule_hall_unlock":"Heldenhallen-Held freischalten",
 "t:rule_hall_unlock_help":"Der Heldenhallen-Held jeder neuen Gen muss mit 10 Splittern freigeschaltet werden (Wert-Heldenpaket oder Tapferkeitsmarken); die anderen neuen Helden werden kostenlos über Glücksrad / Events freigeschaltet. Die Paketzahlen gelten nur, wenn die Tabelle des Wert-Heldenpakets auf der Paketseite fehlt.",
 "t:rule_hall_unlock_shards":"Splitter zum Freischalten des Heldenhallen-Helden",

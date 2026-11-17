@@ -2707,6 +2707,8 @@
 "t:pkd_part_of":"{name}의 일부",
 "t:pkd_open":"패키지 열기",
 "t:pkd_count":"예산에 포함",
+"t:pkd_first_done":"✓ Natalia 해금됨",
+"t:pkd_hero_maxed":"✓ {hero} 최대",
 "t:rule_hall_unlock":"영웅의 전당 영웅 해금",
 "t:rule_hall_unlock_help":"새 세대마다 영웅의 전당 영웅은 조각 10개를 사야 해금됩니다 (가치 영웅 패키지 또는 용맹의 증표). 다른 새 영웅은 행운의 룰렛 / 이벤트에서 무료로 해금됩니다. 패키지 숫자는 팩 페이지에 가치 영웅 패키지 표가 없을 때만 사용됩니다.",
 "t:rule_hall_unlock_shards":"영웅의 전당 영웅 해금 조각",
