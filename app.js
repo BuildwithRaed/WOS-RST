@@ -1286,7 +1286,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 98; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 99; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -2188,8 +2188,6 @@ const T = {
   tl_kind_unlock: { en: "Unlock" },
   tl_kind_pet: { en: "Pet" },
   tl_kind_expert: { en: "Expert" },
-  tl_more_1: { en: "1 more day" },
-  tl_more_n: { en: "{n} more days" },
   chest_not_needed: { en: "nothing to cover" },
   pk_same_title: { en: "Same pack, several tables" },
   pk_same_desc: { en: "Tick the other tables that are this same pack (e.g. Classic / Sublime / Exquisite). Each step of the pack can then be bought as any one of them, and the plan picks the best." },
@@ -16006,11 +16004,13 @@ async function renderStateTimelinePage() {
     genAt.set(gd, g);
     const list = (heroes || []).filter((h) => Number(h.generation) === g);
     const names = new Set(list.map((h) => h.name));
-    list.forEach((h) => items.push({ day: gd, name: h.name, img: h.image_url || "", kind: "hero", star: h.name === hall, gen: g, src: heroSource(h.name, g) }));
+    list.forEach((h) => items.push({ day: gd, name: h.name, img: h.image_url || "", kind: "hero", star: h.name === hall, gen: g, src: heroSource(h.name, g), troop: h.troop_type || "" }));
     if (hall && !names.has(hall)) items.push({ day: gd, name: hall, img: "", kind: "hero", star: true, gen: g, src: heroSource(hall, g) });
   });
   const order = { hero: 0, gear: 1, page: 2, lab: 3, level: 4, pets: 5, experts: 6 };
-  items.sort((a, b) => a.day - b.day || (b.star ? 1 : 0) - (a.star ? 1 : 0) || (order[a.kind] ?? 9) - (order[b.kind] ?? 9));
+  // Heroes of a day always Infantry, Lancer, Marksman (owner, 17 Nov 2026)
+  const troopRank = (x) => { const k = String(x.troop || "").toLowerCase(); return /^inf/.test(k) ? 0 : /^lan/.test(k) ? 1 : /^mark/.test(k) ? 2 : 3; };
+  items.sort((a, b) => a.day - b.day || (order[a.kind] ?? 9) - (order[b.kind] ?? 9) || (a.kind === "hero" ? troopRank(a) - troopRank(b) : 0));
   const genOf = (day) => { let g = 1; STATE_GEN_DAYS.forEach((gd, i) => { if (gd <= day) g = i + 1; }); return g; };
   const fmt = (dt) => { let s0; try { s0 = dt.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); } catch (e) { s0 = packDayKey(dt); }
     return dt.getUTCFullYear() !== packStartOfToday().getUTCFullYear() ? `${s0} ’${String(dt.getUTCFullYear()).slice(2)}` : s0; };
@@ -16064,22 +16064,11 @@ async function renderStateTimelinePage() {
   }
   const openHtml = open.length ? `<details class="tl-open"><summary><span class="tl-dot g">✓</span><span class="tl-ok">✓ ${esc(t("tl_open_n").replace("{n}", open.length))}</span><span class="tl-stack">${open.slice(-5).map((x) => x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" />` : "").join("")}</span><span class="tl-os">${esc(t("tl_open_sub").replace("{d}", now.toLocaleString()))}</span></summary>
       <div class="tl-open-l">${days.filter((d) => d <= now).map((d) => dayCard(d, false, true)).join("")}</div></details>` : "";
-  // The first 3 coming days are shown; later ones fold into one row
-  // ("N more days · Gen 10 + T12 · in ~10 months") that opens into the same cards.
-  const nearDays = comingDays.slice(0, 3), farDays = comingDays.slice(3);
-  let moreHtml = "";
-  if (farDays.length) {
-    const gens = farDays.filter(isGenDay).map((d) => genAt.get(d));
-    const genTxt = !gens.length ? "" : t("tl_gen").replace("{g}", gens.length > 1 ? bidiNum(`${gens[0]} – ${gens[gens.length - 1]}`) : gens[0]);
-    const big = farDays.flatMap((d) => byDay.get(d)).filter((x) => x.kind === "page" || x.kind === "lab");
-    const what = [genTxt, ...big.slice(0, 2).map((x) => x.name)].filter(Boolean).join(" + ");
-    const sub = [t(farDays.length === 1 ? "tl_more_1" : "tl_more_n").replace("{n}", farDays.length), what, now != null ? inTxt(farDays[farDays.length - 1]) : ""].filter(Boolean).join(" · ");
-    moreHtml = `<details class="tl-more"><summary><span class="tl-dot"></span><span class="tl-mv">▾</span> ${esc(sub)}</summary><div class="tl-open-l">${farDays.map((d) => dayCard(d, false)).join("")}</div></details>`;
-  }
+  // Every coming day is shown (owner, 17 Nov 2026: no fold for far days).
   keepFolds(content, () => { content.innerHTML = `
     <div class="page-head"><div><h2>${esc(t("tl_title"))}</h2><p class="desc">${esc(t("tl_desc"))}</p></div></div>
     ${top}
-    <div class="tl">${openHtml}${nearDays.map((d, i) => dayCard(d, i === 0 && now != null)).join("")}${moreHtml}</div>
+    <div class="tl">${openHtml}${comingDays.map((d, i) => dayCard(d, i === 0 && now != null)).join("")}</div>
     <div class="tl-leg"><span class="tl-src hall">★ ${HERO_SOURCE_ICON.hall} ${esc(heroSourceLabel("hall"))}</span><span class="tl-src wheel">${HERO_SOURCE_ICON.wheel} ${esc(heroSourceLabel("wheel"))}</span><span class="tl-src event">${HERO_SOURCE_ICON.event} ${esc(heroSourceLabel("event"))}</span><span class="tl-src unl">🔓 ${esc(t("tl_kind_unlock"))}</span></div>
     ${IS_OWNER ? `<p style="margin:12px 0 0;"><button type="button" class="btn small ghost" data-tladmin>${esc(t("tl_admin_edit"))} &rsaquo;</button></p>` : ""}`; });
   content.onclick = (e) => {

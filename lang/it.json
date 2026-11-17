@@ -1822,8 +1822,6 @@
 "t:tl_kind_unlock":"Sblocco",
 "t:tl_kind_pet":"Animale",
 "t:tl_kind_expert":"Esperto",
-"t:tl_more_1":"1 giorno in più",
-"t:tl_more_n":"{n} giorni in più",
 "t:privacy_policy":"Informativa sulla privacy",
 "t:pcl_desc":"Pacchetti, eventi e nuovi eroi, una settimana alla volta come nel calendario del gioco: una barra per pacchetto sui suoi giorni, oggi in oro, una ★ per i pacchetti del tuo piano. Tocca un giorno per la sua lista, una barra o un pacchetto per date, contenuto e livelli di prezzo.",
 "t:pcl_utc":"Giorni di gioco (UTC).",

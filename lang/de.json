@@ -1822,8 +1822,6 @@
 "t:tl_kind_unlock":"Freischaltung",
 "t:tl_kind_pet":"Haustier",
 "t:tl_kind_expert":"Experte",
-"t:tl_more_1":"1 weiterer Tag",
-"t:tl_more_n":"{n} weitere Tage",
 "t:privacy_policy":"Datenschutzerklärung",
 "t:pcl_desc":"Pakete, Events und neue Helden, Woche für Woche wie im Spielkalender: ein Balken pro Paket über seine Tage, heute in Gold, ein ★ für Pakete in deinem Plan. Tippe auf einen Tag für seine Liste, auf einen Balken oder ein Paket für Termine, Inhalt und Preisstufen.",
 "t:pcl_utc":"Spieltage (UTC).",

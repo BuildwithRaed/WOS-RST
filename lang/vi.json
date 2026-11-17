@@ -1821,8 +1821,6 @@
 "t:tl_kind_unlock":"Mở khóa",
 "t:tl_kind_pet":"Thú cưng",
 "t:tl_kind_expert":"Chuyên gia",
-"t:tl_more_1":"thêm 1 ngày",
-"t:tl_more_n":"thêm {n} ngày",
 "t:privacy_policy":"Chính sách quyền riêng tư",
 "t:pcl_desc":"Gói, sự kiện và anh hùng mới theo từng tuần như lịch trong game: mỗi gói một thanh theo các ngày của nó, hôm nay màu vàng, ★ là gói trong kế hoạch của bạn. Chạm vào một ngày để xem danh sách, hoặc thanh / gói để xem ngày, phần thưởng và các mức giá.",
 "t:pcl_utc":"Ngày trong game (UTC).",

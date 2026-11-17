@@ -894,7 +894,7 @@
   .tl-bl{ display:flex; justify-content:space-between; gap:8px; font-size:11px; color:var(--muted); margin-top:4px; }
   .tl{ position:relative; padding-inline-start:22px; }
   .tl::before{ content:""; position:absolute; top:10px; bottom:10px; inset-inline-start:7px; width:2px; background:var(--line); }
-  .tl-day, .tl-open, .tl-more{ position:relative; margin-bottom:10px; }
+  .tl-day, .tl-open{ position:relative; margin-bottom:10px; }
   .tl-day{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px 11px; }
   .tl-day.next{ border-color:rgba(111,211,242,.6); box-shadow:0 0 0 1px rgba(111,211,242,.2), 0 0 18px rgba(111,211,242,.15); }
   .tl-dot{ position:absolute; inset-inline-start:-21px; top:15px; width:12px; height:12px; border-radius:50%; border:2px solid var(--muted); background:var(--bg); }
@@ -919,15 +919,13 @@
   .tl-src.wheel{ color:var(--ice); }
   .tl-src.event{ color:var(--good); }
   .tl-src.packs, .tl-src.signin, .tl-src.recruit, .tl-src.unl{ color:#c9a7f0; }
-  .tl-open > summary, .tl-more > summary{ list-style:none; cursor:pointer; }
-  .tl-open > summary::-webkit-details-marker, .tl-more > summary::-webkit-details-marker{ display:none; }
+  .tl-open > summary{ list-style:none; cursor:pointer; }
+  .tl-open > summary::-webkit-details-marker{ display:none; }
   .tl-open > summary{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; background:rgba(91,201,138,.10); border:1px solid rgba(91,201,138,.35); border-radius:14px; padding:10px 12px; }
   .tl-ok{ color:var(--good); font-weight:700; font-size:14px; flex:1 1 100%; }
   .tl-stack{ display:inline-flex; }
   .tl-stack img{ width:24px; height:24px; object-fit:contain; border-radius:50%; margin-inline-end:-7px; background:var(--panel-2); border:1px solid var(--bg); }
   .tl-os{ font-size:12px; color:var(--muted); margin-inline-start:auto; }
-  .tl-more > summary{ display:flex; align-items:center; gap:6px; min-height:42px; font-size:13px; color:var(--muted); background:var(--panel); border:1px dashed rgba(255,255,255,.16); border-radius:12px; padding:9px 12px; }
-  .tl-more[open] .tl-mv{ transform:rotate(180deg); }
   .tl-open-l{ padding:10px 0 0; }
   .tl-day.done .tl-dot{ border-color:var(--good); background:var(--good); }
   .tl-in.ok{ color:var(--good); }
