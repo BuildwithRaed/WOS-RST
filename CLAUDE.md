@@ -541,6 +541,7 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 **State Timeline (owner, 17 Nov 2026):** every coming day is shown (the "N more days" fold for days after the first 3 is gone, T keys `tl_more_1` / `tl_more_n` and the `.tl-more` CSS removed, `LANG_FILES_VERSION` 99); heroes of a day are always Infantry, Lancer, Marksman (`troopRank`, items carry `troop`; the Hall of Heroes hero keeps its ★ but no longer goes first).
 
 **State Timeline troop badges (owner picked design A, 17 Nov 2026):** each hero's picture has its troop symbol on the bottom-left corner (`troopBadge` / `troopKey` in `renderStateTimelinePage`, `img.tl-tr`, 14 px; title = `troop_infantry` / `troop_lancers` / `troop_marksman`); pictures `icons/troop-infantry.png`, `icons/troop-lancer.png`, `icons/troop-marksman.png` = the owner's own symbols with the background (checker pattern + a watermark) cut away, 64 × 64 (owner OK'd removing the background). Pets / experts / unlocks get none; the Hall ★ stays top-right.
+**Footer + Backpack on the iPhone (owner, 17 Nov 2026):** the footer's last line is two parts (`renderFooter`: `.ft-copy` © line + `.ft-links` About us · Contact us · Privacy, kept together with `white-space:nowrap`): one line on wide screens, two lines under 640 px (it used to break in the middle, leaving "· Contact us · Privacy" alone). Backpack page tiles are 4 a row on phones (≤ 440 px, was 3; gap 6 px; long names cut to 2 lines, e.g. "Custom Resource…"); the top card's "N chests to open" no longer pushes to the right (`.bp-chests` margin-inline-start 0), so when it wraps it starts on the left.
 
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
@@ -706,3 +707,4 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - Gen 18 heroes Jordan / Nikola / Aisha (pictures, how-to-get tags; data added live)
 - State Timeline: every coming day shown, heroes Infantry / Lancer / Marksman
 - State Timeline: troop symbol on each hero's picture
+- Footer links on their own line on phones; Backpack 4 tiles a row

@@ -224,6 +224,10 @@
   html:not(.page-drawn) .site-footer{ visibility:hidden; }
   .site-footer p{ margin:0 0 6px; }
   .site-footer a{ color:var(--muted); text-decoration:underline; }
+  /* copyright, then the links: one line on wide screens, two lines on phones (never split mid-way) */
+  .site-footer .ft-links{ white-space:nowrap; }
+  .site-footer .ft-links::before{ content:"\00a0\00a0\00b7\00a0\00a0"; }
+  @media (max-width:640px){ .site-footer .ft-copy, .site-footer .ft-links{ display:block; } .site-footer .ft-links{ margin-top:4px; } .site-footer .ft-links::before{ content:none; } }
   @media (max-width:640px){ .site-footer{ padding:12px 12px 22px; font-size:11px; } }
   .page-head{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
   .page-head h2{ font-size:24px; margin:0; font-weight:700; }
@@ -1976,7 +1980,7 @@ input,select,textarea{
   .bp-scan-big:hover{ background:#336276; }
   .bp-top-l{ display:flex; align-items:center; flex-wrap:wrap; gap:4px 10px; margin-top:8px; font-size:12.5px; color:var(--muted); }
   .bp-top-l b{ color:var(--frost); }
-  .bp-chests{ margin-inline-start:auto; display:inline-flex; align-items:center; gap:5px; min-height:32px; padding:0 2px; border:0; background:none; color:#f0c46a; font:inherit; font-size:12.5px; font-weight:800; cursor:pointer; }
+  .bp-chests{ margin-inline-start:0; display:inline-flex; align-items:center; gap:5px; min-height:32px; padding:0 2px; border:0; background:none; color:#f0c46a; font:inherit; font-size:12.5px; font-weight:800; cursor:pointer; }
   .bp-lab{ display:flex; align-items:center; gap:8px; margin-top:10px; padding:6px 6px 6px 10px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.03); font-size:13px; color:var(--frost); min-width:0; }
   .bp-lab img{ width:26px; height:26px; object-fit:contain; flex:0 0 auto; }
   .bp-lab-t{ flex:1 1 auto; min-width:0; line-height:1.3; }
@@ -3751,9 +3755,9 @@ input,select,textarea{
     .bs-tiles{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
     .bs-tile{ aspect-ratio:auto; min-height:92px; }
     .bs-tile img{ width:36px; height:36px; }
-    /* Backpack page: three tiles a row so names fit at 11 px. */
-    .bp-grid{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
-    .bp-grid .bp-tile img{ width:38px; height:38px; }
+    /* Backpack page: four tiles a row (owner, 17 Nov 2026: three were too big on the iPhone). */
+    .bp-grid{ grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; }
+    .bp-grid .bp-tile img{ width:30px; height:30px; }
     /* Budgets stat increase: two boxes a row (four left the numbers at 10 px). */
     .plx-stats.one.bud-st{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
     .plx-stats.one.bud-st .plx-stat b{ font-size:15px; }

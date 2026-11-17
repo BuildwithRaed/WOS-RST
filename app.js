@@ -3608,7 +3608,7 @@ function applyNavLanguage() {
 function renderFooter() {
   const el = document.getElementById("siteFooter");
   if (!el) return;
-  el.innerHTML = `<p>${esc(t("footer_disclaimer"))}</p><p>&copy; ${new Date().getFullYear()} WOS RST &mdash; Whiteout Survival Raw Stats Tracker &nbsp;&middot;&nbsp; <a href="#" data-tab="aboutpage" id="footerAboutLink">${esc(t("about_title"))}</a> &nbsp;&middot;&nbsp; <a href="#" data-tab="contactpage" id="footerContactLink">${esc(t("contact_link"))}</a> &nbsp;&middot;&nbsp; <a href="privacy.html">${esc(t("privacy_link"))}</a></p>`;
+  el.innerHTML = `<p>${esc(t("footer_disclaimer"))}</p><p><span class="ft-copy">&copy; ${new Date().getFullYear()} WOS RST &mdash; Whiteout Survival Raw Stats Tracker</span><span class="ft-links"><a href="#" data-tab="aboutpage" id="footerAboutLink">${esc(t("about_title"))}</a> &middot; <a href="#" data-tab="contactpage" id="footerContactLink">${esc(t("contact_link"))}</a> &middot; <a href="privacy.html">${esc(t("privacy_link"))}</a></span></p>`;
   el.querySelector("#footerAboutLink").addEventListener("click", (e) => { e.preventDefault(); goToTab("aboutpage"); window.scrollTo(0, 0); });
   el.querySelector("#footerContactLink").addEventListener("click", (e) => { e.preventDefault(); goToTab("contactpage"); window.scrollTo(0, 0); });
 }
