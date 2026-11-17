@@ -364,6 +364,11 @@
   .pks .bset-c select{ width:auto; max-width:180px; }
   .pks .bset-l{ flex:1 1 0; }
   .pks .pks-nw .bset-c{ flex-wrap:nowrap; flex:0 0 auto; }
+  @media (max-width: 700px){
+    .pks .bset-row[data-pkresetrow]{ flex-wrap:wrap; row-gap:6px; }
+    .pks .bset-row[data-pkresetrow] > .bset-l{ flex:1 0 auto; }
+    .pks .bset-row[data-pkresetrow] > .bset-c{ flex:1 1 auto; }
+  }
   .pk-tbl-wrap td{ padding-left:1px !important; padding-right:1px !important; }
   .pks-opt:has(.bset-c > input[style*="display: none"]), .pks-opt:has(.bset-c > input[style*="display:none"]){ display:none; }
   .pks [data-pkresetrow][hidden], .pks [data-pkanchorrow][hidden], .pkdw-note[hidden]{ display:none !important; }

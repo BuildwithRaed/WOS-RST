@@ -13334,9 +13334,9 @@ async function renderPacksPage() {
               <option value="stack" ${preset === "stack" ? "selected" : ""}>${esc(t("pack_reset_stack"))}</option>
               <option value="trigger" ${preset === "trigger" ? "selected" : ""}>${esc(t("pk_trigger_option"))}</option>
             </select>
-            <input type="number" min="1" step="1" data-packstackcap value="${link.stackCap}" style="width:64px; font-size:12px; padding:3px 6px; ${preset === "stack" ? "" : "display:none;"}" />
+            <input type="number" min="1" step="1" class="keep-w" data-packstackcap value="${link.stackCap}" style="width:64px; font-size:12px; padding:3px 6px; ${preset === "stack" ? "" : "display:none;"}" />
             <span class="meta" data-packstackcaplabel style="font-size:11px; ${preset === "stack" ? "" : "display:none;"}">${esc(t("pack_stack_max"))}</span>
-            <input type="number" min="1" step="1" data-packresetdays value="${typeof r === "number" ? r : 7}" style="width:56px; font-size:12px; padding:3px 6px; ${preset === "custom" ? "" : "display:none;"}" />
+            <input type="number" min="1" step="1" class="keep-w" data-packresetdays value="${typeof r === "number" ? r : 7}" style="width:56px; font-size:12px; padding:3px 6px; ${preset === "custom" ? "" : "display:none;"}" />
             <span class="meta" data-packresetdayslabel style="font-size:11px; ${preset === "custom" ? "" : "display:none;"}">${esc(t("pack_days_short_long"))}</span>
         </span></div>
         <div class="bset-row pks-opt" data-pkanchorrow ${packDateLeaderShown(tb.id) ? "hidden" : ""}><span class="bset-l" data-packanchorlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_next_on"))}</span><span class="bset-c"><input type="date" data-packanchor value="${esc(link.resetDay || "")}" style="${typeof r === "number" ? "" : "display:none;"}" /></span></div>
