@@ -14336,8 +14336,8 @@ function heroShardCostByGen(starRows) {
 // sets each hero's own target (default 5★ / widget 10); `extra` = heroes
 // planned besides the roster (e.g. a new Gen's heroes to push).
 // `special` = { hero name: whole stars } from Heroes Special Skills (Natalia /
-// Jeronimo): their level when not in the roster (the higher of it and a saved
-// player_heroes row); stars > 0 = unlocked.
+// Jeronimo): their level is the higher of it and the saved player_heroes row
+// (roster or not); stars > 0 = unlocked. Out of the roster they get no widgets.
 function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, extra, special }) {
   const costByGen = heroShardCostByGen(starRows);
   const phBy = {};
@@ -14358,7 +14358,7 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     const T = tg[hero.id] || {};
     // Not out yet in the person's state: no shards to plan for.
     if (heroGenNotOut(hero.generation)) { notOut.push({ troop, hero }); return null; }
-    const sp = !inRoster && special && vipPackHero(hero.name) ? Math.max(0, Math.min(5, Math.floor(Number(special[hero.name]) || 0))) : 0;
+    const sp = special && vipPackHero(hero.name) ? Math.max(0, Math.min(5, Math.floor(Number(special[hero.name]) || 0))) : 0;
     const v = Math.max(Number((phBy[hero.id] || {}).current_stars) || 0, sp);
     const star = Math.min(5, Math.floor(v)), sub = Math.min(6, Math.round((v - star) * 10));
     const step = Math.min(30, star * 6 + sub);
@@ -14387,7 +14387,8 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     // Widgets (mythic heroes): from the roster's widget level to 10.
     const e = inRoster ? (roster || {})[troop] : null;
     const wLevel = e && typeof e === "object" ? Math.max(0, Math.min(widgetMaxLevel(), Number(e.widget) || 0)) : Math.max(0, Math.min(widgetMaxLevel(), Number(T.wNow) || 0));
-    const hasWidget = hero.rarity === "Legendary";
+    // Natalia / Jeronimo: widgets only while in a roster slot (owner: tracked for their special skills).
+    const hasWidget = hero.rarity === "Legendary" && (inRoster || !vipPackHero(hero.name));
     const tW = T.later ? wLevel : Math.max(wLevel, Math.min(widgetMaxLevel(), T.widget != null ? Number(T.widget) : widgetMaxLevel()));
     const wNeed = hasWidget ? widgetNeedFrom(wLevel) - widgetNeedFrom(tW) : 0;
     // Own widgets first, then that Gen's general widgets ("Gen 14 Widgets", any hero of the Gen).
