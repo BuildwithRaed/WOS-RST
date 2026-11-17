@@ -2708,6 +2708,8 @@
 "t:pkd_part_of":"Parte di {name}",
 "t:pkd_open":"Apri pacchetto",
 "t:pkd_count":"Conta nei Budget",
+"t:pkd_first_done":"✓ Natalia sbloccata",
+"t:pkd_hero_maxed":"✓ {hero} al massimo",
 "t:rule_hall_unlock":"Sblocco dell'eroe della Sala degli Eroi",
 "t:rule_hall_unlock_help":"L'eroe della Sala degli Eroi di ogni nuova Gen deve comprare 10 frammenti per sbloccarsi (Pacchetto Eroe Valore o Marchi del Valore); gli altri nuovi eroi si sbloccano gratis con la Ruota della Fortuna / eventi. I numeri del pacchetto valgono solo se la tabella del Pacchetto Eroe Valore manca nella pagina Pacchetti.",
 "t:rule_hall_unlock_shards":"Frammenti per sbloccare l'eroe della Sala",

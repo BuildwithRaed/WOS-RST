@@ -2707,6 +2707,8 @@
 "t:pkd_part_of":"Bagian dari {name}",
 "t:pkd_open":"Buka paket",
 "t:pkd_count":"Hitung di Anggaran",
+"t:pkd_first_done":"✓ Natalia terbuka",
+"t:pkd_hero_maxed":"✓ {hero} sudah maks",
 "t:rule_hall_unlock":"Buka hero Aula Pahlawan",
 "t:rule_hall_unlock_help":"Hero Aula Pahlawan setiap Gen baru harus membeli 10 shard untuk dibuka (Paket Hero Bernilai atau Marks of Valor); hero baru lainnya terbuka gratis dari Roda Keberuntungan / event. Angka paket hanya dipakai jika tabel Paket Hero Bernilai tidak ada di halaman Paket.",
 "t:rule_hall_unlock_shards":"Shard untuk membuka hero Aula",

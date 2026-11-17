@@ -2708,6 +2708,8 @@
 "t:pkd_part_of":"Parte de {name}",
 "t:pkd_open":"Abrir paquete",
 "t:pkd_count":"Contar en Presupuestos",
+"t:pkd_first_done":"✓ Natalia desbloqueada",
+"t:pkd_hero_maxed":"✓ {hero} al máximo",
 "t:rule_hall_unlock":"Desbloqueo del héroe del Salón de Héroes",
 "t:rule_hall_unlock_help":"El héroe del Salón de Héroes de cada nueva Gen necesita comprar 10 fragmentos para desbloquearse (Paquete de Héroe de Valor o Marcas de Valor); los demás héroes nuevos se desbloquean gratis con la Rueda de la Fortuna / eventos. Los números del paquete solo se usan si falta la tabla del Paquete de Héroe de Valor en la página de Paquetes.",
 "t:rule_hall_unlock_shards":"Fragmentos para desbloquear al héroe del Salón",

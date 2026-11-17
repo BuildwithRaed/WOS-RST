@@ -2708,6 +2708,8 @@
 "t:pkd_part_of":"Fait partie de {name}",
 "t:pkd_open":"Ouvrir le pack",
 "t:pkd_count":"Compter dans Budgets",
+"t:pkd_first_done":"✓ Natalia débloquée",
+"t:pkd_hero_maxed":"✓ {hero} au max",
 "t:rule_hall_unlock":"Déblocage du héros du Hall des héros",
 "t:rule_hall_unlock_help":"Le héros du Hall des héros de chaque nouvelle Gen doit acheter 10 fragments pour être débloqué (Pack Héros Valeur ou Marques de bravoure) ; les autres nouveaux héros sont débloqués gratuitement via la Roue de la fortune / les événements. Les chiffres du pack ne servent que si la table du Pack Héros Valeur manque sur la page Packs.",
 "t:rule_hall_unlock_shards":"Fragments pour débloquer le héros du Hall",

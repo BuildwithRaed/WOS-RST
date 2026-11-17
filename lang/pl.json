@@ -2708,6 +2708,8 @@
 "t:pkd_part_of":"Część {name}",
 "t:pkd_open":"Otwórz pakiet",
 "t:pkd_count":"Licz w Budżetach",
+"t:pkd_first_done":"✓ Natalia odblokowana",
+"t:pkd_hero_maxed":"✓ {hero} na maks.",
 "t:rule_hall_unlock":"Odblokowanie bohatera Sali Bohaterów",
 "t:rule_hall_unlock_help":"Bohater Sali Bohaterów każdej nowej Gen musi kupić 10 odłamków, by się odblokować (Pakiet Cennego Bohatera lub Znaki Męstwa); pozostali nowi bohaterowie odblokowują się za darmo z Koła Fortuny / wydarzeń. Liczby pakietu są używane tylko, gdy na stronie Pakietów brak tabeli Pakietu Cennego Bohatera.",
 "t:rule_hall_unlock_shards":"Odłamki do odblokowania bohatera Sali",

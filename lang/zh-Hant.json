@@ -2707,6 +2707,8 @@
 "t:pkd_part_of":"{name}的一部分",
 "t:pkd_open":"打開禮包",
 "t:pkd_count":"計入預算",
+"t:pkd_first_done":"✓ Natalia 已解鎖",
+"t:pkd_hero_maxed":"✓ {hero} 已滿級",
 "t:rule_hall_unlock":"英雄殿堂英雄解鎖",
 "t:rule_hall_unlock_help":"每個新世代的英雄殿堂英雄需要購買 10 個碎片才能解鎖（超值英雄禮包或勇氣徽章）；其他新英雄透過幸運轉盤 / 活動免費解鎖。禮包數字僅在禮包頁面缺少超值英雄禮包表時使用。",
 "t:rule_hall_unlock_shards":"解鎖殿堂英雄所需碎片",
