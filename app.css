@@ -2853,6 +2853,28 @@ input,select,textarea{
   .rl-fields label{ display:flex; flex-direction:column; gap:3px; font-size:12.5px; }
   .rl-fields label span{ color:var(--muted); }
   .rl-foot{ display:flex; align-items:center; gap:8px; margin-top:12px; }
+  .rs-card .rl-h{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:4px; }
+  .rs-i{ position:relative; flex:none; display:inline-flex; }
+  .rs-i .cg-i{ margin:0; }
+  .rs-list{ display:flex; flex-direction:column; gap:8px; margin-top:6px; }
+  .rs-fd{ border:1px solid var(--line); border-radius:12px; background:var(--panel-2); }
+  .rs-fd.open{ border-color:#3d5f7d; background:#1f2a39; }
+  .rs-fh{ display:flex; align-items:center; gap:6px; padding:4px 6px 4px 4px; min-height:46px; }
+  .rs-fb{ flex:1 1 auto; min-width:0; display:flex; align-items:center; gap:9px; padding:5px 6px; background:none; border:0; color:var(--frost); text-align:start; cursor:pointer; font:inherit; }
+  .rs-ic{ width:26px; height:26px; object-fit:contain; flex:none; }
+  .rs-ft{ flex:1 1 auto; min-width:0; }
+  .rs-ft b{ display:block; font-size:14px; }
+  .rs-ft small{ display:block; font-size:12px; color:var(--muted); margin-top:1px; }
+  .rs-dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:#e0b25a; vertical-align:middle; margin-inline-start:4px; }
+  .rs-car{ flex:none; width:32px; height:32px; background:none; border:0; color:var(--muted); font-size:13px; cursor:pointer; }
+  .rs-fbody{ padding:0 10px 10px; }
+  .rs-sub{ font-size:12px; color:var(--muted); margin:0 0 4px; }
+  .rs-lr{ display:grid; grid-template-columns:minmax(0, 1fr) 84px 60px; gap:8px; align-items:center; padding:4px 0; border-top:1px solid var(--line); }
+  .rs-sub + .rs-lr, .rs-fbody > .rs-lr:first-child{ border-top:0; }
+  .rs-ll{ font-size:13px; color:var(--frost); }
+  .rs-ll small{ display:block; font-size:11.5px; color:#e0b25a; }
+  .rs-lr input{ width:100%; min-width:0; }
+  .rs-lu{ font-size:12px; color:var(--muted); }
   .ds-row{ display:flex; align-items:center; gap:8px; padding:2px 0; border-top:1px solid var(--line); background:var(--panel); }
   .ds-n{ flex:1 1 auto; min-width:0; font-size:13.5px; }
   .ds-n small{ display:block; color:var(--muted); font-size:11.5px; }
