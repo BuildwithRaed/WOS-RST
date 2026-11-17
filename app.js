@@ -16394,6 +16394,12 @@ async function ngHeroTables(baseTables) {
 // usual 500 gems a dollar; the gold item isn't counted. Only levels up to the
 // tier picked on the VIP page (calc_state "vip_tier") are offered; with no
 // tier picked none are. Used only by Budgets' "Hero shards & widgets".
+// Also the game's "Reward for first purchase" (any pack bought once; the
+// cheapest pack, a Daily Deals row, is $0.99), open to everyone (VIP 0). Two
+// purchases in order: the first unlocks Natalia (counted as her 10 unlock
+// shards) with 10 Hero XP bottles, a second one (the next day or later) gives
+// 10 of her shards; the keys, gems and books aren't counted.
+const VIP_FIRST_BUY = { hero: "Natalia", steps: [[0.99, 10, 10], [0.99, 10, 0]] };
 const VIP_PACK_ROWS = [
   [1, 4.99, "Natalia", 20, 10], [2, 9.99, "Natalia", 40, 20], [3, 19.99, "Natalia", 80, 30],
   [4, 49.99, "Natalia", 180, 60], [5, 99.99, "Natalia", 360, 100], [6, 99.99, "Natalia", 375, 100],
@@ -16414,6 +16420,9 @@ function vipTierNow() {
 function vipPackTables() {
   const tier = vipTierNow(), out = [];
   const cols = ["$", null, "Hero XP", "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Gems"];
+  const f = VIP_FIRST_BUY;
+  VIP_PACK_LINKS["vip-0"] = { group: NG_HERO_GROUP, pages: ["hero_shards"], priceCol: 0, cols: { 1: `${f.hero} Shards`, 2: "Hero XP" }, reset: "once", buys: 1, sequential: true, vip: 0 };
+  out.push({ id: "vip-0", title: "First Purchase Reward", columns: ["$", `${f.hero} Shards`, "Hero XP"], rows: f.steps.map(([p, n, xp]) => ({ cells: [p, n, xp * 10000].map(String) })), sort_order: 210000 });
   VIP_PACK_ROWS.forEach(([lv, price, hero, shards, xp]) => {
     if (lv > tier) return;
     const id = `vip-${lv}`, c = cols.slice();
@@ -16422,6 +16431,13 @@ function vipPackTables() {
     out.push({ id, title: `VIP ${lv} Special Pack`, columns: c, rows: [{ cells: [price, shards, xp * 10000, lv * 60, lv * 60, lv * 60, ngGems(price)].map(String) }], sort_order: 210000 + lv });
   });
   return out;
+}
+// The first purchase reward is planned only while its hero still needs unlocking
+// (the last hero shard plan has her with unlock shards): anyone who has her
+// already made a first purchase.
+function vipFirstBuyOpen() {
+  const rows = (HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || [];
+  return rows.some((r) => r.hero && r.hero.name === VIP_FIRST_BUY.hero && r.unlock > 0);
 }
 // What the built-in packs (new heroes' copies, VIP packs) were made from.
 function packBuiltSig() { return `${ngHeroSig()}|vip${vipTierNow()}`; }
@@ -21047,13 +21063,17 @@ function budgetPlanLines(calcKey) {
 // Everything the Budgets page needs for one calculator page.
 async function budgetForPage(calcKey, targetDays, opts = {}) {
   await ensurePackLinks();
-  const tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey) && packInBudgets(tb.id));
+  let tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey) && packInBudgets(tb.id));
   let groups, live = true, vipNote = null, shInfo = null;
   if (opts.groups) groups = opts.groups;
   else if (calcKey === "chief_gear") groups = computeChiefGearNeeds();
   else if (calcKey === "charm") groups = computeCharmNeeds();
   else if (calcKey === "hero_gear") groups = computeHeroGearNeeds();
-  else if (calcKey === "hero_shards") { const hb = await heroShardBudget(); groups = hb.groups; vipNote = hb.vip; }
+  else if (calcKey === "hero_shards") {
+    const hb = await heroShardBudget(); groups = hb.groups; vipNote = hb.vip;
+    // The first purchase reward only while Natalia isn't unlocked yet.
+    if (!vipFirstBuyOpen()) tables = tables.filter((tb) => tb.id !== "vip-0");
+  }
   else if (calcKey === "shining_skins") { shInfo = await shiningSkinsNeed(); groups = shInfo.groups; }
   else {
     // T11 / T12 not counted (their page tick, which follows the state age): nothing to plan.
