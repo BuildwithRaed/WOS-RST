@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "171a118217";
+window.ADMIN_BUILD = "37302a5b75";
 
 // ============================================================
 // ADMIN PAGE
@@ -673,13 +673,13 @@ async function renderAdminResearchLocks(body) {
 // Which rules each Admin section owns (headings: "" = none), and rules it uses
 // that are edited elsewhere (link rows). Saved data is unchanged (game_rules).
 const ADMIN_RULE_HOME = {
-  heroes: { groups: [["", ["widgetCost", "shardChart", "heroTrades"]]], links: ["hallHero", "vipShards"] },
+  heroes: { groups: [["", ["ngPacks", "widgetCost", "shardChart", "heroTrades"]]], links: ["hallHero", "vipShards"] },
   vip: { groups: [["", ["vipShards"]]] },
   experts: { groups: [["", ["affinity"]]] },
   pets: { groups: [["", ["advancedMark"]]] },
   centerresearch: { groups: [["T12", ["t12Tree"]], ["Research Center", ["rcTracks", "rcTiers"]], ["Unlock rules", ["researchLocks"]], ["Research Lab", ["rfcLab"]]] },
   skins: { groups: [["Skin Gallery", ["galleryBig", "globeLevels"]], ["Islands", ["islCopies", "islTree", "islShop", "islCamp", "islLighthouse", "islLightUnlock"]]] },
-  packres: { groups: [["", ["gems", "packDatesGroups", "ngPacks"]]] },
+  packres: { groups: [["", ["gems", "packDatesGroups"]]] },
   items: { groups: [["", ["trades", "bundles", "resChests"]]] },
 };
 const ADMIN_RULE_STATE = ["unlocks", "genDays", "events", "newGenRule", "hallHero"];

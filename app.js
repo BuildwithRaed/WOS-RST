@@ -1447,6 +1447,11 @@ const NAV_PAGE_LABELS = {
 // General UI strings (settings panel, owner login, Dashboard chrome).
 const T = {
   language: { en: "Language" },
+  rule_hall_unlock: { en: "Hall of Heroes hero unlock" },
+  rule_hall_unlock_help: { en: "The Hall of Heroes hero of each new Gen must buy 10 shards to unlock (Value Hero Pack or Marks of Valor); the other new heroes are unlocked free from the Lucky Wheel / events. The pack numbers are used only if the Value Hero Pack table is missing on the Packs page." },
+  rule_hall_unlock_shards: { en: "Shards to unlock the Hall of Heroes hero" },
+  rule_hall_unlock_price: { en: "Value Hero Pack price ($) (used only if the pack table is missing)" },
+  rule_hall_unlock_gives: { en: "…shards it gives" },
   commander: { en: "Commander" },
   name_placeholder: { en: "Name" },
   save: { en: "Save" },
@@ -14231,8 +14236,10 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     const step = Math.min(30, star * 6 + sub);
     const tStep = T.later ? step : Math.max(step, Math.min(30, T.stars != null ? Number(T.stars) * 6 : 30));
     // A hero not unlocked yet (not in the roster, no saved stars) takes HERO_UNLOCK_SHARDS
-    // shards before its first star step (owner, 17 Nov 2026: 10 + 1,065 = 1,075 to 5★).
-    const unlock = !inRoster && !phBy[hero.id] && !T.later ? HERO_UNLOCK_SHARDS : 0;
+    // shards before its first star step, but only the Gen's Hall of Heroes hero has to
+    // buy them; the other new heroes are unlocked free (Lucky Wheel / events).
+    const isHall = HALL_OF_HEROES_HERO[Number(hero.generation)] === hero.name;
+    const unlock = isHall && !inRoster && !phBy[hero.id] && !T.later ? HERO_UNLOCK_SHARDS : 0;
     let need = unlock;
     const cum = {}; // shards from now to each whole star (mini targets)
     for (let k = step + 1; k <= tStep; k++) { need += heroShardStepCost(costByGen, hero.generation, k); if (k % 6 === 0) cum[k / 6] = need; }
@@ -14269,8 +14276,8 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
 }
 // Widgets for each Exclusive Gear (widget) level 1..10: 5, 10 ... 50 (275 in all).
 // Assumed from community tables; widgets cost $4.99 for 5.
-// Shards to unlock (recruit) a hero before its first star step.
-const HERO_UNLOCK_SHARDS = 10;
+// Shards the Gen's Hall of Heroes hero must buy to unlock (Rules "Hall of Heroes hero unlock").
+let HERO_UNLOCK_SHARDS = 10;
 const WIDGET_LEVEL_COST = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 const WIDGET_PACK = { count: 5, price: 4.99 };
 // Top widget level = the Rules "Widgets per widget level" table's length (10 built in).
@@ -32381,7 +32388,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=171a118217";
+      s.src = "admin.min.js?v=37302a5b75";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
@@ -32497,9 +32504,10 @@ function gameRules() {
       cols: [{ key: "star", label: "Star", type: "num" }, ...[1, 2, 3, 4, 5, 6].map((k) => ({ key: "s" + k, label: "Step " + k, type: "num" }))],
       get: () => Object.entries(HERO_SHARD_CHART).map(([st, a]) => ({ star: Number(st), ...Object.fromEntries(a.map((v, i) => ["s" + (i + 1), v])) })),
       set: (rows) => ruleSetObject(HERO_SHARD_CHART, Object.fromEntries(rows.filter((r) => r.star).map((r) => [Number(r.star), [1, 2, 3, 4, 5, 6].map((k) => Number(r["s" + k]) || 0)]))) },
-    { key: "ngPacks", group: "heroes", label: "New heroes packs (built-in numbers)", help: "Used only when the Heroes packs tables on the Packs page are missing.", type: "fields",
-      fields: [num("price", "Value Hero Pack price ($)"), num("shards", "…hero shards")],
-      get: () => ({ ...NG_HERO_SHARD_PACK }), set: (v) => { NG_HERO_SHARD_PACK.price = Number(v.price) || 0; NG_HERO_SHARD_PACK.shards = Number(v.shards) || 0; } },
+    { key: "ngPacks", group: "heroes", label: t("rule_hall_unlock"), help: t("rule_hall_unlock_help"), type: "fields",
+      fields: [num("unlock", t("rule_hall_unlock_shards")), num("price", t("rule_hall_unlock_price")), num("shards", t("rule_hall_unlock_gives"))],
+      get: () => ({ unlock: HERO_UNLOCK_SHARDS, ...NG_HERO_SHARD_PACK }),
+      set: (v) => { HERO_UNLOCK_SHARDS = v.unlock != null && v.unlock !== "" && Number.isFinite(Number(v.unlock)) ? Math.max(0, Number(v.unlock)) : 10; NG_HERO_SHARD_PACK.price = Number(v.price) || 0; NG_HERO_SHARD_PACK.shards = Number(v.shards) || 0; } },
     { key: "trades", group: "trades", label: "Built-in trades per page", help: "Item → item rules each page uses (hidden ones are rules, not shown in the Trade box). The page's own Trade box edits still win for visible trades.",
       cols: [{ key: "page", label: "Page", type: "select", options: () => Object.keys(TRADE_DEFAULT_RATES) }, { key: "from", label: "Give item", type: "text" }, { key: "give", label: "Give", type: "num" }, { key: "to", label: "Get item", type: "text" }, { key: "get", label: "Get", type: "num" }, { key: "max", label: "Weekly max (0 = none)", type: "num" }, { key: "hidden", label: "Hidden rule", type: "check" }],
       get: () => Object.entries(TRADE_DEFAULT_RATES).flatMap(([pg, rows]) => rows.map((r) => ({ page: pg, from: r.from, give: r.give, to: r.to, get: r.get, max: r.max || 0, hidden: !!r.hidden, ...(r.silent ? { silent: true } : {}) }))),
