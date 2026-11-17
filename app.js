@@ -14335,7 +14335,10 @@ function heroShardCostByGen(starRows) {
 // `targets` (Budgets, admin): { heroId: { stars 1-5, widget 0-10, later, wNow } }
 // sets each hero's own target (default 5★ / widget 10); `extra` = heroes
 // planned besides the roster (e.g. a new Gen's heroes to push).
-function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, extra }) {
+// `special` = { hero name: whole stars } from Heroes Special Skills (Natalia /
+// Jeronimo): their level when not in the roster (the higher of it and a saved
+// player_heroes row); stars > 0 = unlocked.
+function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, extra, special }) {
   const costByGen = heroShardCostByGen(starRows);
   const phBy = {};
   (playerHeroes || []).forEach((p) => { phBy[p.hero_id] = p; });
@@ -14355,7 +14358,8 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     const T = tg[hero.id] || {};
     // Not out yet in the person's state: no shards to plan for.
     if (heroGenNotOut(hero.generation)) { notOut.push({ troop, hero }); return null; }
-    const v = Number((phBy[hero.id] || {}).current_stars) || 0;
+    const sp = !inRoster && special && vipPackHero(hero.name) ? Math.max(0, Math.min(5, Math.floor(Number(special[hero.name]) || 0))) : 0;
+    const v = Math.max(Number((phBy[hero.id] || {}).current_stars) || 0, sp);
     const star = Math.min(5, Math.floor(v)), sub = Math.min(6, Math.round((v - star) * 10));
     const step = Math.min(30, star * 6 + sub);
     const tStep = T.later ? step : Math.max(step, Math.min(30, T.stars != null ? Number(T.stars) * 6 : 30));
@@ -14364,7 +14368,7 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     // buy them; the other new heroes are unlocked free (Lucky Wheel / events).
     // Natalia / Jeronimo (VIP packs only) need it too.
     const isHall = HALL_OF_HEROES_HERO[Number(hero.generation)] === hero.name || vipPackHero(hero.name);
-    const unlock = isHall && !inRoster && !phBy[hero.id] && !T.later ? HERO_UNLOCK_SHARDS : 0;
+    const unlock = isHall && !inRoster && !phBy[hero.id] && !sp && !T.later ? HERO_UNLOCK_SHARDS : 0;
     let need = unlock;
     const cum = {}; // shards from now to each whole star (mini targets)
     for (let k = step + 1; k <= tStep; k++) { need += heroShardStepCost(costByGen, hero.generation, k); if (k % 6 === 0) cum[k / 6] = need; }
@@ -20745,10 +20749,16 @@ async function heroShardBudget() {
     ensureStateAge(),
   ]);
   const vipTier = await loadCalcState("vip_tier").catch(() => null);
+  // Natalia / Jeronimo's stars from Heroes Special Skills (calc_state hero_stars_<key>).
+  const special = {};
+  await Promise.all(Object.entries(SPECIAL_HERO_META).map(async ([k, m]) => {
+    const s = await loadCalcState(`hero_stars_${k.toLowerCase()}`).catch(() => null);
+    special[m.name] = Number((s || {}).__shared__) || 0;
+  }));
   noteHeroImages(heroes);
   // Each hero's own target and extra heroes (admin, Order of goals).
   const ht = visitorCan("goals") ? await ensureHeroTargets() : null;
-  const plan = heroShardPlan({ heroes, roster, playerHeroes, starRows, bp: bp || {}, targets: ht ? ht.heroes : null, extra: ht ? ht.extra : null });
+  const plan = heroShardPlan({ heroes, roster, playerHeroes, starRows, bp: bp || {}, targets: ht ? ht.heroes : null, extra: ht ? ht.extra : null, special });
   HERO_PLAN_LAST = { rows: plan.rows, heroes, roster };
   const totals = {}, owned = {}, rules = [];
   const rule = (from, to, give, get, max) => rules.push({ from, to, give, get, max, hidden: true, silent: true });
@@ -28316,7 +28326,8 @@ async function renderExtraBonusHeroes() {
   const list = heroes.map((h, i) => { const m = SPECIAL_HERO_META[h] || { name: h, img: HERO_IMG_BY_NAME[h] || "" }; return { key: h, name: m.name, img: m.img, d: data[i] }; });
   const ok = list.filter((x) => x.d);
   const starsOf = (x) => Math.max(0, Math.min(5, Number(x.d.saved.__shared__) || 0));
-  const save = (x) => saveCalcState(`hero_stars_${x.key.toLowerCase()}`, x.d.saved);
+  // Natalia / Jeronimo's stars also set their shards in Budgets (heroShardBudget).
+  const save = (x) => { saveCalcState(`hero_stars_${x.key.toLowerCase()}`, x.d.saved); if (typeof budgetInvalidate === "function") budgetInvalidate(); };
 
   content.innerHTML = `<div class="t12x bn-pg">
       ${bnTitleHtml(navLabel("extrabonusheroes"), t("hs_desc"), ok.length ? "heroSkillsMaxAllBtn" : "")}
