@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "931b7b2f32";
+window.ADMIN_BUILD = "ec89ec007e";
 
 // ============================================================
 // ADMIN PAGE
@@ -744,6 +744,13 @@ function admRuleCard(host, key, back) {
       const has = opts.some((o) => String(pair(o)[0]) === String(v));
       return `<select ${a}>${!has && v != null && v !== "" ? `<option selected>${esc(String(v))}</option>` : ""}${opts.map((o) => { const [ov, ol] = pair(o); return `<option value="${esc(String(ov))}" ${String(ov) === String(v) ? "selected" : ""}>${esc(String(ol))}</option>`; }).join("")}</select>`;
     }
+    // A name list with "Custom…" (a name not in the list opens as Custom with its text).
+    if (c.type === "pick") {
+      const opts = (typeof c.options === "function" ? c.options(row || {}) : c.options) || [];
+      const pair = (o) => (Array.isArray(o) ? o : [o, o]);
+      const sv = v == null ? "" : String(v), custom = sv !== "" && !opts.some((o) => String(pair(o)[0]) === sv);
+      return `<span class="rl-pick"><select ${a} data-rpick><option value="" ${sv === "" ? "selected" : ""}>—</option>${opts.map((o) => { const [ov, ol] = pair(o); return `<option value="${esc(String(ov))}" ${!custom && String(ov) === sv ? "selected" : ""}>${esc(String(ol))}</option>`; }).join("")}<option value="${ADM_PICK_CUSTOM}" ${custom ? "selected" : ""}>Custom…</option></select><input type="text" data-rcellc="${ri}|${c.key}" value="${esc(custom ? sv : "")}" placeholder="Type the name" ${custom ? "" : "hidden"} /></span>`;
+    }
     if (c.type === "page") return `<select ${a}>${pages.map((p) => `<option value="${esc(p.tab)}" ${p.tab === v ? "selected" : ""}>${esc(p.label)}</option>`).join("")}</select>`;
     return `<input ${a} type="${c.type === "num" ? "number" : c.type === "date" ? "date" : "text"}" ${c.type === "num" ? 'step="any" inputmode="decimal"' : ""} value="${esc(v == null ? "" : String(v))}" />`;
   };
@@ -761,7 +768,14 @@ function admRuleCard(host, key, back) {
       ed.innerHTML = `${val.length > 1 ? arrangeBarHtml("rule:" + r.key) : ""}<div class="rl-table-wrap"><table class="rl-table"${arrangeHostAttr("rule:" + r.key)}><thead><tr><th></th>${r.cols.map((c) => `<th>${esc(c.label)}</th>`).join("")}<th></th></tr></thead><tbody>
         ${val.map((row, ri) => `<tr data-rrow="${ri}"><td class="rl-dragcell">${dsHandleHtml("data-rdrag")}</td>${r.cols.map((c) => `<td>${cell(c, row[c.key], ri, row)}</td>`).join("")}<td class="rl-rowbtns"><button type="button" data-rdel="${ri}" aria-label="delete">&#10005;</button></td></tr>`).join("")}
         </tbody></table></div><button type="button" class="btn ghost small" data-radd style="margin-top:8px;">+ Add row</button>`;
-      ed.querySelectorAll("[data-rcell]").forEach((inp) => inp.addEventListener(inp.type === "checkbox" || inp.tagName === "SELECT" ? "change" : "input", () => {
+      ed.querySelectorAll("select[data-rpick]").forEach((sel) => sel.addEventListener("change", () => {
+        const [ri, k] = sel.dataset.rcell.split("|"), box = ed.querySelector(`[data-rcellc="${ri}|${k}"]`);
+        box.hidden = sel.value !== ADM_PICK_CUSTOM;
+        if (box.hidden) val[+ri][k] = sel.value;
+        else { if (!box.value) box.value = val[+ri][k] == null ? "" : String(val[+ri][k]); val[+ri][k] = box.value; box.focus(); }
+      }));
+      ed.querySelectorAll("[data-rcellc]").forEach((box) => box.addEventListener("input", () => { const [ri, k] = box.dataset.rcellc.split("|"); val[+ri][k] = box.value; }));
+      ed.querySelectorAll("[data-rcell]:not([data-rpick])").forEach((inp) => inp.addEventListener(inp.type === "checkbox" || inp.tagName === "SELECT" ? "change" : "input", () => {
         const [ri, k] = inp.dataset.rcell.split("|"); const c = r.cols.find((x) => x.key === k);
         val[+ri][k] = inp.type === "checkbox" ? inp.checked : c.type === "num" ? (inp.value === "" ? "" : Number(inp.value)) : inp.value;
         if (c.after) c.after(val[+ri]);

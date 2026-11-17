@@ -2863,6 +2863,7 @@ input,select,textarea{
   .rl-table th{ text-align:start; font-size:11px; color:var(--muted); font-weight:600; padding:4px 6px; white-space:nowrap; }
   .rl-table td{ padding:3px 4px; border-top:1px solid var(--line); }
   .rl-table td.rl-dragcell{ padding:0; width:40px; }
+  .rl-pick{ display:flex; flex-direction:column; gap:4px; min-width:130px; }
   .rl-table input[type=text], .rl-table input[type=number], .rl-table input[type=date], .rl-table select{ width:100%; min-width:70px; padding:5px 6px; font-size:13px; }
   .rl-rowbtns{ white-space:nowrap; }
   .rl-rowbtns button{ width:26px; height:26px; border:1px solid var(--line); border-radius:7px; background:var(--panel-2); color:var(--frost); cursor:pointer; font-size:11px; }

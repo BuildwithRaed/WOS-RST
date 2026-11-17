@@ -15979,7 +15979,9 @@ const STATE_UNLOCKS = [
 ];
 const stateKeyNorm = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9]/g, "").replace(/tiger$/, "");
 // The built-in rows the code reads by key (kind + key).
-const STATE_UNLOCK_KEYS = STATE_UNLOCKS.filter((u) => u.key).map((u) => ({ kind: u.kind, key: u.key }));
+const STATE_UNLOCK_KEYS = STATE_UNLOCKS.filter((u) => u.key).map((u) => ({ kind: u.kind, key: u.key, label: u.label }));
+// Built-in pet / expert names (the Admin name lists' fallback when the tables can't be read).
+const STATE_UNLOCK_NAMES0 = { pets: STATE_UNLOCKS.filter((u) => u.kind === "pets").map((u) => u.name), experts: STATE_UNLOCKS.filter((u) => u.kind === "experts").map((u) => u.name) };
 function stateUnlockBuiltinKey(kind, name) {
   const k = stateKeyNorm(name);
   const b = STATE_UNLOCK_KEYS.find((x) => x.kind === kind && stateKeyNorm(x.key) === k);
@@ -32417,7 +32419,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=931b7b2f32";
+      s.src = "admin.min.js?v=ec89ec007e";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
@@ -32481,11 +32483,11 @@ function gameRules() {
   const affDef = { ...AFFINITY_ITEM_VALUE }; // code values (before any saved rule)
   GAME_RULES = [
     { key: "unlocks", group: "timeline", label: "Unlocks by state age", help: "What opens on which state day (pets, experts, T11 / T12, Crystal Lab, Legendary Chief Gear…). Pages show a 🔒 note before that day and leave it out of the totals until it opens. Kind \"level\": pick a page's levels and the first one not open yet; until that day Max and the default My max stop just below it (like Upcoming).",
-      prepare: () => loadLevelLockChoices(),
+      prepare: () => Promise.all([loadLevelLockChoices(), loadUnlockNameChoices()]),
       cols: [{ key: "label", label: "Shown as", type: "text" },
         { key: "kind", label: "Kind", type: "select", options: ["pets", "experts", "page", "lab", "gear", "level"], redraw: true, locked: (row) => !!row.key,
           after: (row) => { if (row.kind === "level" && !LEVEL_LOCK_TARGETS[row.table]) { row.table = Object.keys(LEVEL_LOCK_TARGETS)[0]; row.level = (LEVEL_LOCK_CHOICES[row.table] || [""])[0]; } } },
-        { key: "name", label: "Name (pet / expert / id)", type: "text", locked: (row) => !!row.key, when: (row) => row.kind !== "level" },
+        { key: "name", label: "Name (pet / expert / id)", type: "pick", options: (row) => unlockNameChoices(row.kind), locked: (row) => !!row.key, when: (row) => row.kind !== "level" },
         { key: "tab", label: "Page", type: "page", when: (row) => row.kind !== "level" },
         { key: "table", label: "Levels of (kind level)", type: "select", options: () => Object.entries(LEVEL_LOCK_TARGETS).map(([k, d]) => [k, d.label]), redraw: true,
           after: (row) => { row.level = (LEVEL_LOCK_CHOICES[row.table] || [""])[0]; }, when: (row) => row.kind === "level" },
@@ -32652,6 +32654,21 @@ function gameRules() {
   // The built-in values, kept for "Reset" and to show what changed.
   GAME_RULES.forEach((r) => { r.def = JSON.parse(JSON.stringify(r.get())); });
   return GAME_RULES;
+}
+// Names to pick from for the other unlocks (Admin; "Custom…" types any other):
+// pets from the pet levels table, experts from the roster, built-in feature
+// unlocks (T11, T12, Crystal Lab, gear / charm) by their readable name.
+const UNLOCK_NAME_CHOICES = { pets: null, experts: null };
+async function loadUnlockNameChoices() {
+  const uniq = (a) => [...new Set(a.filter(Boolean))];
+  await Promise.all([
+    sb(`${PET_LEVELS_TABLE}?select=pet&order=pet.asc`).then((rows) => { UNLOCK_NAME_CHOICES.pets = uniq(rows.map((r) => r.pet)); }).catch(() => {}),
+    sb("experts?select=key&order=sort_order.asc").then((rows) => { UNLOCK_NAME_CHOICES.experts = uniq(rows.map((r) => r.key)); }).catch(() => {}),
+  ]);
+}
+function unlockNameChoices(kind) {
+  if (kind === "pets" || kind === "experts") return UNLOCK_NAME_CHOICES[kind] && UNLOCK_NAME_CHOICES[kind].length ? UNLOCK_NAME_CHOICES[kind] : STATE_UNLOCK_NAMES0[kind];
+  return STATE_UNLOCK_KEYS.filter((x) => x.kind === kind).map((x) => [x.key, x.label || x.key]);
 }
 // Levels to pick from for "level" unlocks (Admin), loaded when that rule opens.
 const LEVEL_LOCK_CHOICES = {};
