@@ -555,6 +555,8 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 
 **Pack sheet speedups in hours (17 Nov 2026):** in the Packs page's pack details sheet (`pkbChip` / `pkbChips`), items stored in minutes (names ending "(minutes)", e.g. the VIP packs' Research / Troop / Construction Speedups) show as a time (`pkbMinTxt`: "1h", "1.5h", "30m", over 99 h "5d 4h"); the chip's title keeps the full minutes. Display only: data, the editor's boxes and totals, prices and plans unchanged. Counted speedups ("Speedup 1h" × 4) stay counts.
 
+**Natalia / Jeronimo shard pictures (17 Nov 2026, owner's pictures, 128 px, background removed with the owner's OK):** `icons/heroes/natalia-shards.png` / `jeronimo-shards.png`, map `HERO_SHARD_OWN_ICON` read by `heroOwnShardIcon(name)`, checked first in `bpIcon` and `materialIconSrc` (so `pkItemIcon`, Packs headers / rows / sheet chips, Backpack tiles, Budgets / My Purchases chips use them). These two show without the hero-face corner badge (`.pk-hface`, `.bp-heroic`, `heroItemMark`); other heroes unchanged. A new hero with its own shard picture = one line in the map.
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit (since Speed plan Step 5 it also writes the .min copies the site loads).
