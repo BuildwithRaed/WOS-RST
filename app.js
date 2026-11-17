@@ -12112,7 +12112,7 @@ async function renderPacksPage() {
     if (fixed) return `<div class="pk-hd">${packColumnControlHtml(tb, ci)}</div>`;
     const name = pkColItem(tb, ci), label = materialDisplayName(name) || name, tm = pkSpeedTime(name);
     // A hero's own shards / widgets: the hero's face in the corner (two heroes' shards look alike).
-    const hm = /^(.+) (Shards|Widgets)$/.exec(String(name)), hImg = hm && HERO_IMG_BY_NAME[hm[1]];
+    const hm = /^(.+) (Shards|Widgets)$/.exec(String(name)), hImg = hm && !heroOwnShardIcon(name) && HERO_IMG_BY_NAME[hm[1]];
     const face = (pkIconHtml(name) || `<b>${esc(String(label || "?").slice(0, 3))}</b>`) + (hImg ? `<img class="pk-hface" src="${esc(hImg)}" alt="" loading="lazy" />` : "");
     if (cur.toLowerCase() === "gems") {
       return `<div class="pk-hd"><span class="pk-hdi" title="${esc(label)}">${face}${IS_OWNER ? `<button type="button" class="pk-hdx" data-pt-gemsdel data-col="${ci}" title="${esc(t("pack_remove_column"))}">&times;</button>` : ""}</span></div>`;
@@ -12543,12 +12543,23 @@ async function renderPacksPage() {
   const pkbCap = (lk, ri) => { const m = Number((lk.rowMax || {})[ri]); return Number.isInteger(m) && m > 0 ? m : Math.max(1, Math.round(Number(lk.buys)) || 1); };
   const pkbLocal = (tb, lk, ri) => { const n = parseNum(String(tb.rows[ri].cells[lk.priceCol || 0] ?? "")); return n > 0 ? Number(packConvert(n, lk.currency).n) || 0 : 0; };
   const pkbMoneyL = (n, lk) => packFmtMoney(n, packLocalCode(lk.currency), false, true);
+  // Speedups stored in minutes ("Research Speedups (minutes)") read as a
+  // time: 60 -> "1h", 90 -> "1.5h", 30 -> "30m", 7440 -> "5d 4h".
+  const pkbIsMin = (name) => /\(minutes\)\s*$/i.test(String(name || ""));
+  function pkbMinTxt(min) {
+    const m = Number(min) || 0;
+    if (m < 60) return `${Math.round(m)}m`;
+    const h = m / 60;
+    if (h > 99) { const tot = Math.round(h), d = Math.floor(tot / 24), r = tot % 24; return r ? `${d}d ${r}h` : `${d}d`; }
+    return `${Math.round(h * 10) / 10}h`;
+  }
+  const pkbAmt = (name, n) => (pkbIsMin(name) ? pkbMinTxt(n) : pkShortNum(n, true));
   function pkbChip(name, n, extra) {
-    const label = materialDisplayName(name) || name;
+    const label = materialDisplayName(name) || name, isMin = pkbIsMin(name);
     let ic = pkIconHtml(name);
     if (!ic && /hero shards?$/i.test(name)) ic = pkIconHtml("Mythic General Hero Shard");
     if (!ic && /hero widgets?$/i.test(name)) ic = `<img src="${esc(HERO_ITEM_ICON.widget)}" alt="" loading="lazy" />`;
-    return `<span class="pkd-c${/^gems$/i.test(name) ? " gem" : ""}" title="${esc(label)}">${ic || `<i class="pkd-cn">${esc(label)}</i>`}<b>${esc(pkShortNum(n, true))}${extra || ""}</b></span>`;
+    return `<span class="pkd-c${/^gems$/i.test(name) ? " gem" : ""}" title="${esc(isMin ? `${label} · ${fmtNum(n)}` : label)}">${ic || `<i class="pkd-cn">${esc(label)}</i>`}<b>${esc(pkbAmt(name, n))}${extra || ""}</b></span>`;
   }
   // A row's items as picture chips (Gems last, dimmed); `only` = these columns;
   // `strike` = { col: amount } shown struck through after the amount.
@@ -12560,7 +12571,7 @@ async function renderPacksPage() {
       const n = pkbVal(row, ci);
       if (!(n > 0)) return;
       const name = eff[ci] || String(c || "").trim();
-      const s0 = strike && strike[ci] != null && strike[ci] !== n ? ` <s>${esc(pkShortNum(strike[ci], true))}</s>` : "";
+      const s0 = strike && strike[ci] != null && strike[ci] !== n ? ` <s>${esc(pkbAmt(name, strike[ci]))}</s>` : "";
       (/^gems$/i.test(name) ? g : a).push(pkbChip(name, n, s0));
     });
     return a.concat(g).join("");
@@ -14477,6 +14488,7 @@ const BP_HERO_CURRENCIES = ["Marks of Valor", "Mystery Points"];
 const BP_ISLAND_ITEMS = ["Life Essence", "Mythic Island Shards", "General Accessory Construction Contract", "Mark of Revival", "Glorious Tome", "Lucky Glorious Tome Chest"];
 const BP_EXTRA_ICONS = { "Life Essence": "icons/life-essence.png", "Mythic Island Shards": "icons/island-shard.png", "General Accessory Construction Contract": "icons/construction-contract.png", "Mark of Revival": "icons/mark-of-revival.png", "Glorious Tome": "icons/glorious-tome.png", "Lucky Glorious Tome Chest": "icons/lucky-glorious-tome-chest.png", "Marks of Valor": "icons/hall-marks.png", "Mystery Points": "icons/mystery-pts.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/mythic-hero-lucky-box.png" };
 function bpIcon(item) {
+  if (heroOwnShardIcon(item.name)) return heroOwnShardIcon(item.name);
   if (item.icon) return item.icon;
   const name = item.name;
   if (itemRegIcon(name)) return itemRegIcon(name);
@@ -14541,7 +14553,7 @@ async function renderInventory() {
   const heroGroups = [["Legendary", "backpack_mythic_heroes"], ["Epic", "backpack_epic_heroes"], ["Rare", "backpack_rare_heroes"]].map(([rarity, key]) => ({
     title: t(key), heroShards: true, rarity,
     all: (heroes || []).filter((h) => h.rarity === rarity),
-    items: (heroes || []).filter((h) => h.rarity === rarity && myHeroes.includes(h.name)).flatMap((h) => [{ name: `${h.name} Shards`, icon: HERO_ITEM_ICON.shard(rarity), face: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity }])
+    items: (heroes || []).filter((h) => h.rarity === rarity && myHeroes.includes(h.name)).flatMap((h) => [{ name: `${h.name} Shards`, icon: heroOwnShardIcon(`${h.name} Shards`) || HERO_ITEM_ICON.shard(rarity), face: heroOwnShardIcon(`${h.name} Shards`) ? "" : h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity }])
       // Mythic heroes' widgets: one box for all of them (see widgetHeroes).
       .concat(rarity === "Legendary" && mythics.length ? [{ name: t("bp_widgets"), icon: HERO_ITEM_ICON.widget, widgetsAll: true, rarity }] : []),
   })).filter((g) => g.all.length);
@@ -14693,7 +14705,7 @@ async function renderInventory() {
       const gm = /^Gen (\d+) Widgets$/.exec(name);
       if (gm) return mythics.some((h) => Number(h.generation) === Number(gm[1])) ? { label: t("bpw_gen_row").replace("{g}", `${t("gen_prefix")} ${gm[1]}`), icon: HERO_ITEM_ICON.widget, listed: widgetGens().includes(Number(gm[1])) } : null;
       const h = (heroes || []).find((x) => `${x.name} Shards` === name);
-      return h ? { label: `${dataName(h.name)} — ${t("backpack_hero_shards")}`, icon: HERO_ITEM_ICON.shard(h.rarity) } : null;
+      return h ? { label: `${dataName(h.name)} — ${t("backpack_hero_shards")}`, icon: heroOwnShardIcon(`${h.name} Shards`) || HERO_ITEM_ICON.shard(h.rarity) } : null;
     },
     added: (names) => {
       names.forEach((n) => {
@@ -24844,6 +24856,13 @@ const HERO_IMG_BY_NAME = {}, HERO_RARITY_BY_NAME = {};
 function noteHeroImages(heroes) { (heroes || []).forEach((h) => { if (h && h.name && h.image_url) { HERO_IMG_BY_NAME[h.name] = h.image_url; HERO_RARITY_BY_NAME[h.name] = h.rarity; } }); return heroes; }
 // A hero's own shards / widgets show the item (the rarity's shard, the widget
 // box), with the hero's face in the corner.
+// Heroes whose own shards have their own picture (the face is in it, so no
+// face badge in the corner).
+const HERO_SHARD_OWN_ICON = { Natalia: "icons/heroes/natalia-shards.png", Jeronimo: "icons/heroes/jeronimo-shards.png" };
+function heroOwnShardIcon(name) {
+  const hm = /^(.+) Shards$/.exec(String(name || ""));
+  return (hm && HERO_SHARD_OWN_ICON[hm[1]]) || "";
+}
 const HERO_ITEM_ICON = {
   widget: "icons/hero-widgets.png",
   shard: (rarity) => BP_SHARD_ICONS[HERO_GENERAL_SHARD[rarity] || "Mythic General Hero Shard"],
@@ -24851,10 +24870,11 @@ const HERO_ITEM_ICON = {
 // 🧩 / ⚙ next to a hero's picture, so shards and widgets of one hero differ.
 function heroItemMark(name) {
   const hm = /^(.+) (Shards|Widgets)$/.exec(String(name));
-  return hm && HERO_IMG_BY_NAME[hm[1]] ? `<img class="bud-face" src="${esc(HERO_IMG_BY_NAME[hm[1]])}" alt="" loading="lazy" />` : "";
+  return hm && HERO_IMG_BY_NAME[hm[1]] && !heroOwnShardIcon(name) ? `<img class="bud-face" src="${esc(HERO_IMG_BY_NAME[hm[1]])}" alt="" loading="lazy" />` : "";
 }
 function materialIconSrc(name) {
   if (itemRegIcon(name)) return itemRegIcon(name);
+  if (heroOwnShardIcon(name)) return heroOwnShardIcon(name);
   const hm = /^(.+) (Shards|Widgets)$/.exec(String(name));
   if (hm && HERO_IMG_BY_NAME[hm[1]]) return hm[2] === "Widgets" ? HERO_ITEM_ICON.widget : HERO_ITEM_ICON.shard(HERO_RARITY_BY_NAME[hm[1]]);
   if (/^Research Speedups/.test(name)) return "icons/speedup-research.png";
