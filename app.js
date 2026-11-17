@@ -27823,7 +27823,7 @@ function bnLevelRowHtml(o) {
   const lv = Math.max(0, i);
   const next = i >= 0 && i < last ? `<em>${bidiNums(esc(t("bn_next").replace("{n}", bnFmt(vals[i + 1] - vals[i])).replace("{s}", bnAbbr(o.stat))))}</em>` : i >= last ? `<em class="ok">${esc(t("bn_max"))}</em>` : "";
   return `<div class="bn-lvh"><span><b>${esc(tStatLabel(o.stat))}</b> · ${esc(t("bn_lv_of").replace("{a}", lv).replace("{b}", last))}</span>${next}</div>
-    <div class="bn-lc">${vals.map((v, j) => `<button type="button" class="${j === 0 ? "z " : ""}${j === i ? "on" : j < i ? "lo" : ""}${j > last ? " up" : ""}" data-bnlv="${esc(o.stat)}|${v}" aria-pressed="${j === i}"${j > last ? ` title="${esc(t("upcoming_tag"))}"` : ""}>${bnFmt(v)}</button>`).join("")}</div>`;
+    <div class="bn-sl${i >= last ? " max" : ""}" style="--fill:${vals.length > 1 ? Math.round(Math.max(0, i) / (vals.length - 1) * 1000) / 10 : 0}%"><div class="bn-sl-tr"><i></i></div><div class="bn-sl-d">${vals.map((v, j) => `<button type="button" class="${j === i ? "on" : j < i ? "lo" : ""}${j > last ? " up" : ""}" data-bnlv="${esc(o.stat)}|${v}" aria-pressed="${j === i}" aria-label="${esc(tStatLabel(o.stat))} ${bnFmt(v)}%"${j > last ? ` title="${esc(t("upcoming_tag"))}"` : ""}><span class="dot"></span><small>${bnFmt(v)}</small></button>`).join("")}</div></div>`;
 }
 
 async function renderVipTierTable(target) {
