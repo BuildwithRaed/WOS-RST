@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "e56c20d72e";
+window.ADMIN_BUILD = "066a4bf123";
 
 // ============================================================
 // ADMIN PAGE
@@ -101,7 +101,7 @@ function adminLangMissing() { try { const o = JSON.parse(localStorage.getItem("a
 function adminCardInfo(k) {
   const up = siteConfig("upcoming_levels", {}) || {};
   let line = ADMIN_SHORT[k] || ADMIN_TABLES[k].desc, warn = false;
-  if (k === "rules") { const n = Object.keys(gameRulesSaved()).length; if (n) line = t("admh_n_changed").replace("{n}", n); }
+  if (k === "rules") { const n = admRulesChangedN(); if (n) line = t("admh_n_changed").replace("{n}", n); }
   if (k === "backup") { const d = adminBackupAge(); line = d == null ? t("admh_bk_never") : d === 0 ? t("admh_bk_today") : t("admh_bk_days").replace("{n}", d); warn = d == null || d > 7; }
   if (k === "languages") { const m = adminLangMissing(); const shown = languageList(true).filter((l) => !l.hidden).length; line = t("admh_n_langs").replace("{n}", shown); if (m && m.n > 0) { line = t("admh_n_missing").replace("{n}", m.n.toLocaleString()); warn = true; } }
   if (k === "visibility" && typeof UI_HIDDEN === "object" && UI_HIDDEN) { const n = Object.keys(UI_HIDDEN).filter((x) => UI_HIDDEN[x]).length; if (n) line = t("admh_n_hidden").replace("{n}", n); }
@@ -123,7 +123,7 @@ function adminHomeHtml() {
   rows.push({ warn: bk == null || bk > 7, b: bk == null ? t("admh_need_bk_none") : bk === 0 ? t("admh_need_bk_today") : t("admh_need_bk").replace("{n}", bk), s: t("admh_need_bk_sub"), go: "backup", btn: t("admh_backup_btn") });
   const lm = adminLangMissing();
   if (lm && lm.n > 0) rows.push({ warn: true, b: t("admh_need_texts").replace("{n}", lm.n.toLocaleString()), s: lm.lang ? t("admh_need_texts_sub").replace("{lang}", lm.lang) : "", go: "languages", btn: t("admh_texts_btn") });
-  const rc = Object.keys(gameRulesSaved()).length;
+  const rc = admRulesChangedN();
   if (rc) rows.push({ warn: false, b: t("admh_need_rules").replace("{n}", rc), s: t("admh_need_rules_sub"), go: "rules", btn: t("admh_rules_btn") });
   const needs = `<div class="admh-needs"><div class="admh-k">${esc(t("admh_needs"))}</div>${rows.map((r) => `<div class="admh-nr"><i class="admh-dot${r.warn ? " warn" : ""}" aria-hidden="true"></i><span class="admh-nt"><b>${esc(r.b)}</b>${r.s ? `<small>${esc(r.s)}</small>` : ""}</span><button type="button" class="admh-nb${r.warn ? " warn" : ""}" data-admintable="${r.go}">${esc(r.btn)} &#8250;</button></div>`).join("")}</div>`;
   // Main game data first (owner's mock-up); every section is shown.
@@ -680,10 +680,15 @@ const ADMIN_RULE_HOME = {
   pets: { groups: [["", ["advancedMark"]]] },
   // adv: inside the folded "Advanced (page structure)" heading (owner, 17 Nov 2026).
   centerresearch: { groups: [["T12", ["t12Tree"], "adv"], ["Research Center", ["rcTracks", "rcTiers"], "adv"], ["Unlock rules", ["researchLocks"]], ["Research Lab", ["rfcLab"]]] },
-  skins: { groups: [["Skin Gallery", ["galleryBig", "globeLevels"]], ["Islands", ["islCopies", "islTree", "islShop", "islCamp", "islLighthouse", "islLightUnlock"]]] },
+  skins: { groups: [["Skin Gallery", ["globeLevels"]], ["Islands", ["islCopies", "islTree", "islShop", "islCamp", "islLighthouse", "islLightUnlock"]]] },
   packres: { groups: [["", ["gems"]]] },
   items: { groups: [["", ["trades", "bundles", "resChests"]]] },
 };
+// Rules kept in the registry (saved values still apply) but not shown on the Rules screens:
+// edited only in their own place (galleryBig: Skins → ⋯ Category → Big pictures).
+const ADMIN_RULE_OFF = new Set(["galleryBig"]);
+const admRulesShown = () => gameRules().filter((r) => !ADMIN_RULE_OFF.has(r.key));
+const admRulesChangedN = () => Object.keys(gameRulesSaved()).filter((k) => !ADMIN_RULE_OFF.has(k)).length;
 const ADMIN_RULE_STATE = ["unlocks", "genDays", "events", "newGenRule", "hallHero"];
 const ADMIN_RULE_SHORTCUTS = ["trades", "bundles"];
 const admRuleKeysOf = (sec) => ((ADMIN_RULE_HOME[sec] || {}).groups || []).flatMap((g) => g[1]);
@@ -908,7 +913,7 @@ async function renderAdminRules(body) {
   await ensureSiteConfig();
   const rv = ADMIN_RULE_VIEW;
   if (rv && rv.startsWith("r:")) { admRuleCard(body, rv.slice(2), () => admRuleBack(() => { ADMIN_RULE_VIEW = null; renderAdminRules(body); })); return; }
-  const rules = gameRules(), byKey = (k) => rules.find((r) => r.key === k);
+  const rules = admRulesShown(), byKey = (k) => rules.find((r) => r.key === k);
   const tile = (sec) => {
     const keys = admRuleKeysOf(sec), ch = keys.filter(admRuleChanged).length, e = ADMIN_TABLES[sec];
     const pic = ADMIN_PIC[sec] ? `<img src="${ADMIN_PIC[sec]}" alt="" loading="lazy" />` : `<span>${e.icon}</span>`;
