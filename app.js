@@ -12543,12 +12543,23 @@ async function renderPacksPage() {
   const pkbCap = (lk, ri) => { const m = Number((lk.rowMax || {})[ri]); return Number.isInteger(m) && m > 0 ? m : Math.max(1, Math.round(Number(lk.buys)) || 1); };
   const pkbLocal = (tb, lk, ri) => { const n = parseNum(String(tb.rows[ri].cells[lk.priceCol || 0] ?? "")); return n > 0 ? Number(packConvert(n, lk.currency).n) || 0 : 0; };
   const pkbMoneyL = (n, lk) => packFmtMoney(n, packLocalCode(lk.currency), false, true);
+  // Speedups stored in minutes ("Research Speedups (minutes)") read as a
+  // time: 60 -> "1h", 90 -> "1.5h", 30 -> "30m", 7440 -> "5d 4h".
+  const pkbIsMin = (name) => /\(minutes\)\s*$/i.test(String(name || ""));
+  function pkbMinTxt(min) {
+    const m = Number(min) || 0;
+    if (m < 60) return `${Math.round(m)}m`;
+    const h = m / 60;
+    if (h > 99) { const tot = Math.round(h), d = Math.floor(tot / 24), r = tot % 24; return r ? `${d}d ${r}h` : `${d}d`; }
+    return `${Math.round(h * 10) / 10}h`;
+  }
+  const pkbAmt = (name, n) => (pkbIsMin(name) ? pkbMinTxt(n) : pkShortNum(n, true));
   function pkbChip(name, n, extra) {
-    const label = materialDisplayName(name) || name;
+    const label = materialDisplayName(name) || name, isMin = pkbIsMin(name);
     let ic = pkIconHtml(name);
     if (!ic && /hero shards?$/i.test(name)) ic = pkIconHtml("Mythic General Hero Shard");
     if (!ic && /hero widgets?$/i.test(name)) ic = `<img src="${esc(HERO_ITEM_ICON.widget)}" alt="" loading="lazy" />`;
-    return `<span class="pkd-c${/^gems$/i.test(name) ? " gem" : ""}" title="${esc(label)}">${ic || `<i class="pkd-cn">${esc(label)}</i>`}<b>${esc(pkShortNum(n, true))}${extra || ""}</b></span>`;
+    return `<span class="pkd-c${/^gems$/i.test(name) ? " gem" : ""}" title="${esc(isMin ? `${label} · ${fmtNum(n)}` : label)}">${ic || `<i class="pkd-cn">${esc(label)}</i>`}<b>${esc(pkbAmt(name, n))}${extra || ""}</b></span>`;
   }
   // A row's items as picture chips (Gems last, dimmed); `only` = these columns;
   // `strike` = { col: amount } shown struck through after the amount.
@@ -12560,7 +12571,7 @@ async function renderPacksPage() {
       const n = pkbVal(row, ci);
       if (!(n > 0)) return;
       const name = eff[ci] || String(c || "").trim();
-      const s0 = strike && strike[ci] != null && strike[ci] !== n ? ` <s>${esc(pkShortNum(strike[ci], true))}</s>` : "";
+      const s0 = strike && strike[ci] != null && strike[ci] !== n ? ` <s>${esc(pkbAmt(name, strike[ci]))}</s>` : "";
       (/^gems$/i.test(name) ? g : a).push(pkbChip(name, n, s0));
     });
     return a.concat(g).join("");
