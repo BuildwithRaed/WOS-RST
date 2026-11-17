@@ -3248,6 +3248,8 @@ const T = {
   pkd_lv_now: { en: "on now" },
   pkd_trig_note: { en: "Appears when {e} reaches {list}" },
   pkd_trig_lv: { en: "Lv {n} (step {s})" },
+  pkd_first_done: { en: "\u2713 Natalia unlocked" },
+  pkd_hero_maxed: { en: "\u2713 {hero} maxed" },
   pkd_and: { en: "and" },
   pkd_or: { en: "or" },
   pkd_buy_all: { en: "Buy all {n}" },
@@ -12012,6 +12014,8 @@ async function renderPacksPage() {
     ensureSiteConfig(),
   ]);
   if (seq !== RENDER_SEQ) return;
+  // Natalia Reward Pack / VIP Packs: "done" marks (reads only when needed).
+  if ((tablesLoaded || []).some((tb) => packIsFirstBuy(tb.id) || vipPackHeroOf(tb.id))) { await vipHeroesCheck(); if (seq !== RENDER_SEQ) return; }
   let tables = packApplyMyEdits(tablesLoaded).filter((tb) => IS_OWNER || !packLinkFor(tb.id).hideVisitors);
   // Visitors copy the templates in "My packs"; they aren't listed as packs.
   const templateTables = tables.filter((tb) => packLinkFor(tb.id).template);
@@ -12404,7 +12408,7 @@ async function renderPacksPage() {
     return preset ? t("pack_reset_" + preset.key) : `${t("pack_reset_every")} ${r}${t("pack_days_short")}`;
   }
   // "Every 2 weeks · Sun–Mon", on now / the next date it comes.
-  function pkbWhen(lk) {
+  function pkbWhen(lk, id) {
     const r = lk.reset, out = { text: "", on: false, next: "" };
     if (r == null || r === "") return out;
     const parts = [Number(r) === 30 ? packEveryText(30, lk.resetDay) : pkbResetText(r)];
@@ -12418,7 +12422,12 @@ async function renderPacksPage() {
       if (a && win > 0 && win < 7 && r % 7 === 0) { out.days = win === 1 ? pkbWd(a) : `${pkbWd(a)}–${pkbWd(new Date(a.getTime() + (win - 1) * 86400000))}`; parts.push(out.days); }
     }
     // The first purchase reward is on sale from day 1 (no trigger, no date).
-    if (lk.firstBuy) out.on = true;
+    // Once Natalia is unlocked it is done (vipFirstBuyDone).
+    if (lk.firstBuy) { out.done = vipFirstBuyDone(); out.on = !out.done; }
+    // Natalia / Jeronimo VIP Packs: done once that hero is maxed (5★).
+    const vh = id != null ? vipPackHeroOf(id) : null;
+    if (vh && vipHeroMaxed(vh)) { out.done = true; out.doneText = t("pkd_hero_maxed").replace("{hero}", dataName(vh)); out.on = false; out.next = ""; }
+    if (out.done && !out.doneText) out.doneText = t("pkd_first_done");
     out.text = parts.filter(Boolean).join(" · ");
     return out;
   }
@@ -12527,17 +12536,17 @@ async function renderPacksPage() {
     return n === 1 ? t("pkd_1day") : t("pkd_days").replace("{n}", n);
   }
   function pkbCardHtml(tb, ti, arr) {
-    const lk = packLinkFor(tb.id), inB = packInBudgets(tb.id), w = pkbWhen(lk), hid = IS_OWNER && lk.hideVisitors;
-    const st = w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : "";
+    const lk = packLinkFor(tb.id), inB = packInBudgets(tb.id), w = pkbWhen(lk, tb.id), hid = IS_OWNER && lk.hideVisitors;
+    const st = w.done ? `<small>${esc(w.doneText)}</small>` : w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : "";
     return `<div class="pkb-card${inB || lk.template ? "" : " pkb-off"}${hid ? " pkb-hidv" : ""}" data-pkrow="${ti}" data-pkrowid="${esc(String(tb.id))}" role="button" tabindex="0">
       ${arr ? dsHandleHtml("data-pkbdrag") : ""}<span class="pkb-cl"><span class="pkb-ic">${pkbIcon(tb, lk) || "&#127873;"}</span>${lk.template ? "" : `<label class="pkb-tk" title="${esc(t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbudrow="${esc(String(tb.id))}" ${inB ? "checked" : ""} aria-label="${esc(t("pk_in_budgets"))}" /></label>`}</span>
       <span class="pkb-cm"><b>${esc(tb.title)}</b><span class="pkb-cp">${esc(pkbPrice(tb, lk, true))}</span>${st}${hid ? `<small class="pkb-hid">${esc(t("pk_hidden_tag"))}</small>` : ""}</span>
     </div>`;
   }
   function pkbEvCardHtml(u, arr) {
-    const lt = u.lead.tb, w = pkbWhen(packLinkFor(lt.id)), id = String(lt.id), all = u.all;
+    const lt = u.lead.tb, w = pkbWhen(packLinkFor(lt.id), lt.id), id = String(lt.id), all = u.all;
     const pics = all.slice(0, 4).map((x) => `<span>${pkbIcon(x.tb, packLinkFor(x.tb.id)) || "&#127873;"}</span>`).join("");
-    const st = w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : "";
+    const st = w.done ? `<small>${esc(w.doneText)}</small>` : w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : "";
     const off = all.every((x) => !packInBudgets(x.tb.id) && !packLinkFor(x.tb.id).template);
     return `<div class="pkb-card pkb-evc${off ? " pkb-off" : ""}" data-pkbev="${esc(id)}" data-pkbevtap="${esc(id)}" role="button" tabindex="0">
       ${arr ? dsHandleHtml("data-pkbdrag") : ""}<span class="pkb-cl"><span class="pkb-ev-st">${pics}</span>${pkbEvTickHtml(all.map((x) => x.tb))}</span>
@@ -12644,7 +12653,10 @@ async function renderPacksPage() {
       if (w <= 7 && a && !once) days = (w === 1 ? pkbWd(a) : `${pkbWd(a)} – ${pkbWd(new Date(a.getTime() + (w - 1) * DAY))}`) + (w >= 4 && w < 7 ? ` (${pkbDur(w)})` : "");
       else if (w < PACK_ONE_TIME_DAYS) days = t("pkd_lasts").replace("{d}", pkbDur(w));
     }
-    if (trig) {
+    const vh = vipPackHeroOf(tb.id);
+    if (vh && vipHeroMaxed(vh)) now = `<span class="mut">${esc(t("pkd_hero_maxed").replace("{hero}", dataName(vh)))}</span>`;
+    else if (lk.firstBuy) now = vipFirstBuyDone() ? `<span class="mut">${esc(t("pkd_first_done"))}</span>` : on("");
+    else if (trig) {
       const sts = Object.keys(trig.levels).map((ri) => packTriggerRowStatus(trig, Number(ri))), en = dataName(trig.expert);
       if (sts.some((s) => s.state === "now")) now = on("");
       else if (sts.length && sts.every((s) => s.state === "done")) now = `<span class="mut">${esc(t("pkd_trig_passed").replace("{e}", en).replace("{n}", packExpertLevel(trig.expert).current))}</span>`;
@@ -12990,11 +13002,11 @@ async function renderPacksPage() {
     const body = panel.querySelector(".pk-body");
     if (!body) return;
     body.hidden = false;
-    const tb = tables[Number(panel.dataset.packtable)], lk = packLinkFor(tb.id), w = pkbWhen(lk);
+    const tb = tables[Number(panel.dataset.packtable)], lk = packLinkFor(tb.id), w = pkbWhen(lk, tb.id);
     const bar = body.querySelector(".pk-ed-bar");
     if (bar) {
       bar.insertAdjacentHTML("afterbegin", `<button type="button" class="pkb-back" data-pkbclose aria-label="${esc(t("close_button"))}">&#8249;</button>`);
-      const line = [w.text, w.on ? t("pkb_on_now") : w.next ? t("pkb_next").replace("{date}", w.next) : ""].filter(Boolean).join(" · ");
+      const line = [w.text, w.done ? w.doneText : w.on ? t("pkb_on_now") : w.next ? t("pkb_next").replace("{date}", w.next) : ""].filter(Boolean).join(" · ");
       if (line) bar.insertAdjacentHTML("beforeend", `<div class="pkb-when">${esc(line)}</div>`);
       const hint = body.querySelector("[data-pack-visitor-hint]");
       if (hint) bar.after(hint);
@@ -13750,10 +13762,10 @@ async function renderPacksPage() {
         const note = box.querySelector("[data-pkdwnote]");
         if (note) { note.hidden = !lead; note.textContent = "\u{1F517} " + t("pk_date_follows").replace("{pack}", leadTb ? leadTb.title || "" : ""); }
         // The window's "when" line and the list row follow the new dates.
-        const lk = packLinkFor(id), w = pkbWhen(lk);
+        const lk = packLinkFor(id), w = pkbWhen(lk, id);
         const panel = box.closest("[data-packtable]");
         const when = panel && panel.querySelector(".pkb-when");
-        if (when) when.textContent = [w.text, w.on ? t("pkb_on_now") : w.next ? t("pkb_next").replace("{date}", w.next) : ""].filter(Boolean).join(" · ");
+        if (when) when.textContent = [w.text, w.done ? w.doneText : w.on ? t("pkb_on_now") : w.next ? t("pkb_next").replace("{date}", w.next) : ""].filter(Boolean).join(" · ");
         // (The list behind the window, with its event cards, is drawn again when the window closes.)
         await savePackLinks();
       });
@@ -16580,6 +16592,46 @@ function vipSpecialSet(name, stars) {
   saveCalcState(`hero_stars_${k}`, { ...(CALC_STATE_CACHE[`hero_stars_${k}`] || {}), __shared__: n });
   return true;
 }
+// A VIP pack hero as the person tracks it: { hero, ph (the kept list), row, inRoster }.
+async function vipHeroTrack(name) {
+  const [heroes, ph, roster] = await Promise.all([
+    dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []),
+    dashCached("player_heroes", () => sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`)).catch(() => null),
+    loadCalcState("dashboard_roster").catch(() => null),
+  ]);
+  const hero = (heroes || []).find((h) => h.name === name);
+  if (!hero) return null;
+  const row = Array.isArray(ph) ? ph.find((p) => p.hero_id === hero.id) || null : null;
+  const inRoster = ["Infantry", "Lancers", "Marksman"].some((k) => { const e = (roster || {})[k]; return e && (typeof e === "string" ? e : e.heroId) === hero.id; });
+  return { hero, ph, row, inRoster };
+}
+// Packs page "done" marks (like a passed trigger pack): the Natalia Reward Pack
+// once Natalia is unlocked (same rule as the shard plan: Heroes Special Skills
+// stars > 0, a player_heroes row or a roster slot), each VIP pack hero's VIP
+// Packs once that hero is maxed (5★, the higher of both star values).
+// vipHeroesCheck() fills the row / roster part (the Packs page awaits it).
+let VIP_TRACK = null; // { user, by: { hero: vipHeroTrack result } }
+function vipTrackOf(name) { return VIP_TRACK && VIP_TRACK.user === USER_ID ? VIP_TRACK.by[name] || null : null; }
+function vipHeroStarsNow(name) {
+  const tr = vipTrackOf(name);
+  return Math.max(vipSpecialStars(name), tr && tr.row ? Math.min(5, Math.floor(Number(tr.row.current_stars) || 0)) : 0);
+}
+function vipHeroMaxed(name) { return vipHeroStarsNow(name) >= 5; }
+function vipFirstBuyDone() { const tr = vipTrackOf(VIP_FIRST_BUY_HERO); return vipSpecialStars(VIP_FIRST_BUY_HERO) > 0 || !!(tr && (tr.row || tr.inRoster)); }
+// The VIP pack hero a table's VIP rows give shards of (null for other tables).
+function vipPackHeroOf(tableId) {
+  const l = packLinkRaw(tableId).l;
+  if (!Array.isArray(l.vipRows)) return null;
+  const cols = Object.values(l.cols || {});
+  return VIP_PACK_HEROES.find((n) => cols.includes(`${n} Shards`)) || null;
+}
+async function vipHeroesCheck() {
+  await preloadCalcStates();
+  if (VIP_PACK_HEROES.every((n) => vipSpecialStars(n) >= 5)) return;
+  const by = {};
+  await Promise.all(VIP_PACK_HEROES.map(async (n) => { by[n] = await vipHeroTrack(n).catch(() => null); }));
+  VIP_TRACK = { user: USER_ID, by };
+}
 // Heroes Special Skills saved Natalia / Jeronimo at `stars`: their player_heroes
 // row follows (step = stars × 6, up or down; a row already on that whole star keeps
 // its pieces). Only for a hero the person tracks: a row exists, or it sits in a
@@ -16587,14 +16639,9 @@ function vipSpecialSet(name, stars) {
 async function vipRosterSet(name, stars) {
   if (!vipPackHero(name)) return;
   const n = Math.max(0, Math.min(5, Math.floor(Number(stars) || 0)));
-  const [heroes, ph, roster] = await Promise.all([
-    dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []),
-    dashCached("player_heroes", () => sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`)).catch(() => null),
-    loadCalcState("dashboard_roster").catch(() => null),
-  ]);
-  const hero = (heroes || []).find((h) => h.name === name);
-  if (!hero || !Array.isArray(ph)) return;
-  const row = ph.find((p) => p.hero_id === hero.id);
+  const tr = await vipHeroTrack(name);
+  if (!tr || !Array.isArray(tr.ph)) return;
+  const { hero, ph, row, inRoster } = tr;
   if (row) {
     const v = Number(row.current_stars) || 0;
     const step = Math.min(5, Math.floor(v)) * 6 + Math.min(6, Math.round((v - Math.floor(v)) * 10));
@@ -16607,7 +16654,6 @@ async function vipRosterSet(name, stars) {
     });
     return;
   }
-  const inRoster = ["Infantry", "Lancers", "Marksman"].some((k) => { const e = (roster || {})[k]; return e && (typeof e === "string" ? e : e.heroId) === hero.id; });
   if (!inRoster || !n) return;
   try {
     const [made] = await sb(`player_heroes`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, hero_id: hero.id, current_level: 0, current_stars: n }) });
