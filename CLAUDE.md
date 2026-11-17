@@ -536,13 +536,15 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - Arrange (owner) now drags whole cards only (`pkbArrItem` / `pkbArrList` on `.pkb-card`; an event card moves as one); packs inside an event are no longer dragged on the page (`__rowOrder` "ev:<id>" lists already saved are still read). The per-hero new-hero list (Value Hero Pack / Widget Pack copies) moved from the row into the sheet (`pkbNgSheetHtml`, `PKB_NG`). T keys `pkb_prices_in`, `pkd_*` in all 16 lang files; `pkb_ng_heroes`, `pkb_ng_hero1`, `pkb_tiers`, `pkb_ev_same` removed (no longer used); `LANG_FILES_VERSION` 98.
 - Live data change (16 Nov 2026, owner's OK): Daily Deals: Hero Shards (`pack_tables` `08569c09-6fec-494a-94c3-a1973bb8edb8`) got a 4th row, $4.99 "buy all" = 6 Mythic General Hero Shards, 4 Lucky Boxes, 30 Fire Crystal, 1,200 Mystery Points, 3,000 Gems. Backup: owner calc_state `backup_daily_deals_20261116` (undo: copy its rows back).
 
+**Gen 18 heroes (owner, 17 Nov 2026; live data + pictures):** from whiteoutsurvival.wiki: Jordan (Infantry, Hall of Heroes), Nikola (Lancer, Lucky Wheel), Aisha (Marksman, Events), all Legendary, max Attack / Defense 2,471.97%, widget Lethality / Health 617.50%. Live data: 3 `heroes` rows (`image_url` icons/heroes/<name>.png), `hero_gen_star_stats` Gen 18 (30 steps) and `hero_gen_widget_stats` Gen 18 (10 levels). The wiki gives only the max values; every Gen's star table is the previous one × a fixed number (Gen 16 = 0.926 × Gen 17 at all 30 steps), so Gen 18 = Gen 17 × 2471.97 / 2301.84, step 30 set to the wiki's 2,471.97 (step 1 = 340.86); shards per step as every Gen (totals 10 / 40 / 115 / 300 / 600, matching the wiki); widget 61.75% per level. Undo: delete those rows (ids in owner calc_state `backup_gen18_20261117`). Pictures: the wiki's 350 px portraits resized to 200 × 200 palette PNG like the others (owner OK'd the resize). `HERO_SOURCE_DEFAULT`: Nikola wheel, Aisha event (Jordan = Hall of Heroes by `HALL_OF_HEROES_HERO`).
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit (since Speed plan Step 5 it also writes the .min copies the site loads).
 - Live data backups kept in owner calc_state (copy back to undo): `backup_20261018` (pack resources, packs_links, pack order), `backup_scan_learned_20261031`, `backup_expert_affinity_20261103`, `backup_forge_links_20261106` (Champion Forge / Widget Pack links). Spare site_config key `backup_pack_resources_20261018` still waits for the owner to delete.
 - Shared pack setup lives in owner calc_state `packs_links` (incl. `__order`, `__settings`, `__rowOrder`); copy it before any big Packs change.
 - Owner's saved ticks (Admin → Languages Shown, Visibility) must never be reset by a PR.
-- Still open: gift codes (waiting for the owner's pick A/B/C/D; `giftcodes-probe` deleted 7 Nov 2026), Scan pack (needs pack screenshots), Gen 18 heroes missing from the `heroes` table (their packs won't be made until added).
+- Still open: gift codes (waiting for the owner's pick A/B/C/D; `giftcodes-probe` deleted 7 Nov 2026), Scan pack (needs pack screenshots) (Gen 18 heroes added 17 Nov 2026).
 
 ## Open to-dos
 - **Waiting to be shown to the owner** (built 9 Nov 2026): branch `ccr-41bc4d90-fokvur-packsfix` — Packs window fixes (a new pack's window no longer closes after adding a row / column; "Hide from visitors" and other full redraws keep the window's scroll). Calendar: own colour + legend for every added game event (owner OK'd, after Islands).
@@ -563,7 +565,6 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 ## Open questions for the owner
 - (7 Nov 2026, owner: "remember it for later") The full open list was read out on 7 Nov: gift codes pick (A / B / C / D), Scan pack screenshots, Gen 18 heroes, Max stars field, Cloudflare, New Gen heroes card, Dashboard Stats | Plan tabs, G4 budget card, the dated plan in Pack cost / My budget, Scan pictures still to learn, the "Table name here" pack table, the unlinked city-skin picture in Storage. Bring it up again when the owner is back.
 - Research Lab (answered 16 Nov 2026): the game's weekly count (45–53) is higher than the plan's ~26 because the owner sometimes refines beyond the plan, up to the top tier, to push one upgrade; most weeks follow the picked tier at the cheapest pace. No change: the plan keeps the usual pace, extra Refined FC counts once it is in the Backpack, the This week box shows "ahead", and Can do now counts only the week's refinements still left.
-- The `heroes` table stops at Gen 17, while the timeline (`HALL_OF_HEROES_HERO`) has Gen 18 (Jordan). Add the Gen 18 heroes?
 - The heroes' "Max stars" field is not used outside Admin. Keep or drop it?
 
 ## History (Oct 2026)
@@ -698,3 +699,4 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - Islands: shard packs pay for building copies when cheapest, plan / Pack cost like every page, part-bought Bazaar steps kept, lighthouses unlocked with Marks (step 31)
 - Packs: part-bought ladders keep the rest of the run, last-step repeats, previous copies, daily-reward packs one buy a day (step 33)
 - Packs page: mini cards two a row, a details sheet per pack (price steps, Buys, Count in Budgets, Open pack), Shining City first-buy switch, Daily Deals "Buy all 3" (step 35)
+- Gen 18 heroes Jordan / Nikola / Aisha (pictures, how-to-get tags; data added live)

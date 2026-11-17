@@ -15962,8 +15962,8 @@ const TL_ICONS = { t11: "icons/item_icon_100081.png", t12: "icons/item_icon_1000
 const HERO_SOURCE_DEFAULT = (() => {
   const out = {};
   const put = (src, names) => names.split(",").forEach((n) => { out[n.trim()] = src; });
-  put("wheel", "Zinman, Flint, Mia, Lynn, Hector, Renee, Bradley, Gatot, Fred, Blanchette, Eleonora, Karol, Vulcanus, Elif, Estrella, Aisling, Aiden");
-  put("event", "Philly, Greg, Ahmose, Norah, Wayne, Edith, Sonya, Xura, Gregory, Lloyd, Ligeia, Gisela, Dominic, Viveca, Seigel, Bertha, Gina");
+  put("wheel", "Zinman, Flint, Mia, Lynn, Hector, Renee, Bradley, Gatot, Fred, Blanchette, Eleonora, Karol, Vulcanus, Elif, Estrella, Aisling, Aiden, Nikola");
+  put("event", "Philly, Greg, Ahmose, Norah, Wayne, Edith, Sonya, Xura, Gregory, Lloyd, Ligeia, Gisela, Dominic, Viveca, Seigel, Bertha, Gina, Aisha");
   put("packs", "Jeronimo, Natalia");
   put("signin", "Molly");
   put("recruit", "Smith, Eugene, Charlie, Cloris, Sergey, Jessie, Patrick, Bahiti, Jasser, Lumak Bokan, Seo-yoon, Ling Xue");
