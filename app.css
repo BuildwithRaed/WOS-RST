@@ -910,6 +910,7 @@
   .tl-pic{ position:relative; width:34px; height:34px; flex:0 0 auto; border-radius:9px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.06); }
   .tl-pic img{ width:34px; height:34px; object-fit:contain; border-radius:9px; display:block; }
   .tl-pic b{ font-size:14px; color:var(--ice); }
+  .tl-pic img.tl-tr{ position:absolute; bottom:-3px; inset-inline-start:-3px; width:14px; height:14px; border-radius:0; filter:drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
   .tl-pic i{ position:absolute; top:-5px; inset-inline-end:-5px; font-style:normal; font-size:10px; line-height:15px; width:15px; height:15px; text-align:center; border-radius:50%; background:var(--amber); color:#1b1406; }
   .tl-cw{ display:flex; flex-direction:column; min-width:0; line-height:1.2; }
   .tl-cn{ font-size:13px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }

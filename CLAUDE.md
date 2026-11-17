@@ -540,6 +540,8 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 
 **State Timeline (owner, 17 Nov 2026):** every coming day is shown (the "N more days" fold for days after the first 3 is gone, T keys `tl_more_1` / `tl_more_n` and the `.tl-more` CSS removed, `LANG_FILES_VERSION` 99); heroes of a day are always Infantry, Lancer, Marksman (`troopRank`, items carry `troop`; the Hall of Heroes hero keeps its ★ but no longer goes first).
 
+**State Timeline troop badges (owner picked design A, 17 Nov 2026):** each hero's picture has its troop symbol on the bottom-left corner (`troopBadge` / `troopKey` in `renderStateTimelinePage`, `img.tl-tr`, 14 px; title = `troop_infantry` / `troop_lancers` / `troop_marksman`); pictures `icons/troop-infantry.png`, `icons/troop-lancer.png`, `icons/troop-marksman.png` = the owner's own symbols with the background (checker pattern + a watermark) cut away, 64 × 64 (owner OK'd removing the background). Pets / experts / unlocks get none; the Hall ★ stays top-right.
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit (since Speed plan Step 5 it also writes the .min copies the site loads).
@@ -703,3 +705,4 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - Packs page: mini cards two a row, a details sheet per pack (price steps, Buys, Count in Budgets, Open pack), Shining City first-buy switch, Daily Deals "Buy all 3" (step 35)
 - Gen 18 heroes Jordan / Nikola / Aisha (pictures, how-to-get tags; data added live)
 - State Timeline: every coming day shown, heroes Infantry / Lancer / Marksman
+- State Timeline: troop symbol on each hero's picture
