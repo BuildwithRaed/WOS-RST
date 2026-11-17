@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "066a4bf123";
+window.ADMIN_BUILD = "8888b574eb";
 
 // ============================================================
 // ADMIN PAGE
@@ -682,15 +682,16 @@ const ADMIN_RULE_HOME = {
   centerresearch: { groups: [["T12", ["t12Tree"], "adv"], ["Research Center", ["rcTracks", "rcTiers"], "adv"], ["Unlock rules", ["researchLocks"]], ["Research Lab", ["rfcLab"]]] },
   skins: { groups: [["Skin Gallery", ["globeLevels"]], ["Islands", ["islCopies", "islTree", "islShop", "islCamp", "islLighthouse", "islLightUnlock"]]] },
   packres: { groups: [["", ["gems"]]] },
-  items: { groups: [["", ["trades", "bundles", "resChests"]]] },
+  items: { groups: [["", ["trades", "resChests"]]] },
 };
 // Rules kept in the registry (saved values still apply) but not shown on the Rules screens:
-// edited only in their own place (galleryBig: Skins → ⋯ Category → Big pictures).
-const ADMIN_RULE_OFF = new Set(["galleryBig"]);
+// edited only in their own place (galleryBig: Skins → ⋯ Category → Big pictures;
+// bundles: Admin → Items "Counts as" / Pack Resources "Gives").
+const ADMIN_RULE_OFF = new Set(["galleryBig", "bundles"]);
 const admRulesShown = () => gameRules().filter((r) => !ADMIN_RULE_OFF.has(r.key));
 const admRulesChangedN = () => Object.keys(gameRulesSaved()).filter((k) => !ADMIN_RULE_OFF.has(k)).length;
 const ADMIN_RULE_STATE = ["unlocks", "genDays", "events", "newGenRule", "hallHero"];
-const ADMIN_RULE_SHORTCUTS = ["trades", "bundles"];
+const ADMIN_RULE_SHORTCUTS = ["trades"];
 const admRuleKeysOf = (sec) => ((ADMIN_RULE_HOME[sec] || {}).groups || []).flatMap((g) => g[1]);
 function admRuleSection(key) { return Object.keys(ADMIN_RULE_HOME).find((k) => admRuleKeysOf(k).includes(key)) || "rules"; }
 const admRuleChanged = (key) => gameRulesSaved()[key] != null;
