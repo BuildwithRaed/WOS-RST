@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "91a55ea7c5";
+window.ADMIN_BUILD = "bbd167b783";
 
 // ============================================================
 // ADMIN PAGE
@@ -2746,13 +2746,23 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
     return { lab, main, all: b };
   };
   // Groups: by major level ("4", "4.1" … "4.3"), else by name without its last
-  // number ("Mythic T1 ★0" … "★3"); mostly single rows → blocks of 10.
+  // number ("Mythic T1 ★0" … "★3", "Weapons Prep I" × its levels); mostly single
+  // rows → blocks of 10. A name that comes back after other names (stat rows like
+  // Collection Gallery's Attack / Lethality / … Lethality) in a table of mostly
+  // single rows isn't a level: such a table is never folded by name.
   const groupsOf = (list) => {
     const labs = list.map((tr) => admPlLabel(parts(tr).lab).trim());
     const num = labs.every((l) => l === "" || /^(?:lv\.?\s*)?-?\d+(?:\.\d+)?$/i.test(l));
     const keyOf = (l, i) => (num ? (l === "" ? "new" + i : String(parseInt(l.replace(/^\D+/, ""), 10))) : (l.replace(/[\s.]*[★☆]?\s*\d+(?:\.\d+)?$/, "") || "row" + i));
+    const keys = list.map((tr, i) => (tr.hasAttribute("data-newrow") ? "__new" : keyOf(labs[i], i)));
+    if (!num) {
+      const seen = new Set();
+      let runs = 0, back = false;
+      keys.forEach((k, i) => { if (k === keys[i - 1]) return; runs++; if (seen.has(k)) back = true; seen.add(k); });
+      if (back && keys.length / runs < 1.6) keys.forEach((k, i) => { if (k !== "__new") keys[i] = "row" + i; });
+    }
     const out = [];
-    list.forEach((tr, i) => { const k = tr.hasAttribute("data-newrow") ? "__new" : keyOf(labs[i], i); const g = out.at(-1); if (g && g.k === k) g.rows.push(tr); else out.push({ k, rows: [tr] }); });
+    list.forEach((tr, i) => { const k = keys[i]; const g = out.at(-1); if (g && g.k === k) g.rows.push(tr); else out.push({ k, rows: [tr] }); });
     if (out.length > 12 && list.length / out.length < 1.6) {
       const blocks = [];
       list.forEach((tr, i) => { if (i % 10 === 0) blocks.push({ k: "b" + i, rows: [] }); blocks.at(-1).rows.push(tr); });
