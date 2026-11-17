@@ -16024,7 +16024,10 @@ async function renderStateTimelinePage() {
   // Picture chips, 2 a row: heroes with their
   // how-to-get tag, everything else tagged as what opens (pet / expert / unlock).
   const unlockTag = (x) => `<span class="tl-src unl">🔓 ${esc(t(x.kind === "pets" ? "tl_kind_pet" : x.kind === "experts" ? "tl_kind_expert" : "tl_kind_unlock"))}</span>`;
-  const chip = (x) => `<span class="tl-chip${x.kind === "hero" ? "" : " u"}" title="${esc(x.star ? `${x.name} · ${t("tl_hall")}` : x.name)}"><span class="tl-pic">${x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" />` : `<b>${esc((x.name || "?")[0])}</b>`}${x.star ? `<i>★</i>` : ""}</span><span class="tl-cw"><span class="tl-cn">${esc(x.name)}</span>${x.kind !== "hero" ? unlockTag(x) : x.src ? `<span class="tl-src ${esc(x.src)}">${HERO_SOURCE_ICON[x.src] || ""} ${esc(heroSourceLabel(x.src))}</span>` : ""}</span></span>`;
+  // Troop badge on a hero's picture (owner's own symbols, design A, 17 Nov 2026)
+  const troopKey = (x) => { const k = String(x.troop || "").toLowerCase(); return /^inf/.test(k) ? "infantry" : /^lan/.test(k) ? "lancer" : /^mark/.test(k) ? "marksman" : ""; };
+  const troopBadge = (x) => { const k = x.kind === "hero" ? troopKey(x) : ""; return k ? `<img class="tl-tr" src="icons/troop-${k}.png" alt="${esc(t(k === "lancer" ? "troop_lancers" : "troop_" + k))}" title="${esc(t(k === "lancer" ? "troop_lancers" : "troop_" + k))}" />` : ""; };
+  const chip = (x) => `<span class="tl-chip${x.kind === "hero" ? "" : " u"}" title="${esc(x.star ? `${x.name} · ${t("tl_hall")}` : x.name)}"><span class="tl-pic">${x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" />` : `<b>${esc((x.name || "?")[0])}</b>`}${x.star ? `<i>★</i>` : ""}${troopBadge(x)}</span><span class="tl-cw"><span class="tl-cn">${esc(x.name)}</span>${x.kind !== "hero" ? unlockTag(x) : x.src ? `<span class="tl-src ${esc(x.src)}">${HERO_SOURCE_ICON[x.src] || ""} ${esc(heroSourceLabel(x.src))}</span>` : ""}</span></span>`;
   const byDay = new Map();
   items.forEach((x) => { if (!byDay.has(x.day)) byDay.set(x.day, []); byDay.get(x.day).push(x); });
   const days = [...byDay.keys()].sort((a, b) => a - b);
