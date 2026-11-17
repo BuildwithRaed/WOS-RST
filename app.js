@@ -14337,7 +14337,8 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     // A hero not unlocked yet (not in the roster, no saved stars) takes HERO_UNLOCK_SHARDS
     // shards before its first star step, but only the Gen's Hall of Heroes hero has to
     // buy them; the other new heroes are unlocked free (Lucky Wheel / events).
-    const isHall = HALL_OF_HEROES_HERO[Number(hero.generation)] === hero.name;
+    // Natalia / Jeronimo (VIP Special Packs only) need it too.
+    const isHall = HALL_OF_HEROES_HERO[Number(hero.generation)] === hero.name || vipPackHero(hero.name);
     const unlock = isHall && !inRoster && !phBy[hero.id] && !T.later ? HERO_UNLOCK_SHARDS : 0;
     let need = unlock;
     const cum = {}; // shards from now to each whole star (mini targets)
@@ -14347,7 +14348,8 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     for (let k = step + 1; k <= nextStep; k++) next += heroShardStepCost(costByGen, hero.generation, k);
     const own = Number((bp || {})[`${hero.name} Shards`]) || 0;
     const rarity = HERO_GENERAL_SHARD[hero.rarity] ? hero.rarity : "Legendary";
-    const fromGeneral = Math.min(pool[rarity] || 0, Math.max(0, need - own));
+    // General Hero Shards never go to the VIP pack heroes.
+    const fromGeneral = vipPackHero(hero.name) ? 0 : Math.min(pool[rarity] || 0, Math.max(0, need - own));
     pool[rarity] = (pool[rarity] || 0) - fromGeneral;
     const have = own + fromGeneral;
     // How far the shards you have would take this hero.
@@ -16482,6 +16484,62 @@ async function ngHeroTables(baseTables) {
   });
   return out;
 }
+// ---- VIP Special Packs (built here, not in the pack tables) ----
+// One pack per VIP level (owner, 17 Nov 2026, from the game): bought once,
+// as soon as you reach that VIP level. They are the only way to unlock and
+// star up Natalia (VIP 1-6) and Jeronimo (VIP 7-12): [VIP level, price, hero,
+// that hero's shards, Hero XP bottles of 10K]. Each also gives 1 Research,
+// 1 Troop and 1 Construction Speedup of N hours (counted in minutes) and the
+// usual 500 gems a dollar; the gold item isn't counted. Only levels up to the
+// tier picked on the VIP page (calc_state "vip_tier") are offered; with no
+// tier picked none are. Used only by Budgets' "Hero shards & widgets".
+// Also the game's "Reward for first purchase" (any pack bought once; the
+// cheapest pack, a Daily Deals row, is $0.99), open to everyone (VIP 0). Two
+// purchases in order: the first unlocks Natalia (counted as her 10 unlock
+// shards) with 10 Hero XP bottles, a second one (the next day or later) gives
+// 10 of her shards; the keys, gems and books aren't counted.
+const VIP_FIRST_BUY = { hero: "Natalia", steps: [[0.99, 10, 10], [0.99, 10, 0]] };
+const VIP_PACK_ROWS = [
+  [1, 4.99, "Natalia", 20, 10], [2, 9.99, "Natalia", 40, 20], [3, 19.99, "Natalia", 80, 30],
+  [4, 49.99, "Natalia", 180, 60], [5, 99.99, "Natalia", 360, 100], [6, 99.99, "Natalia", 375, 100],
+  [7, 19.99, "Jeronimo", 75, 30], [8, 49.99, "Jeronimo", 150, 60], [9, 49.99, "Jeronimo", 150, 60],
+  [10, 49.99, "Jeronimo", 150, 100], [11, 99.99, "Jeronimo", 280, 100], [12, 99.99, "Jeronimo", 300, 100],
+];
+// Heroes whose shards come only from these packs: they need the unlock shards
+// and General Hero Shards (or anything that trades into "a mythic hero's
+// shards") never go to them.
+const VIP_PACK_HEROES = ["Natalia", "Jeronimo"];
+const VIP_PACK_LINKS = {}; // table id -> link (read by packLinkRaw)
+function vipPackHero(name) { return VIP_PACK_HEROES.includes(String(name || "")); }
+// The VIP tier number picked on the VIP page (0 = none), from the saved states.
+function vipTierNow() {
+  const v = CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID ? CALC_STATE_CACHE.vip_tier : null;
+  return (v && vipTierNumber(v.name)) || 0;
+}
+function vipPackTables() {
+  const tier = vipTierNow(), out = [];
+  const cols = ["$", null, "Hero XP", "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Gems"];
+  const f = VIP_FIRST_BUY;
+  VIP_PACK_LINKS["vip-0"] = { group: NG_HERO_GROUP, pages: ["hero_shards"], priceCol: 0, cols: { 1: `${f.hero} Shards`, 2: "Hero XP" }, reset: "once", buys: 1, sequential: true, vip: 0 };
+  out.push({ id: "vip-0", title: "First Purchase Reward", columns: ["$", `${f.hero} Shards`, "Hero XP"], rows: f.steps.map(([p, n, xp]) => ({ cells: [p, n, xp * 10000].map(String) })), sort_order: 210000 });
+  VIP_PACK_ROWS.forEach(([lv, price, hero, shards, xp]) => {
+    if (lv > tier) return;
+    const id = `vip-${lv}`, c = cols.slice();
+    c[1] = `${hero} Shards`;
+    VIP_PACK_LINKS[id] = { group: NG_HERO_GROUP, pages: ["hero_shards"], priceCol: 0, cols: Object.fromEntries(c.map((n, i) => [i, n]).slice(1)), reset: "once", buys: 1, vip: lv };
+    out.push({ id, title: `VIP ${lv} Special Pack`, columns: c, rows: [{ cells: [price, shards, xp * 10000, lv * 60, lv * 60, lv * 60, ngGems(price)].map(String) }], sort_order: 210000 + lv });
+  });
+  return out;
+}
+// The first purchase reward is planned only while its hero still needs unlocking
+// (the last hero shard plan has her with unlock shards): anyone who has her
+// already made a first purchase.
+function vipFirstBuyOpen() {
+  const rows = (HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || [];
+  return rows.some((r) => r.hero && r.hero.name === VIP_FIRST_BUY.hero && r.unlock > 0);
+}
+// What the built-in packs (new heroes' copies, VIP packs) were made from.
+function packBuiltSig() { return `${ngHeroSig()}|vip${vipTierNow()}`; }
 const PACK_TEMPLATE_SOURCES = [
   { title: "Wishful type", from: ["Wishfull", "Wishful"] },
   { title: "Mix & Match type", from: ["Mix & Match"] },
@@ -16593,7 +16651,7 @@ function packTriggerRowStatus(trig, ri) {
 // table, or the admin's packs_links entry).
 function packLinkRaw(tableId) {
   const mine = String(tableId).startsWith("my-") ? packMineFind(tableId) : null;
-  const ng = String(tableId).startsWith("ng-") ? NG_HERO_LINKS[String(tableId)] : null;
+  const ng = String(tableId).startsWith("ng-") ? NG_HERO_LINKS[String(tableId)] : String(tableId).startsWith("vip-") ? VIP_PACK_LINKS[String(tableId)] : null;
   return { mine, l: ng || (mine ? { ...(mine.link || {}), group: PACK_MINE_GROUP } : (PACK_LINKS || {})[String(tableId)]) || {} };
 }
 // packLinkFor(tableId).linkSet without working out the whole link.
@@ -16609,7 +16667,7 @@ function packLinkSetOf(tableId) {
 // Returns the leader's table id, or "".
 function packDateLeader(tableId) {
   const start = String(tableId);
-  if (start.startsWith("my-") || start.startsWith("ng-")) return "";
+  if (start.startsWith("my-") || start.startsWith("ng-") || start.startsWith("vip-")) return "";
   // A New Gen pack follows only New Gen packs, a normal pack only normal
   // packs: a mixed link is ignored.
   const kind = packIsNewGen((PACK_LINKS || {})[start]);
@@ -16841,7 +16899,7 @@ function packTablesUnstash() {
 async function ensurePackTables() {
   if (!PACK_TABLES_CACHE && PACK_TABLES_STASH) packTablesUnstash();
   // The New Gen hero packs follow the state's Gen dates: rebuild when they move.
-  if (PACK_TABLES_CACHE && PACK_TABLES_CACHE._ngSig !== ngHeroSig()) PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
+  if (PACK_TABLES_CACHE && PACK_TABLES_CACHE._ngSig !== packBuiltSig()) PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
   if (PACK_TABLES_CACHE) return PACK_TABLES_CACHE;
   if (PACK_TABLES_LOADING) return PACK_TABLES_LOADING;
   PACK_TABLES_LOADING = (async () => {
@@ -16856,8 +16914,8 @@ async function ensurePackTables() {
       const baseTables = packApplyMyEdits((await rowsP).map((tb) => ({ id: tb.id, title: tb.title, columns: tb.columns, rows: tb.rows, sort_order: tb.sort_order })))
         .filter((tb) => (IS_OWNER || !packLinkFor(tb.id).hideVisitors) && !packLinkFor(tb.id).template)
         .concat(IS_OWNER ? [] : MY_PACKS.map((x, i) => ({ id: x.id, title: x.title, columns: x.columns, rows: x.rows, sort_order: 100000 + i })));
-      PACK_TABLES_CACHE = baseTables.concat(await ngHeroTables(baseTables));
-      PACK_TABLES_CACHE._ngSig = ngHeroSig();
+      PACK_TABLES_CACHE = baseTables.concat(await ngHeroTables(baseTables), vipPackTables());
+      PACK_TABLES_CACHE._ngSig = packBuiltSig();
       PACK_TABLES_CACHE._inSig = inSig; PACK_TABLES_CACHE._rows = rowRefs;
     } catch (e) {
       PACK_TABLES_CACHE = [];
@@ -20667,13 +20725,14 @@ async function heroShardBudget() {
   HERO_PLAN_LAST = { rows: plan.rows, heroes, roster };
   const totals = {}, owned = {}, rules = [];
   const rule = (from, to, give, get, max) => rules.push({ from, to, give, get, max, hidden: true, silent: true });
-  const mythicShards = plan.rows.filter((r) => r.need > 0 && r.rarity === "Legendary");
+  // Mythic heroes General shards / Marks of Valor can go to (not the VIP pack heroes).
+  const mythicShards = plan.rows.filter((r) => r.need > 0 && r.rarity === "Legendary" && !vipPackHero(r.hero.name));
   const newestGen = newGenGen();
   plan.rows.forEach((r) => {
     const sh = `${r.hero.name} Shards`;
     if (r.need > 0) {
       totals[sh] = r.need; owned[sh] = r.own + r.fromGeneral;
-      if (r.rarity === "Legendary") {
+      if (r.rarity === "Legendary" && !vipPackHero(r.hero.name)) {
         rule("Mythic General Hero Shard", sh, 1, 1, 0);
         rule("Marks of Valor", sh, HERO_RULES.marksPerGeneral, 1, Math.max(1, Math.floor(HERO_RULES.marksGeneralWeekly / mythicShards.length)));
         // Only the newest Gen's Hall of Heroes hero (gold ticket on the timeline)
@@ -21103,13 +21162,17 @@ function budgetPlanLines(calcKey) {
 // Everything the Budgets page needs for one calculator page.
 async function budgetForPage(calcKey, targetDays, opts = {}) {
   await ensurePackLinks();
-  const tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey) && packInBudgets(tb.id));
+  let tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey) && packInBudgets(tb.id));
   let groups, live = true, vipNote = null, shInfo = null;
   if (opts.groups) groups = opts.groups;
   else if (calcKey === "chief_gear") groups = computeChiefGearNeeds();
   else if (calcKey === "charm") groups = computeCharmNeeds();
   else if (calcKey === "hero_gear") groups = computeHeroGearNeeds();
-  else if (calcKey === "hero_shards") { const hb = await heroShardBudget(); groups = hb.groups; vipNote = hb.vip; }
+  else if (calcKey === "hero_shards") {
+    const hb = await heroShardBudget(); groups = hb.groups; vipNote = hb.vip;
+    // The first purchase reward only while Natalia isn't unlocked yet.
+    if (!vipFirstBuyOpen()) tables = tables.filter((tb) => tb.id !== "vip-0");
+  }
   else if (calcKey === "shining_skins") { shInfo = await shiningSkinsNeed(); groups = shInfo.groups; }
   else {
     // T11 / T12 not counted (their page tick, which follows the state age): nothing to plan.
@@ -32487,7 +32550,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=26e36716fd";
+      s.src = "admin.min.js?v=91a55ea7c5";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
@@ -32599,7 +32662,8 @@ function gameRules() {
       cols: [{ key: "level", label: "Level", type: "auto" }, { key: "cost", label: "Widgets", type: "num" }],
       get: () => WIDGET_LEVEL_COST.slice(1).map((c, i) => ({ level: i + 1, cost: c })),
       set: (rows) => ruleSetArray(WIDGET_LEVEL_COST, [0, ...rows.map((r) => Number(r.cost) || 0)]) },
-    { key: "shardChart", group: "heroes", label: "Hero shards per star step (fallback)", help: "Used only when a hero's Gen has no shard costs in Admin → Heroes. Each star has 6 steps.",
+    // Not shown in Admin (owner, 17 Nov 2026): kept so a saved value still applies.
+    { key: "shardChart", group: "heroes", hidden: true, label: "Hero shards per star step (fallback)", help: "Used only when a hero's Gen has no shard costs in Admin → Heroes. Each star has 6 steps.",
       cols: [{ key: "star", label: "Star", type: "num" }, ...[1, 2, 3, 4, 5, 6].map((k) => ({ key: "s" + k, label: "Step " + k, type: "num" }))],
       get: () => Object.entries(HERO_SHARD_CHART).map(([st, a]) => ({ star: Number(st), ...Object.fromEntries(a.map((v, i) => ["s" + (i + 1), v])) })),
       set: (rows) => ruleSetObject(HERO_SHARD_CHART, Object.fromEntries(rows.filter((r) => r.star).map((r) => [Number(r.star), [1, 2, 3, 4, 5, 6].map((k) => Number(r["s" + k]) || 0)]))) },

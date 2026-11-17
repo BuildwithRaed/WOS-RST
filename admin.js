@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "26e36716fd";
+window.ADMIN_BUILD = "91a55ea7c5";
 
 // ============================================================
 // ADMIN PAGE
@@ -674,7 +674,7 @@ async function renderAdminResearchLocks(body) {
 // Which rules each Admin section owns (headings: "" = none), and rules it uses
 // that are edited elsewhere (link rows). Saved data is unchanged (game_rules).
 const ADMIN_RULE_HOME = {
-  heroes: { groups: [["", ["ngPacks", "widgetCost", "shardChart", "heroTrades", "hallHero"]]], links: ["vipShards"] },
+  heroes: { groups: [["", ["ngPacks", "widgetCost", "heroTrades", "hallHero"]]], links: ["vipShards"] },
   vip: { groups: [["", ["vipShards"]]] },
   experts: { groups: [["", ["affinity"]]] },
   pets: { groups: [["", ["advancedMark"]]] },
@@ -688,7 +688,7 @@ const ADMIN_RULE_HOME = {
 // edited only in their own place (galleryBig: Skins → ⋯ Category → Big pictures;
 // bundles: Admin → Items "Counts as" / Pack Resources "Gives").
 const ADMIN_RULE_OFF = new Set(["galleryBig", "bundles"]);
-const admRulesShown = () => gameRules().filter((r) => !ADMIN_RULE_OFF.has(r.key));
+const admRulesShown = () => gameRules().filter((r) => !r.hidden && !ADMIN_RULE_OFF.has(r.key));
 const admRulesChangedN = () => Object.keys(gameRulesSaved()).filter((k) => !ADMIN_RULE_OFF.has(k)).length;
 const ADMIN_RULE_STATE = ["unlocks", "genDays", "events", "newGenRule"];
 const ADMIN_RULE_SHORTCUTS = ["trades"];
