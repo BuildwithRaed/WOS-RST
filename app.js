@@ -5079,6 +5079,13 @@ async function renderOverview(opts = {}) {
   const SPECIAL_HERO_SET = new Set(SPECIAL_HEROES);
   const HERO_STARS = {};
   (await Promise.all(SPECIAL_HEROES.map((h) => (h === "Jero" ? JERO_SAVED : h === "Natalia" ? NATALIA_SAVED : loadCalcState(`hero_stars_${h.toLowerCase()}`))))).forEach((s, i) => { HERO_STARS[SPECIAL_HEROES[i]] = (s || {})["__shared__"] ?? 0; });
+  // Natalia / Jeronimo: old data where the two sides differ reads as the higher.
+  Object.entries(SPECIAL_HERO_META).forEach(([k, m]) => {
+    if (!(k in HERO_STARS) || !vipPackHero(m.name)) return;
+    const h = (ROSTER_HERO_CATALOG || []).find((x) => x.name === m.name);
+    const p = h && (ROSTER_PLAYER_HEROES || []).find((r) => r.hero_id === h.id);
+    if (p) HERO_STARS[k] = Math.max(Number(HERO_STARS[k]) || 0, Math.min(5, Math.floor(Number(p.current_stars) || 0)));
+  });
   // The highest released level of a Collection Gallery / Tundra Album stat
   // (same as their pages), or null when the table didn't load.
   const levelTableMax = (rows, table, stat) => {
@@ -5097,8 +5104,11 @@ async function renderOverview(opts = {}) {
   const ROSTER_WIDGET_STATS_BY_GEN = {};
   ROSTER_WIDGET_ROWS.forEach((r) => { (ROSTER_WIDGET_STATS_BY_GEN[r.generation] = ROSTER_WIDGET_STATS_BY_GEN[r.generation] || {})[r.level] = r; });
   // current_stars is stored as star.sub (e.g. 3.4 = 3★ + 4 of 6 shards).
+  // Natalia / Jeronimo: the higher of these and their Heroes Special Skills stars.
   const rosterStarsOf = (heroId) => {
-    const v = Number((ROSTER_PH_BY_HERO[heroId] || {}).current_stars) || 0;
+    let v = Number((ROSTER_PH_BY_HERO[heroId] || {}).current_stars) || 0;
+    const hn = VIP_PACK_HEROES.length && (ROSTER_HERO_CATALOG || []).find((h) => h.id === heroId);
+    if (hn && vipPackHero(hn.name)) v = Math.max(v, vipSpecialStars(hn.name));
     const star = Math.min(5, Math.floor(v));
     const sub = Math.min(6, Math.round((v - star) * 10));
     return { star, sub };
@@ -5596,6 +5606,9 @@ async function renderOverview(opts = {}) {
     const saveStars = async (heroId, star, sub) => {
       const value = Number((star + sub / 10).toFixed(1));
       if (typeof budgetInvalidate === "function") budgetInvalidate(); // shards needed changed
+      // Natalia / Jeronimo: their Heroes Special Skills stars follow (whole stars).
+      const vh = heroCatalog.find((h) => h.id === heroId);
+      if (vh && vipSpecialSet(vh.name, star)) { const sk = Object.keys(SPECIAL_HERO_META).find((k) => SPECIAL_HERO_META[k].name === vh.name); if (sk && sk in HERO_STARS) HERO_STARS[sk] = vipSpecialStars(vh.name); }
       const existing = phByHero[heroId];
       if (existing) {
         // Shown at once, saved in the background in order; put back if
@@ -5656,7 +5669,7 @@ async function renderOverview(opts = {}) {
       const genPrefix = t("gen_prefix");
       const widgetLevelLabel = t("widget_level_label"), widgetShort = t("widget_short");
       // Shards still short for 5★, from the Backpack (own shards, then general).
-      const shardPlan = heroShardPlan({ heroes: heroCatalog, roster, playerHeroes: Object.values(phByHero), starRows: ROSTER_STAR_ROWS, bp: ROSTER_BACKPACK || {} });
+      const shardPlan = heroShardPlan({ heroes: heroCatalog, roster, playerHeroes: Object.values(phByHero), starRows: ROSTER_STAR_ROWS, bp: ROSTER_BACKPACK || {}, special: vipSpecialStarsMap() });
       const shShort = t("rc_sh_short"), shEnough = t("rc_sh_enough"), shReach = t("rc_sh_reach");
       const wdTxt = { need: t("bp_sh_need"), own: t("bp_wd_own"), short: t("rc_wd_short"), enough: t("rc_wd_enough") }; // `t` is the troop inside the cards' map
       // Small card on phones: one short line
@@ -16546,6 +16559,61 @@ const VIP_FIRST_BUY_HERO = "Natalia";
 // shards") never go to them.
 const VIP_PACK_HEROES = ["Natalia", "Jeronimo"];
 function vipPackHero(name) { return VIP_PACK_HEROES.includes(String(name || "")); }
+// Natalia / Jeronimo: the Heroes Special Skills save key (calc_state hero_stars_<key>).
+const VIP_HERO_STAR_KEY = { Natalia: "natalia", Jeronimo: "jero" };
+// Their Heroes Special Skills stars (0-5) from the saved states (0 for other heroes).
+function vipSpecialStars(name) {
+  const k = VIP_HERO_STAR_KEY[String(name || "")];
+  if (!k || !CALC_STATE_CACHE || CALC_STATE_CACHE_USER !== USER_ID) return 0;
+  const s = CALC_STATE_CACHE[`hero_stars_${k}`];
+  return Math.max(0, Math.min(5, Math.floor(Number((s || {}).__shared__) || 0)));
+}
+function vipSpecialStarsMap() { const o = {}; VIP_PACK_HEROES.forEach((n) => { o[n] = vipSpecialStars(n); }); return o; }
+// The roster set Natalia / Jeronimo to `stars` whole stars: their Heroes Special
+// Skills stars follow (up or down; one hero, one value). Returns true when saved.
+function vipSpecialSet(name, stars) {
+  const k = VIP_HERO_STAR_KEY[String(name || "")];
+  if (!k || !(CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID)) return false;
+  const n = Math.max(0, Math.min(5, Math.floor(Number(stars) || 0)));
+  const cur = CALC_STATE_CACHE[`hero_stars_${k}`];
+  if (cur && Number(cur.__shared__) === n) return false;
+  saveCalcState(`hero_stars_${k}`, { ...(CALC_STATE_CACHE[`hero_stars_${k}`] || {}), __shared__: n });
+  return true;
+}
+// Heroes Special Skills saved Natalia / Jeronimo at `stars`: their player_heroes
+// row follows (step = stars × 6, up or down; a row already on that whole star keeps
+// its pieces). Only for a hero the person tracks: a row exists, or it sits in a
+// roster slot.
+async function vipRosterSet(name, stars) {
+  if (!vipPackHero(name)) return;
+  const n = Math.max(0, Math.min(5, Math.floor(Number(stars) || 0)));
+  const [heroes, ph, roster] = await Promise.all([
+    dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []),
+    dashCached("player_heroes", () => sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`)).catch(() => null),
+    loadCalcState("dashboard_roster").catch(() => null),
+  ]);
+  const hero = (heroes || []).find((h) => h.name === name);
+  if (!hero || !Array.isArray(ph)) return;
+  const row = ph.find((p) => p.hero_id === hero.id);
+  if (row) {
+    const v = Number(row.current_stars) || 0;
+    const step = Math.min(5, Math.floor(v)) * 6 + Math.min(6, Math.round((v - Math.floor(v)) * 10));
+    if (Math.floor(step / 6) === n) return;
+    const prev = row.current_stars;
+    row.current_stars = n;
+    patchRowQueued("player_heroes", row.id, { current_stars: n, updated_at: new Date().toISOString() }).catch(() => {
+      if (row.current_stars === n) row.current_stars = prev;
+      toast("Couldn't save", true);
+    });
+    return;
+  }
+  const inRoster = ["Infantry", "Lancers", "Marksman"].some((k) => { const e = (roster || {})[k]; return e && (typeof e === "string" ? e : e.heroId) === hero.id; });
+  if (!inRoster || !n) return;
+  try {
+    const [made] = await sb(`player_heroes`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, hero_id: hero.id, current_level: 0, current_stars: n }) });
+    if (made) ph.push(made);
+  } catch (e) { toast("Couldn't save", true); }
+}
 // The VIP tier number picked on the VIP page (0 = none), from the saved states.
 function vipTierNow() {
   const v = CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID ? CALC_STATE_CACHE.vip_tier : null;
@@ -28325,10 +28393,30 @@ async function renderExtraBonusHeroes() {
   const [data] = await Promise.all([Promise.all(heroes.map((h) => heroSpecialData(h).catch(() => null))), maxBeforeLoad("hero_special_skills"), pics]);
   if (seq !== RENDER_SEQ) return;
   const list = heroes.map((h, i) => { const m = SPECIAL_HERO_META[h] || { name: h, img: HERO_IMG_BY_NAME[h] || "" }; return { key: h, name: m.name, img: m.img, d: data[i] }; });
+  // Natalia / Jeronimo: one value with their Dashboard roster stars; old data where
+  // the two differ shows the higher (written to both on the next save).
+  if (list.some((x) => x.d && vipPackHero(x.name))) {
+    const [hs, ph] = await Promise.all([
+      dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []),
+      dashCached("player_heroes", () => sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`)).catch(() => []),
+    ]);
+    if (seq !== RENDER_SEQ) return;
+    list.forEach((x) => {
+      if (!x.d || !vipPackHero(x.name)) return;
+      const h = (hs || []).find((y) => y.name === x.name), p = h && (ph || []).find((r) => r.hero_id === h.id);
+      const rs = p ? Math.min(5, Math.floor(Number(p.current_stars) || 0)) : 0;
+      if (rs > (Number(x.d.saved.__shared__) || 0)) x.d.saved.__shared__ = rs;
+    });
+  }
   const ok = list.filter((x) => x.d);
   const starsOf = (x) => Math.max(0, Math.min(5, Number(x.d.saved.__shared__) || 0));
   // Natalia / Jeronimo's stars also set their shards in Budgets (heroShardBudget).
-  const save = (x) => { saveCalcState(`hero_stars_${x.key.toLowerCase()}`, x.d.saved); if (typeof budgetInvalidate === "function") budgetInvalidate(); };
+  // Natalia / Jeronimo: their Dashboard roster row follows (vipRosterSet).
+  const save = (x) => {
+    saveCalcState(`hero_stars_${x.key.toLowerCase()}`, x.d.saved);
+    if (typeof budgetInvalidate === "function") budgetInvalidate();
+    vipRosterSet(x.name, starsOf(x)).catch(() => { /* toast shown */ });
+  };
 
   content.innerHTML = `<div class="t12x bn-pg">
       ${bnTitleHtml(navLabel("extrabonusheroes"), t("hs_desc"), ok.length ? "heroSkillsMaxAllBtn" : "")}
