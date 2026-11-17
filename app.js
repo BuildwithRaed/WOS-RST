@@ -414,8 +414,36 @@ function dsHandleHtml(attrs = "", label = "") {
   const l = esc(label || t("drag_to_move"));
   return `<span class="ds-h" role="button" tabindex="0" ${attrs} aria-label="${l}" title="${l}">${DS_HANDLE}</span>`;
 }
+// "⇅ Arrange" (owner, 17 Nov 2026: drag kept starting while scrolling): every
+// sortable list is still until its Arrange button is on. One switch per list
+// key, kept for the visit. A list's box carries arrangeHostAttr(key) (its ⋮⋮
+// handles are hidden while off, CSS) and dragSort(h, { arrange: key }) does
+// nothing while it is off (touch, mouse, hold and ↑ / ↓ alike). Packs keep
+// their own Arrange modes (no key).
+const ARRANGE_ON = new Set();
+const arrangeOn = (key) => ARRANGE_ON.has(key);
+function arrangeHostAttr(key) { return ` data-arrhost="${esc(key)}"${arrangeOn(key) ? " data-arron" : ""}`; }
+function arrangeHost(el, key) { if (!el) return; el.setAttribute("data-arrhost", key); el.toggleAttribute("data-arron", arrangeOn(key)); }
+function arrangeBtnInner(on) { return on ? `&#10003; ${esc(t("pkb_arrange_done"))}` : `&#8645; ${esc(t("pkb_arrange"))}`; }
+function arrangeBtnHtml(key) { const on = arrangeOn(key); return `<button type="button" class="arr-btn${on ? " on" : ""}" data-arrbtn="${esc(key)}" aria-pressed="${on}">${arrangeBtnInner(on)}</button>`; }
+// The button with a short hint beside it (shown only while arranging).
+function arrangeBarHtml(key, hint = t("pkb_arrange_hint"), cls = "") { return `<div class="arr-bar${cls ? " " + cls : ""}"${arrangeOn(key) ? " data-arron" : ""}>${arrangeBtnHtml(key)}${hint ? `<span class="arr-hint">${esc(hint)}</span>` : ""}</div>`; }
+function arrangeSet(key, on) {
+  if (on) ARRANGE_ON.add(key); else ARRANGE_ON.delete(key);
+  document.querySelectorAll("[data-arrhost]").forEach((el) => { if (el.dataset.arrhost === key) el.toggleAttribute("data-arron", on); });
+  document.querySelectorAll("[data-arrbtn]").forEach((b) => {
+    if (b.dataset.arrbtn !== key) return;
+    b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); b.innerHTML = arrangeBtnInner(on);
+    const bar = b.closest(".arr-bar"); if (bar) bar.toggleAttribute("data-arron", on);
+  });
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest("[data-arrbtn]");
+  if (b) arrangeSet(b.dataset.arrbtn, !arrangeOn(b.dataset.arrbtn));
+}, true);
 function dragSort(h, o) {
   if (!h) return;
+  const still = () => o.arrange != null && !arrangeOn(o.arrange);
   const X = o.axis === "x";
   // o.grid: items wrap in rows (cards two a row): the row moves both ways and
   // the line stands at the side of the card it lands before.
@@ -434,6 +462,7 @@ function dragSort(h, o) {
   };
   if (!o.hold) h.classList.add("ds-h");
   h.onkeydown = (e) => {
+    if (still()) return;
     const back = X ? (document.documentElement.dir === "rtl" ? "ArrowRight" : "ArrowLeft") : "ArrowUp";
     const fwd = X ? (document.documentElement.dir === "rtl" ? "ArrowLeft" : "ArrowRight") : "ArrowDown";
     const gb = G && e.key === (document.documentElement.dir === "rtl" ? "ArrowRight" : "ArrowLeft"), gf = G && e.key === (document.documentElement.dir === "rtl" ? "ArrowLeft" : "ArrowRight");
@@ -449,7 +478,7 @@ function dragSort(h, o) {
   // once it moves 6 px, a finger after holding still for 350 ms (moving
   // sooner scrolls as usual); a plain tap stays a tap.
   h.onpointerdown = (e) => {
-    if (e.button > 0) return;
+    if (e.button > 0 || still()) return;
     if (!o.hold) { e.preventDefault(); start(e, e); return; }
     const x0 = e.clientX, y0 = e.clientY, mouse = e.pointerType === "mouse";
     let timer = 0, last = e;
@@ -473,7 +502,7 @@ function dragSort(h, o) {
     document.addEventListener("pointercancel", off);
     if (!mouse) timer = setTimeout(go, 350);
   };
-  if (o.hold) h.addEventListener("contextmenu", (ev) => { if (h.classList.contains("ds-lift") || ev.pointerType !== "mouse") ev.preventDefault(); });
+  if (o.hold) h.addEventListener("contextmenu", (ev) => { if (still()) return; if (h.classList.contains("ds-lift") || ev.pointerType !== "mouse") ev.preventDefault(); });
   function start(e, now) {
     const row = rowOf(); if (!row) return false;
     const list = listOf(row), from = list.indexOf(row);
@@ -1286,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 99; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 100; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -1447,6 +1476,11 @@ const NAV_PAGE_LABELS = {
 // General UI strings (settings panel, owner login, Dashboard chrome).
 const T = {
   language: { en: "Language" },
+  rule_hall_unlock: { en: "Hall of Heroes hero unlock" },
+  rule_hall_unlock_help: { en: "The Hall of Heroes hero of each new Gen must buy 10 shards to unlock (Value Hero Pack or Marks of Valor); the other new heroes are unlocked free from the Lucky Wheel / events. The pack numbers are used only if the Value Hero Pack table is missing on the Packs page." },
+  rule_hall_unlock_shards: { en: "Shards to unlock the Hall of Heroes hero" },
+  rule_hall_unlock_price: { en: "Value Hero Pack price ($) (used only if the pack table is missing)" },
+  rule_hall_unlock_gives: { en: "…shards it gives" },
   commander: { en: "Commander" },
   name_placeholder: { en: "Name" },
   save: { en: "Save" },
@@ -2048,6 +2082,88 @@ const T = {
   admh_rules_btn: { en: "Rules" },
   admh_open_page: { en: "Open a page" },
   admh_n_changed: { en: "{n} changed" },
+  rv_rules_chip: { en: "Rules" },
+  rv_state: { en: "State & events" },
+  rv_other: { en: "Rules in other sections" },
+  rv_shortcuts: { en: "Shortcuts" },
+  rv_search: { en: "Search all {n} rules…" },
+  rv_no_match: { en: "No rule matches" },
+  rv_n_rules: { en: "{n} rules" },
+  rv_1_rule: { en: "1 rule" },
+  rv_also: { en: "Also used here (edited elsewhere)" },
+  rv_back: { en: "Back" },
+  rs_builtin: { en: "built-in values" },
+  rs_builtin_n: { en: "built-in {n}" },
+  rs_changed: { en: "changed" },
+  rs_h_gen: { en: "Mythic General shard" },
+  rs_h_gen_sub: { en: "Marks of Valor → 1 Mythic General shard" },
+  rs_h_gen_sum: { en: "{marksPerGeneral} Marks each · {marksGeneralWeekly} a week" },
+  rs_h_gen_help: { en: "Hall of Heroes sells Mythic General Hero Shards for Marks of Valor, up to a number of shards a week. Budgets trades them 1:1 into your mythic heroes' shards." },
+  rs_h_hall: { en: "Newest-Gen Hall hero shard" },
+  rs_h_hall_sub: { en: "Marks of Valor → 1 shard of the newest Gen's Hall of Heroes hero" },
+  rs_h_hall_sum: { en: "{hallMarksPerShard} Marks each · {hallWeekly} a week" },
+  rs_h_hall_help: { en: "Only the newest Gen's Hall of Heroes hero, once that Gen is out in your state." },
+  rs_h_wid: { en: "Widgets" },
+  rs_h_wid_sub: { en: "Widget Chests and Mystery Points → widgets" },
+  rs_h_wid_sum: { en: "Chest {widgetChestGives} · {mysteryGive} points → {mysteryGet}" },
+  rs_h_wid_help: { en: "A Widget Chest gives widgets of any hero. Mystery Points buy widgets only." },
+  rs_h_free: { en: "Free Mystery Points" },
+  rs_h_free_sum: { en: "{mysteryDaily} a day" },
+  rs_h_free_help: { en: "Counted every day up to the Budgets date (30 days without one)." },
+  rs_cost1: { en: "Cost of 1 shard" },
+  rs_weekly: { en: "Weekly limit" },
+  rs_chest1: { en: "1 Widget Chest gives" },
+  rs_myst_give: { en: "Mystery Points" },
+  rs_myst_get: { en: "…buy this many widgets" },
+  rs_per_day: { en: "Free a day" },
+  rs_i_copy: { en: "Shards & copies" },
+  rs_i_copy_sub: { en: "Mythic Island Shards → 1 building copy" },
+  rs_i_copy_sum: { en: "{perCopy} shards a copy · {essence10} essence for 10" },
+  rs_i_copy_help: { en: "Shards needed for one copy of a Mythic building, and the Life Essence that buys 10 shards." },
+  rs_i_shop: { en: "Shard shop" },
+  rs_i_shop_sum: { en: "{shopWeek} shards · {copyLimit} copies per building a week" },
+  rs_i_shop_help: { en: "The shop's weekly limit. Each building's price is set on the building." },
+  rs_i_inc: { en: "Free income" },
+  rs_i_inc_sum: { en: "{ctWeek} contract a week · tree {treeCap} · mill {millHour} an hour" },
+  rs_i_inc_help: { en: "Free Construction Contracts, and the Life Essence the Tree of Life, the Timbermill and ally help make. The Tree and the Timbermill stop making essence when full." },
+  rs_i_mark: { en: "Mark of Revival" },
+  rs_i_mark_sum: { en: "{markPrice} Marks a copy" },
+  rs_i_mark_help: { en: "Price of one building copy in the Mark of Revival shop." },
+  rs_i_shine: { en: "Shining City" },
+  rs_i_shine_sum: { en: "{tomePrice} tomes a copy · {tomeMax} an event · skin {skinTomes}" },
+  rs_i_shine_help: { en: "Glorious Tomes buy building copies (up to a number per building an event) and the city skin. Each day a pack is bought during the pack event gives free tomes." },
+  rs_copy1: { en: "Cost of 1 copy" },
+  rs_ess10: { en: "Life Essence for 10 shards" },
+  rs_shop_wk: { en: "Shards a week" },
+  rs_copy_wk: { en: "Copies a week, per building" },
+  rs_ct_week: { en: "Construction Contracts a week" },
+  rs_ct_event: { en: "Contracts each KOI / SvS" },
+  rs_tree_cap: { en: "Tree of Life holds" },
+  rs_mill_hour: { en: "Timbermill, per worker" },
+  rs_mill_cap: { en: "Timbermill holds" },
+  rs_wood_ess: { en: "Wood for 1 Life Essence" },
+  rs_ally_each: { en: "Essence per ally help" },
+  rs_ally_max: { en: "Ally helps" },
+  rs_tome_max: { en: "Copies per building an event" },
+  rs_shine_days: { en: "Pack event lasts" },
+  rs_tome_free: { en: "Free tomes a day a pack is bought" },
+  rs_skin_tomes: { en: "Cost of the city skin" },
+  rs_u_marks: { en: "Marks" },
+  rs_u_shards: { en: "shards" },
+  rs_u_widgets: { en: "widgets" },
+  rs_u_points: { en: "points" },
+  rs_u_a_day: { en: "a day" },
+  rs_u_essence: { en: "essence" },
+  rs_u_copies: { en: "copies" },
+  rs_u_free: { en: "free" },
+  rs_u_an_hour: { en: "an hour" },
+  rs_u_wood: { en: "wood" },
+  rs_u_tomes: { en: "tomes" },
+  rs_u_days: { en: "days" },
+  rv_state_short: { en: "State" },
+  rv_sec_rules: { en: "{name} rules" },
+  rv_note: { en: "Each rule starts with the built-in value; your changes apply to everyone. Tap a rule to change it (Save / Reset to built-in)." },
+  rv_hub_desc: { en: "Game rules the site calculates with. State & events are here; every other rule sits in the Admin section where that data is edited (its ⚙ Rules chip). Search finds them all." },
   admh_bk_never: { en: "No backup yet" },
   admh_bk_today: { en: "Backed up today" },
   admh_bk_days: { en: "Last backup {n} days ago" },
@@ -2762,6 +2878,8 @@ const T = {
   pk_visitor_date_desc: { en: "For packs whose date differs by state (e.g. New Gen Heroes). Visitors only change the date; everything else stays yours." },
   pk_date_with: { en: "Same dates as" },
   pk_date_with_desc: { en: "Two tables of one event: this pack comes on that pack's days. Only the dates are shared." },
+  pk_ng_after: { en: "Starts after the new heroes" },
+  pk_ng_after_desc: { en: "Days from the day new heroes come (0 = the same day). Packs with the same dates follow this one." },
   pk_date_with_none: { en: "— (its own dates)" },
   pk_date_with_missing: { en: "(pack not found: own dates)" },
   pk_date_follows: { en: "Follows {pack}: comes back and next date are set there. \"Lasts\" stays this pack's own." },
@@ -3035,6 +3153,8 @@ const T = {
   pkb_free: { en: "Free" },
   pkb_show_more: { en: "Show {n} more" },
   pkb_arrange: { en: "Arrange" },
+  rv_adv: { en: "Advanced (page structure)" },
+  rv_adv_warn: { en: "These set how the research pages are built. A wrong edit can break those pages." },
   pkb_arrange_done: { en: "Done" },
   pkb_arrange_reset: { en: "Reset to A–Z" },
   pkb_arrange_hint: { en: "Hold ⋮⋮ and drag" },
@@ -4062,17 +4182,17 @@ window.addEventListener("popstate", (e) => {
   if (tab === "mypacks" && TAB === "mypacks" && MPW_HOOK) { MPW_HOOK.history(e.state.mpw || null); return; }
   // Admin sections: Back / Forward between the Admin home and its sections.
   if (tab === "adminpage" && typeof ADMIN_ACTIVE_TABLE !== "undefined") {
-    const adm = e.state.adm || null;
+    const adm = e.state.adm || null, rv = e.state.rv || null;
     if (TAB === "adminpage") {
-      if (adm === ADMIN_ACTIVE_TABLE) return;
-      if (!ADMIN_SKIP_CONFIRM && !admConfirmLeave()) { history.pushState({ tab: "adminpage", adm: ADMIN_ACTIVE_TABLE }, "", location.pathname + location.search); return; }
+      if (adm === ADMIN_ACTIVE_TABLE && rv === ADMIN_RULE_VIEW) return;
+      if (!ADMIN_SKIP_CONFIRM && !admConfirmLeave()) { history.pushState({ tab: "adminpage", adm: ADMIN_ACTIVE_TABLE, ...(ADMIN_RULE_VIEW ? { rv: ADMIN_RULE_VIEW } : {}) }, "", location.pathname + location.search); return; }
       ADMIN_SKIP_CONFIRM = false;
-      ADMIN_ACTIVE_TABLE = adm;
+      ADMIN_ACTIVE_TABLE = adm; ADMIN_RULE_VIEW = rv;
       renderAdminPage();
       window.scrollTo(0, 0);
       return;
     }
-    ADMIN_ACTIVE_TABLE = adm;
+    ADMIN_ACTIVE_TABLE = adm; ADMIN_RULE_VIEW = rv;
   }
   goToTab(tab, { fromHistory: true });
 });
@@ -4757,8 +4877,8 @@ async function openQuickSheet(after) {
     modal.innerHTML = `<div class="modal-box qk-box">
       <div class="bd-head"><h2>${esc(t("qk_edit"))}</h2><button type="button" class="btn small" data-qkdone>${esc(t("qk_done"))}</button></div>
       <div class="meta" style="font-size:11.5px;">${esc(t("qk_hint"))}</div>
-      <div class="qk-k">${esc(t("qk_pinned"))} (${pins.length})</div>
-      <div class="qk-list">${pins.length ? pins.map((tb) => row(tb, true)).join("") : `<div class="meta" style="font-size:12px; padding:8px;">${esc(t("qk_none"))}</div>`}</div>
+      <div class="qk-k${pins.length > 1 ? " arr-row" : ""}"><span>${esc(t("qk_pinned"))} (${pins.length})</span>${pins.length > 1 ? arrangeBtnHtml("quick") : ""}</div>
+      <div class="qk-list"${arrangeHostAttr("quick")}>${pins.length ? pins.map((tb) => row(tb, true)).join("") : `<div class="meta" style="font-size:12px; padding:8px;">${esc(t("qk_none"))}</div>`}</div>
       ${groups.map((g) => `<div class="qk-k">${esc(g.name)}</div><div class="qk-list">${g.tabs.map((tb) => row(tb)).join("")}</div>`).join("")}
     </div>`;
     modal.querySelector("[data-qkdone]").addEventListener("click", done);
@@ -4771,7 +4891,7 @@ async function openQuickSheet(after) {
     }));
     // Drag ⋮⋮ to change the order (saved with Done, like the stars).
     modal.querySelectorAll("[data-qkdrag]").forEach((h) => dragSort(h, {
-      row: "[data-qkrow]",
+      row: "[data-qkrow]", arrange: "quick",
       done: () => { pins = [...modal.querySelectorAll("[data-qkrow]")].map((x) => x.dataset.qkrow); },
     }));
   };
@@ -7708,12 +7828,12 @@ function cdaOrderSheet() {
   const draw = () => {
     m.innerHTML = `<div class="modal-box adm-sheet cando-box" role="dialog" aria-modal="true" aria-label="${esc(t("cando_order"))}">
       <div class="cando-hd"><b>${esc(t("cando_order"))}</b>${closeXHtml("data-cdx")}</div>
-      <div class="cando-oh"><span class="meta cando-desc">${esc(t("cando_drag_hint"))}</span><button type="button" class="btn ghost small" data-cdreset>${esc(t("rch_order_reset"))}</button></div>
-      <div class="cando-ord">${UPGRADE_ORDER.rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-cdrow="${i}" data-cdkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>${dsHandleHtml("data-cddrag")}</div>`).join("")}</div>
+      <div class="cando-oh"><span class="meta cando-desc">${esc(t("cando_drag_hint"))}</span><span class="cando-ob">${arrangeBtnHtml("upgrade_order")}<button type="button" class="btn ghost small" data-cdreset>${esc(t("rch_order_reset"))}</button></span></div>
+      <div class="cando-ord"${arrangeHostAttr("upgrade_order")}>${UPGRADE_ORDER.rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-cdrow="${i}" data-cdkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>${dsHandleHtml("data-cddrag")}</div>`).join("")}</div>
       <div class="cando-foot"><button type="button" class="btn cando-done" data-cdx>${esc(t("gs_done"))}</button></div>
     </div>`;
     m.querySelectorAll("[data-cddrag]").forEach((h) => dragSort(h, {
-      row: "[data-cdrow]",
+      row: "[data-cdrow]", arrange: "upgrade_order",
       done: () => { const old = UPGRADE_ORDER.rows; UPGRADE_ORDER.rows = [...m.querySelectorAll("[data-cdrow]")].map((x) => old[Number(x.dataset.cdrow)]); changed(); },
       refocus: (row) => { const r2 = [...m.querySelectorAll("[data-cdkey]")].find((x) => x.dataset.cdkey === row.dataset.cdkey), hh = r2 && r2.querySelector("[data-cddrag]"); if (hh) hh.focus(); },
     }));
@@ -8723,7 +8843,7 @@ function purBoughtUntil(p) {
     // Forge: weeks 5–8); it leaves when those end.
     const base = newGenBaseDay();
     if (!base) return { until: null, once: true };
-    const off = (ng ? (ng[1] === "w" ? NG_HERO_DAYS : 0) : packNewGenOffset(p.table)) * DAY;
+    const off = (ng ? (ng[1] === "w" ? ngForgeDays((NG_HERO_LINKS[String(p.table)] || {}).tpl) : 0) : packNewGenOffset(p.table)) * DAY;
     const win = Number(l.window) > 0 ? Math.round(Number(l.window)) : 28;
     const starts = newGenStarts(base, 12).map((g) => new Date(g.getTime() + off));
     const at = starts.filter((x) => x <= d).pop();
@@ -11991,7 +12111,9 @@ async function renderPacksPage() {
     const fixed = ci === link.priceCol || (packIsNonResourceColumn(cur) && cur.toLowerCase() !== "gems");
     if (fixed) return `<div class="pk-hd">${packColumnControlHtml(tb, ci)}</div>`;
     const name = pkColItem(tb, ci), label = materialDisplayName(name) || name, tm = pkSpeedTime(name);
-    const face = pkIconHtml(name) || `<b>${esc(String(label || "?").slice(0, 3))}</b>`;
+    // A hero's own shards / widgets: the hero's face in the corner (two heroes' shards look alike).
+    const hm = /^(.+) (Shards|Widgets)$/.exec(String(name)), hImg = hm && HERO_IMG_BY_NAME[hm[1]];
+    const face = (pkIconHtml(name) || `<b>${esc(String(label || "?").slice(0, 3))}</b>`) + (hImg ? `<img class="pk-hface" src="${esc(hImg)}" alt="" loading="lazy" />` : "");
     if (cur.toLowerCase() === "gems") {
       return `<div class="pk-hd"><span class="pk-hdi" title="${esc(label)}">${face}${IS_OWNER ? `<button type="button" class="pk-hdx" data-pt-gemsdel data-col="${ci}" title="${esc(t("pack_remove_column"))}">&times;</button>` : ""}</span></div>`;
     }
@@ -12282,6 +12404,8 @@ async function renderPacksPage() {
       const a = packParseDay(lk.resetDay);
       if (a && win > 0 && win < 7 && r % 7 === 0) { out.days = win === 1 ? pkbWd(a) : `${pkbWd(a)}–${pkbWd(new Date(a.getTime() + (win - 1) * 86400000))}`; parts.push(out.days); }
     }
+    // The first purchase reward is on sale from day 1 (no trigger, no date).
+    if (lk.firstBuy) out.on = true;
     out.text = parts.filter(Boolean).join(" · ");
     return out;
   }
@@ -13267,6 +13391,12 @@ async function renderPacksPage() {
         <div class="bset-sec"><b>${esc(t("pk_sec_schedule"))} ${info("reset")}</b></div>
         ${infoText("reset", esc(t("pack_reset_desc")))}
         ${IS_OWNER ? packDateWithRowHtml(tb, preset) : ""}
+        ${IS_OWNER && packIsNewGen((PACK_LINKS || {})[String(tb.id)]) ? (() => {
+          // New Gen pack: how many days after the new heroes it starts (its
+          // followers take the leader's; hidden while it follows another pack).
+          const own = packNgAfterOf(tb.id), v = own != null ? own : packNewGenOffset(tb.id);
+          return `<div class="bset-row" data-pkngafterrow ${packDateLeaderShown(tb.id) ? "hidden" : ""}><span class="bset-l">${esc(t("pk_ng_after"))}<small>${esc(t("pk_ng_after_desc"))}</small></span><span class="bset-c"><input type="number" min="0" step="1" class="keep-w" data-pkngafter value="${esc(String(v))}" style="width:64px;" /><span class="meta">${esc(t("pack_lasts_days"))}</span></span></div>`;
+        })() : ""}
         <div class="bset-row" data-pkresetrow ${packDateLeaderShown(tb.id) ? "hidden" : ""}><span class="bset-l">${esc(t("pack_reset_every"))}</span><span class="bset-c">
             <select data-packreset>
               ${preset === "unlimited" ? `<option value="unlimited" selected>${esc(t("pack_reset_unlimited"))}</option>` : ""}
@@ -13276,9 +13406,9 @@ async function renderPacksPage() {
               <option value="stack" ${preset === "stack" ? "selected" : ""}>${esc(t("pack_reset_stack"))}</option>
               <option value="trigger" ${preset === "trigger" ? "selected" : ""}>${esc(t("pk_trigger_option"))}</option>
             </select>
-            <input type="number" min="1" step="1" data-packstackcap value="${link.stackCap}" style="width:64px; font-size:12px; padding:3px 6px; ${preset === "stack" ? "" : "display:none;"}" />
+            <input type="number" min="1" step="1" class="keep-w" data-packstackcap value="${link.stackCap}" style="width:64px; font-size:12px; padding:3px 6px; ${preset === "stack" ? "" : "display:none;"}" />
             <span class="meta" data-packstackcaplabel style="font-size:11px; ${preset === "stack" ? "" : "display:none;"}">${esc(t("pack_stack_max"))}</span>
-            <input type="number" min="1" step="1" data-packresetdays value="${typeof r === "number" ? r : 7}" style="width:56px; font-size:12px; padding:3px 6px; ${preset === "custom" ? "" : "display:none;"}" />
+            <input type="number" min="1" step="1" class="keep-w" data-packresetdays value="${typeof r === "number" ? r : 7}" style="width:56px; font-size:12px; padding:3px 6px; ${preset === "custom" ? "" : "display:none;"}" />
             <span class="meta" data-packresetdayslabel style="font-size:11px; ${preset === "custom" ? "" : "display:none;"}">${esc(t("pack_days_short_long"))}</span>
         </span></div>
         <div class="bset-row pks-opt" data-pkanchorrow ${packDateLeaderShown(tb.id) ? "hidden" : ""}><span class="bset-l" data-packanchorlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_next_on"))}</span><span class="bset-c"><input type="date" data-packanchor value="${esc(link.resetDay || "")}" style="${typeof r === "number" ? "" : "display:none;"}" /></span></div>
@@ -13545,6 +13675,25 @@ async function renderPacksPage() {
       const windowIn = box.querySelector("[data-packwindow]");
       if (windowIn) windowIn.addEventListener("change", saveReset);
       if (stackCapIn) stackCapIn.addEventListener("change", saveReset);
+      // New Gen pack: "Starts N days after the new heroes" (`ngAfter`).
+      const ngAfterIn = box.querySelector("input[data-pkngafter]");
+      if (ngAfterIn) ngAfterIn.addEventListener("change", async () => {
+        const l = current();
+        const n = Math.round(Number(ngAfterIn.value));
+        if (ngAfterIn.value === "" || !Number.isFinite(n)) delete l.ngAfter; else l.ngAfter = Math.max(0, n);
+        ngAfterIn.value = String(packNgAfterOf(id) != null ? packNgAfterOf(id) : packNewGenOffset(id));
+        PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
+        if (box.closest(".pkb-panel")) {
+          savePackLinks();
+          setTimeout(() => {
+            renderAll();
+            const s = listEl.querySelector(".pkb-panel input[data-pkngafter]");
+            if (s) s.scrollIntoView({ block: "center" });
+          }, 0);
+          return;
+        }
+        await savePackLinks();
+      });
       // "Same dates as": dates only (not a linked set), so only this field changes.
       const dwSel = box.querySelector("select[data-pkdatewith]");
       if (dwSel) dwSel.addEventListener("change", async () => {
@@ -13573,7 +13722,7 @@ async function renderPacksPage() {
         }
         const lead = packDateLeaderShown(id);
         const leadTb = lead ? tables.find((x) => String(x.id) === lead) : null;
-        [box.querySelector("[data-pkresetrow]"), box.querySelector("[data-pkanchorrow]")].forEach((el) => { if (el) el.hidden = !!lead; });
+        [box.querySelector("[data-pkresetrow]"), box.querySelector("[data-pkanchorrow]"), box.querySelector("[data-pkngafterrow]")].forEach((el) => { if (el) el.hidden = !!lead; });
         const note = box.querySelector("[data-pkdwnote]");
         if (note) { note.hidden = !lead; note.textContent = "\u{1F517} " + t("pk_date_follows").replace("{pack}", leadTb ? leadTb.title || "" : ""); }
         // The window's "when" line and the list row follow the new dates.
@@ -14085,6 +14234,16 @@ async function renderPacksPage() {
   pkbDpSub();
   renderAll();
   pkbReady = true;
+  // Tables with a hero's own shards column (the VIP packs …): the heroes'
+  // pictures for those columns; drawn again once they're known.
+  const heroCol = /^(.+) (shards|widgets)$/i;
+  if (tables.some((tb) => Object.values(packEffectiveCols(tb)).some((c) => heroCol.test(String(c)) && !/general hero/i.test(String(c)) && !HERO_IMG_BY_NAME[heroCol.exec(String(c))[1]]))) {
+    ngHeroRows().then((heroes) => {
+      const before = Object.keys(HERO_IMG_BY_NAME).length;
+      noteHeroImages(heroes);
+      if (seq === RENDER_SEQ && listEl.isConnected && Object.keys(HERO_IMG_BY_NAME).length !== before) renderAll();
+    }).catch(() => {});
+  }
   // The New Gen hero copies of the pattern tables, under their rows.
   ngHeroTables(tables).then((copies) => {
     if (seq !== RENDER_SEQ || !listEl.isConnected) return;
@@ -14190,8 +14349,11 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     const step = Math.min(30, star * 6 + sub);
     const tStep = T.later ? step : Math.max(step, Math.min(30, T.stars != null ? Number(T.stars) * 6 : 30));
     // A hero not unlocked yet (not in the roster, no saved stars) takes HERO_UNLOCK_SHARDS
-    // shards before its first star step (owner, 17 Nov 2026: 10 + 1,065 = 1,075 to 5★).
-    const unlock = !inRoster && !phBy[hero.id] && !T.later ? HERO_UNLOCK_SHARDS : 0;
+    // shards before its first star step, but only the Gen's Hall of Heroes hero has to
+    // buy them; the other new heroes are unlocked free (Lucky Wheel / events).
+    // Natalia / Jeronimo (VIP packs only) need it too.
+    const isHall = HALL_OF_HEROES_HERO[Number(hero.generation)] === hero.name || vipPackHero(hero.name);
+    const unlock = isHall && !inRoster && !phBy[hero.id] && !T.later ? HERO_UNLOCK_SHARDS : 0;
     let need = unlock;
     const cum = {}; // shards from now to each whole star (mini targets)
     for (let k = step + 1; k <= tStep; k++) { need += heroShardStepCost(costByGen, hero.generation, k); if (k % 6 === 0) cum[k / 6] = need; }
@@ -14200,7 +14362,8 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     for (let k = step + 1; k <= nextStep; k++) next += heroShardStepCost(costByGen, hero.generation, k);
     const own = Number((bp || {})[`${hero.name} Shards`]) || 0;
     const rarity = HERO_GENERAL_SHARD[hero.rarity] ? hero.rarity : "Legendary";
-    const fromGeneral = Math.min(pool[rarity] || 0, Math.max(0, need - own));
+    // General Hero Shards never go to the VIP pack heroes.
+    const fromGeneral = vipPackHero(hero.name) ? 0 : Math.min(pool[rarity] || 0, Math.max(0, need - own));
     pool[rarity] = (pool[rarity] || 0) - fromGeneral;
     const have = own + fromGeneral;
     // How far the shards you have would take this hero.
@@ -14228,8 +14391,8 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
 }
 // Widgets for each Exclusive Gear (widget) level 1..10: 5, 10 ... 50 (275 in all).
 // Assumed from community tables; widgets cost $4.99 for 5.
-// Shards to unlock (recruit) a hero before its first star step.
-const HERO_UNLOCK_SHARDS = 10;
+// Shards the Gen's Hall of Heroes hero must buy to unlock (Rules "Hall of Heroes hero unlock").
+let HERO_UNLOCK_SHARDS = 10;
 const WIDGET_LEVEL_COST = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 const WIDGET_PACK = { count: 5, price: 4.99 };
 // Top widget level = the Rules "Widgets per widget level" table's length (10 built in).
@@ -15637,11 +15800,18 @@ function packAllResourceNames() {
 // localeCompare with the same locale/options.
 const PACK_RESOURCE_COLLATOR = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 let PACK_RESOURCE_SORTED = { key: null, list: [] };
+// Each hero's own shards ("<hero> Shards") as pack items: the VIP pack heroes
+// and every hero known so far (the heroes table, once read). Only in the
+// column lists and the name match, not in the Pack Resources list.
+function packHeroShardNames() {
+  const heroes = [...new Set([...VIP_PACK_HEROES, ...Object.keys(HERO_IMG_BY_NAME)])].sort();
+  return heroes.map((h) => `${h} Shards`);
+}
 function packResourceChoices(current) {
   const cfg = packResourceConfig();
   const hiddenLower = new Set([...cfg.hidden, ...cfg.removed].map((n) => String(n).toLowerCase()));
   const cur = current ? String(current).toLowerCase() : "";
-  const names = packAllResourceNames();
+  const names = packAllResourceNames().concat(packHeroShardNames());
   const key = `${LANG}\u0001${cfg.order.join("\u0002")}\u0001${names.join("\u0002")}`;
   if (PACK_RESOURCE_SORTED.key !== key) {
     const orderOf = new Map();
@@ -15697,7 +15867,8 @@ function packResourceByName(name) {
   if (!raw || packIsNonResourceColumn(raw)) return "";
   const lower = raw.toLowerCase();
   if (PACK_RESOURCE_ALIASES[lower]) return PACK_RESOURCE_ALIASES[lower];
-  return packAllResourceNames().find((r) => r.toLowerCase() === lower || materialDisplayName(r).toLowerCase() === lower) || "";
+  return packAllResourceNames().find((r) => r.toLowerCase() === lower || materialDisplayName(r).toLowerCase() === lower)
+    || packHeroShardNames().find((r) => r.toLowerCase() === lower) || "";
 }
 // What each column actually grants: worked out from the column names, with
 // any manual choice from the "Used for" box taking precedence.
@@ -15893,14 +16064,16 @@ const STATE_UNLOCKS = [
   { kind: "gear", key: "charm 11.1 16", name: "charm 11.1 16", tabs: ["charmscalc"], day: 440, label: "Chief Charm Lv 12 – 16" }, // with Gen 7 heroes
   { kind: "gear", key: "charm 16.1 18", name: "charm 16.1 18", tabs: ["charmscalc"], day: 520, label: "Chief Charm Lv 17 – 18" }, // with Gen 8 heroes
   ...[["Cave Hyena", 25], ["Arctic Wolf", 25], ["Musk Ox", 25], ["Titan Roc", 50], ["Giant Tapir", 50], ["Giant Elk", 71], ["Snow Leopard", 71], ["Snow Ape", 113], ["Cave Lion", 113],
-    ["Iron Rhino", 200], ["Saber-tooth Tiger", 200], ["Frost Gorilla", 270], ["Mammoth", 270], ["Frostscale Chameleon", 360]]
+    ["Iron Rhino", 200], ["Sabertooth Tiger", 200], ["Frost Gorilla", 270], ["Mammoth", 270], ["Frostscale Chameleon", 360]]
     .map(([n, d]) => ({ kind: "pets", name: n, tabs: ["petsdata", "refinepage"], day: d, label: n })),
   ...[["Holger", 121], ["Agnes", 121], ["Cyrille", 121], ["Romulus", 160], ["Valeria", 200], ["Baldur", 200], ["Fabian", 200], ["Kathy", 230], ["Ronne", 230], ["Gareth", 270]]
     .map(([n, d]) => ({ kind: "experts", name: n, tabs: ["expertspage", "expertsresearchpage"], day: d, label: n })),
 ];
 const stateKeyNorm = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9]/g, "").replace(/tiger$/, "");
 // The built-in rows the code reads by key (kind + key).
-const STATE_UNLOCK_KEYS = STATE_UNLOCKS.filter((u) => u.key).map((u) => ({ kind: u.kind, key: u.key }));
+const STATE_UNLOCK_KEYS = STATE_UNLOCKS.filter((u) => u.key).map((u) => ({ kind: u.kind, key: u.key, label: u.label }));
+// Built-in pet / expert names (the Admin name lists' fallback when the tables can't be read).
+const STATE_UNLOCK_NAMES0 = { pets: STATE_UNLOCKS.filter((u) => u.kind === "pets").map((u) => u.name), experts: STATE_UNLOCKS.filter((u) => u.kind === "experts").map((u) => u.name) };
 function stateUnlockBuiltinKey(kind, name) {
   const k = stateKeyNorm(name);
   const b = STATE_UNLOCK_KEYS.find((x) => x.kind === kind && stateKeyNorm(x.key) === k);
@@ -16076,7 +16249,7 @@ async function renderStateTimelinePage() {
     ${IS_OWNER ? `<p style="margin:12px 0 0;"><button type="button" class="btn small ghost" data-tladmin>${esc(t("tl_admin_edit"))} &rsaquo;</button></p>` : ""}`; });
   content.onclick = (e) => {
     if (e.target.closest("[data-saopen]")) { openStateAgeModal(() => keepPlace(() => renderStateTimelinePage())); return; }
-    if (e.target.closest("[data-tladmin]")) { ADMIN_ACTIVE_TABLE = "rules"; goToTab("adminpage"); }
+    if (e.target.closest("[data-tladmin]")) { ADMIN_ACTIVE_TABLE = "rules"; ADMIN_RULE_VIEW = null; goToTab("adminpage"); }
   };
 }
 // ---- Game events: SvS and King of Icefield (KOI) ----
@@ -16145,14 +16318,25 @@ function newGenGapDays() {
 }
 // New Gen tables: flagged `newGen` (they now sit in "Heroes packs"), or the old group name.
 function packIsNewGen(l) { return !!l && (l.newGen === true || (typeof l.group === "string" && l.group.trim() === PACK_NEWGEN_GROUP)); }
+// A New Gen pack's own "Starts N days after the new heroes" (`ngAfter` on its
+// link, set in the pack's settings on the Packs page), or null when not set.
+function packNgAfterOf(tableId) {
+  const l = (PACK_LINKS || {})[String(tableId)];
+  if (!l || l.ngAfter == null || l.ngAfter === "") return null;
+  const n = Number(l.ngAfter);
+  return Number.isFinite(n) ? Math.max(0, Math.round(n)) : null;
+}
 // New Gen Heroes packs follow the person's "last new heroes" date (My
 // Purchases): Hero Ascension Training starts the day new heroes come,
-// Exclusive Gear Forge 4 weeks (28 days) later.
+// Exclusive Gear Forge 4 weeks (28 days) later, unless the pack (its event's
+// leader) has its own `ngAfter`.
 function packNewGenOffset(tableId) {
   // A New Gen pack that follows another New Gen pack's dates ("Same dates as",
   // e.g. Value Hero Pack → Hero Ascension Training) takes the leader's timing.
   const lead = packDateLeader(tableId);
   if (lead) tableId = lead;
+  const set = packNgAfterOf(tableId);
+  if (set != null) return set;
   const tb = (PACK_TABLES_CACHE || PACK_TABLES_ALL || []).find((x) => String(x.id) === String(tableId));
   if (tb) return /forge/i.test(String(tb.title || "")) ? NG_HERO_DAYS : 0;
   // Title not loaded yet: the gap between the admin's own dates for the New Gen tables.
@@ -16234,8 +16418,6 @@ let PACK_PURCHASES = { list: [], newGen: {} };
 const PACK_NEWGEN_GROUP = "New Gen Heroes";
 // Shown as "Heroes packs", together with the other hero shard / widget packs.
 const PACK_HEROES_GROUP = "Heroes packs";
-// Packs whose own date is set on the Packs page, not in My Purchases.
-const PACK_DATES_ON_PACKS_PAGE = ["Bazzar"];
 // − n + stepper. `attr` names the buttons' data attribute.
 function purStepHtml(attr, n, max, min = 1) {
   return `<span class="pur-step"><button type="button" data-${attr}="-1" aria-label="−"${n <= min ? " disabled" : ""}>&minus;</button><b data-${attr}-n>${n}</b><button type="button" data-${attr}="1" aria-label="+"${n >= max ? " disabled" : ""}>+</button></span>`;
@@ -16260,13 +16442,32 @@ const PACK_MINE_GROUP = "My packs";
 // packs aren't counted. They're only for the Budgets
 // "Hero shards & widgets" page, built from the person's state's Gen dates.
 const NG_HERO_GROUP = "Heroes packs";
-let NG_HERO_DAYS = 28; // each part runs 4 weeks (Admin → Rules "New heroes packs timing")
+// Each part runs 4 weeks; the Forge's default start (days after the new heroes)
+// when its pack has no "Starts N days after the new heroes" of its own. An old
+// saved game_rules.ngForge (the rule moved into the pack's settings) still sets it.
+let NG_HERO_DAYS = 28;
 const PACK_ONE_TIME_DAYS = 1000; // a "reset" this long is one time only (these packs use 3000)
 const NG_HERO_SHARD_PACK = { price: 4.99, shards: 10 };
 const NG_HERO_WIDGET_LADDER = [[0.99, 5], [2.99, 10], [4.99, 15], [9.99, 25], [19.99, 40]];
 const NG_HERO_LINKS = {}; // table id -> link (read by packLinkForBase)
 const ngGems = (price) => Math.round((price + 0.01) * 500);
-function ngHeroSig() { return [newGenBaseDay(), newGenGen(), packDayKey(packStartOfToday()), NG_HERO_DAYS].join("|"); }
+function ngHeroSig() {
+  const own = Object.keys(PACK_LINKS || {}).filter((k) => packNgAfterOf(k) != null).sort().map((k) => `${k}:${packNgAfterOf(k)}:${(PACK_LINKS[k] || {}).dateWith || ""}`).join(",");
+  return [newGenBaseDay(), newGenGen(), packDayKey(packStartOfToday()), NG_HERO_DAYS, own].join("|");
+}
+// Days from the new heroes to the Exclusive Gear Forge: the Forge event's own
+// setting (`patId` = the widget pattern table, or a New Gen table titled
+// "…Forge…"; its leader's `ngAfter`), else NG_HERO_DAYS.
+function ngForgeDays(patId) {
+  let id = patId ? String(patId) : "";
+  if (!id) {
+    const tb = (PACK_TABLES_CACHE || PACK_TABLES_ALL || []).find((x) => /forge/i.test(String(x.title || "")) && packIsNewGen((PACK_LINKS || {})[String(x.id)]));
+    id = tb ? String(tb.id) : "";
+  }
+  if (!id) return NG_HERO_DAYS;
+  const v = packNgAfterOf(packDateLeader(id) || id);
+  return v != null ? v : NG_HERO_DAYS;
+}
 // The two New Gen tables on the Packs page with a "Hero Shards" / "Hero Widgets"
 // column are the patterns (owner edits prices and amounts there); each new
 // hero gets its own copy. Without them the built-in numbers above are used.
@@ -16288,6 +16489,7 @@ async function ngHeroTables(baseTables) {
   noteHeroImages(heroes);
   const shardPat = ngHeroPattern(baseTables, /^hero shards?$/i), widgetPat = ngHeroPattern(baseTables, /^hero widgets?$/i);
   const t0 = packStartOfToday(), day = 86400000, out = [];
+  const forgeDays = ngForgeDays(widgetPat && widgetPat.id);
   newGenStarts(base, 5).forEach((start, k) => {
     const gen = gen0 + k;
     (heroes || []).filter((h) => Number(h.generation) === gen).forEach((h) => {
@@ -16299,11 +16501,55 @@ async function ngHeroTables(baseTables) {
         out.push({ id, title, columns: ["$", col, "Gems"], rows: rows.map((r) => ({ cells: r.map(String) })), sort_order: 200000 + out.length });
       };
       add("s", start, `Value Hero Pack · ${h.name}`, `${h.name} Shards`, shardPat ? shardPat.rows : [[NG_HERO_SHARD_PACK.price, NG_HERO_SHARD_PACK.shards, ngGems(NG_HERO_SHARD_PACK.price)]], shardPat ? shardPat.sequential : false, shardPat && shardPat.window, shardPat && shardPat.id);
-      add("w", new Date(start.getTime() + NG_HERO_DAYS * day), `Exclusive Gear Pack · ${h.name}`, `${h.name} Widgets`, widgetPat ? widgetPat.rows : NG_HERO_WIDGET_LADDER.map(([p, n]) => [p, n, ngGems(p)]), widgetPat ? widgetPat.sequential : true, widgetPat && widgetPat.window, widgetPat && widgetPat.id);
+      add("w", new Date(start.getTime() + forgeDays * day), `Exclusive Gear Pack · ${h.name}`, `${h.name} Widgets`, widgetPat ? widgetPat.rows : NG_HERO_WIDGET_LADDER.map(([p, n]) => [p, n, ngGems(p)]), widgetPat ? widgetPat.sequential : true, widgetPat && widgetPat.window, widgetPat && widgetPat.id);
     });
   });
   return out;
 }
+// ---- VIP packs and the Natalia Reward Pack (real pack tables) ----
+// Three tables on the Packs page (owner, 17 Nov 2026, from the game; rows in
+// pack_tables, settings in the owner's packs_links like any pack, so the owner
+// edits them there):
+//  - "Natalia VIP Packs" (VIP 1-6) and "Jeronimo VIP Packs" (VIP 7-12), group
+//    "Heroes packs": one row per VIP level, each bought once, as soon as you
+//    reach that level. Each entry has `vipRows` = the VIP level of each row
+//    ([1 ... 6] / [7 ... 12]): rows above the tier picked on the VIP page
+//    (calc_state "vip_tier") aren't offered (packOffersFor); with no tier
+//    picked none are.
+//  - "Natalia Reward Pack", group "Triggered packs" but with no trigger: the
+//    game's reward for any first purchase (the cheapest pack, a Daily Deals
+//    row, is $0.99), on sale from day 1; two $0.99 steps in order: the first
+//    unlocks Natalia (10 of her shards = her unlock), the second gives 10 more
+//    of her shards (Hero XP, keys, gems and books aren't counted). Its entry
+//    has `firstBuy: true`; Budgets plans it only while Natalia still needs
+//    unlocking (vipFirstBuyOpen).
+const VIP_FIRST_BUY_HERO = "Natalia";
+// Heroes whose shards come only from these packs: they need the unlock shards
+// and General Hero Shards (or anything that trades into "a mythic hero's
+// shards") never go to them.
+const VIP_PACK_HEROES = ["Natalia", "Jeronimo"];
+function vipPackHero(name) { return VIP_PACK_HEROES.includes(String(name || "")); }
+// The VIP tier number picked on the VIP page (0 = none), from the saved states.
+function vipTierNow() {
+  const v = CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID ? CALC_STATE_CACHE.vip_tier : null;
+  return (v && vipTierNumber(v.name)) || 0;
+}
+// A row's VIP level from its table's `vipRows` (0 = not a VIP row).
+function vipRowLevel(tableId, ri) {
+  const v = packLinkRaw(tableId).l.vipRows;
+  return Array.isArray(v) ? Number(v[ri]) || 0 : 0;
+}
+function packIsFirstBuy(tableId) { return packLinkRaw(tableId).l.firstBuy === true; }
+// The first purchase reward is planned only while its hero still needs unlocking
+// (the last hero shard plan has her with unlock shards): anyone who has her
+// already made a first purchase.
+function vipFirstBuyOpen() {
+  const rows = (HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || [];
+  return rows.some((r) => r.hero && r.hero.name === VIP_FIRST_BUY_HERO && r.unlock > 0);
+}
+// What the built pack list depends on besides the tables (new heroes' copies,
+// the VIP tier for the VIP rows).
+function packBuiltSig() { return `${ngHeroSig()}|vip${vipTierNow()}`; }
 const PACK_TEMPLATE_SOURCES = [
   { title: "Wishful type", from: ["Wishfull", "Wishful"] },
   { title: "Mix & Match type", from: ["Mix & Match"] },
@@ -16541,6 +16787,8 @@ function packLinkForBase(tableId, own) {
     group: trig ? PACK_TRIGGER_GROUP : typeof l.group === "string" ? (l.group.trim() === PACK_NEWGEN_GROUP ? PACK_HEROES_GROUP : l.group.trim()) : "",
     // Kept on the returned link so packIsNewGen works on it after the group is renamed.
     newGen: packIsNewGen(l),
+    // The first purchase reward (Natalia Reward Pack): one time, on sale from day 1.
+    firstBuy: l.firstBuy === true,
     // Daily-reward cards: the ticked columns are PER-DAY amounts, paid for
     // `days` days after one purchase (so they count `days` times).
     daily: l.daily && typeof l.daily === "object" && Array.isArray(l.daily.cols) && l.daily.cols.length
@@ -16663,7 +16911,7 @@ function packTablesUnstash() {
 async function ensurePackTables() {
   if (!PACK_TABLES_CACHE && PACK_TABLES_STASH) packTablesUnstash();
   // The New Gen hero packs follow the state's Gen dates: rebuild when they move.
-  if (PACK_TABLES_CACHE && PACK_TABLES_CACHE._ngSig !== ngHeroSig()) PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
+  if (PACK_TABLES_CACHE && PACK_TABLES_CACHE._ngSig !== packBuiltSig()) PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
   if (PACK_TABLES_CACHE) return PACK_TABLES_CACHE;
   if (PACK_TABLES_LOADING) return PACK_TABLES_LOADING;
   PACK_TABLES_LOADING = (async () => {
@@ -16679,7 +16927,7 @@ async function ensurePackTables() {
         .filter((tb) => (IS_OWNER || !packLinkFor(tb.id).hideVisitors) && !packLinkFor(tb.id).template)
         .concat(IS_OWNER ? [] : MY_PACKS.map((x, i) => ({ id: x.id, title: x.title, columns: x.columns, rows: x.rows, sort_order: 100000 + i })));
       PACK_TABLES_CACHE = baseTables.concat(await ngHeroTables(baseTables));
-      PACK_TABLES_CACHE._ngSig = ngHeroSig();
+      PACK_TABLES_CACHE._ngSig = packBuiltSig();
       PACK_TABLES_CACHE._inSig = inSig; PACK_TABLES_CACHE._rows = rowRefs;
     } catch (e) {
       PACK_TABLES_CACHE = [];
@@ -16721,6 +16969,9 @@ function packOffersFor(table, keepEmpty) {
         if (!st.counted) return null;
         label += ` · ${link.trigger.expert} Lv ${st.level}`;
       }
+      // VIP packs: only the levels the person's VIP tier has reached.
+      const vipLv = vipRowLevel(table.id, ri);
+      if (vipLv && vipLv > vipTierNow()) return null;
       return { price, gives, label, row: ri };
     })
     .filter((o) => o && o.price > 0 && (keepEmpty || Object.keys(o.gives).length));
@@ -17275,7 +17526,7 @@ function packShiningBonusOf(tb, link) {
 // most tables, so each table is built once and reused (kept with the other
 // built groups in PACK_GROUPS_CACHE; the key covers labels, currency and day).
 function packTableGroups(tb) {
-  const cacheKey = [tb.id, LANG, DISPLAY_CURRENCY, new Date().toDateString()].join("|");
+  const cacheKey = [tb.id, LANG, DISPLAY_CURRENCY, new Date().toDateString(), vipTierNow()].join("|");
   const per = PACK_GROUPS_CACHE.perTable;
   if (per && per.has(cacheKey)) return per.get(cacheKey);
   const groups = [];
@@ -20489,13 +20740,14 @@ async function heroShardBudget() {
   HERO_PLAN_LAST = { rows: plan.rows, heroes, roster };
   const totals = {}, owned = {}, rules = [];
   const rule = (from, to, give, get, max) => rules.push({ from, to, give, get, max, hidden: true, silent: true });
-  const mythicShards = plan.rows.filter((r) => r.need > 0 && r.rarity === "Legendary");
+  // Mythic heroes General shards / Marks of Valor can go to (not the VIP pack heroes).
+  const mythicShards = plan.rows.filter((r) => r.need > 0 && r.rarity === "Legendary" && !vipPackHero(r.hero.name));
   const newestGen = newGenGen();
   plan.rows.forEach((r) => {
     const sh = `${r.hero.name} Shards`;
     if (r.need > 0) {
       totals[sh] = r.need; owned[sh] = r.own + r.fromGeneral;
-      if (r.rarity === "Legendary") {
+      if (r.rarity === "Legendary" && !vipPackHero(r.hero.name)) {
         rule("Mythic General Hero Shard", sh, 1, 1, 0);
         rule("Marks of Valor", sh, HERO_RULES.marksPerGeneral, 1, Math.max(1, Math.floor(HERO_RULES.marksGeneralWeekly / mythicShards.length)));
         // Only the newest Gen's Hall of Heroes hero (gold ticket on the timeline)
@@ -20925,13 +21177,17 @@ function budgetPlanLines(calcKey) {
 // Everything the Budgets page needs for one calculator page.
 async function budgetForPage(calcKey, targetDays, opts = {}) {
   await ensurePackLinks();
-  const tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey) && packInBudgets(tb.id));
+  let tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey) && packInBudgets(tb.id));
   let groups, live = true, vipNote = null, shInfo = null;
   if (opts.groups) groups = opts.groups;
   else if (calcKey === "chief_gear") groups = computeChiefGearNeeds();
   else if (calcKey === "charm") groups = computeCharmNeeds();
   else if (calcKey === "hero_gear") groups = computeHeroGearNeeds();
-  else if (calcKey === "hero_shards") { const hb = await heroShardBudget(); groups = hb.groups; vipNote = hb.vip; }
+  else if (calcKey === "hero_shards") {
+    const hb = await heroShardBudget(); groups = hb.groups; vipNote = hb.vip;
+    // The first purchase reward only while Natalia isn't unlocked yet.
+    if (!vipFirstBuyOpen()) tables = tables.filter((tb) => !packIsFirstBuy(tb.id));
+  }
   else if (calcKey === "shining_skins") { shInfo = await shiningSkinsNeed(); groups = shInfo.groups; }
   else {
     // T11 / T12 not counted (their page tick, which follows the state age): nothing to plan.
@@ -22976,7 +23232,7 @@ function wireBudgetGoals(box) {
   // Drag a row by its ⋮⋮ handle (dragSort): the only way to move a goal
   // ↑ / ↓ on the focused handle move it too.
   box.querySelectorAll("[data-goaldrag]").forEach((h) => dragSort(h, {
-    row: "[data-goal]",
+    row: "[data-goal]", arrange: "goals",
     done: () => saveOrder(ids()),
     refocus: (li) => { const gid = li.dataset.goal, row = [...content.querySelectorAll("[data-goal]")].find((x) => x.dataset.goal === gid), nh = row && row.querySelector("[data-goaldrag]"); if (nh) nh.focus(); },
   }));
@@ -23567,7 +23823,7 @@ async function renderBudgetsPage(opts = {}) {
       : `<div class="bud-g-sum">${esc(t("goal_same_path").replace("{v}", money(total)).replace("{date}", fmtDate(plan.days || 0)))}</div>`;
     const goalsCard = `<div class="t12x-card bud-goals" style="margin-top:12px;">
       <button type="button" class="bud-g-head" data-goalsfold aria-expanded="${BUDGET_GOALS_OPEN}"><span class="t12x-title" style="margin:0;">${esc(t("goals_title"))}</span>${adminOnlyTagOn("goals") ? `<span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span>` : ""}<span class="bud-g-arrow">${BUDGET_GOALS_OPEN ? "&#9662;" : "&#9656;"}</span></button>
-      ${BUDGET_GOALS_OPEN ? `${nGoals ? `<ol class="bud-g-list">${goals.map(rowHtml).join("")}</ol>` : `<div class="meta gu-empty">${esc(t("gu_empty"))}</div>`}
+      ${BUDGET_GOALS_OPEN ? `${nGoals ? `${goals.filter((g) => !g.rest).length > 1 ? arrangeBarHtml("goals", "", "bud-g-arr") : ""}<ol class="bud-g-list"${arrangeHostAttr("goals")}>${goals.map(rowHtml).join("")}</ol>` : `<div class="meta gu-empty">${esc(t("gu_empty"))}</div>`}
       ${restHtml()}
       ${addHtml()}
       ${heroEdHtml()}`
@@ -32289,6 +32545,9 @@ async function renderFacilityPage() {
 // ============================================================
 // null = the Admin home (cards); a refresh reopens the section the page was on
 let ADMIN_ACTIVE_TABLE = (history.state && history.state.tab === "adminpage" && typeof history.state.adm === "string" && history.state.adm) || null;
+// A section's Rules view (option C): null = the section itself, "list" = its rules,
+// "r:<rule key>" = one rule's editor, "x:<screen>" = a rule screen of its own (Globe Levels…).
+let ADMIN_RULE_VIEW = (history.state && history.state.tab === "adminpage" && typeof history.state.rv === "string" && history.state.rv) || null;
 // Each opened Admin section is a step in the browser history, so Back from a
 // section returns to the Admin home instead of the page before Admin.
 let ADMIN_SKIP_CONFIRM = false;
@@ -32306,7 +32565,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=05035033f2";
+      s.src = "admin.min.js?v=bbd167b783";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
@@ -32370,11 +32629,11 @@ function gameRules() {
   const affDef = { ...AFFINITY_ITEM_VALUE }; // code values (before any saved rule)
   GAME_RULES = [
     { key: "unlocks", group: "timeline", label: "Unlocks by state age", help: "What opens on which state day (pets, experts, T11 / T12, Crystal Lab, Legendary Chief Gear…). Pages show a 🔒 note before that day and leave it out of the totals until it opens. Kind \"level\": pick a page's levels and the first one not open yet; until that day Max and the default My max stop just below it (like Upcoming).",
-      prepare: () => loadLevelLockChoices(),
+      prepare: () => Promise.all([loadLevelLockChoices(), loadUnlockNameChoices()]),
       cols: [{ key: "label", label: "Shown as", type: "text" },
         { key: "kind", label: "Kind", type: "select", options: ["pets", "experts", "page", "lab", "gear", "level"], redraw: true, locked: (row) => !!row.key,
           after: (row) => { if (row.kind === "level" && !LEVEL_LOCK_TARGETS[row.table]) { row.table = Object.keys(LEVEL_LOCK_TARGETS)[0]; row.level = (LEVEL_LOCK_CHOICES[row.table] || [""])[0]; } } },
-        { key: "name", label: "Name (pet / expert / id)", type: "text", locked: (row) => !!row.key, when: (row) => row.kind !== "level" },
+        { key: "name", label: "Name (pet / expert / id)", type: "pick", options: (row) => unlockNameChoices(row.kind), locked: (row) => !!row.key, when: (row) => row.kind !== "level" },
         { key: "tab", label: "Page", type: "page", when: (row) => row.kind !== "level" },
         { key: "table", label: "Levels of (kind level)", type: "select", options: () => Object.entries(LEVEL_LOCK_TARGETS).map(([k, d]) => [k, d.label]), redraw: true,
           after: (row) => { row.level = (LEVEL_LOCK_CHOICES[row.table] || [""])[0]; }, when: (row) => row.kind === "level" },
@@ -32418,13 +32677,15 @@ function gameRules() {
       cols: [{ key: "level", label: "Level", type: "auto" }, { key: "cost", label: "Widgets", type: "num" }],
       get: () => WIDGET_LEVEL_COST.slice(1).map((c, i) => ({ level: i + 1, cost: c })),
       set: (rows) => ruleSetArray(WIDGET_LEVEL_COST, [0, ...rows.map((r) => Number(r.cost) || 0)]) },
-    { key: "shardChart", group: "heroes", label: "Hero shards per star step (fallback)", help: "Used only when a hero's Gen has no shard costs in Admin → Heroes. Each star has 6 steps.",
+    // Not shown in Admin (owner, 17 Nov 2026): kept so a saved value still applies.
+    { key: "shardChart", group: "heroes", hidden: true, label: "Hero shards per star step (fallback)", help: "Used only when a hero's Gen has no shard costs in Admin → Heroes. Each star has 6 steps.",
       cols: [{ key: "star", label: "Star", type: "num" }, ...[1, 2, 3, 4, 5, 6].map((k) => ({ key: "s" + k, label: "Step " + k, type: "num" }))],
       get: () => Object.entries(HERO_SHARD_CHART).map(([st, a]) => ({ star: Number(st), ...Object.fromEntries(a.map((v, i) => ["s" + (i + 1), v])) })),
       set: (rows) => ruleSetObject(HERO_SHARD_CHART, Object.fromEntries(rows.filter((r) => r.star).map((r) => [Number(r.star), [1, 2, 3, 4, 5, 6].map((k) => Number(r["s" + k]) || 0)]))) },
-    { key: "ngPacks", group: "heroes", label: "New heroes packs (built-in numbers)", help: "Used only when the Heroes packs tables on the Packs page are missing.", type: "fields",
-      fields: [num("price", "Value Hero Pack price ($)"), num("shards", "…hero shards")],
-      get: () => ({ ...NG_HERO_SHARD_PACK }), set: (v) => { NG_HERO_SHARD_PACK.price = Number(v.price) || 0; NG_HERO_SHARD_PACK.shards = Number(v.shards) || 0; } },
+    { key: "ngPacks", group: "heroes", label: t("rule_hall_unlock"), help: t("rule_hall_unlock_help"), type: "fields",
+      fields: [num("unlock", t("rule_hall_unlock_shards")), num("price", t("rule_hall_unlock_price")), num("shards", t("rule_hall_unlock_gives"))],
+      get: () => ({ unlock: HERO_UNLOCK_SHARDS, ...NG_HERO_SHARD_PACK }),
+      set: (v) => { HERO_UNLOCK_SHARDS = v.unlock != null && v.unlock !== "" && Number.isFinite(Number(v.unlock)) ? Math.max(0, Number(v.unlock)) : 10; NG_HERO_SHARD_PACK.price = Number(v.price) || 0; NG_HERO_SHARD_PACK.shards = Number(v.shards) || 0; } },
     { key: "trades", group: "trades", label: "Built-in trades per page", help: "Item → item rules each page uses (hidden ones are rules, not shown in the Trade box). The page's own Trade box edits still win for visible trades.",
       cols: [{ key: "page", label: "Page", type: "select", options: () => Object.keys(TRADE_DEFAULT_RATES) }, { key: "from", label: "Give item", type: "text" }, { key: "give", label: "Give", type: "num" }, { key: "to", label: "Get item", type: "text" }, { key: "get", label: "Get", type: "num" }, { key: "max", label: "Weekly max (0 = none)", type: "num" }, { key: "hidden", label: "Hidden rule", type: "check" }],
       get: () => Object.entries(TRADE_DEFAULT_RATES).flatMap(([pg, rows]) => rows.map((r) => ({ page: pg, from: r.from, give: r.give, to: r.to, get: r.get, max: r.max || 0, hidden: !!r.hidden, ...(r.silent ? { silent: true } : {}) }))),
@@ -32437,7 +32698,7 @@ function gameRules() {
       cols: [{ key: "name", label: "Item", type: "text" }, { key: "item", label: "Counts as", type: "text" }, { key: "amount", label: "Amount", type: "num" }],
       get: () => Object.entries(PACK_BUNDLES).flatMap(([n, c]) => Object.entries(c).map(([it, a]) => ({ name: n, item: it, amount: a }))),
       set: (rows) => { const o = {}; rows.filter((r) => r.name && r.item).forEach((r) => { (o[r.name] = o[r.name] || {})[r.item] = Number(r.amount) || 0; }); ruleSetObject(PACK_BUNDLES, o); } },
-    { key: "affinity", group: "trades", label: "Affinity per expert gift item", help: "Affinity one gift item is worth on the Experts pages. A changed value is also used for packs and the Experts trade rule.",
+    { key: "affinity", group: "trades", label: "Affinity per expert gift item", help: "How much Affinity one gift item gives on the Experts pages. Changing it also changes how much Affinity these items count as inside packs, and in the Experts trade (gift items → Affinity).",
       cols: [{ key: "item", label: "Item", type: "text" }, { key: "value", label: "Affinity", type: "num" }],
       get: () => Object.entries(AFFINITY_ITEM_VALUE).map(([item, value]) => ({ item, value })),
       set: (rows) => {
@@ -32513,13 +32774,6 @@ function gameRules() {
     { key: "researchLocks", group: "research", label: "Research unlock rules", help: "Which levels of a research node wait for other research (same for every troop). Used by \"can reach\": it does that research first. Edited in Admin → Research unlock rules.", link: "reslocks",
       get: () => JSON.parse(JSON.stringify(RESEARCH_LOCKS)),
       set: (v) => researchLocksSet(v) },
-    { key: "packDatesGroups", group: "packs", label: "Pack groups dated on the Packs page", help: "Pack groups (name as on the Packs page) whose start date everyone sets above Pack prices on the Packs page instead of in My Purchases → My pack dates.",
-      cols: [{ key: "group", label: "Pack group", type: "text" }],
-      get: () => PACK_DATES_ON_PACKS_PAGE.map((g) => ({ group: g })),
-      set: (rows) => ruleSetArray(PACK_DATES_ON_PACKS_PAGE, rows.map((r) => String(r.group || "").trim()).filter(Boolean)) },
-    { key: "ngForge", group: "heroes", label: "New heroes packs timing", type: "fields", help: "Days from the new heroes (Hero Ascension Training) to the Exclusive Gear Forge; also how long each runs when its table on the Packs page has no window.",
-      fields: [num("days", "Forge starts after (days)")],
-      get: () => ({ days: NG_HERO_DAYS }), set: (v) => { NG_HERO_DAYS = Number(v.days) > 0 ? Number(v.days) : 28; } },
     { key: "islCopies", group: "islands", label: "Island building copies per level", help: "Copies of a Mythic building needed to reach each level (Lv 1 = getting the building from an event or pack, 0). The Islands page's Shards plan counts these × shards per copy.",
       cols: [{ key: "level", label: "Level", type: "auto" }, { key: "copies", label: "Copies", type: "num" }],
       get: () => ISL_COPIES.slice(1).map((c, i) => ({ level: i + 1, copies: c })),
@@ -32548,6 +32802,21 @@ function gameRules() {
   GAME_RULES.forEach((r) => { r.def = JSON.parse(JSON.stringify(r.get())); });
   return GAME_RULES;
 }
+// Names to pick from for the other unlocks (Admin; "Custom…" types any other):
+// pets from the pet levels table, experts from the roster, built-in feature
+// unlocks (T11, T12, Crystal Lab, gear / charm) by their readable name.
+const UNLOCK_NAME_CHOICES = { pets: null, experts: null };
+async function loadUnlockNameChoices() {
+  const uniq = (a) => [...new Set(a.filter(Boolean))];
+  await Promise.all([
+    sb(`${PET_LEVELS_TABLE}?select=pet&order=pet.asc`).then((rows) => { UNLOCK_NAME_CHOICES.pets = uniq(rows.map((r) => r.pet)); }).catch(() => {}),
+    sb("experts?select=key&order=sort_order.asc").then((rows) => { UNLOCK_NAME_CHOICES.experts = uniq(rows.map((r) => r.key)); }).catch(() => {}),
+  ]);
+}
+function unlockNameChoices(kind) {
+  if (kind === "pets" || kind === "experts") return UNLOCK_NAME_CHOICES[kind] && UNLOCK_NAME_CHOICES[kind].length ? UNLOCK_NAME_CHOICES[kind] : STATE_UNLOCK_NAMES0[kind];
+  return STATE_UNLOCK_KEYS.filter((x) => x.kind === kind).map((x) => [x.key, x.label || x.key]);
+}
 // Levels to pick from for "level" unlocks (Admin), loaded when that rule opens.
 const LEVEL_LOCK_CHOICES = {};
 async function loadLevelLockChoices() {
@@ -32559,6 +32828,10 @@ function gameRulesSaved() { const v = siteConfig("game_rules", null); return v &
 // Puts the built-in values back, then the admin's saved ones on top.
 function applyGameRules() {
   const saved = gameRulesSaved();
+  // "New heroes packs timing" moved into the Forge pack's settings; an old
+  // saved value stays its default.
+  const ngf = saved.ngForge;
+  NG_HERO_DAYS = ngf && Number(ngf.days) > 0 ? Number(ngf.days) : 28;
   gameRules().forEach((r) => {
     try { r.set(JSON.parse(JSON.stringify(saved[r.key] != null ? saved[r.key] : r.def))); }
     catch (e) { console.error("rule", r.key, e); try { r.set(JSON.parse(JSON.stringify(r.def))); } catch (e2) { /* keep */ } }
