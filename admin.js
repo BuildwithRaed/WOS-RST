@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "ec89ec007e";
+window.ADMIN_BUILD = "26e36716fd";
 
 // ============================================================
 // ADMIN PAGE
@@ -725,6 +725,42 @@ function admRuleSecName(sec) { return sec === "rules" ? t("rv_state_short") : ((
 function admWireRuleRows(root) {
   root.querySelectorAll("[data-rlopen]").forEach((row) => row.addEventListener("click", (e) => { if (e.target.closest("[data-info], .cg-tip")) return; admRuleOpen(row.dataset.rlopen); }));
 }
+// Design B "folding sections" (owner, 17 Nov 2026) for the two "fields" rules that read as one long list:
+// each section = picture, title, a short line with its numbers when closed; open = label | box | unit.
+// One section open at a time. Same boxes (data-rfield), so the saved value is unchanged.
+const ADM_RULE_SECTIONS = {
+  heroTrades: [
+    { id: "gen", ic: "icons/item_icon_500220.png", t: "rs_h_gen", sub: "rs_h_gen_sub", sum: "rs_h_gen_sum", help: "rs_h_gen_help", rows: [["marksPerGeneral", "rs_cost1", "rs_u_marks"], ["marksGeneralWeekly", "rs_weekly", "rs_u_shards"]] },
+    { id: "hall", ic: "icons/hall-marks.png", t: "rs_h_hall", sub: "rs_h_hall_sub", sum: "rs_h_hall_sum", help: "rs_h_hall_help", rows: [["hallMarksPerShard", "rs_cost1", "rs_u_marks"], ["hallWeekly", "rs_weekly", "rs_u_shards"]] },
+    { id: "wid", ic: "icons/hero-widgets.png", t: "rs_h_wid", sub: "rs_h_wid_sub", sum: "rs_h_wid_sum", help: "rs_h_wid_help", rows: [["widgetChestGives", "rs_chest1", "rs_u_widgets"], ["mysteryGive", "rs_myst_give", "rs_u_points"], ["mysteryGet", "rs_myst_get", "rs_u_widgets"]] },
+    { id: "free", ic: "icons/mystery-pts.png", t: "rs_h_free", sum: "rs_h_free_sum", help: "rs_h_free_help", rows: [["mysteryDaily", "rs_per_day", "rs_u_points"]] },
+  ],
+  islShop: [
+    { id: "copy", ic: "icons/island-shard.png", t: "rs_i_copy", sub: "rs_i_copy_sub", sum: "rs_i_copy_sum", help: "rs_i_copy_help", rows: [["perCopy", "rs_copy1", "rs_u_shards"], ["essence10", "rs_ess10", "rs_u_essence"]] },
+    { id: "shop", ic: "icons/island-shard.png", t: "rs_i_shop", sum: "rs_i_shop_sum", help: "rs_i_shop_help", rows: [["shopWeek", "rs_shop_wk", "rs_u_shards"], ["copyLimit", "rs_copy_wk", "rs_u_copies"]] },
+    { id: "inc", ic: "icons/life-essence.png", t: "rs_i_inc", sum: "rs_i_inc_sum", help: "rs_i_inc_help", rows: [["ctWeek", "rs_ct_week", "rs_u_free"], ["ctEvent", "rs_ct_event", "rs_u_free"], ["treeCap", "rs_tree_cap", "rs_u_essence"], ["millHour", "rs_mill_hour", "rs_u_an_hour"], ["millCap", "rs_mill_cap", "rs_u_essence"], ["woodPerEssence", "rs_wood_ess", "rs_u_wood"], ["allyEach", "rs_ally_each", "rs_u_essence"], ["allyMax", "rs_ally_max", "rs_u_a_day"]] },
+    { id: "mark", ic: "icons/mark-of-revival.png", t: "rs_i_mark", sum: "rs_i_mark_sum", help: "rs_i_mark_help", rows: [["markPrice", "rs_copy1", "rs_u_marks"]] },
+    { id: "shine", ic: "icons/glorious-tome.png", t: "rs_i_shine", sum: "rs_i_shine_sum", help: "rs_i_shine_help", rows: [["tomePrice", "rs_copy1", "rs_u_tomes"], ["tomeMax", "rs_tome_max", "rs_u_copies"], ["shiningDays", "rs_shine_days", "rs_u_days"], ["tomeFreeDay", "rs_tome_free", "rs_u_tomes"], ["skinTomes", "rs_skin_tomes", "rs_u_tomes"]] },
+  ],
+};
+const ADM_RS_OPEN = {}; // open section per rule, for the visit ("" = all closed)
+const admRsNum = (v) => (v === "" || v == null || !Number.isFinite(Number(v)) ? "\u2014" : Number(v).toLocaleString("en-US"));
+const admRsSum = (sec, val) => t(sec.sum).replace(/\{(\w+)\}/g, (m, k) => admRsNum(val[k]));
+const admRsInfo = (txt) => `<span class="rs-i"><button type="button" class="cg-i" data-info aria-expanded="false" aria-label="${esc(t("info_more"))}">${INFO_SVG}</button><span class="cg-tip" role="tooltip" data-infotip hidden>${esc(txt)}</span></span>`;
+function admRuleSectionsHtml(r, val) {
+  const secs = ADM_RULE_SECTIONS[r.key], open = ADM_RS_OPEN[r.key] != null ? ADM_RS_OPEN[r.key] : secs[0].id;
+  const chg = (k) => String(r.def[k]) !== String(val[k]);
+  return `<div class="rs-list">${secs.map((sec) => {
+    const on = sec.id === open, dirty = sec.rows.some(([k]) => chg(k));
+    return `<div class="rs-fd${on ? " open" : ""}" data-rssec="${sec.id}">
+      <div class="rs-fh"><button type="button" class="rs-fb" data-rsfold="${sec.id}" aria-expanded="${on}"><img class="rs-ic" src="${esc(sec.ic)}" alt="" loading="lazy" /><span class="rs-ft"><b>${esc(t(sec.t))}${dirty ? ` <i class="rs-dot" title="${esc(t("rs_changed"))}"></i>` : ""}</b>${on ? "" : `<small data-rssum>${esc(admRsSum(sec, val))}</small>`}</span></button>${on && sec.help ? admRsInfo(t(sec.help)) : ""}<button type="button" class="rs-car" data-rsfold="${sec.id}" aria-hidden="true" tabindex="-1">${on ? "&#9652;" : "&#9662;"}</button></div>
+      ${on ? `<div class="rs-fbody">${sec.sub ? `<div class="rs-sub">${esc(t(sec.sub))}</div>` : ""}${sec.rows.map(([k, lbl, unit]) => {
+        const f = r.fields.find((x) => x.key === k) || { key: k, label: k };
+        return `<label class="rs-lr"><span class="rs-ll">${esc(t(lbl))}${chg(k) ? `<small>${esc(t("rs_builtin_n").replace("{n}", admRsNum(r.def[k])))}</small>` : ""}</span><input type="number" step="any" inputmode="decimal" data-rfield="${k}" aria-label="${esc(f.label)}" value="${esc(String(val[k] != null ? val[k] : ""))}" /><span class="rs-lu">${esc(t(unit))}</span></label>`;
+      }).join("")}</div>` : ""}
+    </div>`;
+  }).join("")}</div>`;
+}
 // The rule editor card (the same one Rules & Timeline always had): Save tries the value first, Reset to built-in.
 function admRuleCard(host, key, back) {
   const r = gameRules().find((x) => x.key === key);
@@ -760,6 +796,18 @@ function admRuleCard(host, key, back) {
     if (r.key === "unlocks" && Array.isArray(val)) val.sort((a, b) => (Number(a.day) || 0) - (Number(b.day) || 0)); // by state day
     const drawEditor = () => {
       const ed = host.querySelector(".rl-ed");
+      if (r.type === "fields" && ADM_RULE_SECTIONS[r.key]) {
+        ed.innerHTML = admRuleSectionsHtml(r, val);
+        ed.querySelectorAll("[data-rfield]").forEach((inp) => inp.addEventListener("input", () => { val[inp.dataset.rfield] = inp.value === "" ? "" : Number(inp.value); }));
+        ed.querySelectorAll("[data-rsfold]").forEach((b) => b.addEventListener("click", () => {
+          const id = b.dataset.rsfold, cur = ADM_RS_OPEN[r.key] != null ? ADM_RS_OPEN[r.key] : ADM_RULE_SECTIONS[r.key][0].id;
+          ADM_RS_OPEN[r.key] = cur === id ? "" : id;
+          drawEditor();
+          const sec = ed.querySelector(`[data-rssec="${id}"]`);
+          if (sec && sec.getBoundingClientRect().top < 0) sec.scrollIntoView({ block: "start" });
+        }));
+        return;
+      }
       if (r.type === "fields") {
         ed.innerHTML = `<div class="rl-fields">${r.fields.map((f) => `<label><span>${esc(f.label)}</span><input type="number" step="any" inputmode="decimal" data-rfield="${f.key}" value="${esc(String(val[f.key] != null ? val[f.key] : ""))}" />${r.def[f.key] !== val[f.key] ? `<small class="meta">built-in ${esc(String(r.def[f.key]))}</small>` : ""}</label>`).join("")}</div>`;
         ed.querySelectorAll("[data-rfield]").forEach((inp) => inp.addEventListener("input", () => { val[inp.dataset.rfield] = inp.value === "" ? "" : Number(inp.value); }));
@@ -791,8 +839,8 @@ function admRuleCard(host, key, back) {
     };
     host.innerHTML = `
       <button type="button" class="btn ghost small" data-ruleback style="margin-bottom:10px;">&#8249; ${esc(t("rv_back"))}</button>
-      <div class="rl-card"><div class="rl-h"><b>${esc(r.label)}</b>${changed() ? ` <span class="rl-chg">changed</span>` : ` <span class="meta" style="font-size:11.5px;">built-in values</span>`}</div>
-        <p class="desc" style="margin:4px 0 10px;">${esc(r.help || "")}</p>
+      <div class="rl-card${ADM_RULE_SECTIONS[r.key] ? " rs-card" : ""}"><div class="rl-h"><b>${esc(r.label)}</b>${changed() ? ` <span class="rl-chg">changed</span>` : ` <span class="meta" style="font-size:11.5px;">${ADM_RULE_SECTIONS[r.key] ? esc(t("rs_builtin")) : "built-in values"}</span>`}${ADM_RULE_SECTIONS[r.key] && r.help ? admRsInfo(r.help) : ""}</div>
+        ${ADM_RULE_SECTIONS[r.key] ? "" : `<p class="desc" style="margin:4px 0 10px;">${esc(r.help || "")}</p>`}
         <div class="rl-ed">${r.prepare ? `<div class="meta" style="font-size:12px;">Loading…</div>` : ""}</div>
         <div class="rl-foot"><button type="button" class="btn ghost small" data-rulereset ${changed() ? "" : "disabled"}>Reset to built-in</button><span style="flex:1"></span><button type="button" class="btn small" data-rulesave>Save</button></div>
       </div>`;
@@ -871,22 +919,31 @@ function admRulesSync(body) {
     own.querySelector("[data-rvsec]").classList.toggle("on", !rv);
   }
   const isBtn = !!row.querySelector("[data-researchsub]");
-  let chip = row.querySelector(":scope > [data-rvopen]");
-  if (!chip) {
-    row.insertAdjacentHTML("beforeend", `<button type="button" class="${isBtn ? "btn small" : "adm-chip"} rv-chip" data-rvopen>&#9881; ${esc(t("rv_rules_chip"))} <span class="meta">${n}</span></button>`);
+  const keep = row.closest(".adm-chips") || row;
+  const chipHtml = `<button type="button" class="${isBtn ? "btn small" : "adm-chip"} rv-chip" data-rvopen>&#9881; ${esc(t("rv_rules_chip"))} <span class="meta">${n}</span></button>`;
+  let chip, line = null;
+  if (own) {
+    // No chip row of its own: the chip sits beside the section's name chip (as before).
     chip = row.querySelector(":scope > [data-rvopen]");
+    if (!chip) { row.insertAdjacentHTML("beforeend", chipHtml); chip = row.querySelector(":scope > [data-rvopen]"); }
+  } else {
+    // Its own line above the section's chip row, so it is always in sight (the row scrolls sideways on phones).
+    line = [...body.querySelectorAll(".rv-line")].find(outside) || null;
+    if (!line) { line = document.createElement("div"); line.className = "rv-line"; line.innerHTML = chipHtml; }
+    if (line.nextElementSibling !== keep) keep.parentNode.insertBefore(line, keep);
+    chip = line.querySelector("[data-rvopen]");
   }
   if (isBtn) chip.classList.toggle("ghost", !rv); else chip.classList.toggle("on", !!rv);
   // The picked Rules chip stays in sight (the row scrolls sideways on phones).
-  if (rv && chip.dataset.seen !== "1") { chip.dataset.seen = "1"; const y = window.scrollY; try { chip.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) { /* old browser */ } window.scrollTo(window.scrollX, y); }
+  if (rv && !line && chip.dataset.seen !== "1") { chip.dataset.seen = "1"; const y = window.scrollY; try { chip.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) { /* old browser */ } window.scrollTo(window.scrollX, y); }
   if (!rv) delete chip.dataset.seen;
   // Rules view: only the chip row and the panel show; the row's own chips look not picked.
   body.querySelectorAll(".rv-path, .rv-keep").forEach((el) => el.classList.remove("rv-path", "rv-keep"));
   body.classList.toggle("adm-rv", !!rv);
   let p = body.querySelector(":scope > .rv-panel");
   if (!rv) { if (p) p.remove(); return; }
-  const keep = row.closest(".adm-chips") || row;
   keep.classList.add("rv-keep");
+  if (line) line.classList.add("rv-keep");
   for (let el = keep.parentElement; el && el !== body; el = el.parentElement) el.classList.add("rv-path");
   row.querySelectorAll(":scope > :not([data-rvopen])").forEach((b) => { if (b.classList.contains("btn")) b.classList.add("ghost"); else b.classList.remove("on"); });
   if (!p) { p = document.createElement("div"); p.className = "rv-panel rv-keep"; body.appendChild(p); }
@@ -3842,7 +3899,7 @@ async function renderAdminHeroes(body) {
   };
   function drawHeroes() {
     const list = rows.filter((r) => (r.generation ?? -1) === ADMIN_HERO_GEN);
-    listWrap.innerHTML = `<div class="adm-chips"><div class="adm-chips-row">${gens.map((g) => `<button type="button" class="adm-chip${g === ADMIN_HERO_GEN ? " on" : ""}" data-herogen="${g}">${g < 0 ? "No gen" : `Gen ${g}`} <span class="meta">· ${((n) => `${n} ${n === 1 ? "hero" : "heroes"}`)(rows.filter((r) => (r.generation ?? -1) === g).length)}</span></button>`).join("")}</div></div>`
+    listWrap.innerHTML = `<div class="adm-chips"><div class="adm-chips-row">${gens.map((g) => `<button type="button" class="adm-chip${g === ADMIN_HERO_GEN ? " on" : ""}" data-herogen="${g}">${g < 0 ? "No gen" : `Gen ${g}`} <span class="meta">(${rows.filter((r) => (r.generation ?? -1) === g).length})</span></button>`).join("")}</div></div>`
       + admListHtml(list, { title: ADMIN_HERO_GEN < 0 ? "No gen" : `Gen ${ADMIN_HERO_GEN} heroes`, attr: "data-herorow", img: (r) => r.image_url, name: (r) => r.name, sub: (r) => [r.troop_type, r.rarity === "Legendary" ? "Mythic" : r.rarity].filter(Boolean).join(" · ") });
     listWrap.querySelectorAll("[data-herogen]").forEach((b) => b.addEventListener("click", () => { ADMIN_HERO_GEN = Number(b.dataset.herogen); keepBoxes(listWrap, drawHeroes); }));
     wireAdmList(listWrap, {
