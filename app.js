@@ -16042,7 +16042,7 @@ const STATE_UNLOCKS = [
   { kind: "gear", key: "charm 11.1 16", name: "charm 11.1 16", tabs: ["charmscalc"], day: 440, label: "Chief Charm Lv 12 – 16" }, // with Gen 7 heroes
   { kind: "gear", key: "charm 16.1 18", name: "charm 16.1 18", tabs: ["charmscalc"], day: 520, label: "Chief Charm Lv 17 – 18" }, // with Gen 8 heroes
   ...[["Cave Hyena", 25], ["Arctic Wolf", 25], ["Musk Ox", 25], ["Titan Roc", 50], ["Giant Tapir", 50], ["Giant Elk", 71], ["Snow Leopard", 71], ["Snow Ape", 113], ["Cave Lion", 113],
-    ["Iron Rhino", 200], ["Saber-tooth Tiger", 200], ["Frost Gorilla", 270], ["Mammoth", 270], ["Frostscale Chameleon", 360]]
+    ["Iron Rhino", 200], ["Sabertooth Tiger", 200], ["Frost Gorilla", 270], ["Mammoth", 270], ["Frostscale Chameleon", 360]]
     .map(([n, d]) => ({ kind: "pets", name: n, tabs: ["petsdata", "refinepage"], day: d, label: n })),
   ...[["Holger", 121], ["Agnes", 121], ["Cyrille", 121], ["Romulus", 160], ["Valeria", 200], ["Baldur", 200], ["Fabian", 200], ["Kathy", 230], ["Ronne", 230], ["Gareth", 270]]
     .map(([n, d]) => ({ kind: "experts", name: n, tabs: ["expertspage", "expertsresearchpage"], day: d, label: n })),
