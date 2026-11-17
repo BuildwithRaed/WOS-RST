@@ -1822,8 +1822,6 @@
 "t:tl_kind_unlock":"解锁",
 "t:tl_kind_pet":"宠物",
 "t:tl_kind_expert":"专家",
-"t:tl_more_1":"再 1 天",
-"t:tl_more_n":"再 {n} 天",
 "t:privacy_policy":"隐私政策",
 "t:pcl_desc":"礼包、活动和新英雄，像游戏日历一样按周显示：每个礼包一条横条覆盖其日期，今天为金色，★ 表示计划中的礼包。点日期查看当天列表，点横条或礼包查看日期、内容和价格档位。",
 "t:pcl_utc":"游戏日（UTC）。",

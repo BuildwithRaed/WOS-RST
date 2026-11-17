@@ -1821,8 +1821,6 @@
 "t:tl_kind_unlock":"Desbloqueio",
 "t:tl_kind_pet":"Pet",
 "t:tl_kind_expert":"Especialista",
-"t:tl_more_1":"mais 1 dia",
-"t:tl_more_n":"mais {n} dias",
 "t:privacy_policy":"Política de privacidade",
 "t:pcl_desc":"Pacotes, eventos e novos heróis, uma semana por vez como no calendário do jogo: uma barra por pacote nos seus dias, hoje em dourado, uma ★ para pacotes do seu plano. Toque num dia para ver a lista, ou numa barra ou pacote para ver datas, o que dá e as etapas de preço.",
 "t:pcl_utc":"Dias do jogo (UTC).",

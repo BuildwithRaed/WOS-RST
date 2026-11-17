@@ -1822,8 +1822,6 @@
 "t:tl_kind_unlock":"Déblocage",
 "t:tl_kind_pet":"Familier",
 "t:tl_kind_expert":"Expert",
-"t:tl_more_1":"1 jour de plus",
-"t:tl_more_n":"{n} jours de plus",
 "t:privacy_policy":"Politique de confidentialité",
 "t:pcl_desc":"Packs, événements et nouveaux héros, semaine par semaine comme le calendrier du jeu : une barre par pack sur ses jours, aujourd’hui en or, une ★ pour les packs de votre plan. Touchez un jour pour sa liste, une barre ou un pack pour ses dates, ce qu’il donne et ses paliers de prix.",
 "t:pcl_utc":"Jours du jeu (UTC).",
