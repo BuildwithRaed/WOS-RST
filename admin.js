@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "37302a5b75";
+window.ADMIN_BUILD = "0e94a52a91";
 
 // ============================================================
 // ADMIN PAGE
@@ -673,7 +673,7 @@ async function renderAdminResearchLocks(body) {
 // Which rules each Admin section owns (headings: "" = none), and rules it uses
 // that are edited elsewhere (link rows). Saved data is unchanged (game_rules).
 const ADMIN_RULE_HOME = {
-  heroes: { groups: [["", ["ngPacks", "widgetCost", "shardChart", "heroTrades"]]], links: ["hallHero", "vipShards"] },
+  heroes: { groups: [["", ["ngPacks", "widgetCost", "heroTrades"]]], links: ["hallHero", "vipShards"] },
   vip: { groups: [["", ["vipShards"]]] },
   experts: { groups: [["", ["affinity"]]] },
   pets: { groups: [["", ["advancedMark"]]] },
@@ -900,7 +900,7 @@ async function renderAdminRules(body) {
   await ensureSiteConfig();
   const rv = ADMIN_RULE_VIEW;
   if (rv && rv.startsWith("r:")) { admRuleCard(body, rv.slice(2), () => admRuleBack(() => { ADMIN_RULE_VIEW = null; renderAdminRules(body); })); return; }
-  const rules = gameRules(), byKey = (k) => rules.find((r) => r.key === k);
+  const rules = gameRules().filter((r) => !r.hidden), byKey = (k) => rules.find((r) => r.key === k);
   const tile = (sec) => {
     const keys = admRuleKeysOf(sec), ch = keys.filter(admRuleChanged).length, e = ADMIN_TABLES[sec];
     const pic = ADMIN_PIC[sec] ? `<img src="${ADMIN_PIC[sec]}" alt="" loading="lazy" />` : `<span>${e.icon}</span>`;
