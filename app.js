@@ -2776,6 +2776,8 @@ const T = {
   pk_visitor_date_desc: { en: "For packs whose date differs by state (e.g. New Gen Heroes). Visitors only change the date; everything else stays yours." },
   pk_date_with: { en: "Same dates as" },
   pk_date_with_desc: { en: "Two tables of one event: this pack comes on that pack's days. Only the dates are shared." },
+  pk_ng_after: { en: "Starts after the new heroes" },
+  pk_ng_after_desc: { en: "Days from the day new heroes come (0 = the same day). Packs with the same dates follow this one." },
   pk_date_with_none: { en: "— (its own dates)" },
   pk_date_with_missing: { en: "(pack not found: own dates)" },
   pk_date_follows: { en: "Follows {pack}: comes back and next date are set there. \"Lasts\" stays this pack's own." },
@@ -8737,7 +8739,7 @@ function purBoughtUntil(p) {
     // Forge: weeks 5–8); it leaves when those end.
     const base = newGenBaseDay();
     if (!base) return { until: null, once: true };
-    const off = (ng ? (ng[1] === "w" ? NG_HERO_DAYS : 0) : packNewGenOffset(p.table)) * DAY;
+    const off = (ng ? (ng[1] === "w" ? ngForgeDays((NG_HERO_LINKS[String(p.table)] || {}).tpl) : 0) : packNewGenOffset(p.table)) * DAY;
     const win = Number(l.window) > 0 ? Math.round(Number(l.window)) : 28;
     const starts = newGenStarts(base, 12).map((g) => new Date(g.getTime() + off));
     const at = starts.filter((x) => x <= d).pop();
@@ -13281,6 +13283,12 @@ async function renderPacksPage() {
         <div class="bset-sec"><b>${esc(t("pk_sec_schedule"))} ${info("reset")}</b></div>
         ${infoText("reset", esc(t("pack_reset_desc")))}
         ${IS_OWNER ? packDateWithRowHtml(tb, preset) : ""}
+        ${IS_OWNER && packIsNewGen((PACK_LINKS || {})[String(tb.id)]) ? (() => {
+          // New Gen pack: how many days after the new heroes it starts (its
+          // followers take the leader's; hidden while it follows another pack).
+          const own = packNgAfterOf(tb.id), v = own != null ? own : packNewGenOffset(tb.id);
+          return `<div class="bset-row" data-pkngafterrow ${packDateLeaderShown(tb.id) ? "hidden" : ""}><span class="bset-l">${esc(t("pk_ng_after"))}<small>${esc(t("pk_ng_after_desc"))}</small></span><span class="bset-c"><input type="number" min="0" step="1" class="keep-w" data-pkngafter value="${esc(String(v))}" style="width:64px;" /><span class="meta">${esc(t("pack_lasts_days"))}</span></span></div>`;
+        })() : ""}
         <div class="bset-row" data-pkresetrow ${packDateLeaderShown(tb.id) ? "hidden" : ""}><span class="bset-l">${esc(t("pack_reset_every"))}</span><span class="bset-c">
             <select data-packreset>
               ${preset === "unlimited" ? `<option value="unlimited" selected>${esc(t("pack_reset_unlimited"))}</option>` : ""}
@@ -13559,6 +13567,25 @@ async function renderPacksPage() {
       const windowIn = box.querySelector("[data-packwindow]");
       if (windowIn) windowIn.addEventListener("change", saveReset);
       if (stackCapIn) stackCapIn.addEventListener("change", saveReset);
+      // New Gen pack: "Starts N days after the new heroes" (`ngAfter`).
+      const ngAfterIn = box.querySelector("input[data-pkngafter]");
+      if (ngAfterIn) ngAfterIn.addEventListener("change", async () => {
+        const l = current();
+        const n = Math.round(Number(ngAfterIn.value));
+        if (ngAfterIn.value === "" || !Number.isFinite(n)) delete l.ngAfter; else l.ngAfter = Math.max(0, n);
+        ngAfterIn.value = String(packNgAfterOf(id) != null ? packNgAfterOf(id) : packNewGenOffset(id));
+        PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
+        if (box.closest(".pkb-panel")) {
+          savePackLinks();
+          setTimeout(() => {
+            renderAll();
+            const s = listEl.querySelector(".pkb-panel input[data-pkngafter]");
+            if (s) s.scrollIntoView({ block: "center" });
+          }, 0);
+          return;
+        }
+        await savePackLinks();
+      });
       // "Same dates as": dates only (not a linked set), so only this field changes.
       const dwSel = box.querySelector("select[data-pkdatewith]");
       if (dwSel) dwSel.addEventListener("change", async () => {
@@ -13587,7 +13614,7 @@ async function renderPacksPage() {
         }
         const lead = packDateLeaderShown(id);
         const leadTb = lead ? tables.find((x) => String(x.id) === lead) : null;
-        [box.querySelector("[data-pkresetrow]"), box.querySelector("[data-pkanchorrow]")].forEach((el) => { if (el) el.hidden = !!lead; });
+        [box.querySelector("[data-pkresetrow]"), box.querySelector("[data-pkanchorrow]"), box.querySelector("[data-pkngafterrow]")].forEach((el) => { if (el) el.hidden = !!lead; });
         const note = box.querySelector("[data-pkdwnote]");
         if (note) { note.hidden = !lead; note.textContent = "\u{1F517} " + t("pk_date_follows").replace("{pack}", leadTb ? leadTb.title || "" : ""); }
         // The window's "when" line and the list row follow the new dates.
@@ -16159,14 +16186,25 @@ function newGenGapDays() {
 }
 // New Gen tables: flagged `newGen` (they now sit in "Heroes packs"), or the old group name.
 function packIsNewGen(l) { return !!l && (l.newGen === true || (typeof l.group === "string" && l.group.trim() === PACK_NEWGEN_GROUP)); }
+// A New Gen pack's own "Starts N days after the new heroes" (`ngAfter` on its
+// link, set in the pack's settings on the Packs page), or null when not set.
+function packNgAfterOf(tableId) {
+  const l = (PACK_LINKS || {})[String(tableId)];
+  if (!l || l.ngAfter == null || l.ngAfter === "") return null;
+  const n = Number(l.ngAfter);
+  return Number.isFinite(n) ? Math.max(0, Math.round(n)) : null;
+}
 // New Gen Heroes packs follow the person's "last new heroes" date (My
 // Purchases): Hero Ascension Training starts the day new heroes come,
-// Exclusive Gear Forge 4 weeks (28 days) later.
+// Exclusive Gear Forge 4 weeks (28 days) later, unless the pack (its event's
+// leader) has its own `ngAfter`.
 function packNewGenOffset(tableId) {
   // A New Gen pack that follows another New Gen pack's dates ("Same dates as",
   // e.g. Value Hero Pack → Hero Ascension Training) takes the leader's timing.
   const lead = packDateLeader(tableId);
   if (lead) tableId = lead;
+  const set = packNgAfterOf(tableId);
+  if (set != null) return set;
   const tb = (PACK_TABLES_CACHE || PACK_TABLES_ALL || []).find((x) => String(x.id) === String(tableId));
   if (tb) return /forge/i.test(String(tb.title || "")) ? NG_HERO_DAYS : 0;
   // Title not loaded yet: the gap between the admin's own dates for the New Gen tables.
@@ -16274,13 +16312,32 @@ const PACK_MINE_GROUP = "My packs";
 // packs aren't counted. They're only for the Budgets
 // "Hero shards & widgets" page, built from the person's state's Gen dates.
 const NG_HERO_GROUP = "Heroes packs";
-let NG_HERO_DAYS = 28; // each part runs 4 weeks (Admin → Rules "New heroes packs timing")
+// Each part runs 4 weeks; the Forge's default start (days after the new heroes)
+// when its pack has no "Starts N days after the new heroes" of its own. An old
+// saved game_rules.ngForge (the rule moved into the pack's settings) still sets it.
+let NG_HERO_DAYS = 28;
 const PACK_ONE_TIME_DAYS = 1000; // a "reset" this long is one time only (these packs use 3000)
 const NG_HERO_SHARD_PACK = { price: 4.99, shards: 10 };
 const NG_HERO_WIDGET_LADDER = [[0.99, 5], [2.99, 10], [4.99, 15], [9.99, 25], [19.99, 40]];
 const NG_HERO_LINKS = {}; // table id -> link (read by packLinkForBase)
 const ngGems = (price) => Math.round((price + 0.01) * 500);
-function ngHeroSig() { return [newGenBaseDay(), newGenGen(), packDayKey(packStartOfToday()), NG_HERO_DAYS].join("|"); }
+function ngHeroSig() {
+  const own = Object.keys(PACK_LINKS || {}).filter((k) => packNgAfterOf(k) != null).sort().map((k) => `${k}:${packNgAfterOf(k)}:${(PACK_LINKS[k] || {}).dateWith || ""}`).join(",");
+  return [newGenBaseDay(), newGenGen(), packDayKey(packStartOfToday()), NG_HERO_DAYS, own].join("|");
+}
+// Days from the new heroes to the Exclusive Gear Forge: the Forge event's own
+// setting (`patId` = the widget pattern table, or a New Gen table titled
+// "…Forge…"; its leader's `ngAfter`), else NG_HERO_DAYS.
+function ngForgeDays(patId) {
+  let id = patId ? String(patId) : "";
+  if (!id) {
+    const tb = (PACK_TABLES_CACHE || PACK_TABLES_ALL || []).find((x) => /forge/i.test(String(x.title || "")) && packIsNewGen((PACK_LINKS || {})[String(x.id)]));
+    id = tb ? String(tb.id) : "";
+  }
+  if (!id) return NG_HERO_DAYS;
+  const v = packNgAfterOf(packDateLeader(id) || id);
+  return v != null ? v : NG_HERO_DAYS;
+}
 // The two New Gen tables on the Packs page with a "Hero Shards" / "Hero Widgets"
 // column are the patterns (owner edits prices and amounts there); each new
 // hero gets its own copy. Without them the built-in numbers above are used.
@@ -16302,6 +16359,7 @@ async function ngHeroTables(baseTables) {
   noteHeroImages(heroes);
   const shardPat = ngHeroPattern(baseTables, /^hero shards?$/i), widgetPat = ngHeroPattern(baseTables, /^hero widgets?$/i);
   const t0 = packStartOfToday(), day = 86400000, out = [];
+  const forgeDays = ngForgeDays(widgetPat && widgetPat.id);
   newGenStarts(base, 5).forEach((start, k) => {
     const gen = gen0 + k;
     (heroes || []).filter((h) => Number(h.generation) === gen).forEach((h) => {
@@ -16313,7 +16371,7 @@ async function ngHeroTables(baseTables) {
         out.push({ id, title, columns: ["$", col, "Gems"], rows: rows.map((r) => ({ cells: r.map(String) })), sort_order: 200000 + out.length });
       };
       add("s", start, `Value Hero Pack · ${h.name}`, `${h.name} Shards`, shardPat ? shardPat.rows : [[NG_HERO_SHARD_PACK.price, NG_HERO_SHARD_PACK.shards, ngGems(NG_HERO_SHARD_PACK.price)]], shardPat ? shardPat.sequential : false, shardPat && shardPat.window, shardPat && shardPat.id);
-      add("w", new Date(start.getTime() + NG_HERO_DAYS * day), `Exclusive Gear Pack · ${h.name}`, `${h.name} Widgets`, widgetPat ? widgetPat.rows : NG_HERO_WIDGET_LADDER.map(([p, n]) => [p, n, ngGems(p)]), widgetPat ? widgetPat.sequential : true, widgetPat && widgetPat.window, widgetPat && widgetPat.id);
+      add("w", new Date(start.getTime() + forgeDays * day), `Exclusive Gear Pack · ${h.name}`, `${h.name} Widgets`, widgetPat ? widgetPat.rows : NG_HERO_WIDGET_LADDER.map(([p, n]) => [p, n, ngGems(p)]), widgetPat ? widgetPat.sequential : true, widgetPat && widgetPat.window, widgetPat && widgetPat.id);
     });
   });
   return out;
@@ -32323,7 +32381,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=c2031e42a1";
+      s.src = "admin.min.js?v=171a118217";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
@@ -32534,9 +32592,6 @@ function gameRules() {
       cols: [{ key: "group", label: "Pack group", type: "text" }],
       get: () => PACK_DATES_ON_PACKS_PAGE.map((g) => ({ group: g })),
       set: (rows) => ruleSetArray(PACK_DATES_ON_PACKS_PAGE, rows.map((r) => String(r.group || "").trim()).filter(Boolean)) },
-    { key: "ngForge", group: "heroes", label: "New heroes packs timing", type: "fields", help: "Days from the new heroes (Hero Ascension Training) to the Exclusive Gear Forge; also how long each runs when its table on the Packs page has no window.",
-      fields: [num("days", "Forge starts after (days)")],
-      get: () => ({ days: NG_HERO_DAYS }), set: (v) => { NG_HERO_DAYS = Number(v.days) > 0 ? Number(v.days) : 28; } },
     { key: "islCopies", group: "islands", label: "Island building copies per level", help: "Copies of a Mythic building needed to reach each level (Lv 1 = getting the building from an event or pack, 0). The Islands page's Shards plan counts these × shards per copy.",
       cols: [{ key: "level", label: "Level", type: "auto" }, { key: "copies", label: "Copies", type: "num" }],
       get: () => ISL_COPIES.slice(1).map((c, i) => ({ level: i + 1, copies: c })),
@@ -32576,6 +32631,10 @@ function gameRulesSaved() { const v = siteConfig("game_rules", null); return v &
 // Puts the built-in values back, then the admin's saved ones on top.
 function applyGameRules() {
   const saved = gameRulesSaved();
+  // "New heroes packs timing" moved into the Forge pack's settings; an old
+  // saved value stays its default.
+  const ngf = saved.ngForge;
+  NG_HERO_DAYS = ngf && Number(ngf.days) > 0 ? Number(ngf.days) : 28;
   gameRules().forEach((r) => {
     try { r.set(JSON.parse(JSON.stringify(saved[r.key] != null ? saved[r.key] : r.def))); }
     catch (e) { console.error("rule", r.key, e); try { r.set(JSON.parse(JSON.stringify(r.def))); } catch (e2) { /* keep */ } }

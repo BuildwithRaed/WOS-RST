@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "c2031e42a1";
+window.ADMIN_BUILD = "171a118217";
 
 // ============================================================
 // ADMIN PAGE
@@ -682,7 +682,7 @@ const ADMIN_RULE_HOME = {
   packres: { groups: [["", ["gems", "packDatesGroups", "ngPacks"]]] },
   items: { groups: [["", ["trades", "bundles", "resChests"]]] },
 };
-const ADMIN_RULE_STATE = ["unlocks", "genDays", "events", "newGenRule", "ngForge", "hallHero"];
+const ADMIN_RULE_STATE = ["unlocks", "genDays", "events", "newGenRule", "hallHero"];
 const ADMIN_RULE_SHORTCUTS = ["trades", "bundles"];
 const admRuleKeysOf = (sec) => ((ADMIN_RULE_HOME[sec] || {}).groups || []).flatMap((g) => g[1]);
 function admRuleSection(key) { return Object.keys(ADMIN_RULE_HOME).find((k) => admRuleKeysOf(k).includes(key)) || "rules"; }
