@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "05035033f2";
+window.ADMIN_BUILD = "c2031e42a1";
 
 // ============================================================
 // ADMIN PAGE
@@ -39,11 +39,11 @@ const ADMIN_TABLES = {
   alliance: { label: "Alliance", group: "game", icon: "🏰", desc: "Facility and tech", words: "facility alliance tech" },
   centerresearch: { label: "Research", group: "game", icon: "🔬", desc: "Research Center, T11, T12", words: "research t11 t12 helios" },
   skins: { label: "Skins", group: "game", icon: "🎨", desc: "Gallery, album, skins, islands", words: "skin gallery album islands" },
-  // Opens the "Globe Level extra skins" rule on its own.
-  globe: { label: "Globe Level", group: "game", icon: "🔮", desc: "Skins that come with each Globe Level", words: "globe level frost sphere skin cosmetics" },
+  // Globe Levels now sit in Skins → ⚙ Rules; this entry is only found by search (alias).
+  globe: { label: "Globe Level", group: "game", icon: "🔮", desc: "Skins that come with each Globe Level", words: "globe level frost sphere skin cosmetics", alias: ["skins", "x:globe"] },
   rules: { label: "Rules & Timeline", group: "rules", icon: "📅", desc: "State days, Gen, events, trades, chests", words: "rules timeline state day unlock gen svs koi trade chest widget hall heroes gems lab advanced marks" },
-  // Research unlock rules have their own screen.
-  reslocks: { label: "Research unlock rules", group: "rules", icon: "🔓", desc: "Which research needs which first", words: "research unlock rule need prerequisite before t12 t11 order can reach" },
+  // Research unlock rules: their own screen inside Research → ⚙ Rules (found by search, alias).
+  reslocks: { label: "Research unlock rules", group: "rules", icon: "🔓", desc: "Which research needs which first", words: "research unlock rule need prerequisite before t12 t11 order can reach", alias: ["centerresearch", "x:reslocks"] },
   // These are full pages of their own; the Admin entry just opens them.
   packs: { label: "Packs", group: "packs", icon: "📦", desc: "Pack tables (opens the page)", tab: "packs", words: "pack" },
   packres: { label: "Pack Resources", group: "packs", icon: "🧺", desc: "Columns used in packs", words: "resource column chest" },
@@ -114,7 +114,7 @@ function adminCardInfo(k) {
 }
 function adminHomeHtml() {
   const pic = (k) => ADMIN_PIC[k] ? `<img src="${ADMIN_PIC[k]}" alt="" loading="lazy" />` : `<span>${ADMIN_TABLES[k].icon}</span>`;
-  const card = (k, extra) => { const e = ADMIN_TABLES[k], i = adminCardInfo(k); return `<button type="button" class="admh-c${extra ? " " + extra : ""}" data-admintable="${k}" title="${esc(e.desc)}"><span class="admh-pic">${pic(k)}</span><span class="admh-t"><b>${esc(e.label)}</b><small>${esc(i.line)}</small></span><i class="admh-dot${i.warn ? " warn" : ""}" aria-hidden="true"></i></button>`; };
+  const card = (k, extra) => { const e = ADMIN_TABLES[k], i = adminCardInfo(k); return `<button type="button" class="admh-c${extra ? " " + extra : ""}" data-admintable="${k}" title="${esc(e.desc)}"${e.alias ? " hidden" : ""}><span class="admh-pic">${pic(k)}</span><span class="admh-t"><b>${esc(e.label)}</b><small>${esc(i.line)}</small></span><i class="admh-dot${i.warn ? " warn" : ""}" aria-hidden="true"></i></button>`; };
   const keys = (g) => Object.keys(ADMIN_TABLES).filter((k) => ADMIN_TABLES[k].group === g && !ADMIN_TABLES[k].tab);
   const gl = (g) => (ADMIN_GROUPS.find((x) => x.key === g) || {}).label || g;
   // Needs you
@@ -129,7 +129,7 @@ function adminHomeHtml() {
   // Main game data first (owner's mock-up); every section is shown.
   const MAIN = ["experts", "pets", "chiefgears", "charm", "herogearprog", "heroes", "centerresearch", "vip"];
   const game = keys("game").sort((a, b) => (MAIN.indexOf(a) < 0 ? 99 : MAIN.indexOf(a)) - (MAIN.indexOf(b) < 0 ? 99 : MAIN.indexOf(b)));
-  const grid = (g, list) => `<div class="admh-g" data-admhg="${g}"><div class="admh-gk">${esc(gl(g))} <span>${list.length}</span></div><div class="admh-cards">${list.map((k) => card(k)).join("")}</div></div>`;
+  const grid = (g, list) => `<div class="admh-g" data-admhg="${g}"><div class="admh-gk">${esc(gl(g))} <span>${list.filter((k) => !ADMIN_TABLES[k].alias).length}</span></div><div class="admh-cards">${list.map((k) => card(k)).join("")}</div></div>`;
   const site = keys("site");
   const pages = Object.keys(ADMIN_TABLES).filter((k) => ADMIN_TABLES[k].tab);
   return `<div class="admh">${needs}<div class="admh-sslot"></div>
@@ -149,11 +149,15 @@ function adminHomeFilter(root, qq) {
 async function renderAdminPageMain() {
   // Admin edits the data other pages keep in memory for the visit.
   dropKeptGameData();
+  // An old history step / refresh on Globe Level or Research unlock rules: open it in its section.
+  const al = ADMIN_ACTIVE_TABLE && ADMIN_TABLES[ADMIN_ACTIVE_TABLE] && ADMIN_TABLES[ADMIN_ACTIVE_TABLE].alias;
+  if (al) { ADMIN_ACTIVE_TABLE = al[0]; ADMIN_RULE_VIEW = al[1]; if (history.state && history.state.tab === "adminpage") history.replaceState({ tab: "adminpage", adm: al[0], rv: al[1] }, "", location.pathname + location.search); }
+  if (!ADMIN_ACTIVE_TABLE) ADMIN_RULE_VIEW = null;
   const cur = ADMIN_ACTIVE_TABLE && ADMIN_TABLES[ADMIN_ACTIVE_TABLE] ? ADMIN_ACTIVE_TABLE : null;
   const q = ADMIN_SEARCH.trim().toLowerCase();
   const match = (k) => { const e = ADMIN_TABLES[k]; return !q || `${e.label} ${e.desc} ${e.words || ""}`.toLowerCase().includes(q); };
   const keysOf = (g) => Object.keys(ADMIN_TABLES).filter((k) => ADMIN_TABLES[k].group === g && match(k));
-  const side = ADMIN_GROUPS.map((g) => { const ks = keysOf(g.key); return ks.length ? `<div class="adm-gk">${esc(g.label)}</div>${ks.map((k) => `<button type="button" class="adm-it${k === cur ? " on" : ""}" data-admintable="${k}"><i>${ADMIN_TABLES[k].icon}</i>${esc(ADMIN_TABLES[k].label)}${ADMIN_TABLES[k].tab ? ` <span class="adm-ext">&#8599;</span>` : ""}</button>`).join("")}` : ""; }).join("") || `<div class="meta" style="padding:8px;">No match</div>`;
+  const side = ADMIN_GROUPS.map((g) => { const ks = keysOf(g.key).filter((k) => q || !ADMIN_TABLES[k].alias); return ks.length ? `<div class="adm-gk">${esc(g.label)}</div>${ks.map((k) => `<button type="button" class="adm-it${k === cur ? " on" : ""}" data-admintable="${k}"${ADMIN_TABLES[k].alias ? " hidden" : ""}><i>${ADMIN_TABLES[k].icon}</i>${esc(ADMIN_TABLES[k].label)}${ADMIN_TABLES[k].tab ? ` <span class="adm-ext">&#8599;</span>` : ""}</button>`).join("")}` : ""; }).join("") || `<div class="meta" style="padding:8px;">No match</div>`;
   const home = cur ? "" : adminHomeHtml();
   const grp = cur ? ADMIN_GROUPS.find((g) => g.key === ADMIN_TABLES[cur].group) : null;
   content.innerHTML = `
@@ -176,9 +180,10 @@ async function renderAdminPageMain() {
   const open = (key) => {
     const entry = ADMIN_TABLES[key];
     if (entry && entry.tab) { goToTab(entry.tab); return; }
+    if (entry && entry.alias) { admRuleGo(entry.alias[0], entry.alias[1]); return; }
     if (!admConfirmLeave()) return;
     admPushSection(key);
-    ADMIN_ACTIVE_TABLE = key;
+    ADMIN_ACTIVE_TABLE = key; ADMIN_RULE_VIEW = null;
     renderAdminPage();
     window.scrollTo(0, 0);
   };
@@ -188,22 +193,22 @@ async function renderAdminPageMain() {
     if (!admConfirmLeave()) return;
     // The section has its own history step: going back to it is the same as the browser's Back.
     if (history.state && history.state.tab === "adminpage" && history.state.adm === ADMIN_ACTIVE_TABLE) { ADMIN_SKIP_CONFIRM = true; history.back(); return; }
-    ADMIN_ACTIVE_TABLE = null; renderAdminPage(); window.scrollTo(0, 0);
+    ADMIN_ACTIVE_TABLE = null; ADMIN_RULE_VIEW = null; renderAdminPage(); window.scrollTo(0, 0);
   });
   const search = content.querySelector("[data-adminsearch]");
   const sslot = content.querySelector(".admh-sslot");
   if (sslot) sslot.appendChild(search);
-  if (!cur && ADMIN_SEARCH.trim()) adminHomeFilter(content, ADMIN_SEARCH.trim().toLowerCase());
   search.addEventListener("input", () => {
     ADMIN_SEARCH = search.value;
     // Redraw only the lists, so typing keeps the focus.
     const qq = ADMIN_SEARCH.trim().toLowerCase();
-    content.querySelectorAll(".adm-side [data-admintable], .adm-home [data-admintable]").forEach((b) => { const e = ADMIN_TABLES[b.dataset.admintable]; b.hidden = !!qq && !`${e.label} ${e.desc} ${e.words || ""}`.toLowerCase().includes(qq); });
+    content.querySelectorAll(".adm-side [data-admintable], .adm-home [data-admintable]").forEach((b) => { const e = ADMIN_TABLES[b.dataset.admintable]; b.hidden = qq ? !`${e.label} ${e.desc} ${e.words || ""}`.toLowerCase().includes(qq) : !!e.alias; });
     adminHomeFilter(content, qq);
     content.querySelectorAll(".adm-side .adm-gk").forEach((h) => { const next = h.nextElementSibling; const list = next && next.classList.contains("adm-cards") ? [...next.children] : (() => { const a = []; let n = h.nextElementSibling; while (n && !n.classList.contains("adm-gk")) { a.push(n); n = n.nextElementSibling; } return a; })(); h.hidden = list.length > 0 && list.every((x) => x.hidden); });
     const nm = content.querySelector(".adm-nomatch");
     if (nm) nm.hidden = !qq || [...content.querySelectorAll(".adm-side [data-admintable]")].some((b) => !b.hidden);
   });
+  if (ADMIN_SEARCH.trim()) search.dispatchEvent(new Event("input"));
   search.addEventListener("keydown", (e) => { if (e.key !== "Enter") return; const first = [...content.querySelectorAll(".adm-side [data-admintable]")].find((b) => !b.hidden); if (first) open(first.dataset.admintable); });
   if (!cur) return;
   const body = document.getElementById("adminBody");
@@ -237,6 +242,7 @@ const ADMIN_ADD_OBSERVER = typeof MutationObserver !== "undefined" ? new Mutatio
 async function drawAdminSection(key, body) {
   ADM_EDIT_DIRTY = 0; // a fresh section has no unsaved edits
   if (ADMIN_ADD_OBSERVER) { ADMIN_ADD_OBSERVER.disconnect(); ADMIN_ADD_OBSERVER.observe(body, { childList: true, subtree: true }); }
+  admRulesWire(key, body);
   if (key === "visibility") await renderAdminVisibility(body);
   else if (key === "menu") await renderAdminMenu(body);
   else if (key === "languages") await renderAdminLanguages(body);
@@ -268,6 +274,7 @@ async function drawAdminSection(key, body) {
   else if (key === "skins") await renderAdminSkinsGroup(body);
   else if (key === "herostars") await renderAdminHeroStars(body);
   else if (key === "dashsources") await renderAdminDashSources(body);
+  if (ADMIN_RULE_HOME[key] && body.isConnected) admRulesSync(body);
 }
 
 // ---- Menu & pages: rename, order, move between groups, page notes ----
@@ -392,7 +399,6 @@ function afterGameRulesChange() {
 }
 
 // ---- Admin editor ----
-let ADMIN_RULE_OPEN = null;
 // Admin → Globe Level: one row per
 // level (City Skin + extra skins), ✎ opens a sheet to pick them from the skins
 // list, "+ Add level" for levels the game adds. Saved as rule "globeLevels".
@@ -663,11 +669,60 @@ async function renderAdminResearchLocks(body) {
   };
   draw();
 }
-async function renderAdminRules(body) {
-  await ensureSiteConfig();
-  const rules = gameRules(), saved = gameRulesSaved();
+// ---- Rules (option C): each section that owns rules has a "⚙ Rules N" chip; Rules & Timeline is the hub ----
+// Which rules each Admin section owns (headings: "" = none), and rules it uses
+// that are edited elsewhere (link rows). Saved data is unchanged (game_rules).
+const ADMIN_RULE_HOME = {
+  heroes: { groups: [["", ["widgetCost", "shardChart", "heroTrades"]]], links: ["hallHero", "vipShards"] },
+  vip: { groups: [["", ["vipShards"]]] },
+  experts: { groups: [["", ["affinity"]]] },
+  pets: { groups: [["", ["advancedMark"]]] },
+  centerresearch: { groups: [["T12", ["t12Tree"]], ["Research Center", ["rcTracks", "rcTiers"]], ["Unlock rules", ["researchLocks"]], ["Research Lab", ["rfcLab"]]] },
+  skins: { groups: [["Skin Gallery", ["galleryBig", "globeLevels"]], ["Islands", ["islCopies", "islTree", "islShop", "islCamp", "islLighthouse", "islLightUnlock"]]] },
+  packres: { groups: [["", ["gems", "packDatesGroups", "ngPacks"]]] },
+  items: { groups: [["", ["trades", "bundles", "resChests"]]] },
+};
+const ADMIN_RULE_STATE = ["unlocks", "genDays", "events", "newGenRule", "ngForge", "hallHero"];
+const ADMIN_RULE_SHORTCUTS = ["trades", "bundles"];
+const admRuleKeysOf = (sec) => ((ADMIN_RULE_HOME[sec] || {}).groups || []).flatMap((g) => g[1]);
+function admRuleSection(key) { return Object.keys(ADMIN_RULE_HOME).find((k) => admRuleKeysOf(k).includes(key)) || "rules"; }
+const admRuleChanged = (key) => gameRulesSaved()[key] != null;
+// Go to a section / rules view as a new history step (Back returns to where it was).
+function admRuleGo(adm, rv) {
+  if (!admConfirmLeave()) return;
+  history.pushState({ tab: "adminpage", adm, ...(rv ? { rv } : {}) }, "", location.pathname + location.search);
+  const same = adm === ADMIN_ACTIVE_TABLE && ADMIN_RULE_HOME[adm] && document.getElementById("adminBody");
+  ADMIN_ACTIVE_TABLE = adm; ADMIN_RULE_VIEW = rv || null;
+  if (same) admRulesSync(document.getElementById("adminBody")); else renderAdminPage();
+  window.scrollTo(0, 0);
+}
+// Opens a rule where it lives: its own screen (Globe Levels, Research unlock rules) or the editor.
+function admRuleOpen(key) {
+  const r = gameRules().find((x) => x.key === key); if (!r) return;
+  admRuleGo(admRuleSection(key), r.link ? "x:" + r.link : "r:" + key);
+}
+// One back step from a rules view: the browser's Back when this view has its own step.
+function admRuleBack(fallback) {
+  if (history.state && history.state.tab === "adminpage" && (history.state.rv || null) === ADMIN_RULE_VIEW && history.state.adm === ADMIN_ACTIVE_TABLE) { ADMIN_SKIP_CONFIRM = true; history.back(); return; }
+  fallback();
+}
+// A compact rule row: name, "changed", (i) with the description, ›. link = the pill of a rule edited elsewhere.
+function admRuleRowHtml(r, o) {
+  o = o || {};
+  const tip = r.help ? `<span class="rlh-ri"><button type="button" class="cg-i" data-info aria-expanded="false" aria-label="${esc(t("info_more"))}">${INFO_SVG}</button><span class="cg-tip" role="tooltip" data-infotip hidden>${esc(r.help)}</span></span>` : "";
+  return `<div class="rlh-row" data-rlopen="${esc(r.key)}"><button type="button" class="rlh-rb"><span class="rlh-rn">${esc(r.label)}${o.sub ? ` <small>${esc(o.sub)}</small>` : ""}</span>${admRuleChanged(r.key) ? `<span class="rl-chg">changed</span>` : ""}</button>${tip}${o.link ? `<span class="rlh-pill">${esc(o.link)} &#8250;</span>` : `<i aria-hidden="true">&#8250;</i>`}</div>`;
+}
+function admRuleRowsHtml(list, o) { return list.length ? `<div class="rlh-rows">${list.map((r) => admRuleRowHtml(r, typeof o === "function" ? o(r) : o)).join("")}</div>` : ""; }
+function admRuleSecName(sec) { return sec === "rules" ? t("rv_state_short") : ((ADMIN_TABLES[sec] || {}).label || sec); }
+function admWireRuleRows(root) {
+  root.querySelectorAll("[data-rlopen]").forEach((row) => row.addEventListener("click", (e) => { if (e.target.closest("[data-info], .cg-tip")) return; admRuleOpen(row.dataset.rlopen); }));
+}
+// The rule editor card (the same one Rules & Timeline always had): Save tries the value first, Reset to built-in.
+function admRuleCard(host, key, back) {
+  const r = gameRules().find((x) => x.key === key);
+  if (!r) { host.innerHTML = `<div class="meta">No such rule.</div>`; return; }
   const pages = visitorPageList ? [{ tab: "", label: "—" }, ...visitorPageList(), { tab: "overview", label: "Dashboard" }] : [];
-  const changed = (r) => saved[r.key] != null;
+  const changed = () => admRuleChanged(r.key);
   const cell = (c, v, ri, row) => {
     const a = `data-rcell="${ri}|${c.key}"`;
     if (row && c.when && !c.when(row)) return `<span class="meta">—</span>`;
@@ -684,22 +739,12 @@ async function renderAdminRules(body) {
     if (c.type === "page") return `<select ${a}>${pages.map((p) => `<option value="${esc(p.tab)}" ${p.tab === v ? "selected" : ""}>${esc(p.label)}</option>`).join("")}</select>`;
     return `<input ${a} type="${c.type === "num" ? "number" : c.type === "date" ? "date" : "text"}" ${c.type === "num" ? 'step="any" inputmode="decimal"' : ""} value="${esc(v == null ? "" : String(v))}" />`;
   };
-  const listHtml = () => GAME_RULE_GROUPS.map((g) => `<div class="adm-gk">${esc(g.label)}</div>
-    <div class="rl-list">${rules.filter((r) => r.group === g.key).map((r) => `<button type="button" class="rl-item${ADMIN_RULE_OPEN === r.key ? " on" : ""}" data-ruleopen="${r.key}"><span><b>${esc(r.label)}</b>${changed(r) ? ` <span class="rl-chg">changed</span>` : ""}<br><small>${esc(r.help || "")}</small></span><i>&#8250;</i></button>`).join("")}</div>`).join("");
   const draw = () => {
-    const r = rules.find((x) => x.key === ADMIN_RULE_OPEN);
-    if (!r) {
-      body.innerHTML = `<p class="desc" style="margin:0 0 10px;">Game rules the site calculates with. Each one starts with the built-in value; your changes apply to everyone. "Reset" puts the built-in value back.</p>${listHtml()}`;
-      body.querySelectorAll("[data-ruleopen]").forEach((b) => b.addEventListener("click", () => {
-        const lk = (rules.find((x) => x.key === b.dataset.ruleopen) || {}).link;
-        if (lk) { admPushSection(lk); ADMIN_ACTIVE_TABLE = lk; renderAdminPage(); window.scrollTo(0, 0); return; } // edited on its own Admin screen
-        ADMIN_RULE_OPEN = b.dataset.ruleopen; draw(); window.scrollTo(0, body.getBoundingClientRect().top + scrollY - 80); }));
-      return;
-    }
+    const saved = gameRulesSaved();
     let val = JSON.parse(JSON.stringify(saved[r.key] != null ? saved[r.key] : r.def));
     if (r.key === "unlocks" && Array.isArray(val)) val.sort((a, b) => (Number(a.day) || 0) - (Number(b.day) || 0)); // by state day
     const drawEditor = () => {
-      const ed = body.querySelector(".rl-ed");
+      const ed = host.querySelector(".rl-ed");
       if (r.type === "fields") {
         ed.innerHTML = `<div class="rl-fields">${r.fields.map((f) => `<label><span>${esc(f.label)}</span><input type="number" step="any" inputmode="decimal" data-rfield="${f.key}" value="${esc(String(val[f.key] != null ? val[f.key] : ""))}" />${r.def[f.key] !== val[f.key] ? `<small class="meta">built-in ${esc(String(r.def[f.key]))}</small>` : ""}</label>`).join("")}</div>`;
         ed.querySelectorAll("[data-rfield]").forEach((inp) => inp.addEventListener("input", () => { val[inp.dataset.rfield] = inp.value === "" ? "" : Number(inp.value); }));
@@ -722,27 +767,26 @@ async function renderAdminRules(body) {
         val.push(row); drawEditor();
       });
     };
-    body.innerHTML = `
-      <button type="button" class="btn ghost small" data-ruleback style="margin-bottom:10px;">&#8249; All rules</button>
-      <div class="rl-card"><div class="rl-h"><b>${esc(r.label)}</b>${changed(r) ? ` <span class="rl-chg">changed</span>` : ` <span class="meta" style="font-size:11.5px;">built-in values</span>`}</div>
+    host.innerHTML = `
+      <button type="button" class="btn ghost small" data-ruleback style="margin-bottom:10px;">&#8249; ${esc(t("rv_back"))}</button>
+      <div class="rl-card"><div class="rl-h"><b>${esc(r.label)}</b>${changed() ? ` <span class="rl-chg">changed</span>` : ` <span class="meta" style="font-size:11.5px;">built-in values</span>`}</div>
         <p class="desc" style="margin:4px 0 10px;">${esc(r.help || "")}</p>
         <div class="rl-ed">${r.prepare ? `<div class="meta" style="font-size:12px;">Loading…</div>` : ""}</div>
-        <div class="rl-foot"><button type="button" class="btn ghost small" data-rulereset ${changed(r) ? "" : "disabled"}>Reset to built-in</button><span style="flex:1"></span><button type="button" class="btn small" data-rulesave>Save</button></div>
+        <div class="rl-foot"><button type="button" class="btn ghost small" data-rulereset ${changed() ? "" : "disabled"}>Reset to built-in</button><span style="flex:1"></span><button type="button" class="btn small" data-rulesave>Save</button></div>
       </div>`;
     if (r.prepare) {
       // Lists to pick from load first (the editor falls back to typing).
-      const ed0 = body.querySelector(".rl-ed");
-      Promise.resolve().then(() => r.prepare()).catch(() => {}).then(() => { if (ADMIN_RULE_OPEN === r.key && body.contains(ed0)) drawEditor(); });
+      const ed0 = host.querySelector(".rl-ed");
+      Promise.resolve().then(() => r.prepare()).catch(() => {}).then(() => { if (host.contains(ed0)) drawEditor(); });
     } else drawEditor();
-    body.querySelector("[data-ruleback]").addEventListener("click", () => { ADMIN_RULE_OPEN = null; draw(); });
+    host.querySelector("[data-ruleback]").addEventListener("click", back);
     const store = async (next, msg) => {
       try {
         await saveSiteConfig("game_rules", next);
-        Object.keys(saved).forEach((k) => { delete saved[k]; }); Object.assign(saved, next);
         afterGameRulesChange(); toast(msg); draw();
       } catch (err) { toast(err.message || "Couldn't save", true); }
     };
-    body.querySelector("[data-rulesave]").addEventListener("click", async () => {
+    host.querySelector("[data-rulesave]").addEventListener("click", async () => {
       // Try it first: a value the page can't use is not saved.
       try { r.set(JSON.parse(JSON.stringify(val))); } catch (e) { toast("Check the values: " + e.message, true); applyGameRules(); return; }
       const same = JSON.stringify(val) === JSON.stringify(r.def);
@@ -750,13 +794,138 @@ async function renderAdminRules(body) {
       if (same) delete next[r.key]; else next[r.key] = val;
       await store(next, same ? "Saved (same as built-in)" : "Rule saved");
     });
-    body.querySelector("[data-rulereset]").addEventListener("click", async () => {
+    host.querySelector("[data-rulereset]").addEventListener("click", async () => {
       if (!confirm(`Put "${r.label}" back to the built-in values?`)) return;
       const next = { ...gameRulesSaved() }; delete next[r.key];
       await store(next, "Back to built-in");
     });
   };
   draw();
+}
+// The section's rules view, drawn into the panel under the section's chip row.
+async function admRulesPanel(p, sec) {
+  const rv = ADMIN_RULE_VIEW, rules = gameRules(), home = ADMIN_RULE_HOME[sec];
+  const toList = () => admRuleBack(() => { ADMIN_RULE_VIEW = "list"; admRulesSync(document.getElementById("adminBody")); });
+  if (rv.startsWith("r:")) { admRuleCard(p, rv.slice(2), toList); return; }
+  if (rv.startsWith("x:")) {
+    p.innerHTML = `<button type="button" class="btn ghost small" data-ruleback style="margin-bottom:10px;">&#8249; ${esc(t("rv_back"))}</button><div class="rv-x"></div>`;
+    p.querySelector("[data-ruleback]").addEventListener("click", toList);
+    const x = p.querySelector(".rv-x"), k = rv.slice(2);
+    if (k === "globe") await renderAdminGlobe(x); else if (k === "reslocks") await renderAdminResearchLocks(x);
+    return;
+  }
+  const byKey = (k) => rules.find((r) => r.key === k);
+  // The sub-tab on screen first (Skins → Islands shows the Islands rules first).
+  const subLabel = sec === "skins" ? ({ skingallery: "Skin Gallery", islands: "Islands" })[ADMIN_ACTIVE_SKINS_SUBTAB] : sec === "centerresearch" ? (ADMIN_ACTIVE_RESEARCH === "T12" ? "T12" : /Research Center/i.test(ADMIN_ACTIVE_RESEARCH || "") ? "Research Center" : "") : "";
+  const groups = home.groups.slice().sort((a, b) => (b[0] === subLabel) - (a[0] === subLabel));
+  const n = admRuleKeysOf(sec).length;
+  p.innerHTML = `<div class="rv-hd"><b>&#9881; ${esc(t("rv_sec_rules").replace("{name}", ADMIN_TABLES[sec].label))}</b> <span class="meta">${n}</span></div>
+    ${groups.map(([g, keys]) => `${g ? `<div class="adm-gk">${esc(g)}</div>` : ""}${admRuleRowsHtml(keys.map(byKey).filter(Boolean))}`).join("")}
+    ${home.links ? `<div class="adm-gk">${esc(t("rv_also"))}</div>${admRuleRowsHtml(home.links.map(byKey).filter(Boolean), (r) => ({ link: admRuleSecName(admRuleSection(r.key)) }))}` : ""}
+    <p class="meta rv-note">${esc(t("rv_note"))}</p>`;
+  admWireRuleRows(p);
+}
+// Puts the "⚙ Rules N" chip at the end of the section's own chip row (or a small row of its own),
+// and while the rules view is on shows only that row + the rules panel.
+function admRulesSync(body) {
+  if (!body || !body.isConnected) return;
+  const sec = ADMIN_ACTIVE_TABLE, home = ADMIN_RULE_HOME[sec];
+  if (!home) return;
+  const rv = ADMIN_RULE_VIEW, n = admRuleKeysOf(sec).length;
+  const outside = (el) => !el.closest(".rv-panel") && !el.closest(".rv-own");
+  let row = [...body.querySelectorAll("[data-researchsub]")].map((b) => b.parentElement).find(outside)
+    || [...body.querySelectorAll(".adm-chips-row")].find(outside);
+  let own = body.querySelector(":scope > .rv-own");
+  if (row && own) { own.remove(); own = null; }
+  if (!row) {
+    if (!own) { body.insertAdjacentHTML("afterbegin", `<div class="adm-chips rv-own"><div class="adm-chips-row"><button type="button" class="adm-chip" data-rvsec>${esc(ADMIN_TABLES[sec].label)}</button></div></div>`); own = body.querySelector(":scope > .rv-own"); }
+    row = own.querySelector(".adm-chips-row");
+    own.querySelector("[data-rvsec]").classList.toggle("on", !rv);
+  }
+  const isBtn = !!row.querySelector("[data-researchsub]");
+  let chip = row.querySelector(":scope > [data-rvopen]");
+  if (!chip) {
+    row.insertAdjacentHTML("beforeend", `<button type="button" class="${isBtn ? "btn small" : "adm-chip"} rv-chip" data-rvopen>&#9881; ${esc(t("rv_rules_chip"))} <span class="meta">${n}</span></button>`);
+    chip = row.querySelector(":scope > [data-rvopen]");
+  }
+  if (isBtn) chip.classList.toggle("ghost", !rv); else chip.classList.toggle("on", !!rv);
+  // The picked Rules chip stays in sight (the row scrolls sideways on phones).
+  if (rv && chip.dataset.seen !== "1") { chip.dataset.seen = "1"; const y = window.scrollY; try { chip.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) { /* old browser */ } window.scrollTo(window.scrollX, y); }
+  if (!rv) delete chip.dataset.seen;
+  // Rules view: only the chip row and the panel show; the row's own chips look not picked.
+  body.querySelectorAll(".rv-path, .rv-keep").forEach((el) => el.classList.remove("rv-path", "rv-keep"));
+  body.classList.toggle("adm-rv", !!rv);
+  let p = body.querySelector(":scope > .rv-panel");
+  if (!rv) { if (p) p.remove(); return; }
+  const keep = row.closest(".adm-chips") || row;
+  keep.classList.add("rv-keep");
+  for (let el = keep.parentElement; el && el !== body; el = el.parentElement) el.classList.add("rv-path");
+  row.querySelectorAll(":scope > :not([data-rvopen])").forEach((b) => { if (b.classList.contains("btn")) b.classList.add("ghost"); else b.classList.remove("on"); });
+  if (!p) { p = document.createElement("div"); p.className = "rv-panel rv-keep"; body.appendChild(p); }
+  p.classList.add("rv-keep");
+  if (p.dataset.rv !== rv) { p.dataset.rv = rv; admRulesPanel(p, sec).catch((e) => { p.innerHTML = `<div class="err">${esc(e.message || "Couldn't load")}</div>`; }); }
+}
+// Once per drawn section: watch for its own redraws (the chip comes back) and the chip clicks.
+let ADMIN_RV_OBS = null;
+function admRulesWire(key, body) {
+  if (ADMIN_RV_OBS) { ADMIN_RV_OBS.disconnect(); ADMIN_RV_OBS = null; }
+  if (!ADMIN_RULE_HOME[key]) return;
+  if (typeof MutationObserver !== "undefined") {
+    let queued = false;
+    ADMIN_RV_OBS = new MutationObserver((muts) => {
+      if (muts.every((m) => m.target.closest && m.target.closest(".rv-panel"))) return;
+      if (queued) return; queued = true;
+      Promise.resolve().then(() => { queued = false; if (ADMIN_ACTIVE_TABLE === key) admRulesSync(body); });
+    });
+    ADMIN_RV_OBS.observe(body, { childList: true, subtree: true });
+  }
+  if (body.dataset.rvwired) return;
+  body.dataset.rvwired = "1";
+  body.addEventListener("click", (e) => {
+    const sec = ADMIN_ACTIVE_TABLE;
+    if (!ADMIN_RULE_HOME[sec] || e.target.closest(".rv-panel")) return;
+    if (e.target.closest("[data-rvopen]")) { e.preventDefault(); if (ADMIN_RULE_VIEW !== "list") admRuleGo(sec, "list"); return; }
+    if (!ADMIN_RULE_VIEW) return;
+    // A chip of the section itself: back to the section (a new history step, so Back returns to the rules).
+    if (e.target.closest(".rv-keep .adm-chip, .rv-keep [data-researchsub], [data-rvsec]")) {
+      history.pushState({ tab: "adminpage", adm: sec }, "", location.pathname + location.search);
+      ADMIN_RULE_VIEW = null; admRulesSync(body);
+      if (e.target.closest("[data-rvsec]")) { e.preventDefault(); renderAdminPage(); }
+    }
+  }, true);
+}
+// Rules & Timeline = the hub: search over every rule, the State & events rules,
+// shortcuts, and one tile per section with its rules.
+async function renderAdminRules(body) {
+  await ensureSiteConfig();
+  const rv = ADMIN_RULE_VIEW;
+  if (rv && rv.startsWith("r:")) { admRuleCard(body, rv.slice(2), () => admRuleBack(() => { ADMIN_RULE_VIEW = null; renderAdminRules(body); })); return; }
+  const rules = gameRules(), byKey = (k) => rules.find((r) => r.key === k);
+  const tile = (sec) => {
+    const keys = admRuleKeysOf(sec), ch = keys.filter(admRuleChanged).length, e = ADMIN_TABLES[sec];
+    const pic = ADMIN_PIC[sec] ? `<img src="${ADMIN_PIC[sec]}" alt="" loading="lazy" />` : `<span>${e.icon}</span>`;
+    return `<button type="button" class="admh-c" data-rvtile="${sec}"><span class="admh-pic">${pic}</span><span class="admh-t"><b>${esc(e.label)}</b><small>${esc(keys.length === 1 ? t("rv_1_rule") : t("rv_n_rules").replace("{n}", keys.length))}${ch ? ` · <span class="rv-chgn">${esc(t("admh_n_changed").replace("{n}", ch))}</span>` : ""}</small></span></button>`;
+  };
+  body.innerHTML = `<p class="desc" style="margin:0 0 10px;">${esc(t("rv_hub_desc"))}</p>
+    <input type="search" class="rlh-q" data-rlq placeholder="${esc(t("rv_search").replace("{n}", rules.length))}" autocomplete="off" />
+    <div class="rlh-res" hidden></div>
+    <div class="rlh-hub">
+      <div class="adm-gk">${esc(t("rv_state"))}</div>${admRuleRowsHtml(ADMIN_RULE_STATE.map(byKey).filter(Boolean))}
+      <div class="adm-gk">${esc(t("rv_shortcuts"))}</div>${admRuleRowsHtml(ADMIN_RULE_SHORTCUTS.map(byKey).filter(Boolean), (r) => ({ link: admRuleSecName(admRuleSection(r.key)) }))}
+      <div class="adm-gk">${esc(t("rv_other"))}</div><div class="admh-cards rlh-tiles">${Object.keys(ADMIN_RULE_HOME).map(tile).join("")}</div>
+    </div>`;
+  admWireRuleRows(body.querySelector(".rlh-hub"));
+  body.querySelectorAll("[data-rvtile]").forEach((b) => b.addEventListener("click", () => admRuleGo(b.dataset.rvtile, "list")));
+  const q = body.querySelector("[data-rlq]"), res = body.querySelector(".rlh-res"), hub = body.querySelector(".rlh-hub");
+  q.addEventListener("input", () => {
+    const qq = q.value.trim().toLowerCase();
+    hub.hidden = !!qq; res.hidden = !qq;
+    if (!qq) { res.innerHTML = ""; return; }
+    const hits = rules.filter((r) => `${r.label} ${r.help || ""}`.toLowerCase().includes(qq));
+    res.innerHTML = hits.length ? admRuleRowsHtml(hits, (r) => ({ sub: admRuleSecName(admRuleSection(r.key)) })) : `<div class="meta" style="padding:8px;">${esc(t("rv_no_match"))}</div>`;
+    admWireRuleRows(res);
+  });
+  q.addEventListener("keydown", (e) => { if (e.key !== "Enter") return; const f = res.querySelector("[data-rlopen]"); if (f) admRuleOpen(f.dataset.rlopen); });
 }
 
 // ---- Languages & Texts (Admin) ----

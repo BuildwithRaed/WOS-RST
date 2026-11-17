@@ -2048,6 +2048,20 @@ const T = {
   admh_rules_btn: { en: "Rules" },
   admh_open_page: { en: "Open a page" },
   admh_n_changed: { en: "{n} changed" },
+  rv_rules_chip: { en: "Rules" },
+  rv_state: { en: "State & events" },
+  rv_other: { en: "Rules in other sections" },
+  rv_shortcuts: { en: "Shortcuts" },
+  rv_search: { en: "Search all {n} rules…" },
+  rv_no_match: { en: "No rule matches" },
+  rv_n_rules: { en: "{n} rules" },
+  rv_1_rule: { en: "1 rule" },
+  rv_also: { en: "Also used here (edited elsewhere)" },
+  rv_back: { en: "Back" },
+  rv_state_short: { en: "State" },
+  rv_sec_rules: { en: "{name} rules" },
+  rv_note: { en: "Each rule starts with the built-in value; your changes apply to everyone. Tap a rule to change it (Save / Reset to built-in)." },
+  rv_hub_desc: { en: "Game rules the site calculates with. State & events are here; every other rule sits in the Admin section where that data is edited (its ⚙ Rules chip). Search finds them all." },
   admh_bk_never: { en: "No backup yet" },
   admh_bk_today: { en: "Backed up today" },
   admh_bk_days: { en: "Last backup {n} days ago" },
@@ -4062,17 +4076,17 @@ window.addEventListener("popstate", (e) => {
   if (tab === "mypacks" && TAB === "mypacks" && MPW_HOOK) { MPW_HOOK.history(e.state.mpw || null); return; }
   // Admin sections: Back / Forward between the Admin home and its sections.
   if (tab === "adminpage" && typeof ADMIN_ACTIVE_TABLE !== "undefined") {
-    const adm = e.state.adm || null;
+    const adm = e.state.adm || null, rv = e.state.rv || null;
     if (TAB === "adminpage") {
-      if (adm === ADMIN_ACTIVE_TABLE) return;
-      if (!ADMIN_SKIP_CONFIRM && !admConfirmLeave()) { history.pushState({ tab: "adminpage", adm: ADMIN_ACTIVE_TABLE }, "", location.pathname + location.search); return; }
+      if (adm === ADMIN_ACTIVE_TABLE && rv === ADMIN_RULE_VIEW) return;
+      if (!ADMIN_SKIP_CONFIRM && !admConfirmLeave()) { history.pushState({ tab: "adminpage", adm: ADMIN_ACTIVE_TABLE, ...(ADMIN_RULE_VIEW ? { rv: ADMIN_RULE_VIEW } : {}) }, "", location.pathname + location.search); return; }
       ADMIN_SKIP_CONFIRM = false;
-      ADMIN_ACTIVE_TABLE = adm;
+      ADMIN_ACTIVE_TABLE = adm; ADMIN_RULE_VIEW = rv;
       renderAdminPage();
       window.scrollTo(0, 0);
       return;
     }
-    ADMIN_ACTIVE_TABLE = adm;
+    ADMIN_ACTIVE_TABLE = adm; ADMIN_RULE_VIEW = rv;
   }
   goToTab(tab, { fromHistory: true });
 });
@@ -16076,7 +16090,7 @@ async function renderStateTimelinePage() {
     ${IS_OWNER ? `<p style="margin:12px 0 0;"><button type="button" class="btn small ghost" data-tladmin>${esc(t("tl_admin_edit"))} &rsaquo;</button></p>` : ""}`; });
   content.onclick = (e) => {
     if (e.target.closest("[data-saopen]")) { openStateAgeModal(() => keepPlace(() => renderStateTimelinePage())); return; }
-    if (e.target.closest("[data-tladmin]")) { ADMIN_ACTIVE_TABLE = "rules"; goToTab("adminpage"); }
+    if (e.target.closest("[data-tladmin]")) { ADMIN_ACTIVE_TABLE = "rules"; ADMIN_RULE_VIEW = null; goToTab("adminpage"); }
   };
 }
 // ---- Game events: SvS and King of Icefield (KOI) ----
@@ -32289,6 +32303,9 @@ async function renderFacilityPage() {
 // ============================================================
 // null = the Admin home (cards); a refresh reopens the section the page was on
 let ADMIN_ACTIVE_TABLE = (history.state && history.state.tab === "adminpage" && typeof history.state.adm === "string" && history.state.adm) || null;
+// A section's Rules view (option C): null = the section itself, "list" = its rules,
+// "r:<rule key>" = one rule's editor, "x:<screen>" = a rule screen of its own (Globe Levels…).
+let ADMIN_RULE_VIEW = (history.state && history.state.tab === "adminpage" && typeof history.state.rv === "string" && history.state.rv) || null;
 // Each opened Admin section is a step in the browser history, so Back from a
 // section returns to the Admin home instead of the page before Admin.
 let ADMIN_SKIP_CONFIRM = false;
@@ -32306,7 +32323,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=05035033f2";
+      s.src = "admin.min.js?v=c2031e42a1";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
