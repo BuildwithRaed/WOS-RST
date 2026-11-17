@@ -12404,6 +12404,8 @@ async function renderPacksPage() {
       const a = packParseDay(lk.resetDay);
       if (a && win > 0 && win < 7 && r % 7 === 0) { out.days = win === 1 ? pkbWd(a) : `${pkbWd(a)}–${pkbWd(new Date(a.getTime() + (win - 1) * 86400000))}`; parts.push(out.days); }
     }
+    // The first purchase reward is on sale from day 1 (no trigger, no date).
+    if (lk.firstBuy) out.on = true;
     out.text = parts.filter(Boolean).join(" · ");
     return out;
   }
@@ -14232,7 +14234,7 @@ async function renderPacksPage() {
   pkbDpSub();
   renderAll();
   pkbReady = true;
-  // Tables with a hero's own shards column (VIP Special Packs …): the heroes'
+  // Tables with a hero's own shards column (the VIP packs …): the heroes'
   // pictures for those columns; drawn again once they're known.
   const heroCol = /^(.+) (shards|widgets)$/i;
   if (tables.some((tb) => Object.values(packEffectiveCols(tb)).some((c) => heroCol.test(String(c)) && !/general hero/i.test(String(c)) && !HERO_IMG_BY_NAME[heroCol.exec(String(c))[1]]))) {
@@ -14349,7 +14351,7 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     // A hero not unlocked yet (not in the roster, no saved stars) takes HERO_UNLOCK_SHARDS
     // shards before its first star step, but only the Gen's Hall of Heroes hero has to
     // buy them; the other new heroes are unlocked free (Lucky Wheel / events).
-    // Natalia / Jeronimo (VIP Special Packs only) need it too.
+    // Natalia / Jeronimo (VIP packs only) need it too.
     const isHall = HALL_OF_HEROES_HERO[Number(hero.generation)] === hero.name || vipPackHero(hero.name);
     const unlock = isHall && !inRoster && !phBy[hero.id] && !T.later ? HERO_UNLOCK_SHARDS : 0;
     let need = unlock;
@@ -14473,7 +14475,7 @@ const BP_HERO_CURRENCIES = ["Marks of Valor", "Mystery Points"];
 // Islands: Life Essence, Mythic Island Shards, the Mark of Revival Shop's currency and the Storehouse's
 // General Accessory Construction Contracts (scrolls for the Lighthouse), always in the Backpack.
 const BP_ISLAND_ITEMS = ["Life Essence", "Mythic Island Shards", "General Accessory Construction Contract", "Mark of Revival", "Glorious Tome", "Lucky Glorious Tome Chest"];
-const BP_EXTRA_ICONS = { "Life Essence": "icons/life-essence.png", "Mythic Island Shards": "icons/island-shard.png", "General Accessory Construction Contract": "icons/construction-contract.png", "Mark of Revival": "icons/mark-of-revival.png", "Glorious Tome": "icons/glorious-tome.png", "Lucky Glorious Tome Chest": "icons/lucky-glorious-tome-chest.png", "Marks of Valor": "icons/hall-marks.png", "Mystery Points": "icons/mystery-pts.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/mythic-hero-lucky-box.png", "Hero XP": "icons/hero-xp.png" };
+const BP_EXTRA_ICONS = { "Life Essence": "icons/life-essence.png", "Mythic Island Shards": "icons/island-shard.png", "General Accessory Construction Contract": "icons/construction-contract.png", "Mark of Revival": "icons/mark-of-revival.png", "Glorious Tome": "icons/glorious-tome.png", "Lucky Glorious Tome Chest": "icons/lucky-glorious-tome-chest.png", "Marks of Valor": "icons/hall-marks.png", "Mystery Points": "icons/mystery-pts.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/mythic-hero-lucky-box.png" };
 function bpIcon(item) {
   if (item.icon) return item.icon;
   const name = item.name;
@@ -15681,7 +15683,7 @@ const PACK_RESOURCE_NAMES = [
   "Food", "Manual", "Potion", "Serum",
   "Books of Knowledge", "Affinity", "Sail of Conquest", "Fiery Heart", "Compass", "General Sigils", "Speedups (minutes)",
   "Speedup 1m", "Speedup 3m", "Speedup 5m", "Speedup 1h", "Speedup 3h", "Speedup 8h",
-  "XP 10", "XP 100", "Hero XP",
+  "XP 10", "XP 100",
   "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest",
   "Fire Crystal", "FC Chest", "FC Crate", "Pet Chest", "Common Marks", "Advanced Marks", "Gems",
   "Mythic General Hero Shard", "Epic General Hero Shard", "Rare General Hero Shard", "Mythic General Hero Lucky Box",
@@ -16504,20 +16506,22 @@ async function ngHeroTables(baseTables) {
   });
   return out;
 }
-// ---- VIP Special Packs and the First Purchase Reward (real pack tables) ----
-// Two tables on the Packs page, group "Heroes packs" (owner, 17 Nov 2026, from
-// the game; rows in pack_tables, settings in the owner's packs_links like any
-// pack, so the owner edits them there):
-//  - "VIP Special Packs": one row per VIP level 1-12, each bought once, as soon
-//    as you reach that level. Its packs_links entry has `vipRows` = the VIP
-//    level of each row ([1, 2, ... 12]): rows above the tier picked on the VIP
-//    page (calc_state "vip_tier") aren't offered (packOffersFor); with no tier
-//    picked none are. VIP 1-6 give Natalia's shards, 7-12 Jeronimo's.
-//  - "First Purchase Reward": the game's reward for any first purchase (the
-//    cheapest pack, a Daily Deals row, is $0.99), open at VIP 0; two $0.99
-//    steps in order: the first unlocks Natalia (10 of her shards = her unlock)
-//    + 10 Hero XP bottles, the second gives 10 of her shards. Its entry has
-//    `firstBuy: true`; Budgets plans it only while Natalia still needs
+// ---- VIP packs and the Natalia Reward Pack (real pack tables) ----
+// Three tables on the Packs page (owner, 17 Nov 2026, from the game; rows in
+// pack_tables, settings in the owner's packs_links like any pack, so the owner
+// edits them there):
+//  - "Natalia VIP Packs" (VIP 1-6) and "Jeronimo VIP Packs" (VIP 7-12), group
+//    "Heroes packs": one row per VIP level, each bought once, as soon as you
+//    reach that level. Each entry has `vipRows` = the VIP level of each row
+//    ([1 ... 6] / [7 ... 12]): rows above the tier picked on the VIP page
+//    (calc_state "vip_tier") aren't offered (packOffersFor); with no tier
+//    picked none are.
+//  - "Natalia Reward Pack", group "Triggered packs" but with no trigger: the
+//    game's reward for any first purchase (the cheapest pack, a Daily Deals
+//    row, is $0.99), on sale from day 1; two $0.99 steps in order: the first
+//    unlocks Natalia (10 of her shards = her unlock), the second gives 10 more
+//    of her shards (Hero XP, keys, gems and books aren't counted). Its entry
+//    has `firstBuy: true`; Budgets plans it only while Natalia still needs
 //    unlocking (vipFirstBuyOpen).
 const VIP_FIRST_BUY_HERO = "Natalia";
 // Heroes whose shards come only from these packs: they need the unlock shards
@@ -16783,6 +16787,8 @@ function packLinkForBase(tableId, own) {
     group: trig ? PACK_TRIGGER_GROUP : typeof l.group === "string" ? (l.group.trim() === PACK_NEWGEN_GROUP ? PACK_HEROES_GROUP : l.group.trim()) : "",
     // Kept on the returned link so packIsNewGen works on it after the group is renamed.
     newGen: packIsNewGen(l),
+    // The first purchase reward (Natalia Reward Pack): one time, on sale from day 1.
+    firstBuy: l.firstBuy === true,
     // Daily-reward cards: the ticked columns are PER-DAY amounts, paid for
     // `days` days after one purchase (so they count `days` times).
     daily: l.daily && typeof l.daily === "object" && Array.isArray(l.daily.cols) && l.daily.cols.length
@@ -16963,7 +16969,7 @@ function packOffersFor(table, keepEmpty) {
         if (!st.counted) return null;
         label += ` · ${link.trigger.expert} Lv ${st.level}`;
       }
-      // VIP Special Packs: only the levels the person's VIP tier has reached.
+      // VIP packs: only the levels the person's VIP tier has reached.
       const vipLv = vipRowLevel(table.id, ri);
       if (vipLv && vipLv > vipTierNow()) return null;
       return { price, gives, label, row: ri };
