@@ -32549,7 +32549,7 @@ function gameRules() {
       cols: [{ key: "name", label: "Item", type: "text" }, { key: "item", label: "Counts as", type: "text" }, { key: "amount", label: "Amount", type: "num" }],
       get: () => Object.entries(PACK_BUNDLES).flatMap(([n, c]) => Object.entries(c).map(([it, a]) => ({ name: n, item: it, amount: a }))),
       set: (rows) => { const o = {}; rows.filter((r) => r.name && r.item).forEach((r) => { (o[r.name] = o[r.name] || {})[r.item] = Number(r.amount) || 0; }); ruleSetObject(PACK_BUNDLES, o); } },
-    { key: "affinity", group: "trades", label: "Affinity per expert gift item", help: "Affinity one gift item is worth on the Experts pages. A changed value is also used for packs and the Experts trade rule.",
+    { key: "affinity", group: "trades", label: "Affinity per expert gift item", help: "How much Affinity one gift item gives on the Experts pages. Changing it also changes how much Affinity these items count as inside packs, and in the Experts trade (gift items → Affinity).",
       cols: [{ key: "item", label: "Item", type: "text" }, { key: "value", label: "Affinity", type: "num" }],
       get: () => Object.entries(AFFINITY_ITEM_VALUE).map(([item, value]) => ({ item, value })),
       set: (rows) => {
