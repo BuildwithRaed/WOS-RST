@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "37302a5b75";
+window.ADMIN_BUILD = "a4395dc668";
 
 // ============================================================
 // ADMIN PAGE
@@ -679,7 +679,7 @@ const ADMIN_RULE_HOME = {
   pets: { groups: [["", ["advancedMark"]]] },
   centerresearch: { groups: [["T12", ["t12Tree"]], ["Research Center", ["rcTracks", "rcTiers"]], ["Unlock rules", ["researchLocks"]], ["Research Lab", ["rfcLab"]]] },
   skins: { groups: [["Skin Gallery", ["galleryBig", "globeLevels"]], ["Islands", ["islCopies", "islTree", "islShop", "islCamp", "islLighthouse", "islLightUnlock"]]] },
-  packres: { groups: [["", ["gems", "packDatesGroups"]]] },
+  packres: { groups: [["", ["gems"]]] },
   items: { groups: [["", ["trades", "bundles", "resChests"]]] },
 };
 const ADMIN_RULE_STATE = ["unlocks", "genDays", "events", "newGenRule", "hallHero"];

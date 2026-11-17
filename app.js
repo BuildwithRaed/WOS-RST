@@ -16293,8 +16293,6 @@ let PACK_PURCHASES = { list: [], newGen: {} };
 const PACK_NEWGEN_GROUP = "New Gen Heroes";
 // Shown as "Heroes packs", together with the other hero shard / widget packs.
 const PACK_HEROES_GROUP = "Heroes packs";
-// Packs whose own date is set on the Packs page, not in My Purchases.
-const PACK_DATES_ON_PACKS_PAGE = ["Bazzar"];
 // − n + stepper. `attr` names the buttons' data attribute.
 function purStepHtml(attr, n, max, min = 1) {
   return `<span class="pur-step"><button type="button" data-${attr}="-1" aria-label="−"${n <= min ? " disabled" : ""}>&minus;</button><b data-${attr}-n>${n}</b><button type="button" data-${attr}="1" aria-label="+"${n >= max ? " disabled" : ""}>+</button></span>`;
@@ -32388,7 +32386,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=37302a5b75";
+      s.src = "admin.min.js?v=a4395dc668";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
@@ -32596,10 +32594,6 @@ function gameRules() {
     { key: "researchLocks", group: "research", label: "Research unlock rules", help: "Which levels of a research node wait for other research (same for every troop). Used by \"can reach\": it does that research first. Edited in Admin → Research unlock rules.", link: "reslocks",
       get: () => JSON.parse(JSON.stringify(RESEARCH_LOCKS)),
       set: (v) => researchLocksSet(v) },
-    { key: "packDatesGroups", group: "packs", label: "Pack groups dated on the Packs page", help: "Pack groups (name as on the Packs page) whose start date everyone sets above Pack prices on the Packs page instead of in My Purchases → My pack dates.",
-      cols: [{ key: "group", label: "Pack group", type: "text" }],
-      get: () => PACK_DATES_ON_PACKS_PAGE.map((g) => ({ group: g })),
-      set: (rows) => ruleSetArray(PACK_DATES_ON_PACKS_PAGE, rows.map((r) => String(r.group || "").trim()).filter(Boolean)) },
     { key: "islCopies", group: "islands", label: "Island building copies per level", help: "Copies of a Mythic building needed to reach each level (Lv 1 = getting the building from an event or pack, 0). The Islands page's Shards plan counts these × shards per copy.",
       cols: [{ key: "level", label: "Level", type: "auto" }, { key: "copies", label: "Copies", type: "num" }],
       get: () => ISL_COPIES.slice(1).map((c, i) => ({ level: i + 1, copies: c })),
