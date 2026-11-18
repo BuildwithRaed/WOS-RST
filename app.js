@@ -30505,18 +30505,13 @@ async function renderExpertsResearchPage() {
       const st = saved[expert][p], cur = Number(st.current) || 0, des = Math.max(cur, Number(st.desired) || 0), top = pathTop(expert, p);
       const go = des > cur, done = !go && cur >= top;
       const pct = (v) => Math.min(100, (v / 200) * 100);
-      // The path's stats are always shown (owner, 18 Nov 2026): what the levels to the target add,
-      // at ✓ Max what the path gives in all, with nothing done yet what it gives at max.
-      const { sigil, stats } = go ? pathRotationOnly(expert, p, cur, des) : { sigil: 0, stats: {} };
-      // Each stat is its own small chip that wraps to the next line (owner, 18 Nov 2026).
-      const statChips = (o) => Object.entries(o).filter(([k, v]) => v > 0 && ER_SHORT[k]).map(([k, v]) => `<span class="er-st">${bidiNum(`+${Number(v.toFixed(1))}%`)} ${esc(ER_SHORT[k])}</span>`).join("");
-      let gains = statChips(stats);
-      if (!go) {
-        const has = cur > 0 ? statChips(pathRotationOnly(expert, p, 0, cur).stats) : "";
-        const mx = done ? "" : statChips(pathRotationOnly(expert, p, 0, top).stats);
-        const upTo = t("pkd_up_to").replace("{list}", "").trim();
-        gains = has + (mx ? `<span class="er-stl">${esc(upTo)}</span>${mx}` : "");
-      }
+      // Every path always shows the stats it gives (ATK / DEF / LETH / HP only), each a chip with its
+      // value at the current level only (no target values; owner, 18 Nov 2026).
+      const { sigil } = go ? pathRotationOnly(expert, p, cur, des) : { sigil: 0 };
+      const keys = Object.entries(pathRotationOnly(expert, p, 0, top).stats).filter(([k, v]) => v > 0 && ER_SHORT[k]).map(([k]) => k);
+      const nowSt = cur > 0 ? pathRotationOnly(expert, p, 0, cur).stats : {};
+      const fmt = (v) => bidiNum(`+${Number((Number(v) || 0).toFixed(2))}%`);
+      const gains = keys.map((k) => `<span class="er-st">${fmt(nowSt[k])} ${esc(ER_SHORT[k])}</span>`).join("");
       const curSel = `<select data-expresearchcur="${esc(expert)}|${p}" aria-label="${esc(t("current_label"))}">${pathLevelOpts(expert, p, cur)}</select>`;
       const desSel = `<select data-expresearchdes="${esc(expert)}|${p}" aria-label="${esc(t("target_label"))}">${pathLevelOpts(expert, p, des)}</select>`;
       const right = go ? `<span class="exp-rst meta">${bidiNum(Math.round(sigil).toLocaleString())} ${esc(t("resource_sigils"))}</span>`
