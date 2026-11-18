@@ -3414,6 +3414,30 @@ const T = {
   hg_needs_this: { en: "Needs for this piece" },
   hg_max_piece: { en: "Max this piece" },
   cg_trades: { en: "Trades" },
+  cgw_needs: { en: "This piece needs" },
+  cgw_have: { en: "have {n}" },
+  cgw_short: { en: "{n} short" },
+  cgw_stage: { en: "Stage" },
+  cgw_swipe: { en: "Swipe down to close" },
+  bsx_rest: { en: "Where the rest comes from" },
+  bsx_used: { en: "Used in trades" },
+  bsx_week: { en: "This week" },
+  bsx_later: { en: "Next weeks" },
+  bsx_plan: { en: "Pack plan" },
+  bsx_buy: { en: "Buy" },
+  bsx_cards: { en: "Coming" },
+  bsx_cards_l: { en: "Packs in My Purchases and running cards" },
+  bsx_trade: { en: "Trade {n}" },
+  bsx_packs_give: { en: "From packs" },
+  bsx_by: { en: "by {d}" },
+  bsx_still: { en: "still {n} short" },
+  bsx_cant: { en: "Packs can't cover it" },
+  bsx_left: { en: "Left after the plan" },
+  bsx_covered: { en: "Covered by your Backpack" },
+  bsx_nothing_traded: { en: "nothing traded" },
+  bsx_cando: { en: "Can do now:" },
+  bsx_wait: { en: "Working out where the rest comes from…" },
+  bsx_shared: { en: "Shared with your other pages: this page's part of the price." },
   cdp_pages_up: { en: "Pages that can go up" },
   cdp_of: { en: "{n} of {m}" },
   cdp_runs_out: { en: "runs out first:" },
@@ -18691,6 +18715,15 @@ let PACK_COST_MODE = "still"; // "still" = after what you own, "full" = whole am
 const PACK_COST_OPEN = {};
 const PACK_COST_SHOWN = {}; // calcKey -> the price the Pack cost card shows (null while folded)
 const PACK_COST_HOOKS = {}; // calcKey -> called when that price changes
+// calcKey -> the plan the Pack cost card shows (null = folded / not worked out, { pending } while
+// working out, { none } = no packs for the page): { trades (free trades first, with their weekly
+// limit), weeks, cards (running cards' items), rows, planTrades, days, cant, uncovered, shared }.
+const PACK_COST_PLAN = {};
+const PACK_PLAN_HOOKS = {}; // calcKey -> called when PACK_COST_PLAN changes
+function packCostPlanSet(calcKey, v) {
+  PACK_COST_PLAN[calcKey] = v;
+  if (PACK_PLAN_HOOKS[calcKey]) { try { PACK_PLAN_HOOKS[calcKey](); } catch (e) { console.warn("plan hook", e); } }
+}
 const PACK_TARGET_HOOKS = {}; // calcKey -> called when the Pack cost window's target date changes (pages whose needs follow it)
 // Pages whose needs depend on the date (Islands: free income up to then): calcKey -> (days) =>
 // { totals, ok }. Pack cost's Cheapest then tries later dates with their own (smaller) needs.
@@ -18968,7 +19001,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (!visitorCan("packcost")) { containerEl.innerHTML = ""; return; }
   await ensurePackLinks();
   const tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey));
-  if (!tables.length) { containerEl.innerHTML = ""; return; }
+  if (!tables.length) { containerEl.innerHTML = ""; packCostPlanSet(calcKey, { none: true }); return; }
   const ownedOrig = owned;
   const activeCards = packActiveCardSupply(calcKey, tables);
   if (activeCards.used.length) owned = packMergeOwned(owned, activeCards.supply);
@@ -18991,6 +19024,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
 
   if (!open) {
     packCostShown(calcKey, null);
+    packCostPlanSet(calcKey, null);
     containerEl.style.minHeight = "";
     containerEl.innerHTML = `${wrapOpen}${head}</div>`;
     containerEl.querySelector("[data-packtoggle]").addEventListener("click", () => { PACK_COST_OPEN[calcKey] = true; rerender(); });
@@ -19003,6 +19037,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   // "Working out…" would pull the page up).
   if (containerEl.offsetHeight) containerEl.style.minHeight = containerEl.offsetHeight + "px";
   containerEl.innerHTML = `${wrapOpen}${head}<div class="meta" style="font-size:11px; margin-top:8px; padding:8px 10px; border:1px dashed var(--line); border-radius:8px;"><b style="color:var(--ice);">${esc(t("budgets_loading"))}</b><br>${esc(t("pack_calc_wait"))}</div></div>`;
+  packCostPlanSet(calcKey, { pending: true });
   await new Promise((r) => setTimeout(r, 450));
   if (stale()) return;
   // What this page needs in total, across every group (e.g. all 3 Hero Gear sets).
@@ -19060,6 +19095,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     </div>`;
 
   let sections;
+  let snapShared = null, snapPage = null, snapCant = false;
   // Items no pack setup can cover (listed, not planned).
   const uncoveredHtml = Object.keys(viaTrades.uncovered).length ? `<div class="meta" style="font-size:10.5px; margin:6px 0; padding:6px 8px; border:1px solid var(--danger); border-radius:8px; color:var(--danger);">${esc(t("pack_cant_cover"))}: ${Object.keys(viaTrades.uncovered).map((n) => `<b>${esc(materialDisplayName(n))} ${qty(viaTrades.uncovered[n])}</b>${viaTrades.maxWithin && viaTrades.maxWithin[n] != null ? ` <span class="meta">(${esc(t("pack_max_3y"))} ${qty(viaTrades.maxWithin[n])})</span>` : ""}`).join(" &middot; ")}<br><span class="meta" style="color:var(--muted);">${esc(t("pack_uncovered_hint"))}</span></div>` : "";
   // Shared packs: show this page's share of the combined Budgets plan.
@@ -19203,6 +19239,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       }).join("");
       if (got > 0) inPlanHtml = `<div class="pca-h">${esc(t("pca_in_plan"))}</div>${lines}<div class="pca-note ok">&#10003; ${esc(t("pca_free_shards").replace("{n}", qty(got)).replace("{c}", qty(Math.floor(got / islPc))))}</div>`;
     }
+    snapShared = { rows: mineShare.rows, planTrades: trades, days: p.days, shared: true };
     sharedSections = `<div class="pc-plans">
         <div class="pc-plan on" style="cursor:default;"><div class="pc-k">${esc(t("combined_share"))}</div><b>${big(packSharesLocal(mineShare))}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(whenTxt)}</small></div>
         <button type="button" class="pc-plan" data-gotobudgets title="${esc(t("combined_desc").replace("{pages}", shared.sharedWith.map(packPageLabel).join(", ")))}"><div class="pc-k">${esc(t("pc_all_pages"))}</div><b>${big(packPlanLocal(p))}</b><small>${esc(t("budgets_title"))} &rarr;</small></button>
@@ -19214,6 +19251,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (!packGroups.length) {
     sections = `<div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("pack_no_columns"))}</div>`;
   } else if (!Object.keys(need).length) {
+    snapPage = { rows: [], planTrades: [], days: 0 };
     sections = Object.keys(viaTrades.uncovered).length ? "" : `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--good);">${esc(t("pack_nothing_needed"))}</div>
       ${traded && traded.trades.length ? `<div class="meta" style="font-size:10px; margin:4px 0; color:var(--good);">${esc(t("trade_free"))}: ${traded.trades.map((x) => `${Math.round(x.giveQty).toLocaleString()} ${esc(materialDisplayName(x.from))} → ${Math.round(x.getQty).toLocaleString()} ${esc(materialDisplayName(x.to))}`).join(" &middot; ")}</div>` : ""}`;
   } else if (skipPagePlan) {
@@ -19247,6 +19285,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     }
     const plans = [];
     if (earliest == null) {
+      snapCant = true;
       // Explain what's short and how much the packs could give at most,
       // plus which tables limit it (once-only / per-row max).
       const sup = packMaxSupply(packGroups, PACK_HORIZON_DAYS);
@@ -19287,6 +19326,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(when)}</small></button>`;
         };
         const p = pick && pick.plan;
+        if (p) snapPage = { rows: p.rows, planTrades: p.trades || [], days: p.days };
         if (p) pickedTotalText = packFmtLocal(Math.ceil(packPlanLocal(p)), currency, true, p.rows[0]?.price);
         if (PACK_PICK_HOOKS[calcKey]) { const hk = PACK_PICK_HOOKS[calcKey], dd = pick && pick.key === "cheapest" && cheapAt && p === cheapAt.plan ? cheapAt.d : null; setTimeout(() => hk(dd), 0); }
         const byPack = [];
@@ -19325,6 +19365,17 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (stale()) return;
   packCostShown(calcKey, (usingShared ? sharedTotalText : (pickedTotalText || pageTotalText)) || null);
   if (usingShared) sections = sharedSections;
+  {
+    const rates = tradeRatesFor(calcKey);
+    const withCap = (x) => { const r = rates.find((q) => q.from === x.from && q.to === x.to) || {}; return { ...x, max: Number(r.max) || 0, hidden: !!r.hidden }; };
+    const sp = usingShared ? snapShared : snapPage;
+    packCostPlanSet(calcKey, {
+      trades: traded ? traded.trades.map(withCap) : [], weeks: traded ? traded.weeks : 1,
+      cards: activeCards.used.length ? { ...activeCards.supply } : {},
+      rows: sp ? sp.rows : [], planTrades: sp ? sp.planTrades : [], days: sp ? sp.days : null,
+      cant: snapCant || !sp, uncovered: { ...viaTrades.uncovered }, shared: !!(sp && sp.shared), targetDays,
+    });
+  }
   let fallbackNote = "";
   if (shared && !canShare && !shared.lazyShare && PACK_COST_MODE === "still") {
     if (shared.notIncluded) fallbackNote = sharedNote(t("combined_not_included"));
@@ -24575,6 +24626,12 @@ function gearSheetEl() {
   return m;
 }
 function closeGearSheet() { const m = document.getElementById("gearSheet"); if (m) m.style.display = "none"; }
+// Esc closes the Chief Gear piece window (it has no buttons of its own).
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  const m = document.getElementById("gearSheet");
+  if (m && m.style.display !== "none" && m.querySelector(".cgw")) { e.stopImmediatePropagation(); closeGearSheet(); }
+}, true);
 
 // Sums Guides/Designs/Secrets across all 18 charm slots.
 async function updateCharmTotals() {
@@ -24874,52 +24931,136 @@ async function renderChiefGearCalc() {
     b.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse" && !pinned) show(false); });
   }
 
-  // The sheet for one piece: Now and Target lists side by side.
+  // One piece's window: Now and Target as tier / star / stage chips, then what
+  // this piece needs (Now → Target) against the Backpack. No buttons: swipe it
+  // down, tap the dim page or Esc to close. Every tap saves and redraws the page.
   function openGearSheet(key) {
     const m = gearSheetEl();
-    const draw = (keepScroll) => {
+    const MATS = [["hardened_alloy", "Hardened Alloy"], ["polishing_solution", "Polishing Solution"], ["design_plan", "Design Plan"], ["amber", "Amber"]];
+    // The tiers in row order (each a run of rows), worked out from the rows themselves.
+    const tiers = [];
+    rows.forEach((r, i) => { const tk = String(r.tier ?? ""), g = tiers[tiers.length - 1]; if (!g || g.tier !== tk) tiers.push({ tier: tk, first: i, last: i }); else g.last = i; });
+    const tierAt = (i) => tiers.findIndex((g) => i >= g.first && i <= g.last);
+    const tierName = (tk) => String(CHIEF_GEAR_TIER_SHORT[tk] || tk || "").replace(/^(Red|Legendary) (?=T\d)/, "");
+    const tierCls = (tk) => { const l = chiefGearLook(tk); return l === "uncommon" ? "green" : l === "rare" ? "blue" : l === "epic" ? "purple" : l === "mythic" ? "gold" : "red"; };
+    const lvName = (r) => (r ? `${tierName(r.tier)}${r.stars != null ? ` ★${r.stars}` : ""}${r.stars != null && r.stage != null ? `.${r.stage}` : ""}` : "");
+    const idxs = (g) => { const a = []; for (let i = g.first; i <= g.last; i++) a.push(i); return a; };
+    const sameStar = (a, b) => String(rows[a].stars) === String(rows[b].stars);
+    const pct = (i) => parseStatPct(rows[i]?.stat) || 0;
+    const big = (v) => (Math.abs(v) < 1e6 ? Math.round(v).toLocaleString() : shortAmount(v));
+    const small = (v) => (Math.abs(v) < 1e5 ? Math.round(v).toLocaleString() : shortAmount(v));
+    const block = (role, sel, lo, cap) => {
+      const ti = tierAt(sel), g = tiers[ti], r = rows[sel];
+      const up = (i) => (i > cap ? " up" : "");
+      const tierChips = tiers.map((x, k) => {
+        const off = x.last < lo, first = Math.max(x.first, lo);
+        return `<button type="button" class="cgw-c ${tierCls(x.tier)}${k === ti ? " on" : ""}${up(first)}" data-cgw="${role}|t|${k}"${off ? " disabled" : ""}${first > cap ? ` title="${esc(t("upcoming_tag"))}"` : ""}>${esc(tierName(x.tier))}</button>`;
+      }).join("");
+      const inTier = idxs(g);
+      const stars = [...new Set(inTier.map((i) => rows[i].stars).filter((s) => s != null).map(String))];
+      const starRow = stars.length ? `<div class="cgw-stars" style="--n:${stars.length};">${stars.map((s) => {
+        const ok = inTier.filter((i) => String(rows[i].stars) === s && i >= lo);
+        return `<button type="button" class="cgw-c${String(r.stars) === s ? " on" : ""}${ok.length ? up(ok[0]) : ""}" data-cgw="${role}|s|${s}"${ok.length ? "" : " disabled"}>&#9733;${esc(s)}</button>`;
+      }).join("")}</div>` : "";
+      const stg = r.stars != null ? inTier.filter((i) => sameStar(i, sel) && rows[i].stage != null) : [];
+      const stageRow = stg.length > 1 ? `<div class="cgw-dots"><span class="cgw-dl">${esc(t("cgw_stage"))}</span>${stg.map((i) => `<button type="button" class="cgw-d${i === sel ? " on" : ""}${up(i)}" data-cgw="${role}|i|${i}"${i < lo ? " disabled" : ""}>.${esc(String(rows[i].stage))}</button>`).join("")}</div>` : "";
+      const tag = role === "to" && sel > cap ? `<span class="cgw-up">${esc(t("upcoming_tag"))}</span>` : "";
+      const mx = Math.max(lo, cap);
+      const maxBtn = role === "to" ? `<button type="button" class="plx-maxbtn plx-max cgw-max" data-cgwmax${sel === mx ? " disabled" : ""}>${esc(t("max_button"))}</button>` : "";
+      return `<div class="ch-sec cgw-blk${role === "to" ? " tgt" : ""}"><div class="ch-sec-h"><b>${esc(t(role === "to" ? "t12x_target" : "t12x_now"))}</b><span class="cgw-v${sel > cap ? " up" : ""}">${esc(lvName(r))}</span>${tag}<i class="cgw-sp"></i>${maxBtn}</div>
+        <div class="cgw-tiers" data-cgwrow="${role}">${tierChips}</div>${starRow}${stageRow}</div>`;
+    };
+    const needsHtml = (from, to) => {
+      const have = BAR_EFF_OWNED.chief_gear || {};
+      const need = {};
+      MATS.forEach(([col, n]) => { let s = 0; for (let i = from + 1; i <= to; i++) s += Number(rows[i][col]) || 0; need[n] = s; });
+      return `<div class="cgw-nh">${esc(t("cgw_needs"))}</div><div class="cgw-nd">${MATS.map(([, n]) => {
+        const h = Number(have[n]) || 0, sh = Math.max(0, need[n] - h), ic = materialIconSrc(n);
+        return `<div class="cgw-nb${need[n] > 0 && sh > 0 ? " bad" : need[n] > 0 ? " ok" : ""}" title="${esc(materialDisplayName(n))}">${ic ? `<img src="${esc(ic)}" alt="" />` : ""}<b>${bidiNum(big(need[n]))}</b><small>${esc(t("cgw_have").replace("{n}", small(h)))}</small><span>${need[n] > 0 ? (sh > 0 ? esc(t("cgw_short").replace("{n}", small(sh))) : "&#10003;") : "&#10003;"}</span></div>`;
+      }).join("")}</div>`;
+    };
+    const draw = () => {
       const p = pieceOf(key), st = CHIEF_GEAR_STATE[p.key], cap = chiefGearCapIdx();
-      const from = st.from, to = Math.max(from, st.to ?? from);
-      const keep = keepScroll ? [...m.querySelectorAll(".gs-list")].map((x) => x.scrollTop) : null;
-      const pct = (i) => parseStatPct(rows[i]?.stat) || 0;
-      const list = (role, sel, lo) => {
-        let tier = null, out = "";
-        rows.forEach((r, i) => {
-          if (r.tier !== tier) { tier = r.tier; out += `<div class="gs-grp">${esc(CHIEF_GEAR_TIER_SHORT[r.tier] || r.tier || "")}</div>`; }
-          out += `<button type="button" class="gs-opt${i === sel ? " on" : ""}${i > cap ? " up" : ""}" data-gspick="${role}|${i}" ${i < lo ? "disabled" : ""}>${esc(cgBadge(r))}${i === sel ? " &#10003;" : ""}${i > cap ? `<small> · ${esc(t("upcoming_tag"))}</small>` : ""}</button>`;
-        });
-        return `<div class="gs-list" data-gslist="${role}">${out}</div>`;
-      };
-      const k = ORDER.indexOf(key);
-      const nav = (d) => { const nk = ORDER[k + d]; return nk ? `<button type="button" class="btn ghost" data-gsnav="${d}">${d < 0 ? "&#8249; " : ""}${esc(pieceDisplayName(pieceOf(nk).name))}${d > 0 ? " &#8250;" : ""}</button>` : `<span></span>`; };
-      m.innerHTML = `<div class="modal-box adm-sheet gs-box" role="dialog" aria-modal="true">
+      const from = Math.min(st.from, rows.length - 1), to = Math.min(Math.max(from, st.to ?? from), rows.length - 1);
+      const keep = {};
+      m.querySelectorAll("[data-cgwrow]").forEach((x) => { keep[x.dataset.cgwrow] = x.scrollLeft; });
+      const first = !m.querySelector(".cgw");
+      m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw" role="dialog" aria-modal="true" aria-label="${esc(`${pieceDisplayName(p.name)} · ${troopDisplayName(p.troop)}`)}">
+        <div class="cgw-top" data-cgwgrab><div class="cgw-grab" title="${esc(t("cgw_swipe"))}"></div>
         <div class="gs-head"><span class="cg-pic sm"><img src="${chiefGearIcon(p.key, from)}" alt="" /></span><div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(p.name))} · ${esc(troopDisplayName(p.troop))}</b>
-          <div class="meta">ATK &amp; DEF <span style="color:var(--good);">${pctShort(pct(from))}</span>${to > from ? ` &rarr; <span style="color:var(--ice);">${pctShort(pct(to))}</span>` : ""}</div></div>
-          ${closeXHtml("data-gsclose")}</div>
-        <div class="gs-lists"><div><div class="gs-l">${esc(t("t12x_now"))}</div>${list("from", from, 0)}</div><div><div class="gs-l">${esc(t("t12x_target"))}</div>${list("to", to, from)}</div></div>
-        <div class="gs-foot">${nav(-1)}<button type="button" class="btn" data-gsclose>${esc(t("gs_done"))}</button>${nav(1)}</div>
+          <div class="meta">ATK &amp; DEF <span style="color:var(--good);">${pctShort(pct(from))}</span>${to > from ? ` &rarr; <span style="color:var(--ice);">${pctShort(pct(to))}</span>` : ""}</div></div></div></div>
+        ${block("from", from, 0, cap)}
+        ${block("to", to, from, cap)}
+        ${needsHtml(from, to)}
       </div>`;
-      const lists = [...m.querySelectorAll(".gs-list")];
-      lists.forEach((l, i) => {
-        if (keep) { l.scrollTop = keep[i]; return; }
-        const on = l.querySelector(".gs-opt.on");
-        if (on) l.scrollTop = Math.max(0, on.offsetTop - l.clientHeight / 2 + on.offsetHeight / 2);
+      m.querySelectorAll("[data-cgwrow]").forEach((x) => {
+        if (!first && keep[x.dataset.cgwrow] != null) { x.scrollLeft = keep[x.dataset.cgwrow]; return; }
+        const on = x.querySelector(".on");
+        if (on) x.scrollLeft = Math.max(0, on.offsetLeft - x.offsetLeft - x.clientWidth / 2 + on.offsetWidth / 2);
       });
     };
-    m.onclick = (ev) => {
-      if (ev.target === m || ev.target.closest("[data-gsclose]")) { closeGearSheet(); return; }
-      const pk = ev.target.closest("[data-gspick]");
-      if (pk) {
-        const [role, i] = pk.dataset.gspick.split("|"), st = CHIEF_GEAR_STATE[key], v = Number(i);
-        st[role] = v;
-        if (role === "from" && (st.to ?? 0) < v) st.to = v; // the target is never below now
-        changed(); draw(true); return;
+    // Picking: a tier takes its first level that is valid for the block (Target keeps
+    // its star / stage when the new tier has it); a star keeps the stage when it can.
+    const pick = (role, kind, val) => {
+      const st = CHIEF_GEAR_STATE[key], from = st.from, cur = role === "from" ? from : Math.max(from, st.to ?? from), lo = role === "from" ? 0 : from;
+      const r0 = rows[cur];
+      let v = null;
+      if (kind === "i") v = Number(val);
+      else if (kind === "t") {
+        const ok = idxs(tiers[Number(val)]).filter((i) => i >= lo);
+        if (!ok.length) return;
+        v = role === "to" ? (ok.find((i) => String(rows[i].stars) === String(r0.stars) && String(rows[i].stage) === String(r0.stage)) ?? ok[0]) : ok[0];
+      } else if (kind === "s") {
+        const ok = idxs(tiers[tierAt(cur)]).filter((i) => String(rows[i].stars) === String(val) && i >= lo);
+        if (!ok.length) return;
+        v = ok.find((i) => String(rows[i].stage) === String(r0.stage)) ?? ok[0];
       }
-      const nv = ev.target.closest("[data-gsnav]");
-      if (nv) { key = ORDER[ORDER.indexOf(key) + Number(nv.dataset.gsnav)] || key; draw(false); }
+      if (v == null || v < lo) return;
+      st[role] = v;
+      if (role === "from" && (st.to ?? 0) < v) st.to = v; // the target is never below now
+      changed(); draw();
     };
+    m.onclick = (ev) => {
+      if (dragged) { dragged = false; return; }
+      if (ev.target === m) { closeGearSheet(); return; }
+      const c = ev.target.closest("[data-cgw]");
+      if (c && !c.disabled) { const [role, kind, val] = c.dataset.cgw.split("|"); pick(role, kind, val); return; }
+      if (ev.target.closest("[data-cgwmax]")) {
+        const st = CHIEF_GEAR_STATE[key];
+        st.to = Math.max(st.from, chiefGearCapIdx());
+        changed(); draw();
+      }
+    };
+    // Swipe down (the handle or the header) to close; a short drag springs back.
+    let sy = null, t0 = 0, dy = 0, dragged = false;
+    const box = () => m.querySelector(".cgw");
+    m.onpointerdown = (ev) => {
+      dragged = false;
+      if (!ev.isPrimary || !ev.target.closest("[data-cgwgrab]") || !box()) return;
+      sy = ev.clientY; t0 = performance.now(); dy = 0;
+      box().style.transition = "none";
+    };
+    m.onpointermove = (ev) => {
+      if (sy == null || !box()) return;
+      dy = Math.max(0, ev.clientY - sy);
+      if (dy > 6) dragged = true;
+      box().style.transform = dy ? `translateY(${dy}px)` : "";
+    };
+    const end = () => {
+      if (sy == null) return;
+      const b = box(), fast = dy > 24 && dy / Math.max(1, performance.now() - t0) > 0.5;
+      sy = null;
+      if (!b) return;
+      b.style.transition = "transform .18s ease";
+      if (dy > 80 || fast) {
+        b.style.transform = "translateY(100%)";
+        setTimeout(() => { closeGearSheet(); b.style.transform = ""; b.style.transition = ""; }, 180);
+      } else b.style.transform = "";
+    };
+    m.onpointerup = end;
+    m.onpointercancel = end;
     m.style.display = "flex";
-    draw(false);
+    draw();
   }
 
   // Max: every piece's current level and target to the highest open level,
@@ -24958,6 +25099,7 @@ const BAR_SUMMARY_KEYS = new Set(["t12_research", "t11_helios", "research_center
 // Research pages show research speedups in their time box, not as a square.
 const BAR_TIME_KEYS = new Set(["t12_research", "t11_helios", "research_center"]);
 const BAR_SHOW_ALL = {}; // { calcKey: false } - item tiles hidden (they start shown)
+const BAR_EFF_OWNED = {}; // { calcKey: { item: amount } } what the Backpack boxes count (chests and hidden trades in)
 // "Hide boxes" is remembered per page on the person's account (owner, 20 Oct
 // 2026): calc_state "bar_hidden" = { calcKey: true }.
 let BAR_HIDDEN_LOAD = null;
@@ -25111,7 +25253,9 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     hiddenTrades = applyTrades(hiddenRates, totalNeed, calcOwned, 1).trades;
     hiddenTrades.forEach((tr) => { effOwned[tr.to] = (effOwned[tr.to] || 0) + tr.getQty; });
   }
+  const noteEff = () => { BAR_EFF_OWNED[calcKey || "chief_gear"] = effOwned; };
   recomputeEffOwned();
+  noteEff();
   // What the page's "can reach" marks spend; redrawn
   // when a box amount changes too.
   const reachRefresh = () => {
@@ -25274,7 +25418,24 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   function editTileModal(name) {
     const canLink = Object.keys(link.bp).length && backpackLinks(calcKey || "chief_gear", name);
     const linked = canLink && backpackLinked(calcKey || "chief_gear", name, link);
+    // Chief Gear: the box on top and where the rest comes from / where the spare goes.
+    const cg = (calcKey || "chief_gear") === "chief_gear";
+    const needAll = {};
+    names.forEach((n) => { const v = needSum(n); if (v > 0) needAll[n] = v; });
+    const extra = cg ? () => cgBoxExplainHtml(name, { need: needSum(name), have: effOwned[name] || 0, needAll, calcOwned }) : null;
+    if (cg) {
+      PACK_PLAN_HOOKS.chief_gear = () => {
+        const md = document.getElementById("bsEditModal"), ex = md && md.style.display !== "none" && md._extra && md.querySelector("[data-bsexplain]");
+        if (ex) ex.innerHTML = md._extra();
+      };
+      // The Pack cost card works its plan out only once opened (same as its button).
+      if (visitorCan("packcost") && PACK_COST_OPEN.chief_gear !== true) {
+        const tg = document.querySelector(`[id="${rowsId}_packs"] [data-packtoggle]`);
+        if (tg) tg.click();
+      }
+    }
     plxAmountModal({
+      top: cg, extra,
       label: materialDisplayName(itemShortName(name)),
       icon: iconFor(name),
       rawValue: owned[name] || 0,
@@ -25360,6 +25521,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     if (note) note.innerHTML = backpackLinkNoteHtml(calcKey || "chief_gear", name, link);
     // A chest / convertible item changes other materials' status too.
     recomputeEffOwned();
+    noteEff();
     reachRefresh();
     names.forEach((n) => groups.forEach((g) => {
       const needed = Number((g.totals || {})[n]) || 0;
@@ -32180,7 +32342,14 @@ document.addEventListener("click", (ev) => {
 function plxAmountModal(o) {
   let modal = document.getElementById("bsEditModal");
   if (!modal) { modal = document.createElement("div"); modal.id = "bsEditModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
-  modal.innerHTML = `<div class="modal-box" style="max-width:300px; text-align:center;">
+  // Chief Gear: the typing box + Save on top, then Needed / You have and where it comes from (o.extra).
+  modal.innerHTML = o.top ? `<div class="modal-box bsm-top">
+      <div class="bsm-h">${o.icon ? `<img src="${esc(o.icon)}" alt="" />` : ""}<div><b>${esc(o.label)}</b>${o.linked != null ? `<small>${o.linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</small>` : ""}</div>${closeXHtml("data-bsmclose")}</div>
+      <div class="bsm-in"><input id="bsEditQty" type="text" inputmode="${o.minutes ? "text" : "decimal"}" autocomplete="off" aria-label="${esc(o.label)}" value="${"rawValue" in o ? o.rawValue : Number(o.value) || 0}" /><button class="btn" type="button" id="bsEditSave">${esc(t("save"))}</button></div>
+      <div class="bsm-ln">${o.linked === false && o.onUse ? `<button class="linklike" type="button" id="bsEditUse">&#127890; ${esc(t("bp_link_use"))}</button>` : "<span></span>"}<button class="linklike bsm-cancel" type="button" id="bsEditCancel">${esc(t("cancel"))}</button></div>
+      ${o.needBox ? bsNeedBoxesHtml(o.needBox) : ""}
+      ${o.extra ? `<div class="bsx" data-bsexplain>${o.extra()}</div>` : ""}
+    </div>` : `<div class="modal-box" style="max-width:300px; text-align:center;">
       ${o.icon ? `<img src="${esc(o.icon)}" alt="" style="width:56px; height:56px; object-fit:contain;" />` : ""}
       <h2 style="margin:6px 0 4px; font-size:16px;">${esc(o.label)}</h2>
       ${o.linked != null ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${o.linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</div>` : ""}
@@ -32193,10 +32362,12 @@ function plxAmountModal(o) {
         <button class="btn" type="button" id="bsEditSave">${esc(t("save"))}</button>
       </div></div>`;
   modal.style.display = "flex";
-  const close = () => { modal.style.display = "none"; };
-  modal.onclick = (ev) => { if (ev.target === modal) close(); };
+  modal._extra = o.extra || null;
+  const close = () => { modal.style.display = "none"; modal._extra = null; };
+  modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-bsmclose]")) close(); };
   const input = modal.querySelector("#bsEditQty");
-  input.focus(); input.select();
+  // (Box on top: phones don't open the keyboard at once, so the list under it stays in view.)
+  if (!o.top || !window.matchMedia("(pointer: coarse)").matches) { input.focus(); input.select(); }
   const save = () => {
     let val = o.minutes ? parseMinutes(input.value) : parseAmount(input.value);
     if (Number.isNaN(val)) { input.style.borderColor = "var(--danger)"; return; }
@@ -32209,6 +32380,87 @@ function plxAmountModal(o) {
   input.onkeydown = (ev) => { if (ev.key === "Enter") save(); else if (ev.key === "Escape") close(); };
   const use = modal.querySelector("#bsEditUse");
   if (use) use.onclick = () => { close(); o.onUse(); };
+}
+// Chief Gear Backpack box pop-up: where the rest of a short item comes from (this
+// week's and later trades, coming packs, the Pack cost plan's packs and trades), or
+// where a spare item goes (trades out of it). Read only from what the page already
+// has: the Pack cost card's picked plan (PACK_COST_PLAN) and the trade rules. The free
+// trades have no dates: each trade's lots up to its weekly limit are "this week", the
+// rest "next weeks" (Pack cost lets them run until the target).
+function cgBoxExplainHtml(name, c) {
+  const calcKey = "chief_gear";
+  let snap = PACK_COST_PLAN[calcKey];
+  const canPacks = visitorCan("packcost");
+  if (canPacks && (!snap || snap.pending)) return `<div class="bsx-wait">${esc(t("bsx_wait"))}</div>`;
+  const rates = tradeRatesFor(calcKey);
+  if (!snap || snap.none) {
+    // No packs for this page (or no Pack cost): only this week's trades.
+    const tr = tradeAdjustedStill(calcKey, c.needAll, c.calcOwned, null);
+    snap = { trades: tr ? tr.trades.map((x) => { const r = rates.find((q) => q.from === x.from && q.to === x.to) || {}; return { ...x, max: Number(r.max) || 0, hidden: !!r.hidden }; }) : [], weeks: 1, cards: {}, rows: [], planTrades: [], days: null, cant: false, uncovered: {}, noPacks: true };
+  }
+  // Rules the Backpack box already counts in "You have" (hidden ones, unlimited ones).
+  const inHave = (x) => x.hidden || ((!(x.max > 0) || x.from === "Fire Crystal") && TRADE_APPLY[calcKey] !== false);
+  const split = (x) => {
+    if (inHave(x) || !(x.lots > 0)) return [];
+    const per = x.giveQty / x.lots, gp = x.getQty / x.lots, a = x.max > 0 ? Math.min(x.lots, x.max) : x.lots, b = x.lots - a;
+    return [a > 0 && { when: "week", from: x.from, to: x.to, give: a * per, get: a * gp }, b > 0 && { when: "later", from: x.from, to: x.to, give: b * per, get: b * gp }].filter(Boolean);
+  };
+  const free = snap.trades.flatMap(split);
+  const ic = (n) => { const src = materialIconSrc(n); return src ? `<img src="${esc(src)}" alt="" />` : ""; };
+  const nm = (n) => esc(materialDisplayName(itemShortName(n)));
+  const num = (v) => bidiNum(Math.abs(v) < 1e5 ? Math.round(v).toLocaleString() : shortAmount(v));
+  const when = (w) => esc(t(w === "week" ? "bsx_week" : w === "later" ? "bsx_later" : w === "plan" ? "bsx_plan" : w === "cards" ? "bsx_cards" : "bsx_buy"));
+  const line = (w, mid, v, cls) => `<div class="bsx-l"><span class="bsx-w">${when(w)}</span><span class="bsx-m">${mid}</span><b class="${cls || "g"}">${v}</b></div>`;
+  const today = packStartOfToday();
+  const dayTxt = (days) => {
+    if (!(days > 0)) return t("pack_ready_now");
+    const d = new Date(today.getTime() + days * 86400000);
+    try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }) + packYearMark(d); } catch (e) { return d.toDateString(); }
+  };
+  // The plan's packs that give this item, one line per pack.
+  const packs = [];
+  (snap.rows || []).forEach((r) => {
+    const q = (Number((r.gives || {})[name]) || 0) * (r.count || 1);
+    if (!(q > 0)) return;
+    const pn = purShortName(purPackName(r.title, PACK_TABLES_CACHE)) || r.title;
+    let g = packs.find((x) => x.pn === pn);
+    if (!g) { g = { pn, q: 0, price: 0, cur: r.currency, sample: r.price }; packs.push(g); }
+    g.q += q; g.price += snap.shared && r.share != null ? packShareLocal(r) : packRowLocal(r);
+  });
+  const packQ = packs.reduce((a, g) => a + g.q, 0);
+  const cards = Number((snap.cards || {})[name]) || 0;
+  const planIn = (snap.planTrades || []).filter((x) => x.to === name), planOut = (snap.planTrades || []).filter((x) => x.from === name);
+  const freeIn = free.filter((x) => x.to === name), freeOut = free.filter((x) => x.from === name);
+  const sum = (a, k) => a.reduce((s, x) => s + (Number(x[k]) || 0), 0);
+  const packLines = packs.map((g) => line("buy", `${ic(name)}<span title="${esc(g.pn)}">${esc(g.pn)}</span><span class="bsx-pr">${packFmtLocal(g.price, g.cur, false, g.sample)}</span>`, `+${num(g.q)}`)).join("");
+  const sharedNote = snap.shared && packs.length ? `<div class="bsx-note">${esc(t("bsx_shared"))}</div>` : "";
+  if (c.need > c.have + 0.5) {
+    const total = c.have + cards + sum(freeIn, "get") + packQ + sum(planIn, "getQty") - sum(freeOut, "give") - sum(planOut, "giveQty");
+    const lines = freeIn.map((x) => line(x.when, `${ic(x.from)}<span>${esc(t("bsx_trade").replace("{n}", num(x.give)))} ${nm(x.from)}</span>`, `+${num(x.get)}`)).join("")
+      + (cards > 0 ? line("cards", `${ic(name)}<span>${esc(t("bsx_cards_l"))}</span>`, `+${num(cards)}`) : "")
+      + packLines
+      + planIn.map((x) => line("plan", `${ic(x.from)}<span>${esc(t("bsx_trade").replace("{n}", num(x.giveQty)))} ${nm(x.from)}</span>`, `+${num(x.getQty)}`)).join("")
+      + freeOut.map((x) => line(x.when, `${ic(name)}<span>${num(x.give)} &rarr;</span>${ic(x.to)}<span>${nm(x.to)}</span>`, `&minus;${num(x.give)}`, "r")).join("")
+      + planOut.map((x) => line("plan", `${ic(name)}<span>${num(x.giveQty)} &rarr;</span>${ic(x.to)}<span>${nm(x.to)}</span>`, `&minus;${num(x.giveQty)}`, "r")).join("");
+    const ok = total >= c.need - 0.5;
+    const tot = ok
+      ? `<div class="bsx-tot ok"><b>= ${num(total)}</b><span>&#10003; ${esc(t("bsx_by").replace("{d}", dayTxt(snap.days)))}</span></div>`
+      : `<div class="bsx-tot bad"><b>= ${num(total)}</b><span>${esc(t("bsx_still").replace("{n}", num(c.need - total)))}${snap.cant && !snap.noPacks ? ` &middot; ${esc(t("bsx_cant"))}` : ""}</span></div>`;
+    // What the Backpack already lets the page do (the page marks), when they are worked out.
+    let can = "";
+    if (typeof MK !== "undefined" && MK && MK.tab === "chiefgear" && MK.plan) {
+      const x = MK.list.find((y) => (MK.plan.lv[y.tr.id] || 0) > y.tr.from);
+      if (x) can = `<div class="bsx-can">&#9889; ${esc(t("bsx_cando"))} <b>${esc(pieceDisplayName(x.tr.name || ""))} &rarr; ${esc(mkLab(x.tr, MK.plan.lv[x.tr.id]))}</b></div>`;
+    }
+    return `<div class="bsx-h">${esc(t("bsx_rest"))}</div>${lines ? `<div class="bsx-list">${lines}</div>` : ""}${sharedNote}${tot}${can}`;
+  }
+  // Enough: what is traded away, and what is left after the plan.
+  const outLines = freeOut.map((x) => line(x.when, `${ic(name)}<span>${num(x.give)} &rarr;</span>${ic(x.to)}<span>${nm(x.to)}</span>`, `+${num(x.get)}`)).join("")
+    + planOut.map((x) => line("plan", `${ic(name)}<span>${num(x.giveQty)} &rarr;</span>${ic(x.to)}<span>${nm(x.to)}</span>`, `+${num(x.getQty)}`)).join("");
+  if (!outLines && !packQ && !cards) return `<div class="bsx-tot ok"><b>&#10003; ${esc(t("bsx_covered"))}</b><span>${esc(t("bsx_nothing_traded"))}</span></div>`;
+  const left = c.have + cards + packQ + sum(planIn, "getQty") - c.need - sum(freeOut, "give") - sum(planOut, "giveQty");
+  return `<div class="bsx-h">${esc(t(outLines ? "bsx_used" : "bsx_packs_give"))}</div><div class="bsx-list">${outLines}${cards > 0 ? line("cards", `${ic(name)}<span>${esc(t("bsx_cards_l"))}</span>`, `+${num(cards)}`) : ""}${packLines}
+    <div class="bsx-l lft"><span class="bsx-w">${esc(t("bsx_left"))}</span><b class="${left < -0.5 ? "r" : ""}">${num(Math.max(0, left))}</b></div></div>${sharedNote}`;
 }
 // Third line of a Backpack tile: red "N short", green ✓, or grey — when
 // this page doesn't use it (need 0). { html, off }.
