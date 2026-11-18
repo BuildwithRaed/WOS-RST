@@ -15603,6 +15603,8 @@ const CHIEF_GEAR_TIER_SHORT = {
   "Legendary T4": "Red T4",
   "Legendary T5": "Red T5",
   "Legendary T6": "Red T6",
+  "Legendary T7": "Red T7",
+  "Legendary T8": "Red T8",
 };
 function rowLabel(r) {
   if (r.display_label) return r.display_label;
@@ -25072,7 +25074,7 @@ const CHIEF_GEAR_ICONS = {
 // Legendary (red, also T1 – T3), Legendary T4, T5 and T6.
 function chiefGearLook(tier) {
   const t = String(tier || ""), m = /^legendary(?:\s*t(\d+))?/i.exec(t);
-  if (m) { const n = Number(m[1] || 0); return n >= 6 ? "t6" : n === 5 ? "t5" : n === 4 ? "t4" : "legendary"; }
+  if (m) { const n = Number(m[1] || 0); return n >= 8 ? "t8" : n === 7 ? "t7" : n >= 6 ? "t6" : n === 5 ? "t5" : n === 4 ? "t4" : "legendary"; }
   return /^mythic/i.test(t) ? "mythic" : /^epic/i.test(t) ? "epic" : /^rare/i.test(t) ? "rare" : "uncommon";
 }
 function chiefGearIcon(key, rowIdx) {
