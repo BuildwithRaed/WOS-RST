@@ -123,8 +123,6 @@
 "t:bs_have_of":"{need} 중 {have} 보유",
 "t:bs_your_amounts":"배낭",
 "t:bs_from_backpack":"배낭",
-"t:bs_show_all":"모두 보기 / 편집",
-"t:bs_hide":"칸 숨기기",
 "t:bp_link_from":"배낭에서",
 "t:bp_link_typed":"직접 입력",
 "t:bp_chest_chance":"확률 상자: 계산 안 함",
