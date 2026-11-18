@@ -32356,6 +32356,8 @@ async function renderResearchCenterPage() {
     };
   }
 
+  // Entering the page: the first group with research time left (else Infantry as before).
+  rcActive = RC_GROUPS[pagePickIdx("research_center", RC_GROUPS, fresh, rcWork, (g) => g === rcActive)];
   renderTotals();
   renderGroups();
 }
