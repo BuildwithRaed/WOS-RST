@@ -2798,5 +2798,15 @@
 "t:pk_ng_after":"새 영웅 이후 시작",
 "t:pk_ng_after_desc":"새 영웅이 나오는 날부터의 일수 (0 = 같은 날). 같은 날짜의 팩은 이 팩을 따릅니다.",
 "t:rv_adv":"고급 (페이지 구조)",
-"t:rv_adv_warn":"연구 페이지의 구성을 정합니다. 잘못 편집하면 그 페이지가 깨질 수 있습니다."
+"t:rv_adv_warn":"연구 페이지의 구성을 정합니다. 잘못 편집하면 그 페이지가 깨질 수 있습니다.",
+"t:pc_cards_count":"이미 반영: 활성 카드 {c}개",
+"t:pca_pack1":"패키지 1개",
+"t:pca_trades":"교환",
+"t:pca_tr_week":"이번 주",
+"t:pca_tr_plan":"패키지 구매 후",
+"t:pca_tr_later":"다음 몇 주",
+"t:pca_trn_week":"이번 주 {n}개",
+"t:pca_trn_plan":"패키지 구매 후 {n}개",
+"t:pca_trn_later":"다음 몇 주 {n}개",
+"t:pca_trade_first":"첫 교환"
 }

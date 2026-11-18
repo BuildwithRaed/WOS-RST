@@ -2799,5 +2799,15 @@
 "t:pk_ng_after":"Empieza después de los héroes nuevos",
 "t:pk_ng_after_desc":"Días desde el día en que llegan los héroes nuevos (0 = el mismo día). Los paquetes con las mismas fechas siguen a este.",
 "t:rv_adv":"Avanzado (estructura de la página)",
-"t:rv_adv_warn":"Definen cómo se construyen las páginas de investigación. Un cambio erróneo puede romper esas páginas."
+"t:rv_adv_warn":"Definen cómo se construyen las páginas de investigación. Un cambio erróneo puede romper esas páginas.",
+"t:pc_cards_count":"Ya contado: {c} tarjetas activas",
+"t:pca_pack1":"1 paquete",
+"t:pca_trades":"Intercambios",
+"t:pca_tr_week":"Esta semana",
+"t:pca_tr_plan":"Después del paquete",
+"t:pca_tr_later":"Próximas semanas",
+"t:pca_trn_week":"{n} esta semana",
+"t:pca_trn_plan":"{n} después del paquete",
+"t:pca_trn_later":"{n} próximas semanas",
+"t:pca_trade_first":"Primer intercambio"
 }

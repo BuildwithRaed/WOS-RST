@@ -2799,5 +2799,15 @@
 "t:pk_ng_after":"新英雄の後に開始",
 "t:pk_ng_after_desc":"新英雄が来る日からの日数（0 = 同じ日）。同じ日付のパックはこれに従います。",
 "t:rv_adv":"詳細（ページ構成）",
-"t:rv_adv_warn":"研究ページの構成を決めます。誤った編集でそのページが壊れることがあります。"
+"t:rv_adv_warn":"研究ページの構成を決めます。誤った編集でそのページが壊れることがあります。",
+"t:pc_cards_count":"計算済み:有効なカード {c}枚",
+"t:pca_pack1":"パック1個",
+"t:pca_trades":"交換",
+"t:pca_tr_week":"今週",
+"t:pca_tr_plan":"パック購入後",
+"t:pca_tr_later":"来週以降",
+"t:pca_trn_week":"今週 {n}件",
+"t:pca_trn_plan":"パック購入後 {n}件",
+"t:pca_trn_later":"来週以降 {n}件",
+"t:pca_trade_first":"最初の交換"
 }

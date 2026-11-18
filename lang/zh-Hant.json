@@ -2798,5 +2798,15 @@
 "t:pk_ng_after":"在新英雄之後開始",
 "t:pk_ng_after_desc":"從新英雄到來那天算起的天數（0 = 同一天）。日期相同的禮包跟隨此禮包。",
 "t:rv_adv":"進階（頁面結構）",
-"t:rv_adv_warn":"這些決定研究頁面的構成。錯誤的編輯可能會讓這些頁面出錯。"
+"t:rv_adv_warn":"這些決定研究頁面的構成。錯誤的編輯可能會讓這些頁面出錯。",
+"t:pc_cards_count":"已計入：{c} 張生效卡",
+"t:pca_pack1":"1 個禮包",
+"t:pca_trades":"兌換",
+"t:pca_tr_week":"本週",
+"t:pca_tr_plan":"買禮包後",
+"t:pca_tr_later":"之後幾週",
+"t:pca_trn_week":"本週 {n} 次",
+"t:pca_trn_plan":"買禮包後 {n} 次",
+"t:pca_trn_later":"之後幾週 {n} 次",
+"t:pca_trade_first":"首次兌換"
 }

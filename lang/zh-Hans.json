@@ -2799,5 +2799,15 @@
 "t:pk_ng_after":"在新英雄之后开始",
 "t:pk_ng_after_desc":"从新英雄到来那天算起的天数（0 = 同一天）。日期相同的礼包跟随此礼包。",
 "t:rv_adv":"高级（页面结构）",
-"t:rv_adv_warn":"这些决定研究页面的构成。错误的编辑可能会让这些页面出错。"
+"t:rv_adv_warn":"这些决定研究页面的构成。错误的编辑可能会让这些页面出错。",
+"t:pc_cards_count":"已计入：{c} 张生效卡",
+"t:pca_pack1":"1 个礼包",
+"t:pca_trades":"兑换",
+"t:pca_tr_week":"本周",
+"t:pca_tr_plan":"买礼包后",
+"t:pca_tr_later":"之后几周",
+"t:pca_trn_week":"本周 {n} 次",
+"t:pca_trn_plan":"买礼包后 {n} 次",
+"t:pca_trn_later":"之后几周 {n} 次",
+"t:pca_trade_first":"首次兑换"
 }

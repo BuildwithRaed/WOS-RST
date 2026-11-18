@@ -559,6 +559,12 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 
 **Natalia / Jeronimo shard pictures (17 Nov 2026, owner's pictures, 128 px, background removed with the owner's OK):** `icons/heroes/natalia-shards.png` / `jeronimo-shards.png`, map `HERO_SHARD_OWN_ICON` read by `heroOwnShardIcon(name)`, checked first in `bpIcon` and `materialIconSrc` (so `pkItemIcon`, Packs headers / rows / sheet chips, Backpack tiles, Budgets / My Purchases chips use them). These two show without the hero-face corner badge (`.pk-hface`, `.bp-heroic`, `heroItemMark`); other heroes unchanged. A new hero with its own shard picture = one line in the map.
 
+**Pack cost + planner fixes (owner, 18 Nov 2026; step 54):**
+- **Pack cost design A**: the green summary bar is gone; the picked plan box carries an "N packs" / "1 pack" tag (`pca_pack1`, `pca_packs`). One "⇄ Trades · N" card sits before "What to buy" and lists every trade (free trades and the plan's own, incl. the Research Lab), grouped This week / After the pack / Next weeks (`packTradeWhenSplit`, `pca_tr_*`, folded counts `pca_trn_*`, `pca_trade_first`); Hide / Show (`g1-fold`) kept per page in calc_state `bar_hidden` key `pc:trades:<calcKey>`. "Already counted" keeps only the active cards (`pc_cards_count`, was `pc_free_count`).
+- **Research Lab counted once**: Pack cost and Budgets leave the Lab's weekly refining (T12's hidden FC → Refined FC rule) to the pack planner (`tradeAdjustedStill(calcKey, need, owned, days, noLab)`, `budgetForPage`), so it isn't taken off the need first and then counted again; plan fingerprint `v: 4` (phones work the plans out again once).
+- **Can do / page marks** count only the Backpack and this week's trades (`mkCompute` no longer adds this week's packs, `cdaWeekPacks`); Free now's "Include this week's packs" switch works only inside Budgets.
+- T keys in all 16 lang files (`LANG_FILES_VERSION` 102).
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit (since Speed plan Step 5 it also writes the .min copies the site loads).
@@ -726,3 +732,4 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - State Timeline: troop symbol on each hero's picture
 - Footer links on their own line on phones; Backpack 4 tiles a row
 - Tundra Album / Collection Gallery: level slider
+- Pack cost: one Trades card with every trade, "N packs" tag, Research Lab counted once, Can do marks without packs (step 54)
