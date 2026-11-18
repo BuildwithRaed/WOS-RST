@@ -459,9 +459,6 @@
   @media (max-width: 900px){
     .hg1 .hg-stc{ display:none; }
     .hg1 .g1-top .g1-bp .bs-tiles{ grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; }
-    .hg1 .g1-top .g1-bp .bs-foot{ flex-wrap:nowrap; }
-    .hg1 .g1-top .g1-bp .bs-foot > span:first-child{ margin-inline-end:auto; }
-    .hg1 .g1-top .g1-bp .plx-bpb{ display:flex; width:auto; margin:0; }
   }
   @media (max-width: 380px){
     .hg-tbl{ grid-template-columns:minmax(46px, auto) repeat(4, minmax(0, 1fr)); gap:6px 3px; }
@@ -3335,8 +3332,11 @@ input,select,textarea{
   .bs-aff{ position:relative; }
   .bs-tiles.bs-slide > .bs-aff *{ font-size:11px; }
   /* Expert sigil boxes: smaller in the sliding row, about 4½ on screen */
-  .bs-tiles.plx-sig.bs-slide > *{ flex:0 0 calc((100% - 3 * 6px) / 4.5); min-height:0; padding-top:6px; padding-bottom:6px; }
-  .bs-tiles.plx-sig.bs-slide img{ width:28px; height:28px; }
+  /* Expert sigil boxes: only a portrait and a number, so compact (62 px), on phones and PC. */
+  .bs-tiles.plx-sig, .g1-top .g1-bp .bs-tiles.plx-sig{ grid-template-columns:repeat(auto-fill, 62px); gap:6px; justify-content:start; }
+  .bs-tiles.plx-sig > *{ min-height:0; padding:6px 2px; }
+  .bs-tiles.plx-sig.bs-slide > *{ flex:0 0 62px; }
+  .bs-tiles.plx-sig img{ width:28px; height:28px; }
   .bs-tiles.bs-slide > [style*="--bsspan"]{ flex:0 0 calc(((100% - (var(--bscols, 4) - 1) * 6px) / (var(--bscols, 4) + .35)) * var(--bsspan, 1) + (var(--bsspan, 1) - 1) * 6px) !important; }
   .bs-tiles.bs-slide > *{ flex:0 0 calc((100% - (var(--bscols, 4) - 1) * 6px) / (var(--bscols, 4) + .35)); min-width:0; scroll-snap-align:start; }
   .bs-tile{ gap:1px; padding:5px 3px; }
@@ -4022,7 +4022,15 @@ input,select,textarea{
     .g1:not(.cg1) .plx-bpb .cg-bpbtn{ min-height:40px; border-radius:10px; }
     .g1:not(:has(.t12x-buy [id$="_trades"]:not(:empty))) [data-plxsheet="trades"]{ display:none; }
     .g1 .t12x-buy.cg-open{ display:block; }
+    /* In the top box: Trades / Pack cost sit on the BACKPACK title row, on its right
+       (compact); they only drop under the title when they can't fit beside it. */
+    .g1-top .g1-bp .bs-foot{ flex-wrap:wrap; }
+    .g1-top .g1-bp .bs-foot > span:first-child{ margin-inline-end:auto; }
+    .g1-top .g1-bp .plx-bpb{ display:flex; width:auto; margin:0; margin-inline-start:auto; gap:6px; }
+    .g1-top .g1-bp .plx-bpb .cg-bpbtn{ padding-inline:10px; white-space:nowrap; }
   }
+  .er-r .exp-skr-b{ margin-top:6px; }
+  .exp-rst.meta.ok{ color:var(--good); font-weight:700; }
   /* "Can do now" on every page (Chief Gear look). */
   .has-info > .cg-tip > * + *{ margin-top:6px; }
   .exp-sigf{ margin-top:10px; border-top:1px solid var(--line); }
@@ -4637,7 +4645,6 @@ input,select,textarea{
   .exp-x{ display:flex; align-items:center; justify-content:center; width:36px; height:36px; padding:0; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font-size:14px; cursor:pointer; }
   /* Experts pages' top box (phones): the Troops Stats card's own title, with its (i), is the box's title */
   .g1-hd-t > .t12x-title{ display:inline-flex; align-items:center; gap:6px; margin:0; padding:0; font:inherit; color:inherit; letter-spacing:inherit; text-transform:inherit; }
-  .exp-gt{ color:var(--muted); font-size:18px; line-height:1; }
   .exp-h4c{ text-align:start; }
   .exp-hd{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
   .exp-hd > img{ width:64px; height:64px; flex:0 0 64px; object-fit:contain; border-radius:12px; }
@@ -4648,17 +4655,6 @@ input,select,textarea{
   .exp-stl b{ color:var(--frost); } .exp-stl b.tg{ color:var(--ice); }
   .exp-tags{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:4px; }
   .exp-tags > span{ margin-top:0 !important; }
-  .exp-sts{ display:grid; grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr); align-items:end; gap:8px; }
-  .exp-sts small{ display:block; margin:0 0 4px; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
-  .exp-sts > div:last-child small{ text-align:end; }
-  .exp-arr{ padding-bottom:12px; color:var(--ice); }
-  .exp-st{ display:flex; align-items:center; justify-content:space-between; min-height:44px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); }
-  .exp-st.tgt{ border-color:var(--ice-dim); }
-  .exp-st button{ width:40px; height:42px; border:0; background:none; color:var(--frost); font-size:20px; cursor:pointer; }
-  .exp-st button:disabled{ opacity:.3; cursor:default; }
-  .exp-st-v{ position:relative; flex:1 1 auto; min-width:0; text-align:center; font-size:18px; font-weight:800; }
-  .exp-st.tgt .exp-st-v{ color:var(--ice); }
-  .exp-st-v select{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; font-size:16px; }
   .exp-nbs{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0 0 10px; }
   .exp-nb{ display:flex; align-items:center; gap:8px; min-width:0; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--frost); font:inherit; text-align:start; }
   button.exp-nb{ cursor:pointer; }
@@ -4688,10 +4684,6 @@ input,select,textarea{
   .exp-sk-h{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
   .exp-sk-t{ flex:1 1 auto; min-width:0; }
   .exp-sk-t b{ display:block; font-size:16px; } .exp-sk-t small{ display:block; font-size:12px; color:var(--muted); }
-  .exp-nav{ width:36px; height:36px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font-size:18px; cursor:pointer; }
-  .exp-nav:disabled{ opacity:.3; }
-  .exp-sk-bonus{ font-size:12.5px; color:var(--muted); margin:0 0 10px; } .exp-sk-bonus b{ color:var(--ice); }
-  .exp-done{ display:block; width:100%; min-height:44px; margin-top:12px; }
 
   /* Dashboard roster: ⚙ settings sheet */
   .rc-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
