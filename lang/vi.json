@@ -1663,8 +1663,6 @@
 "t:g1_hide": "Ẩn",
 "t:er_paths_to_go": "còn {n} nhánh",
 "t:er_path_to_go_1": "còn 1 nhánh",
-"t:er_next_lv": "Ấn · cấp tiếp theo",
-"t:er_path_n": "nhánh {i}/{n}",
 "t:er_gives": "Các cấp này cho",
 "t:rc_settings": "Cài đặt đội hình",
 "t:rc_count_desc": "Cộng chỉ số của 3 anh hùng này vào tổng binh lính",
@@ -2399,7 +2397,6 @@
 "t:exp_lv_max":"Cấp {n} · tối đa",
 "t:exp_lv_max_short":"Cấp {n} · Tối đa",
 "t:exp_nothing_needed":"Thân thiết và Ấn: không cần gì",
-"t:exp_all_skills_max":"Mọi kỹ năng tối đa",
 "t:scan_update_reload":"Trang đã được cập nhật. Tải lại trang để dùng Quét.",
 "t:budgets_view_dates":"Theo ngày của bạn",
 "t:bud_dates_vs":"Nếu xong hết trước {date}:",
@@ -2834,5 +2831,6 @@
 "t:chw_enough":"đủ",
 "t:bsx_cando":"Làm được ngay:",
 "t:bsx_cando_none":"Chưa có",
-"t:mkc_at_target":"Đã đạt mục tiêu"
+"t:mkc_at_target":"Đã đạt mục tiêu",
+"t:bs_type_min":"Nhập mỗi số lượng theo phút (1h = 60 phút)"
 }

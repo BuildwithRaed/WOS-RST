@@ -1663,8 +1663,6 @@
 "t:g1_hide": "Sembunyikan",
 "t:er_paths_to_go": "{n} jalur lagi",
 "t:er_path_to_go_1": "1 jalur lagi",
-"t:er_next_lv": "Sigil · level berikutnya",
-"t:er_path_n": "jalur {i} dari {n}",
 "t:er_gives": "Level ini memberi",
 "t:rc_settings": "Pengaturan roster",
 "t:rc_count_desc": "Menambahkan stat 3 hero ini ke total pasukan",
@@ -2399,7 +2397,6 @@
 "t:exp_lv_max":"Level {n} · maks",
 "t:exp_lv_max_short":"Lv. {n} · Maks",
 "t:exp_nothing_needed":"Afinitas dan Sigil: tidak perlu apa-apa",
-"t:exp_all_skills_max":"Semua skill maks",
 "t:scan_update_reload":"Situs sudah diperbarui. Muat ulang halaman untuk memakai Pindai.",
 "t:budgets_view_dates":"Sesuai tanggalmu",
 "t:bud_dates_vs":"Semua sampai {date}:",
@@ -2834,5 +2831,6 @@
 "t:chw_enough":"cukup",
 "t:bsx_cando":"Bisa sekarang:",
 "t:bsx_cando_none":"Belum ada",
-"t:mkc_at_target":"Sudah di target"
+"t:mkc_at_target":"Sudah di target",
+"t:bs_type_min":"Ketik setiap jumlah dalam menit (1h = 60 mnt)"
 }

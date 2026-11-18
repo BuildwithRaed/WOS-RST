@@ -1664,8 +1664,6 @@
 "t:g1_hide": "隠す",
 "t:er_paths_to_go": "残り{n}ルート",
 "t:er_path_to_go_1": "残り1ルート",
-"t:er_next_lv": "紋章 · 次のレベル",
-"t:er_path_n": "ルート {i}/{n}",
 "t:er_gives": "これらのレベルの効果",
 "t:rc_settings": "編成の設定",
 "t:rc_count_desc": "この3人の英雄のステータスを兵種の合計に加えます",
@@ -2400,7 +2398,6 @@
 "t:exp_lv_max":"レベル{n}・最大",
 "t:exp_lv_max_short":"Lv {n}・最大",
 "t:exp_nothing_needed":"好感度と紋章：不要",
-"t:exp_all_skills_max":"全スキル最大",
 "t:scan_update_reload":"サイトが更新されました。スクショ読み取りを使うにはページを再読み込みしてください。",
 "t:budgets_view_dates":"自分の日付で",
 "t:bud_dates_vs":"全部を{date}までにすると:",
@@ -2835,5 +2832,6 @@
 "t:chw_enough":"足りる",
 "t:bsx_cando":"今できる:",
 "t:bsx_cando_none":"まだなし",
-"t:mkc_at_target":"目標達成"
+"t:mkc_at_target":"目標達成",
+"t:bs_type_min":"各数量を分で入力してください（1h = 60分）"
 }

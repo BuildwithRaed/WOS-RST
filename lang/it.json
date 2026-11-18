@@ -1664,8 +1664,6 @@
 "t:g1_hide": "Nascondi",
 "t:er_paths_to_go": "mancano {n} percorsi",
 "t:er_path_to_go_1": "manca 1 percorso",
-"t:er_next_lv": "Sigilli · livello successivo",
-"t:er_path_n": "percorso {i} di {n}",
 "t:er_gives": "Questi livelli danno",
 "t:rc_settings": "Impostazioni squadra",
 "t:rc_count_desc": "Aggiunge le statistiche di questi 3 eroi ai totali delle truppe",
@@ -2400,7 +2398,6 @@
 "t:exp_lv_max":"Livello {n} · max",
 "t:exp_lv_max_short":"Liv. {n} · Max",
 "t:exp_nothing_needed":"Affinità e Sigilli: niente da fare",
-"t:exp_all_skills_max":"Tutte le abilità al max",
 "t:scan_update_reload":"Il sito è stato aggiornato. Ricarica la pagina per scansionare.",
 "t:budgets_view_dates":"Per le tue date",
 "t:bud_dates_vs":"Tutto entro il {date}:",
@@ -2835,5 +2832,6 @@
 "t:chw_enough":"basta",
 "t:bsx_cando":"Possibile ora:",
 "t:bsx_cando_none":"Ancora niente",
-"t:mkc_at_target":"Al traguardo"
+"t:mkc_at_target":"Al traguardo",
+"t:bs_type_min":"Scrivi ogni quantità in minuti (1h = 60 min)"
 }

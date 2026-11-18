@@ -1663,8 +1663,6 @@
 "t:g1_hide": "Ocultar",
 "t:er_paths_to_go": "faltam {n} caminhos",
 "t:er_path_to_go_1": "falta 1 caminho",
-"t:er_next_lv": "Sigilos · próximo nível",
-"t:er_path_n": "caminho {i} de {n}",
 "t:er_gives": "Estes níveis dão",
 "t:rc_settings": "Ajustes do elenco",
 "t:rc_count_desc": "Soma os atributos destes 3 heróis aos totais das tropas",
@@ -2399,7 +2397,6 @@
 "t:exp_lv_max":"Nível {n} · máx.",
 "t:exp_lv_max_short":"Nv. {n} · Máx.",
 "t:exp_nothing_needed":"Afinidade e Sigilos: nada necessário",
-"t:exp_all_skills_max":"Todas as habilidades no máx.",
 "t:scan_update_reload":"O site foi atualizado. Recarregue a página para ler capturas.",
 "t:budgets_view_dates":"Pelas suas datas",
 "t:bud_dates_vs":"Tudo até {date}:",
@@ -2834,5 +2831,6 @@
 "t:chw_enough":"suficiente",
 "t:bsx_cando":"Dá para fazer agora:",
 "t:bsx_cando_none":"Nada ainda",
-"t:mkc_at_target":"No objetivo"
+"t:mkc_at_target":"No objetivo",
+"t:bs_type_min":"Digite cada quantidade em minutos (1h = 60 min)"
 }

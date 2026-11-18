@@ -1664,8 +1664,6 @@
 "t:g1_hide": "Masquer",
 "t:er_paths_to_go": "encore {n} voies",
 "t:er_path_to_go_1": "encore 1 voie",
-"t:er_next_lv": "Sceaux · niveau suivant",
-"t:er_path_n": "voie {i} sur {n}",
 "t:er_gives": "Ces niveaux donnent",
 "t:rc_settings": "Réglages de l'équipe",
 "t:rc_count_desc": "Ajoute les stats de ces 3 héros aux totaux des troupes",
@@ -2400,7 +2398,6 @@
 "t:exp_lv_max":"Niveau {n} · max",
 "t:exp_lv_max_short":"Niv. {n} · Max",
 "t:exp_nothing_needed":"Affinité et Sceaux : rien à prévoir",
-"t:exp_all_skills_max":"Toutes les compétences au max",
 "t:scan_update_reload":"Le site a été mis à jour. Rechargez la page pour scanner.",
 "t:budgets_view_dates":"Selon vos dates",
 "t:bud_dates_vs":"Tout pour le {date} :",
@@ -2835,5 +2832,6 @@
 "t:chw_enough":"assez",
 "t:bsx_cando":"Possible maintenant :",
 "t:bsx_cando_none":"Rien pour l'instant",
-"t:mkc_at_target":"À l'objectif"
+"t:mkc_at_target":"À l'objectif",
+"t:bs_type_min":"Saisis chaque quantité en minutes (1h = 60 min)"
 }

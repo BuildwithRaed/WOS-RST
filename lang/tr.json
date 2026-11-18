@@ -1663,8 +1663,6 @@
 "t:g1_hide": "Gizle",
 "t:er_paths_to_go": "{n} yol kaldı",
 "t:er_path_to_go_1": "1 yol kaldı",
-"t:er_next_lv": "Mühürler · sonraki seviye",
-"t:er_path_n": "yol {i}/{n}",
 "t:er_gives": "Bu seviyelerin verdiği",
 "t:rc_settings": "Kadro ayarları",
 "t:rc_count_desc": "Bu 3 kahramanın istatistiklerini birlik toplamlarına ekler",
@@ -2399,7 +2397,6 @@
 "t:exp_lv_max":"Seviye {n} · maks",
 "t:exp_lv_max_short":"Sv. {n} · Maks",
 "t:exp_nothing_needed":"Yakınlık ve Mühürler: gerek yok",
-"t:exp_all_skills_max":"Tüm beceriler maks",
 "t:scan_update_reload":"Site güncellendi. Tara'yı kullanmak için sayfayı yenile.",
 "t:budgets_view_dates":"Tarihlerine göre",
 "t:bud_dates_vs":"Bunun yerine her şey {date} tarihine kadar:",
@@ -2834,5 +2831,6 @@
 "t:chw_enough":"yeterli",
 "t:bsx_cando":"Şimdi yapılabilir:",
 "t:bsx_cando_none":"Henüz yok",
-"t:mkc_at_target":"Hedefte"
+"t:mkc_at_target":"Hedefte",
+"t:bs_type_min":"Her miktarı dakika olarak yaz (1h = 60 dk)"
 }

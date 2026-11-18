@@ -1663,8 +1663,6 @@
 "t:g1_hide": "隱藏",
 "t:er_paths_to_go": "還剩 {n} 條路線",
 "t:er_path_to_go_1": "還剩 1 條路線",
-"t:er_next_lv": "徽記 · 下一級",
-"t:er_path_n": "路線 {i}/{n}",
 "t:er_gives": "這些等級提供",
 "t:rc_settings": "陣容設定",
 "t:rc_count_desc": "將這 3 位英雄的數據加入兵種總計",
@@ -2399,7 +2397,6 @@
 "t:exp_lv_max":"等級 {n} · 最大",
 "t:exp_lv_max_short":"Lv {n} · 最大",
 "t:exp_nothing_needed":"好感度和徽記：無需",
-"t:exp_all_skills_max":"全部技能最大",
 "t:scan_update_reload":"網站已更新。請重新載入頁面以使用掃描。",
 "t:budgets_view_dates":"依你的日期",
 "t:bud_dates_vs":"改為全部在 {date} 前完成：",
@@ -2834,5 +2831,6 @@
 "t:chw_enough":"足夠",
 "t:bsx_cando":"現在可做：",
 "t:bsx_cando_none":"暫無",
-"t:mkc_at_target":"已達目標"
+"t:mkc_at_target":"已達目標",
+"t:bs_type_min":"每個數量請以分鐘輸入（1h = 60 分鐘）"
 }

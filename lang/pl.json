@@ -1664,8 +1664,6 @@
 "t:g1_hide": "Ukryj",
 "t:er_paths_to_go": "zostało ścieżek: {n}",
 "t:er_path_to_go_1": "została 1 ścieżka",
-"t:er_next_lv": "Pieczęcie · następny poziom",
-"t:er_path_n": "ścieżka {i} z {n}",
 "t:er_gives": "Te poziomy dają",
 "t:rc_settings": "Ustawienia składu",
 "t:rc_count_desc": "Dodaje statystyki tych 3 bohaterów do sum jednostek",
@@ -2400,7 +2398,6 @@
 "t:exp_lv_max":"Poziom {n} · maks.",
 "t:exp_lv_max_short":"Poz. {n} · Maks.",
 "t:exp_nothing_needed":"Sympatia i Pieczęcie: nic nie trzeba",
-"t:exp_all_skills_max":"Wszystkie umiejętności maks.",
 "t:scan_update_reload":"Strona została zaktualizowana. Odśwież ją, aby użyć Skanu.",
 "t:budgets_view_dates":"Wg Twoich dat",
 "t:bud_dates_vs":"Wszystko do {date} zamiast tego:",
@@ -2835,5 +2832,6 @@
 "t:chw_enough":"wystarczy",
 "t:bsx_cando":"Teraz możesz:",
 "t:bsx_cando_none":"Jeszcze nic",
-"t:mkc_at_target":"Na celu"
+"t:mkc_at_target":"Na celu",
+"t:bs_type_min":"Wpisz każdą ilość w minutach (1h = 60 min)"
 }

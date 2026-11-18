@@ -580,6 +580,14 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - **Can do line** in the three windows: one line "Can do now: Jacket T6 ★0 → ★1" / "Nothing yet" / "✓ At target" (`mkCanHtml(tab, key)`, `mkCanInner`, `mkCanFill`), from the page marks' plan (Backpack + this week's trades, never packs); follows the Visibility switch "Free now (Can do now)" like the marks.
 - Texts `cgw_*`, `chw_*`, `bsx_cando*`, `mkc_at_target` in all 16 lang files; `charm_needs_this`, `charm_stage`, `charm_target_max` removed (no longer used) (`LANG_FILES_VERSION` 106).
 
+**Experts and Pets (owner, 18 Nov 2026; step 57):**
+- **Swipe tab B** (Pets Level, Pet Refine, Experts Level, Experts Research): `renderPickStrip` no longer draws the picture strip; it draws a small "‹ n / N ›" tab over the card (`.pkw`, `.pkw-tab`, `.pkw-a`) and the previous / next pet's or expert's picture peeking out at the card's two sides (`.pkw-pk.s` / `.e`, tap = go there; `data-pick`); the card still swipes (`wireIndexSwipe`). Pets without a picture keep the coloured letter (`.pkw-ph`).
+- **Experts Level**: a skill without a target still shows its Learning XP (only the Books need stays empty); Expert Speedups + General Speedups are one "Speedups" box and the three Affinity items one box, both on the shared helpers `bsGroupTileHtml` / `bsGroupModal` (one group pop-up with Use Backpack per item); the card's Affinity / Sigils / Learning XP boxes open the same box pop-up. The Speedups pop-up says "Type each amount in minutes (1h = 60 min)" above the boxes (`bs_type_min`, `.bsg-mh`). Every skill is one row (the "All skills max" fold is gone, `EXP_MAX_OPEN` removed); a maxed row shows the skill's counted stat ("Last Line · +10% ATK · DEF · Lv 20 · Max"); "Level 100.1 · max" is a plain line (tap = the level list). Skill rows show only the troop stats Troops Stats counts (ATK / DEF / LETH / HP); other skill effects aren't listed.
+- **Experts Research**: paths are edited in the card (tappable Now → Target over the `data-expresearchcur|des` selects, rows `data-erpath`); the path window and its ‹ › are gone. Each path shows what it gives at the current level as small chips that wrap (ATK / DEF / LETH / HP only, `ER_SHORT`, no "up to"); a path with a target also shows the sigils it needs.
+- **Expert sigil boxes** compact: 62 px each (picture + number), on phones and PC (`.bs-tiles.plx-sig`).
+- **Pets Level**: the page mark sits beside the NOW label, so the NOW and TARGET boxes stay level.
+- `bs_type_min` in all 16 lang files; `exp_all_skills_max`, `er_next_lv`, `er_path_n` removed (no longer used) (`LANG_FILES_VERSION` 107).
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit (since Speed plan Step 5 it also writes the .min copies the site loads).
@@ -750,3 +758,4 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - Pack cost: one Trades card with every trade, "N packs" tag, Research Lab counted once, Can do marks without packs (step 54)
 - Backpack box pop-up as a bottom sheet with only the Backpack and its trades, "You have" card, one Hide, one Speedups box on the research pages (step 55)
 - Upgrade windows: Chief Gear tier / star / stage chips, Chief Charm level pictures and stage dots, needs boxes, a Can do line (step 56)
+- Experts and Pets: swipe tab with the neighbours peeking, Experts Level combined Speedups / Affinity boxes, Experts Research paths in the card with stat chips, compact sigil boxes, Pets NOW / TARGET level (step 57)

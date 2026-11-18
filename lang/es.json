@@ -1664,8 +1664,6 @@
 "t:g1_hide": "Ocultar",
 "t:er_paths_to_go": "faltan {n} rutas",
 "t:er_path_to_go_1": "falta 1 ruta",
-"t:er_next_lv": "Sellos · siguiente nivel",
-"t:er_path_n": "ruta {i} de {n}",
 "t:er_gives": "Estos niveles dan",
 "t:rc_settings": "Ajustes de la plantilla",
 "t:rc_count_desc": "Suma las estadísticas de estos 3 héroes a los totales de tropas",
@@ -2400,7 +2398,6 @@
 "t:exp_lv_max":"Nivel {n} · máx.",
 "t:exp_lv_max_short":"Nv. {n} · Máx.",
 "t:exp_nothing_needed":"Afinidad y Sellos: nada necesario",
-"t:exp_all_skills_max":"Todas las habilidades al máx.",
 "t:scan_update_reload":"El sitio se actualizó. Recarga la página para escanear capturas.",
 "t:budgets_view_dates":"Según tus fechas",
 "t:bud_dates_vs":"Todo para el {date}:",
@@ -2835,5 +2832,6 @@
 "t:chw_enough":"suficiente",
 "t:bsx_cando":"Ya puedes:",
 "t:bsx_cando_none":"Nada aún",
-"t:mkc_at_target":"En el objetivo"
+"t:mkc_at_target":"En el objetivo",
+"t:bs_type_min":"Escribe cada cantidad en minutos (1h = 60 min)"
 }

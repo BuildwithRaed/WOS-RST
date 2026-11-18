@@ -1664,8 +1664,6 @@
 "t:g1_hide": "Ausblenden",
 "t:er_paths_to_go": "noch {n} Pfade",
 "t:er_path_to_go_1": "noch 1 Pfad",
-"t:er_next_lv": "Siegel · nächste Stufe",
-"t:er_path_n": "Pfad {i} von {n}",
 "t:er_gives": "Diese Stufen geben",
 "t:rc_settings": "Aufstellungs-Einstellungen",
 "t:rc_count_desc": "Addiert die Werte dieser 3 Helden zu den Truppensummen",
@@ -2400,7 +2398,6 @@
 "t:exp_lv_max":"Stufe {n} · max",
 "t:exp_lv_max_short":"Lv. {n} · Max",
 "t:exp_nothing_needed":"Affinität und Siegel: nichts nötig",
-"t:exp_all_skills_max":"Alle Fähigkeiten max",
 "t:scan_update_reload":"Die Seite wurde aktualisiert. Lade sie neu, um Scan zu nutzen.",
 "t:budgets_view_dates":"Nach deinen Daten",
 "t:bud_dates_vs":"Alles bis {date} stattdessen:",
@@ -2835,5 +2832,6 @@
 "t:chw_enough":"genug",
 "t:bsx_cando":"Jetzt möglich:",
 "t:bsx_cando_none":"Noch nichts",
-"t:mkc_at_target":"Am Ziel"
+"t:mkc_at_target":"Am Ziel",
+"t:bs_type_min":"Gib jede Menge in Minuten ein (1h = 60 Min.)"
 }
