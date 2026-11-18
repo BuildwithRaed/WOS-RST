@@ -7836,12 +7836,9 @@ async function mkCompute() {
     } else b = await cdaBuildPage(pg);
     if (seq !== MK_SEQ || TAB !== tab) return;
     if (!b || !b.tracks) { MK = null; return; }
+    // Only what the Backpack holds (chests in it and this week's trades of its items): never
+    // packs, not even Free now's "Include this week's packs" (that switch stays Budgets' own).
     const have = { ...(b.have || {}) };
-    if (CDA_SET.packs) {
-      if (!CDA_PACKS) CDA_PACKS = await cdaWeekPacks().catch(() => null);
-      if (CDA_PACKS) Object.entries(CDA_PACKS.items).forEach(([k, v]) => { have[k] = (have[k] || 0) + v; });
-    }
-    if (seq !== MK_SEQ || TAB !== tab) return;
     const plan = reachPlan(b.tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, b.conv || []);
     const list = b.tracks.map((tr, k) => ({ tr, html: mkHtml(tr, plan, k) }));
     MK = { tab, list, plan };
