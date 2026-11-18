@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "f9e319eb10";
+window.SCAN_BUILD = "ff4dcc46e9";
 
 
 // ---- Backpack: read game screenshots ----
@@ -501,24 +501,48 @@ function scanLightPanel(src) {
 // A purple gear tile's "+N" (top right; none = +0). Hero gear below Mythic
 // counts as XP Component. Only purple is read for now: no
 // blue / green / grey tile has been seen in a screenshot yet.
-async function scanGearLevel(worker, td) {
+// max: the highest "+" the colour has (purple 80, orange 100).
+async function scanGearLevel(worker, td, max = 80) {
   const num = scanTextMask(td, 60, 2, 138, 50, true);
   if (!num) return { lvl: 0, sure: true };
   const r = await scanRead(worker, num, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "+0123456789" });
   let d = r.text.replace(/[^0-9]/g, "");
-  // The "+" read as a digit ("480", "180"): drop it.
-  if (d.length === 3 && Number(d) > 80) d = d.slice(1);
+  // The "+" read as a digit ("480", "180", "4100"): drop it.
+  if (d.length >= 3 && Number(d) > max) d = d.slice(1);
   const plus = r.text.includes("+");
-  if (d && (r.conf >= 50 || plus) && Number(d) <= 80) return { lvl: Number(d), sure: r.conf >= 70 || plus };
+  if (d && (r.conf >= 50 || plus) && Number(d) <= max) return { lvl: Number(d), sure: r.conf >= 70 || plus };
   // One light shape read as nothing (or a stray digit): a bit of the gear's
   // picture in that corner, not a number (owner's screenshots: plain tiles).
   if (num.count <= 1) return { lvl: 0, sure: true };
   return { lvl: null, sure: false };
 }
+// An orange gear tile's Mastery "Lv.N" (bottom right, yellow; none = Lv 0). The
+// tile shows no stage. The text sits low (y 100+): a yellow belt buckle above it
+// is left out. { lv, sure }, lv null = not read.
+async function scanGearMastery(worker, td) {
+  const x0 = 60, y0 = 100, x1 = 138, y1 = 138, w = x1 - x0, h = y1 - y0, mask = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = ((y0 + y) * 140 + x0 + x) * 4, r = td[i], g = td[i + 1], b = td[i + 2];
+    // Yellow text: red and green both bright and close, blue well below (the orange tile has green well under red).
+    mask[y * w + x] = r > 165 && g > 165 && Math.abs(r - g) < 28 && b < Math.min(r, g) - 50 ? 1 : 0;
+  }
+  const blobs = scanBlobs(mask, w, h, true).filter((b) => b.n > 4 && b.h >= 7);
+  if (!blobs.length) return { lv: 0, sure: true };
+  const ox = Math.max(0, Math.min(...blobs.map((b) => b.x)) - 2), oy = Math.max(0, Math.min(...blobs.map((b) => b.y)) - 2);
+  const cw = Math.max(...blobs.map((b) => b.x + b.w)) - ox + 2, ch = Math.max(...blobs.map((b) => b.y + b.h)) - oy + 2, k = 4, pad = 20;
+  const c = scanCanvas(cw * k + pad * 2, ch * k + pad * 2), g = c.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.fillStyle = "#000";
+  blobs.forEach((b) => b.px.forEach((p) => { const x = p % w; g.fillRect(pad + (x - ox) * k, pad + ((p - x) / w - oy) * k, k, k); }));
+  const r = await scanRead(worker, c, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "Lv.0123456789" });
+  const m = /(\d+)\s*$/.exec(r.text.trim());
+  if (m && Number(m[1]) >= 1 && Number(m[1]) <= 20) return { lv: Number(m[1]), sure: /L/i.test(r.text) && r.conf >= 60 };
+  return { lv: null, sure: false };
+}
 async function scanGearTiles(src, tiles, worker) {
   const t = scanCanvas(140, 140), tg = t.getContext("2d", { willReadFrequently: true });
   let badged = 0, orange = 0;
   const low = []; // purple pieces: { colour, lvl, sure }
+  const og = []; // orange pieces to reset (Mastery under 10): { enh, lv, sure }
   const seq = []; // each gear tile's picture grid + orange, in reading order (to spot overlapping screenshots)
   for (const box of tiles) {
     tg.clearRect(0, 0, 140, 140);
@@ -544,9 +568,15 @@ async function scanGearTiles(src, tiles, worker) {
       lo = { colour: "Purple", lvl: lv.lvl, sure: lv.sure };
       low.push(lo);
     }
-    seq.push({ f: scanTileFeature(td), o: isOrange, lo });
+    let go = null;
+    if (isOrange && worker) {
+      // Orange: its "+" (Enhance, up to 100) and "Lv." (Mastery); Lv.10 and up give nothing back.
+      const en = await scanGearLevel(worker, td, 100), ms = await scanGearMastery(worker, td);
+      if (ms.lv === null || ms.lv < 10) { go = { enh: en.lvl, lv: ms.lv, sure: en.sure && ms.sure }; og.push(go); }
+    }
+    seq.push({ f: scanTileFeature(td), o: isOrange, lo, go });
   }
-  return badged >= 3 && badged >= tiles.length * 0.6 ? { orange, seq, low } : null;
+  return badged >= 3 && badged >= tiles.length * 0.6 ? { orange, seq, low, og } : null;
 }
 // Two Gear screenshots scrolled with some rows in both: how many orange
 // pieces of the new one were already counted (the longest run of tiles at the
@@ -935,7 +965,7 @@ async function scanShot(worker, file, marks, refs, mode) {
   const tiles = scanFindTiles(src);
   if (tiles.length) {
     const gear = await scanGearTiles(src, tiles, worker);
-    if (gear !== null) return { kind: "gear", items: [{ name: "Mythic Gear", part: "gear", value: gear.orange, seq: gear.seq, low: gear.low, sure: false }] };
+    if (gear !== null) return { kind: "gear", items: [{ name: "Mythic Gear", part: "gear", value: gear.orange, seq: gear.seq, low: gear.low, og: gear.og, sure: false }] };
     // Learned item pictures first (quick); speedup tiles match none of them.
     const known = await scanItemTiles(worker, src, tiles, refs);
     if (known.found.length) return { kind: "items", items: known.found, unknown: known.unknown, unk: known.unk, seq: known.seq };
@@ -1006,6 +1036,9 @@ function openBackpackScanMain(groups, bp, done, more) {
   const lab = { seen: false, count: null, saved: null };
   // Purple hero gear for XP from the Gear tab: { "Gear XP Purple +80": n }, null until read.
   let gearLow = null, gearLowUnread = 0;
+  // Orange gear to reset: { "Gear Orange +20 Lv.3": n }, null until a Gear tab is read; stage picks per row.
+  let gearOr = null, gearOrUnread = 0;
+  const gearOrStage = {};
   const gearSeqs = []; // the Gear screenshots read so far
   const shotSpans = []; // per item screenshot: { tab: { min, max } } in game order
   const shotSeqs = []; // per item screenshot: item names tile by tile (null = not read)
@@ -1151,6 +1184,10 @@ function openBackpackScanMain(groups, bp, done, more) {
             const addLow = (lo, d) => { if (lo.lvl === null) gearLowUnread += d; else { const k = gearXpKey(lo.colour, lo.lvl); gearLow[k] = (gearLow[k] || 0) + d; if (!gearLow[k]) delete gearLow[k]; } };
             (it.low || []).forEach((lo) => addLow(lo, 1));
             dup.forEach((x) => { if (x.lo) addLow(x.lo, -1); });
+            gearOr = gearOr || {};
+            const addOr = (o, d) => { if (o.lv === null || o.enh === null) gearOrUnread += d; else { const k = gearOrangeKey(o.enh, o.lv, 0); gearOr[k] = (gearOr[k] || 0) + d; if (!gearOr[k]) delete gearOr[k]; } };
+            (it.og || []).forEach((o) => addOr(o, 1));
+            dup.forEach((x) => { if (x.go) addOr(x.go, -1); });
           }
           else if (it.value !== null) mgParts.box = it.value;
           it.value = mgParts.box === null && mgParts.gear === null ? null : (mgParts.box || 0) + (mgParts.gear || 0);
@@ -1303,6 +1340,21 @@ function openBackpackScanMain(groups, bp, done, more) {
       ${gearLowUnread ? `<div class="meta" style="font-size:11.5px; margin-top:4px;">&#9888; ${esc(t("scan_gx_unread").replace("{n}", gearLowUnread))}</div>` : ""}
       <div class="gx-sum" style="margin-top:6px;">&rarr; <b>${esc(t("gx_xp").replace("{n}", gearXpOf(gearLow).xp.toLocaleString()))}</b> (${esc(t("gx_pieces").replace("{n}", gearXpOf(gearLow).pieces.toLocaleString()))})</div>
     </div>`;
+    // Orange (Mythic) gear to reset, read by "+" and "Lv." (no stage on the tile: pick it here).
+    const goRows = gearOr ? gearOrangeOf(gearOr).rows.sort((a, b) => b.enh - a.enh || b.lv - a.lv) : [];
+    const stOf = (k) => gearOrStage[k] || 0;
+    const goEach = (r) => ({ xp: r.xp, es: Math.floor(gearMasteryUsed(r.lv, stOf(r.key)) / 2) });
+    const goSum = goRows.reduce((a, r) => { const e = goEach(r); return { n: a.n + r.n, xp: a.xp + r.n * e.xp, es: a.es + r.n * e.es }; }, { n: 0, xp: 0, es: 0 });
+    const gearOrHtml = gearOr === null || (!goRows.length && !gearOrUnread) ? "" : `<div class="scan-row unsure" style="display:block;">
+      <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" data-scangotick checked /><b>${esc(t("scan_go_title"))}</b><em class="meta" style="font-size:11.5px;">${esc(t("scan_please_check"))}</em></label>
+      <div class="meta" style="font-size:11.5px; margin:2px 0 4px;">${esc(t("scan_go_hint"))}</div>
+      ${goRows.map((r) => { const st = gearMasteryStages(r.lv), e = goEach(r); return `<div class="gx-line gx-og"><span class="gx-lv gx-og-lv">+${r.enh} Lv.${r.lv}</span>
+        ${st.length > 1 ? `<select data-scangost="${esc(r.key)}" aria-label="${esc(t("scan_go_stage"))}" style="width:auto; height:32px;">${st.map((x) => `<option value="${x}"${x === stOf(r.key) ? " selected" : ""}>${r.lv}.${x}</option>`).join("")}</select>` : ""}
+        <span class="meta" style="font-size:12px;">${esc(t("go_each").replace("{xp}", e.xp.toLocaleString()).replace("{es}", e.es.toLocaleString()))}</span>
+        <input type="text" inputmode="numeric" data-scango="${esc(r.key)}" value="${r.n}" style="margin-inline-start:auto;" /></div>`; }).join("") || `<div class="meta" style="font-size:12px;">0</div>`}
+      ${gearOrUnread ? `<div class="meta" style="font-size:11.5px; margin-top:4px;">&#9888; ${esc(t("scan_go_unread").replace("{n}", gearOrUnread))}</div>` : ""}
+      <div class="gx-sum" style="margin-top:6px;">&rarr; <b>${esc(t("gx_xp").replace("{n}", goSum.xp.toLocaleString()))}</b> · <b>${esc(t("go_es").replace("{n}", goSum.es.toLocaleString()))}</b> (${esc(t("gx_pieces").replace("{n}", goSum.n.toLocaleString()))})</div>
+    </div>`;
     const info = [unsure ? t("scan_flagged").replace("{n}", unsure) : "", ...notes, unknownTiles > unknownList.length ? t("scan_unknown_tiles").replace("{n}", unknownTiles - unknownList.length) : "", skipped.size ? t("scan_skipped").replace("{list}", [...skipped].join(", ")) : ""].filter(Boolean);
     modal.innerHTML = `<div class="modal-box" style="max-width:520px; max-height:86vh; overflow-y:auto;">
       <h2 style="margin:0 0 4px; font-size:16px;">${esc(t("scan_check_title"))}</h2>
@@ -1315,6 +1367,7 @@ function openBackpackScanMain(groups, bp, done, more) {
       ${islHtml}
       ${lightHtml}
       ${gearHtml}
+      ${gearOrHtml}
       ${tabsRead.length ? `<div class="meta scan-tabs">${esc(t("scan_tabs_read").replace("{list}", tabsRead.join(" · ")))}</div>` : ""}
       ${zeroRows ? `<div class="scan-zero-head"><b>${esc(t("scan_zero_title"))}</b><div class="meta">${esc(t("scan_zero_hint"))}</div></div>${zeroRows}` : ""}
       <div id="scanLearn">${learnHtml(false)}</div>
@@ -1350,6 +1403,21 @@ function openBackpackScanMain(groups, bp, done, more) {
       const a = ev.target.closest("[data-lamt]");
       if (a) { const v = a.value.replace(/\D/g, ""); unknownList[Number(a.dataset.lamt)].amount = v ? Number(v) : null; }
     });
+    // A picked stage changes that row's Essence Stones and the total.
+    const goSync = () => {
+      let xp = 0, es = 0, n = 0;
+      modal.querySelectorAll("[data-scango]").forEach((el) => {
+        const r = goRows.find((x) => x.key === el.dataset.scango), c = Number(el.value.replace(/\D/g, "")) || 0;
+        if (!r) return;
+        const e = goEach(r), line = el.closest(".gx-line"), meta = line && line.querySelector(".meta");
+        if (meta) meta.textContent = t("go_each").replace("{xp}", e.xp.toLocaleString()).replace("{es}", e.es.toLocaleString());
+        n += c; xp += c * e.xp; es += c * e.es;
+      });
+      const sum = modal.querySelector("[data-scangotick]") && modal.querySelector("[data-scangotick]").closest(".scan-row").querySelector(".gx-sum");
+      if (sum) sum.innerHTML = `&rarr; <b>${esc(t("gx_xp").replace("{n}", xp.toLocaleString()))}</b> · <b>${esc(t("go_es").replace("{n}", es.toLocaleString()))}</b> (${esc(t("gx_pieces").replace("{n}", n.toLocaleString()))})`;
+    };
+    modal.querySelectorAll("[data-scangost]").forEach((el) => el.addEventListener("change", () => { gearOrStage[el.dataset.scangost] = Number(el.value) || 0; goSync(); }));
+    modal.querySelectorAll("[data-scango]").forEach((el) => el.addEventListener("change", goSync));
     const labIn = modal.querySelector("[data-scanlab]");
     if (labIn) labIn.addEventListener("change", () => { const v = labIn.value.replace(/\D/g, ""); if (v) lab.count = Number(v); });
     // Keep typed fixes if more screenshots are added.
@@ -1376,6 +1444,17 @@ function openBackpackScanMain(groups, bp, done, more) {
       if (gxTick && gxTick.checked) {
         Object.keys(bp).forEach((k) => { if (GEAR_XP_RE.test(k)) delete bp[k]; });
         modal.querySelectorAll("[data-scangx]").forEach((el) => { const v = Number(el.value.replace(/\D/g, "")) || 0; if (v > 0) bp[el.dataset.scangx] = v; });
+      }
+      // Orange gear to reset read from the Gear tab replaces what was saved (with the stage picked).
+      const goTick = modal.querySelector("[data-scangotick]");
+      if (goTick && goTick.checked) {
+        Object.keys(bp).forEach((k) => { if (GEAR_ORANGE_RE.test(k)) delete bp[k]; });
+        modal.querySelectorAll("[data-scango]").forEach((el) => {
+          const v = Number(el.value.replace(/\D/g, "")) || 0, m = GEAR_ORANGE_RE.exec(el.dataset.scango);
+          if (!(v > 0) || !m) return;
+          const k = gearOrangeKey(Number(m[1]), Number(m[2]), stOf(el.dataset.scango));
+          bp[k] = (bp[k] || 0) + v;
+        });
       }
       // Not seen in the screenshots and left ticked: opened or used, now 0.
       modal.querySelectorAll("[data-scanzero]").forEach((tick) => { if (tick.checked) delete bp[tick.dataset.scanzero]; });
