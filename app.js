@@ -3430,7 +3430,8 @@ const T = {
   chw_nothing: { en: "nothing needed" },
   chw_enough: { en: "enough" },
   bsx_rest: { en: "Where the rest comes from" },
-  bsx_goes_spare: { en: "Spare {n} goes to" },
+  bsx_spare: { en: "Spare {n}" },
+  bsx_goes_to: { en: "goes to" },
   bsx_week: { en: "This week" },
   bsx_later: { en: "Next weeks" },
   bsx_lab: { en: "Research Lab" },
@@ -32666,18 +32667,25 @@ function cgBoxExplainHtml(name, c) {
   // Each trade is listed once, in the box of the item it makes. The list and the status line
   // only show when trades into this item change the answer (owner, 18 Nov 2026): otherwise the
   // Needed / You have / Short boxes above already say it all. What this item gives away is one
-  // short line, "Spare N goes to Alloy ›", each target tappable.
+  // green bar, "✓ Spare N → goes to Alloy ›", each target tappable.
   const short = c.need - (c.have + inQ - outQ);
   const ownOk = c.have >= c.need - 0.5, ok = ownOk || short <= 0.5;
   const tos = [...new Set(outs.map((x) => x.to))];
   const tileOf = (n) => [...content.querySelectorAll("[data-bsedit], [data-expedit]")].some((b) => (b.dataset.bsedit || b.dataset.expedit) === n);
-  const goes = tos.length ? `<div class="bsx-goes">${ic(name)}<span>${esc(t("bsx_goes_spare").replace("{n}", num(outQ)))}</span>${tos.map((n) => (tileOf(n) ? `<button type="button" class="bsx-go" data-bsxgo="${esc(n)}">${ic(n)}<span>${nm(n)}</span></button>` : `<span class="bsx-go off">${ic(n)}<span>${nm(n)}</span></span>`)).join('<span class="bsx-gs">,</span>')}${tos.some(tileOf) ? '<span class="bsx-ga">&#8250;</span>' : ""}</div>` : "";
+  // A green bar like the status bars: "✓ Spare 195 → goes to [Alloy] ›". One target: the whole
+  // bar is the button; several: each target is its own button inside the bar.
+  const goTo = (n, own) => (tileOf(n) ? `<${own ? "span" : `button type="button" data-bsxgo="${esc(n)}"`} class="bsx-go">${ic(n)}<span>${nm(n)}</span></${own ? "span" : "button"}>` : `<span class="bsx-go off">${ic(n)}<span>${nm(n)}</span></span>`);
+  const one = tos.length === 1 && tileOf(tos[0]);
+  const goesIn = `<b>&#10003; ${esc(t("bsx_spare").replace("{n}", num(outQ)))}</b><span class="bsx-gt"><span>&#8594; ${esc(t("bsx_goes_to"))}</span>${tos.map((n) => goTo(n, one)).join('<span class="bsx-gs">,</span>')}${tos.some(tileOf) ? '<span class="bsx-ga">&#8250;</span>' : ""}</span>`;
+  const goes = !tos.length ? "" : one
+    ? `<button type="button" class="bsx-tot ok bsx-goes" data-bsxgo="${esc(tos[0])}">${goesIn}</button>`
+    : `<div class="bsx-tot ok bsx-goes">${goesIn}</div>`;
   if (!ins.length) return goes;
   const body = `<div class="bsx-h">${esc(t("bsx_rest"))}</div><div class="bsx-list">${ins.map((x) => line(x.when, x.lab ? labMid(x) : `${ic(x.from)}<span>${esc(t("bsx_trade").replace("{n}", num(x.give, x.from)))} ${nm(x.from)}</span>`, `+${num(x.get)}`)).join("")}</div>`;
   const stat = ok
-    ? `<div class="bsx-tot ok${goes ? " gl" : ""}"><b>&#10003; ${esc(t(ownOk ? "bsx_covered" : "bsx_cov_trades"))}</b>${goes}</div>`
-    : `<div class="bsx-tot bad${goes ? " gl" : ""}"><b>${esc(t("bsx_still_short").replace("{n}", num(short)))}</b>${goes}</div>`;
-  return `${body}${stat}`;
+    ? `<div class="bsx-tot ok"><b>&#10003; ${esc(t(ownOk ? "bsx_covered" : "bsx_cov_trades"))}</b></div>`
+    : `<div class="bsx-tot bad"><b>${esc(t("bsx_still_short").replace("{n}", num(short)))}</b></div>`;
+  return `${body}${stat}${goes}`;
 }
 // Third line of a Backpack tile: red "N short", green ✓, or grey — when
 // this page doesn't use it (need 0). { html, off }.
