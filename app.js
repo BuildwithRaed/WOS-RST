@@ -32428,7 +32428,9 @@ function packTradeWhenSplit(x) {
 function boxExplainRefresh() {
   ["bsEditModal", "bsGrpModal"].forEach((id) => {
     const md = document.getElementById(id), ex = md && md.style.display !== "none" && md._extra && md.querySelector("[data-bsexplain]");
-    if (ex) ex.innerHTML = md._extra();
+    if (!ex) return;
+    ex.innerHTML = md._extra();
+    if (id === "bsGrpModal") ex.hidden = !ex.innerHTML;
   });
 }
 // c: { calcKey, need, have (the box's "You have"), needAll, calcOwned, given ({ item: what the box's own rules already spent }) }
@@ -32572,7 +32574,7 @@ function bsGroupModal(o) {
           <div class="bsm-grab" data-cgwgrab aria-hidden="true"></div>
           <div class="bsm-h"><img src="${esc(o.icon)}" alt="" /><div><b>${esc(o.label)}</b></div>${closeXHtml("data-bsgclose")}</div>
           <div data-bsgnb></div>
-          ${o.extra ? `<div class="bsx" data-bsexplain>${o.extra()}</div>` : ""}
+          ${o.extra ? (() => { const ex = o.extra(); return `<div class="bsx" data-bsexplain${ex ? "" : " hidden"}>${ex}</div>`; })() : ""}
           <div class="bsg-rows">${o.items.map(rowHtml).join("")}</div>
           <button class="btn bsg-save" type="button" data-bsgsave>${esc(t("save"))}</button>
         </div>`;
