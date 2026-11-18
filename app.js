@@ -7768,7 +7768,8 @@ const MK_SLOTS = {
     const cells = [...document.querySelectorAll(`#heroGearTracks .hg-cell[data-hgpc="${mkE(piece)}"]`)];
     return { in: cells[GEAR_LEVELING_TABLES.indexOf(tb)] };
   },
-  petsdata: (tr) => { const s = mkQ(`[data-petfrom="${mkE(tr.raw)}"]`); return { in: s && s.closest(".pc-st") }; },
+  // Beside the NOW label (not under the stepper, which would lift NOW above TARGET).
+  petsdata: (tr) => { const s = mkQ(`[data-petfrom="${mkE(tr.raw)}"]`), st = s && s.closest(".pc-st"); return { in: st && st.querySelector(":scope > span") }; },
   t12research: (tr) => {
     const [troop, key] = String(tr.raw).split("|"), on = mkQ("[data-t12tab].on");
     if (!on || on.dataset.t12tab !== troop) return {};
@@ -31143,14 +31144,15 @@ async function renderExpertsPage() {
     // tap a need box to change what you have (Affinity already in the bar / the expert's Sigils)
     gridEl.querySelectorAll("[data-expbox]").forEach((b) => b.addEventListener("click", () => {
       if (b.dataset.expbox === "aff") {
-        plxAmountModal({ label: t("exp_in_bar_title").replace("{name}", dataName(hero)), icon: EXPERT_INVENTORY_ICONS.Affinity, value: heroAffinityHave(hero) || 0, onSave: (v) => {
+        plxAmountModal({ top: true, label: t("exp_in_bar_title").replace("{name}", dataName(hero)), icon: EXPERT_INVENTORY_ICONS.Affinity, value: heroAffinityHave(hero) || 0, onSave: (v) => {
           v = Math.max(0, Math.floor(Number(v) || 0));
           if (v) saved[hero].affHave = v; else delete saved[hero].affHave;
           saveCalcState("experts", saved); renderTotals(); renderGrid();
         } });
       } else {
         const key = `${hero} Sigils`;
-        plxAmountModal({ label: t("exp_sigils_of").replace("{name}", dataName(hero)), icon: EXPERT_INVENTORY_ICONS[key] || "icons/item_icon_570000.png", value: Number(invSaved[key]) || 0, onSave: (v) => {
+        const sgLinkable = Object.keys(bpLink.bp).length > 0 && backpackLinks("experts", key);
+        plxAmountModal({ top: true, label: t("exp_sigils_of").replace("{name}", dataName(hero)), icon: EXPERT_INVENTORY_ICONS[key] || "icons/item_icon_570000.png", value: Number(invSaved[key]) || 0, linked: sgLinkable ? backpackLinked("experts", key, bpLink) : null, onUse: () => useBackpackFor(key), onSave: (v) => {
           invSaved[key] = Math.max(0, Math.floor(Number(v) || 0));
           if (Object.keys(bpLink.bp).length) setBackpackManual("experts", key, true, bpLink);
           budgetInvalidate(); saveCalcState("experts_inventory", invSaved); renderTotals(); renderInventory(); renderGrid();
@@ -31160,7 +31162,7 @@ async function renderExpertsPage() {
     // tap the EXP number to type the Learning XP you have for this step (lowers only the time)
     gridEl.querySelectorAll("[data-expskillexp]").forEach((b) => b.addEventListener("click", () => {
       const [h, skill] = b.dataset.expskillexp.split("|");
-      plxAmountModal({ label: `${dataName(skill)} · ${t("exp_learn_xp")}`, icon: "icons/exp-learn.png", value: skillExpHave(saved[h].skills[skill]) || 0, onSave: (v) => {
+      plxAmountModal({ top: true, label: `${dataName(skill)} · ${t("exp_learn_xp")}`, icon: "icons/exp-learn.png", value: skillExpHave(saved[h].skills[skill]) || 0, onSave: (v) => {
         v = Math.max(0, Math.floor(Number(v) || 0));
         if (v) saved[h].skills[skill].expHave = v;
         else delete saved[h].skills[skill].expHave;
@@ -31299,7 +31301,7 @@ async function renderExpertsPage() {
     const spdItems = ["Expert Speedups (minutes)", GENERAL_SPEEDUP_KEY].filter((f) => fields.includes(f));
     const GROUPS = {
       aff: { items: affItems, label: t("resource_affinity"), icon: EXPERT_INVENTORY_ICONS.Affinity, fmt: shortAmount, nbFmt: bsNbNum, have: () => affinityOwnedFrom(invSaved), worth: (f, v) => v * AFFINITY_ITEM_VALUE[f], worthTxt: (f, v) => `= ${bsNbNum(v * AFFINITY_ITEM_VALUE[f])} ${t("resource_affinity")}`, minutes: false },
-      spd: { items: spdItems, label: t("backpack_speedups"), icon: "icons/speedup-expert.png", fmt: bsTime, nbFmt: bsTime, have: () => expertSpeedupOwnedFrom(invSaved), worth: (f, v) => v, worthTxt: (f, v) => `${Math.round(v).toLocaleString()} min`, minutes: true },
+      spd: { items: spdItems, label: t("backpack_speedups"), icon: "icons/speedup-expert.png", fmt: bsTime, nbFmt: bsTime, have: () => expertSpeedupOwnedFrom(invSaved), worth: (f, v) => v, worthTxt: (f, v) => formatTimeDHM((Number(v) || 0) / 60), minutes: true },
     };
     const grpOf = (f) => (affItems.includes(f) ? "aff" : spdItems.length > 1 && spdItems.includes(f) ? "spd" : null);
     const grpHtml = (k) => {
@@ -31320,52 +31322,67 @@ async function renderExpertsPage() {
     const openGroup = (k) => {
       const G = GROUPS[k], nd = tileNeed && tileNeed[G.items[0]];
       let modal = document.getElementById("bsGrpModal");
-      if (!modal) { modal = document.createElement("div"); modal.id = "bsGrpModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
+      if (!modal) { modal = document.createElement("div"); modal.id = "bsGrpModal"; modal.className = "modal-overlay bsm-ov"; document.body.appendChild(modal); }
       const useBp = {}, dirty = {};
-      // Exact time to type over ("39d 1h 12m"), so an untouched box saves the same minutes.
-      const minTxt = (v) => { v = Math.round(Number(v) || 0); if (!v) return "0"; const d = Math.floor(v / 1440), h = Math.floor((v % 1440) / 60), m = v % 60; return [d ? `${d}d` : "", h ? `${h}h` : "", m ? `${m}m` : ""].filter(Boolean).join(" "); };
+      const bpOf = (f) => backpackAmountFor(f, bpLink.bp);
+      // Minutes are typed as plain minutes (number pad); days / hours / minutes under the name.
+      const valTxt = (v) => String(G.minutes ? Math.round(Number(v) || 0) : Number(v) || 0);
       const iconOf = (f) => itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f] || (k === "spd" ? (f === GENERAL_SPEEDUP_KEY ? "icons/speedup-general.png" : "icons/speedup-expert.png") : "icons/item_icon_570201.png");
+      const lkTxt = (linked) => (linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`);
       const rowHtml = (f) => {
         const v = Number(invSaved[f]) || 0, linkable = hasBp && backpackLinks("experts", f), linked = linkable && backpackLinked("experts", f, bpLink);
-        return `<div class="bsg-row" data-bsgrow="${esc(f)}">
-          <img src="${esc(iconOf(f))}" alt="" />
-          <div class="bsg-t"><b>${esc(materialDisplayName(f).replace(/\s*\((minutes|min)\)$/, ""))}</b><small data-bsgworth>${esc(G.worthTxt(f, v))}</small>${linkable ? `<small class="bsg-lk">${linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}${linked ? "" : ` · <button type="button" class="linklike" data-bsguse>${esc(t("bp_link_use"))}</button>`}</small>` : ""}</div>
-          <input type="text" inputmode="${G.minutes ? "text" : "decimal"}" autocomplete="off" value="${G.minutes ? esc(minTxt(v)) : v}" aria-label="${esc(materialDisplayName(f))}" />
+        return `<div class="bsg-row" data-bsgrow="${esc(f)}" data-bsglinked="${linked ? 1 : 0}" data-bsginit="${esc(valTxt(v))}">
+          <div class="bsg-top"><img src="${esc(iconOf(f))}" alt="" />
+          <div class="bsg-t"><b>${esc(materialDisplayName(f).replace(/\s*\((minutes|min)\)$/, ""))}</b><small class="bsg-w" data-bsgworth>${esc(G.worthTxt(f, v))}</small>${linkable ? `<small class="bsg-lk" data-bsglk>${lkTxt(linked)}</small>` : ""}</div>
+          ${linkable ? `<button type="button" class="linklike bsg-use" data-bsguse${linked ? " hidden" : ""}>&#127890; ${esc(t("bp_link_use"))}</button>` : ""}</div>
+          <div class="bsm-in"><input type="text" inputmode="${G.minutes ? "numeric" : "decimal"}" autocomplete="off" value="${esc(valTxt(v))}" aria-label="${esc(materialDisplayName(f))}" /></div>
         </div>`;
       };
       const parse = (inp) => { const x = G.minutes ? parseMinutes(inp.value) : parseAmount(inp.value); return Number.isNaN(x) ? NaN : Math.max(0, x); };
-      modal.innerHTML = `<div class="modal-box bsg" style="max-width:360px;">
-          <div class="bsg-h"><img src="${esc(G.icon)}" alt="" /><h2>${esc(G.label)}</h2></div>
+      // Same look as the single box pop-up: a sheet from the bottom on phones (grab handle,
+      // swipe down / ✕ / outside closes), title row, Needed / You have / Short, then a row
+      // per item with its own box, one Save.
+      modal.innerHTML = `<div class="modal-box bsm-top bsg">
+          <div class="bsm-grab" data-cgwgrab aria-hidden="true"></div>
+          <div class="bsm-h"><img src="${esc(G.icon)}" alt="" /><div><b>${esc(G.label)}</b></div>${closeXHtml("data-bsgclose")}</div>
           <div data-bsgnb></div>
           <div class="bsg-rows">${G.items.map(rowHtml).join("")}</div>
-          <div class="meta bsg-hint">${esc(t(G.minutes ? "bs_edit_hint_min" : "bs_edit_hint"))}</div>
-          <div class="bsg-btns"><button class="btn ghost" type="button" data-bsgcancel>${esc(t("cancel"))}</button><button class="btn" type="button" data-bsgsave>${esc(t("save"))}</button></div>
+          <button class="btn bsg-save" type="button" data-bsgsave>${esc(t("save"))}</button>
         </div>`;
       const nbEl = modal.querySelector("[data-bsgnb]");
       const refresh = () => {
         let have = 0;
         modal.querySelectorAll("[data-bsgrow]").forEach((r) => {
-          const f = r.dataset.bsgrow, v = parse(r.querySelector("input")), ok = !Number.isNaN(v);
-          r.querySelector("input").style.borderColor = ok ? "" : "var(--danger)";
+          const f = r.dataset.bsgrow, inp = r.querySelector("input"), v = parse(inp), ok = !Number.isNaN(v);
+          inp.style.borderColor = ok ? "" : "var(--danger)";
           const w = ok ? v : Number(invSaved[f]) || 0;
           have += G.worth(f, w);
           r.querySelector("[data-bsgworth]").textContent = G.worthTxt(f, w);
+          // "Use Backpack": once the box holds a typed amount, or as soon as the person types.
+          const use = r.querySelector("[data-bsguse]");
+          if (use) use.hidden = r.dataset.bsglinked === "1" ? (useBp[f] || inp.value.trim() === r.dataset.bsginit) : !!useBp[f];
         });
         nbEl.innerHTML = nd && nd.need > 0 ? bsNeedBoxesHtml({ need: nd.need, have, fmt: G.nbFmt }) : "";
       };
       refresh();
       modal.style.display = "flex";
       const close = () => { modal.style.display = "none"; };
-      modal.onclick = (ev) => { if (ev.target === modal) close(); };
-      modal.oninput = (ev) => { const r = ev.target.closest && ev.target.closest("[data-bsgrow]"); if (r) { dirty[r.dataset.bsgrow] = true; delete useBp[r.dataset.bsgrow]; } refresh(); };
-      modal.querySelectorAll("[data-bsguse]").forEach((b) => b.addEventListener("click", () => {
-        const r = b.closest("[data-bsgrow]"), f = r.dataset.bsgrow, v = backpackAmountFor(f, bpLink.bp);
-        useBp[f] = true;
-        r.querySelector("input").value = G.minutes ? minTxt(v) : v;
+      const sw = wireSheetSwipe(modal, { box: ".bsm-top", close });
+      modal.onclick = (ev) => {
+        if (sw.dragged) { sw.dragged = false; return; }
+        if (ev.target === modal || ev.target.closest("[data-bsgclose]")) { close(); return; }
+        const b = ev.target.closest("[data-bsguse]");
+        if (!b) return;
+        const r = b.closest("[data-bsgrow]"), f = r.dataset.bsgrow;
+        r.querySelector("input").value = valTxt(bpOf(f));
         delete dirty[f];
-        b.parentNode.innerHTML = `&#127890; ${esc(t("bp_link_from"))}`;
+        // Typed before: back to the Backpack link on Save. Linked: just the Backpack's amount again.
+        if (r.dataset.bsglinked !== "1") useBp[f] = true;
+        const lk = r.querySelector("[data-bsglk]");
+        if (lk) lk.innerHTML = lkTxt(true);
         refresh();
-      }));
+      };
+      modal.oninput = (ev) => { const r = ev.target.closest && ev.target.closest("[data-bsgrow]"); if (r) { dirty[r.dataset.bsgrow] = true; delete useBp[r.dataset.bsgrow]; const lk = r.querySelector("[data-bsglk]"); if (lk) lk.innerHTML = lkTxt(r.dataset.bsglinked === "1"); } refresh(); };
       const save = () => {
         const vals = {};
         let bad = false;
@@ -31376,7 +31393,7 @@ async function renderExpertsPage() {
           const old = Number(invSaved[f]) || 0, typed = !!dirty[f] && vals[f] !== old;
           if (useBp[f]) {
             setBackpackManual("experts", f, false, bpLink);
-            invSaved[f] = backpackAmountFor(f, bpLink.bp);
+            invSaved[f] = bpOf(f);
           } else if (typed) {
             invSaved[f] = vals[f];
             if (hasBp) setBackpackManual("experts", f, true, bpLink);
@@ -31393,8 +31410,7 @@ async function renderExpertsPage() {
         renderGrid();
       };
       modal.querySelector("[data-bsgsave]").onclick = save;
-      modal.querySelector("[data-bsgcancel]").onclick = close;
-      modal.querySelectorAll("input").forEach((i) => { i.onkeydown = (ev) => { if (ev.key === "Enter") save(); }; });
+      modal.querySelectorAll("input").forEach((i) => { i.onkeydown = (ev) => { if (ev.key === "Enter") save(); else if (ev.key === "Escape") close(); }; });
     };
     const tilesHtml = fields.map((f) => { const k = grpOf(f); return k ? (f === GROUPS[k].items[0] ? grpHtml(k) : "") : tile(f); }).join("");
     invEl.innerHTML = `${bsHelpHtml(!!tileNeed && fields.some((f) => tileNeed[f] && !(tileNeed[f].need > 0)), false)}<div class="bs-tiles">${tilesHtml}</div>
