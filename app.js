@@ -3449,8 +3449,6 @@ const T = {
   bsx_cov_trades: { en: "Covered with trades" },
   bsx_still_short: { en: "Still {n} short" },
   bsx_cov_packs: { en: "Covered with the plan's packs" },
-  bsx_packs_btn: { en: "Packs {p}" },
-  bsx_rest_packs: { en: "The rest comes from packs" },
   bsx_wait: { en: "Working out where the rest comes from…" },
   bsx_shared: { en: "Shared with your other pages: this page's part of the price." },
   cdp_pages_up: { en: "Pages that can go up" },
@@ -32484,7 +32482,6 @@ function plxAmountModal(o) {
   if (!o.top) modal.onpointerdown = modal.onpointermove = modal.onpointerup = modal.onpointercancel = null;
   modal.onclick = (ev) => {
     if (sw && sw.dragged) { sw.dragged = false; return; }
-    if (ev.target.closest("[data-bsxpacks]")) { close(); boxOpenPackCost(); return; }
     // "N goes to Alloy ›": open that item's box on the same page.
     const go = ev.target.closest("[data-bsxgo]");
     if (go) {
@@ -32513,10 +32510,10 @@ function plxAmountModal(o) {
   if (use) use.onclick = () => { close(); o.onUse(); };
 }
 // Planner pages' Backpack box pop-up: the trades into this item ("Where the rest comes from":
-// this week / next weeks / after the pack plan) and out of it ("Used in trades"), a status
-// line (covered / still N short after trades) and the "Can do now" bar, which gets a button
-// to the page's Pack cost when the plan still buys packs that give this item. No pack
-// lines. Read only from what the page already has: the Pack cost card's picked plan
+// this week / next weeks / after the pack plan; each trade only in the box of the item it
+// makes), a status line (covered / still N short, counting the plan's packs that give it;
+// a source item adds "N goes to <item> ›") and the "Can do now" bar (how far the Backpack
+// alone takes the page). No pack lines, prices or links. Read only from what the page already has: the Pack cost card's picked plan
 // (PACK_COST_PLAN), the trade rules and the page marks (MK). The free trades have no
 // dates: each trade's lots up to its weekly limit are "this week", the rest "next weeks".
 // Pages whose Backpack box pop-ups use it (calcKey -> the page's tab, for the Can do bar).
@@ -32529,12 +32526,6 @@ function packTradeWhenSplit(x) {
   if (!(x.lots > 0)) return [];
   const per = x.giveQty / x.lots, gp = x.getQty / x.lots, a = x.max > 0 ? Math.min(x.lots, x.max) : x.lots, b = x.lots - a;
   return [a > 0 && { when: "week", from: x.from, to: x.to, give: a * per, get: a * gp, lots: a, lab: x.lab }, b > 0 && { when: "later", from: x.from, to: x.to, give: b * per, get: b * gp, lots: b, lab: x.lab }].filter(Boolean);
-}
-// The page's Pack cost: the same button as the page's own "price ›" (phones: the window,
-// PC: the side card, unfolded and scrolled to).
-function boxOpenPackCost() {
-  const b = content.querySelector('[data-cgsheet="packs"], [data-plxsheet="packs"]');
-  if (b) b.click();
 }
 // c: { calcKey, need, have, needAll, calcOwned, fmt }
 function cgBoxExplainHtml(name, c) {
@@ -32590,16 +32581,14 @@ function cgBoxExplainHtml(name, c) {
   const stat = ok
     ? `<div class="bsx-tot ok${goes ? " gl" : ""}"><b>&#10003; ${esc(t(ownOk ? "bsx_covered" : viaPacks ? "bsx_cov_packs" : "bsx_cov_trades"))}</b>${goes}</div>`
     : `<div class="bsx-tot bad${goes ? " gl" : ""}"><b>${esc(t("bsx_still_short").replace("{n}", num(short)))}</b>${snap.cant && !snap.noPacks ? `<span>${esc(t("bsx_cant"))}</span>` : ""}${goes}</div>`;
-  // The plan buys packs that give it (still short, or covered only with them): a button to the page's Pack cost.
-  const packsNeeded = (!ok || viaPacks) && canPacks && !snap.noPacks && (packQ > 0 || planIn.length > 0);
-  const btn = packsNeeded ? `<button type="button" class="bsx-pk" data-bsxpacks>${esc(t("bsx_packs_btn").replace("{p}", PACK_COST_SHOWN[calcKey] || t("pack_cost_title")))} &#8250;</button>` : "";
   // What the Backpack already lets the page do (the page marks), when they are worked out.
   let canTxt = null;
   if (typeof MK !== "undefined" && MK && MK.tab === BOX_EXPLAIN_TABS[calcKey] && MK.plan) {
     const x = MK.list.find((y) => (MK.plan.lv[y.tr.id] || 0) > y.tr.from);
     canTxt = x ? `${esc(t("bsx_cando"))} <b>${esc(calcKey === "chief_gear" ? pieceDisplayName(x.tr.name || "") : (x.tr.name || ""))} &rarr; ${esc(mkLab(x.tr, MK.plan.lv[x.tr.id]))}</b>` : `${esc(t("bsx_cando"))} <b>${esc(t("bsx_cando_none"))}</b>`;
-  } else if (btn) canTxt = esc(t("bsx_rest_packs"));
-  const can = canTxt != null ? `<div class="bsx-can${btn ? " pk" : ""}"><span>&#9889; ${canTxt}</span>${btn}</div>` : "";
+  }
+  // Only how far the Backpack takes the page: no pack price or link here (Pack cost has its own button).
+  const can = canTxt != null ? `<div class="bsx-can"><span>&#9889; ${canTxt}</span></div>` : "";
   return `${body}${stat}${can}`;
 }
 // Third line of a Backpack tile: red "N short", green ✓, or grey — when
