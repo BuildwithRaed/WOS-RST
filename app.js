@@ -2275,6 +2275,7 @@ const T = {
   path_label: { en: "Path" },
   research_speed_label: { en: "RESEARCH SPEED" },
   speedups_label: { en: "GENERAL SPEEDUPS" },
+  bs_min_unit: { en: "min" },
   set_speed: { en: "Research Speed" },
   set_count: { en: "Count" },
   tl_title: { en: "State Timeline" },
@@ -25363,6 +25364,61 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const tot = RESEARCH_TIME_NEED[calcKey] || 0, gen = Number(RESEARCH_SPEEDUP_MINUTES) || 0, res = Number(owned["Research Speedups (minutes)"]) || 0;
     return { tot, gen, res, short: Math.max(0, tot - gen - res) };
   };
+  // Research + General Speedups: one shared box (both pay the research time), one pop-up.
+  const RS_KEY = "Research Speedups (minutes)";
+  const spdGroup = timePage && names.includes(RS_KEY);
+  const spdItems = () => {
+    const lk = GENERAL_SPEEDUP_LINK, ck = calcKey || "chief_gear", hasBp = Object.keys(link.bp).length > 0, gHasBp = Object.keys(lk.bp || {}).length > 0;
+    const rLinkable = hasBp && backpackLinks(ck, RS_KEY);
+    return [
+      { key: RS_KEY, name: materialDisplayName(itemShortName(RS_KEY)).replace(/\s*\((minutes|min)\)$/, ""), icon: iconFor(RS_KEY), value: Number(owned[RS_KEY]) || 0, linkable: rLinkable, linked: rLinkable && backpackLinked(ck, RS_KEY, link), bpValue: backpackAmountFor(RS_KEY, link.bp) },
+      { key: GENERAL_SPEEDUP_KEY, name: materialDisplayName(GENERAL_SPEEDUP_KEY).replace(/\s*\((minutes|min)\)$/, ""), icon: "icons/speedup-general.png", value: Number(RESEARCH_SPEEDUP_MINUTES) || 0, linkable: gHasBp, linked: gHasBp && backpackLinked("experts", GENERAL_SPEEDUP_KEY, lk), bpValue: backpackAmountFor(GENERAL_SPEEDUP_KEY, lk.bp || {}) },
+    ];
+  };
+  function spdGroupHtml() {
+    const { tot, gen, res, short } = timeNums(), its = spdItems();
+    return bsGroupTileHtml({
+      cls: "bs-spd", host: "data-bsspdbox", off: !(tot > 0), bag: its.some((it) => it.linked), attr: "data-bsspd",
+      items: its.map((it) => ({ key: it.key, icon: it.icon, qty: bsTime(it.value), title: it.name })),
+      label: t("backpack_speedups"), have: gen + res, need: tot, short, fmt: bsTime,
+    });
+  }
+  function openSpdGroup() {
+    const ck = calcKey || "chief_gear", tn = timeNums();
+    const needAll = {};
+    names.forEach((n) => { const v = needSum(n); if (v > 0) needAll[n] = v; });
+    const extra = BOX_EXPLAIN_KEYS.has(ck) && tn.tot > 0 ? () => { const x = timeNums(); return cgBoxExplainHtml(RS_KEY, { calcKey: ck, need: x.tot, have: x.gen + (effOwned[RS_KEY] || 0), needAll, calcOwned }); } : null;
+    bsGroupModal({
+      label: t("backpack_speedups"), icon: "icons/speedup-research.png", need: tn.tot, nbFmt: bsTime, minutes: true, extra,
+      worth: (k, v) => v, worthTxt: (k, v) => formatTimeDHM((Number(v) || 0) / 60),
+      items: spdItems(),
+      onSave: async (changes) => {
+        // The research box first (its Backpack link is saved at once), then the shared general pool.
+        const res = changes.find((c) => c.key === RS_KEY), gen = changes.find((c) => c.key === GENERAL_SPEEDUP_KEY);
+        if (res) {
+          const canLink = Object.keys(link.bp).length && backpackLinks(ck, RS_KEY);
+          owned[RS_KEY] = res.value;
+          if (canLink) setBackpackManual(ck, RS_KEY, !res.use, link);
+        }
+        if (!gen) { ownedChanged(RS_KEY); return; }
+        if (res) { budgetInvalidate(); saveCalcState(`material_owned_${ck}`, owned); }
+        if (gen.use) {
+          const lk = await backpackLinkState();
+          setBackpackManual("experts", GENERAL_SPEEDUP_KEY, false, lk);
+          GENERAL_SPEEDUP_LINK = lk;
+          RESEARCH_SPEEDUP_MINUTES = backpackAmountFor(GENERAL_SPEEDUP_KEY, lk.bp);
+          const inv = (await loadCalcState("experts_inventory")) || {};
+          inv[GENERAL_SPEEDUP_KEY] = RESEARCH_SPEEDUP_MINUTES;
+          saveCalcState("experts_inventory", inv);
+          budgetInvalidate();
+        } else {
+          await saveGeneralSpeedupMinutes(gen.value);
+          GENERAL_SPEEDUP_LINK = await backpackLinkState();
+        }
+        refreshFn();
+      },
+    });
+  }
   function genTileHtml() {
     const { tot, gen, short } = timeNums(), lk = GENERAL_SPEEDUP_LINK;
     const st = bsTileStatus(tot, short, bsTime);
@@ -25458,7 +25514,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     ${timePage ? `<div id="${rowsId}_time">${timeLineHtml()}</div>` : ""}
     ${summaryOn && !sumHost ? `<div id="${rowsId}_sum" class="bs-box">${summaryHtml()}</div>` : ""}
     <div id="${rowsId}" class="${summaryOn ? "bs-edit" : "mat-row"}"${summaryOn && BAR_SHOW_ALL[calcKey] === false ? ` style="display:none;"` : ""}>${summaryOn
-      ? `${bsHelpHtml(matEntries.some(([n]) => tileOff(n)), chests.some((n) => matEntries.some(([m]) => m === n)))}<div class="bs-tiles">${[...matEntries].sort((a, b) => ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(a[0])) - ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(b[0]))).map(([n]) => editRowHtml(n)).join("")}${timePage ? genTileHtml() : ""}</div>`
+      ? `${bsHelpHtml(matEntries.some(([n]) => tileOff(n)), chests.some((n) => matEntries.some(([m]) => m === n)))}<div class="bs-tiles">${[...matEntries].sort((a, b) => ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(a[0])) - ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(b[0]))).map(([n]) => (spdGroup && n === RS_KEY ? spdGroupHtml() : editRowHtml(n))).join("")}${timePage && !spdGroup ? genTileHtml() : ""}</div>`
       : matEntries.map(materialCellHtml).join("")}</div>
     ${(() => { const ch = chests.filter((n) => CHANCE_CHESTS.includes(n) && (owned[n] || 0) > 0); return ch.length ? ch.map((n) => `<div class="chest-open">${iconFor(n) ? `<img src="${esc(iconFor(n))}" alt="" loading="lazy" />` : ""}<span>${esc(chanceChestLine(n, owned[n]))}</span><button type="button" class="linklike" data-chestopen>${esc(t("chest_open_do"))} &rsaquo;</button></div>`).join("") : ""; })()}
     ${buyHost ? "" : `<div id="${rowsId}_trades"></div>
@@ -25503,6 +25559,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     if (tl) tl.innerHTML = timeLineHtml();
     const gt = el.querySelector("[data-bsgen]");
     if (gt) gt.outerHTML = genTileHtml();
+    const sg = el.querySelector("[data-bsspdbox]");
+    if (sg) sg.outerHTML = spdGroupHtml();
     if (BAR_AFTER_CHANGE[calcKey]) BAR_AFTER_CHANGE[calcKey]();
   };
   el.querySelectorAll("[data-ownedmat]").forEach((input) => {
@@ -25528,6 +25586,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   el.onclick = (e) => {
     const tileEl = e.target.closest("[data-bsedit]");
     if (tileEl) { editTileModal(tileEl.dataset.bsedit); return; }
+    if (e.target.closest("[data-bsspd]")) { openSpdGroup(); return; }
     if (e.target.closest("[data-bsgen]")) {
       const lk = GENERAL_SPEEDUP_LINK, linkable = Object.keys(lk.bp || {}).length > 0;
       plxAmountModal({
@@ -32367,8 +32426,10 @@ function packTradeWhenSplit(x) {
 }
 // Redraw the open box pop-up's trades part (after the page's target date has loaded).
 function boxExplainRefresh() {
-  const md = document.getElementById("bsEditModal"), ex = md && md.style.display !== "none" && md._extra && md.querySelector("[data-bsexplain]");
-  if (ex) ex.innerHTML = md._extra();
+  ["bsEditModal", "bsGrpModal"].forEach((id) => {
+    const md = document.getElementById(id), ex = md && md.style.display !== "none" && md._extra && md.querySelector("[data-bsexplain]");
+    if (ex) ex.innerHTML = md._extra();
+  });
 }
 // c: { calcKey, need, have (the box's "You have"), needAll, calcOwned, given ({ item: what the box's own rules already spent }) }
 function cgBoxExplainHtml(name, c) {
@@ -32464,6 +32525,115 @@ function bsNeedBoxesHtml(o) {
     ${short > 0 ? `<div class="t12x-prog bs-nb-bar"><i style="width:${pct}%;"></i></div>` : ""}
     ${o.from || ""}
     ${parts.length > 1 ? `<div class="bs-nb-parts">${parts.map(([l, v]) => `${esc(l)} <b>${bidiNum(fmt(v))}</b>`).join(" &middot; ")}</div>` : ""}`;
+}
+// One Backpack box for items that pay the same need (Expert + General Speedups, Research +
+// General Speedups, the three Affinity items): each item's picture and amount, one line
+// "Speedups 45d 13h · 11h short" / ✓ / —. Tapping an item opens bsGroupModal.
+// o: { cls, off, bag (a Backpack link mark), attr (the data attribute each item button carries),
+//      items: [{ key, icon, qty (shown amount), title }], label, have, need, short, fmt, host (an attribute on the box) }
+function bsGroupTileHtml(o) {
+  const line = !(o.need > 0) ? `<span style="color:var(--muted);">—</span>` : o.short > 0
+    ? `<span style="color:var(--danger);">${esc(o.label)} ${bidiNum(o.fmt(o.have))} · ${bidiNum(o.fmt(o.short))} ${esc(t("bs_short_word"))}</span>`
+    : `<span style="color:var(--good);">${esc(o.label)} ${bidiNum(o.fmt(o.have))} ✓</span>`;
+  return `<div class="bp-tile bs-tile bs-aff${o.cls ? ` ${o.cls}` : ""}${o.off ? " off" : ""}"${o.host ? ` ${o.host}` : ""}>${o.bag ? `<span class="bs-mark">&#127890;</span>` : ""}<div class="bs-aff-items">${o.items.map((it) => `<button type="button" class="bs-aff-it" ${o.attr}="${esc(it.key)}" title="${esc(it.title)}">
+          <img src="${esc(it.icon)}" alt="" loading="lazy" />
+          <span class="bp-qty">${it.qty}</span></button>`).join("")}</div><span class="bs-st">${line}</span></div>`;
+}
+// One pop-up for a shared box: the group's Needed / You have / Short and bar, then one row per
+// item (picture, name, what it counts as, its own box, Use Backpack), one Save. Minutes are typed
+// as plain minutes (number pad, a "min" label in the box), days / hours / minutes under the name.
+// o: { label, icon, need, nbFmt, minutes, worth(key, v), worthTxt(key, v), extra (() => html: the
+//      Backpack's trades, like the single box pop-up),
+//      items: [{ key, name, icon, value, linkable, linked, bpValue }],
+//      onSave([{ key, value, use }]) — only the items that changed; use = back to the Backpack link }
+function bsGroupModal(o) {
+  let modal = document.getElementById("bsGrpModal");
+  if (!modal) { modal = document.createElement("div"); modal.id = "bsGrpModal"; modal.className = "modal-overlay bsm-ov"; document.body.appendChild(modal); }
+  const useBp = {}, dirty = {};
+  const byKey = {};
+  o.items.forEach((it) => { byKey[it.key] = it; });
+  const valTxt = (v) => String(o.minutes ? Math.round(Number(v) || 0) : Number(v) || 0);
+  const lkTxt = (linked) => (linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`);
+  const rowHtml = (it) => {
+    const v = Number(it.value) || 0;
+    const inp = `<input type="text" inputmode="${o.minutes ? "numeric" : "decimal"}" autocomplete="off" value="${esc(valTxt(v))}" aria-label="${esc(it.name)}" />`;
+    return `<div class="bsg-row" data-bsgrow="${esc(it.key)}" data-bsglinked="${it.linked ? 1 : 0}" data-bsginit="${esc(valTxt(v))}">
+          <div class="bsg-top"><img src="${esc(it.icon)}" alt="" />
+          <div class="bsg-t"><b>${esc(it.name)}</b><small class="bsg-w" data-bsgworth>${esc(o.worthTxt(it.key, v))}</small>${it.linkable ? `<small class="bsg-lk" data-bsglk>${lkTxt(it.linked)}</small>` : ""}</div>
+          ${it.linkable ? `<button type="button" class="linklike bsg-use" data-bsguse${it.linked ? " hidden" : ""}>&#127890; ${esc(t("bp_link_use"))}</button>` : ""}</div>
+          <div class="bsm-in">${o.minutes ? `<span class="bsm-f">${inp}<span class="bsm-u" aria-hidden="true">${esc(t("bs_min_unit"))}</span></span>` : inp}</div>
+        </div>`;
+  };
+  const parse = (inp) => { const x = o.minutes ? parseMinutes(inp.value) : parseAmount(inp.value); return Number.isNaN(x) ? NaN : Math.max(0, x); };
+  // Same look as the single box pop-up: a sheet from the bottom on phones (grab handle,
+  // swipe down / ✕ / outside closes), title row, Needed / You have / Short, then a row
+  // per item with its own box, one Save.
+  modal.innerHTML = `<div class="modal-box bsm-top bsg">
+          <div class="bsm-grab" data-cgwgrab aria-hidden="true"></div>
+          <div class="bsm-h"><img src="${esc(o.icon)}" alt="" /><div><b>${esc(o.label)}</b></div>${closeXHtml("data-bsgclose")}</div>
+          <div data-bsgnb></div>
+          ${o.extra ? `<div class="bsx" data-bsexplain>${o.extra()}</div>` : ""}
+          <div class="bsg-rows">${o.items.map(rowHtml).join("")}</div>
+          <button class="btn bsg-save" type="button" data-bsgsave>${esc(t("save"))}</button>
+        </div>`;
+  modal._extra = o.extra || null;
+  const nbEl = modal.querySelector("[data-bsgnb]");
+  const refresh = () => {
+    let have = 0;
+    modal.querySelectorAll("[data-bsgrow]").forEach((r) => {
+      const k = r.dataset.bsgrow, inp = r.querySelector("input"), v = parse(inp), ok = !Number.isNaN(v);
+      inp.style.borderColor = ok ? "" : "var(--danger)";
+      const w = ok ? v : Number(byKey[k].value) || 0;
+      have += o.worth(k, w);
+      r.querySelector("[data-bsgworth]").textContent = o.worthTxt(k, w);
+      // "Use Backpack": once the box holds a typed amount, or as soon as the person types.
+      const use = r.querySelector("[data-bsguse]");
+      if (use) use.hidden = r.dataset.bsglinked === "1" ? (useBp[k] || inp.value.trim() === r.dataset.bsginit) : !!useBp[k];
+    });
+    nbEl.innerHTML = o.need > 0 ? bsNeedBoxesHtml({ need: o.need, have, fmt: o.nbFmt }) : "";
+  };
+  refresh();
+  modal.style.display = "flex";
+  const close = () => { modal.style.display = "none"; modal._extra = null; };
+  const sw = wireSheetSwipe(modal, { box: ".bsm-top", close });
+  modal.onclick = (ev) => {
+    if (sw.dragged) { sw.dragged = false; return; }
+    if (ev.target === modal || ev.target.closest("[data-bsgclose]")) { close(); return; }
+    // "N goes to Alloy ›": open that item's box on the same page.
+    const go = ev.target.closest("[data-bsxgo]");
+    if (go) {
+      const n = go.dataset.bsxgo, tile = [...content.querySelectorAll("[data-bsedit], [data-expedit]")].find((b) => (b.dataset.bsedit || b.dataset.expedit) === n);
+      close();
+      if (tile) tile.click();
+      return;
+    }
+    const b = ev.target.closest("[data-bsguse]");
+    if (!b) return;
+    const r = b.closest("[data-bsgrow]"), k = r.dataset.bsgrow;
+    r.querySelector("input").value = valTxt(byKey[k].bpValue);
+    delete dirty[k];
+    // Typed before: back to the Backpack link on Save. Linked: just the Backpack's amount again.
+    if (r.dataset.bsglinked !== "1") useBp[k] = true;
+    const lk = r.querySelector("[data-bsglk]");
+    if (lk) lk.innerHTML = lkTxt(true);
+    refresh();
+  };
+  modal.oninput = (ev) => { const r = ev.target.closest && ev.target.closest("[data-bsgrow]"); if (r) { dirty[r.dataset.bsgrow] = true; delete useBp[r.dataset.bsgrow]; const lk = r.querySelector("[data-bsglk]"); if (lk) lk.innerHTML = lkTxt(r.dataset.bsglinked === "1"); } refresh(); };
+  const save = () => {
+    const vals = {};
+    let bad = false;
+    modal.querySelectorAll("[data-bsgrow]").forEach((r) => { const v = parse(r.querySelector("input")); if (Number.isNaN(v)) bad = true; else vals[r.dataset.bsgrow] = v; });
+    if (bad) return;
+    const changes = [];
+    o.items.forEach((it) => {
+      if (useBp[it.key]) changes.push({ key: it.key, value: Number(it.bpValue) || 0, use: true });
+      else if (dirty[it.key] && vals[it.key] !== (Number(it.value) || 0)) changes.push({ key: it.key, value: vals[it.key], use: false });
+    });
+    close();
+    if (changes.length) o.onSave(changes);
+  };
+  modal.querySelector("[data-bsgsave]").onclick = save;
+  modal.querySelectorAll("input").forEach((i) => { i.onkeydown = (ev) => { if (ev.key === "Enter") save(); else if (ev.key === "Escape") close(); }; });
 }
 // "Hide boxes": the card then holds only its title (and time line), so drop
 // the bottom gaps and it sits centred.
