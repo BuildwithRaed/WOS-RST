@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 107; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 108; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -1624,9 +1624,7 @@ const T = {
   t12x_max_all: { en: "Max all" },
   t12x_reset: { en: "Reset" },
   t12x_shard: { en: "Shard" },
-  trade_apply_short: { en: "Use in pack cost" },
   trade_lab_line: { en: "Research Lab · once a week (plan set on the Research Lab page)" },
-  trade_card_line2: { en: "{n} trades this week" },
   pc_cards_count: { en: "Already counted: {c} active cards" },
   pc_card_days: { en: "{n} days each" },
   pc_title: { en: "Pack Cost" },
@@ -2624,17 +2622,27 @@ const T = {
   budgets_plan_detail: { en: "What's being upgraded" },
   budgets_snapshot_note: { en: "Numbers from the last time that page was opened." },
   budgets_stats_unavailable: { en: "Current dashboard stats couldn't be loaded — showing increases only." },
-  trade_title: { en: "Trade items" },
+  trade_title: { en: "Trades" },
+  trd_use: { en: "Use trades in Pack cost" },
+  trd_short: { en: "Still short after trades" },
+  trd_nothing_short: { en: "\u2713 Nothing short" },
+  trd_do_title: { en: "Trade this week" },
+  trd_do_trade: { en: "Trade" },
+  trd_do_none: { en: "Nothing to trade this week" },
+  trd_lots_left: { en: "{n} trades left this week" },
+  trd_limit_reached: { en: "limit reached" },
+  trd_from_trades: { en: "from trades" },
+  trd_rules_title: { en: "Trade rules" },
+  trd_per_day: { en: "{n}/day" },
+  trd_per_wk: { en: "{n}/wk" },
+  trd_day: { en: "Day" },
+  trd_week: { en: "Week" },
+  trd_calc: { en: "Calculator" },
   trade_apply: { en: "Use my spare items (trades) in pack cost" },
   trade_rates: { en: "Trade rates" },
-  trade_none: { en: "No spare items to trade, or nothing missing." },
-  trade_after: { en: "Still short after trades:" },
-  trade_max_week: { en: "Max / week" },
-  trade_capped: { en: "weekly limit reached" },
   trade_free: { en: "Free from your spare items (trade, no purchase)" },
   trade_then: { en: "Then trade" },
   trade_via_packs: { en: "Bought as packs then traded" },
-  trade_calc: { en: "Trade calculator" },
   trade_left_over: { en: "left over" },
   pack_group_placeholder: { en: "Group…" },
   pack_group_title: { en: "Main name this table sits under. Tables with the same group name are shown together." },
@@ -17900,11 +17908,11 @@ function packShortAfterTrades(remaining, ctx) {
       if (!(short[to] > 1e-9)) break;
       // (A route whose item ran out gives no lots; spare only goes down.)
       if (!(spare[r.from] > 0)) continue;
-      const capLeft = r.max > 0 ? r.max * ctx.weeks - (used.get(r) || 0) : Infinity;
+      const capLeft = tradeCapLots(r, ctx.weeks) - (used.get(r) || 0);
       const lots = Math.min(Math.ceil(short[to] / r.get), Math.floor(spare[r.from] / r.give), capLeft);
       if (lots <= 0) continue;
       used.set(r, (used.get(r) || 0) + lots);
-      if (r.max > 0) weeksNeeded = Math.max(weeksNeeded, Math.ceil((used.get(r) || 0) / r.max));
+      if (r.max > 0) weeksNeeded = Math.max(weeksNeeded, tradeWeeksForLots(r, used.get(r) || 0));
       spare[r.from] -= lots * r.give;
       short[to] = Math.max(0, short[to] - lots * r.get);
       trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, silent: !!r.silent, lab: !!r.rfcLab, isl: !!r.islFree });
@@ -18163,7 +18171,7 @@ function packExactPicksPart(groups, need, caps, ctx, timeLimit, bonus, feas) {
       else cons.push(` a${ai}_${k}:\n${lines(here.concat(a.tiers[k - 1].map((_, j) => `- 1 ${sv(ai, k - 1, j)}`)))} <= 0`);
     }));
     const bounds = [];
-    rates.forEach((r, k) => { if (r.max > 0) bounds.push(` y${k} <= ${numUp(r.max * ctx.weeks)}`); });
+    rates.forEach((r, k) => { if (r.max > 0) bounds.push(` y${k} <= ${numUp(tradeCapLots(r, ctx.weeks))}`); });
     bons.forEach((b) => bounds.push(` ${b.v} <= ${numUp(b.cap)}`));
     const vars = xs.map((_, j) => `x${j}`).concat(arcVars, rates.map((_, k) => `y${k}`), bons.map((b) => b.v));
     // A tiny cost per trade keeps the solver from making trades nobody needs.
@@ -18209,7 +18217,7 @@ function packPlanCacheKey(groups, need, days, calcKey, quick) {
   if (!sigs) { sigs = new WeakMap(); PACK_PLAN_CACHE.set("__sig", sigs); }
   let gk = sigs.get(groups);
   if (gk === undefined) { gk = packGroupsSig(groups); sigs.set(groups, gk); }
-  return `${gk}|${JSON.stringify(need)}|${days}|${calcKey}|${quick ? 1 : 0}|${TRADE_RATES_CACHE ? JSON.stringify(budgetKeysOf(calcKey).map((k) => TRADE_RATES_CACHE.rates[k] || null)) : ""}|${JSON.stringify(budgetKeysOf(calcKey).map((k) => (TRADE_EXTRA_RATES || {})[k] || null))}`;
+  return `${gk}|${JSON.stringify(need)}|${days}|${calcKey}|${quick ? 1 : 0}|${TRADE_RATES_CACHE ? JSON.stringify(budgetKeysOf(calcKey).map((k) => TRADE_RATES_CACHE.rates[k] || null)) : ""}|${tradeDaysLeftInWeek()}|${JSON.stringify(budgetKeysOf(calcKey).map((k) => (TRADE_EXTRA_RATES || {})[k] || null))}`;
 }
 function packGroupsSig(groups) {
   const sig = groups.map((g) => `${g.reset}|${g.resetDay}|${g.window || 0}|${g.perCycle}|${g.used || 0}|${g.ladder ? 1 : 0}${g.choice ? "c" : ""}${g.dayBonus ? `b${g.dayBonus.key}:${g.dayBonus.qty}:${g.dayBonus.days}` : ""}|` + g.offers.map((o) => o.price + ":" + Object.entries(o.gives).map(([n, v]) => n + "=" + v).join(",") + "~" + (o.label || "") + "~" + (o.tableTitle || "") + "~" + (o.currency || "")).join(";")).join("#");
@@ -18271,7 +18279,7 @@ function packPruneOffersFor(groups, need, ctx) {
 // plans clears this too). Returns { groups, rest (trades left after folding,
 // or null when nothing was folded), worth }.
 function packPlanPrep(groupsIn, need, calcKey, ctx) {
-  const sig = `${JSON.stringify(need)}|${calcKey}|${ctx ? ctx.rates.map((r) => `${r.from}>${r.to}:${r.give}:${r.get}:${r.max || 0}`).join(",") : ""}`;
+  const sig = `${JSON.stringify(need)}|${calcKey}|${ctx ? ctx.rates.map((r) => `${r.from}>${r.to}:${r.give}:${r.get}:${r.max || 0}:${r.wk1 == null ? "" : r.wk1}`).join(",") : ""}`;
   let store = PACK_PLAN_CACHE.get("__prep");
   if (!store) { store = new WeakMap(); PACK_PLAN_CACHE.set("__prep", store); }
   const hit = store.get(groupsIn);
@@ -18502,7 +18510,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
       const perGroup = groups.map(() => 0);
       exact.picks.forEach((p) => { perGroup[p.gi] += p.count; });
       let weeksNeeded = 0;
-      ex.lots.forEach((n, k) => { if (n > 0 && rates[k].max > 0) weeksNeeded = Math.max(weeksNeeded, Math.ceil(n / rates[k].max)); });
+      ex.lots.forEach((n, k) => { if (n > 0 && rates[k].max > 0) weeksNeeded = Math.max(weeksNeeded, tradeWeeksForLots(rates[k], n)); });
       exact.trades = ex.lots.map((n, k) => (n > 0 ? { from: rates[k].from, to: rates[k].to, giveQty: n * rates[k].give, getQty: n * rates[k].get, lots: n, silent: !!rates[k].silent, lab: !!rates[k].rfcLab, isl: !!rates[k].islFree } : null)).filter((x) => x && !x.silent);
       exact.islShards = exact.trades.reduce((a, x) => a + (x.isl ? x.giveQty : 0), 0);
       exact.trades = exact.trades.filter((x) => !x.isl);
@@ -18902,7 +18910,7 @@ function plxTopBox(root) {
 // keys "top:<tab>").
 function g1FoldSync(root) {
   (root || document).querySelectorAll("[data-g1fold]").forEach((b) => {
-    const folded = BAR_SHOW_ALL[b.dataset.g1fold] === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc");
+    const folded = BAR_SHOW_ALL[b.dataset.g1fold] === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc, .trd-rules");
     if (box) box.classList.toggle("g1-folded", folded);
     // Compared as text: innerHTML gives back the real arrow, not "&#9662;", so an
     // HTML compare rewrote the button every time and the #content observer looped.
@@ -19119,7 +19127,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   const traded = PACK_COST_MODE === "still" ? tradeAdjustedStill(calcKey, needFull, owned, targetDays, true) : null;
   // The free trades with their weekly limit (split this week / next weeks like the Backpack box pop-ups).
   const tradeRates = tradeRatesFor(calcKey);
-  const freeTrades = traded ? traded.trades.map((x) => { const r = tradeRates.find((q) => q.from === x.from && q.to === x.to) || {}; return { ...x, max: Number(r.max) || 0, hidden: !!r.hidden }; }) : [];
+  const freeTrades = traded ? traded.trades.map((x) => { const r = tradeRates.find((q) => q.from === x.from && q.to === x.to) || {}; return { ...x, max: Number(r.max) || 0, wk1: r.wk1, hidden: !!r.hidden }; }) : [];
   const base = PACK_COST_MODE === "full" ? needFull : (traded ? traded.still : needStill);
   const packGroups = packGroupsFor(tables, calcKey);
   const supplied = new Set();
@@ -20428,12 +20436,15 @@ const TRADE_DEFAULT_RATES = {
   t11_helios: [
     { from: "Speedups (minutes)", to: "Research Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true, silent: true },
     ...BACKPACK_RES_CHEST_RULES,
-    { from: "Fire Crystal", to: "FC Shard", give: 10, get: 13, max: 500 }, // Research Lab: 10 FC = 13 shards, up to 500 trades a week
+    // perDay = trades a day (weekly cap perDay × 7; this week only the days left in it)
+    { from: "Fire Crystal", to: "FC Shard", give: 10, get: 13, perDay: 500 }, // 10 FC = 13 shards, up to 500 trades a day
+    { from: "Steel", to: "FC Shard", give: 5000, get: 1, perDay: 20 }, // 5,000 Steel = 1 shard, up to 20 a day
   ],
   t12_research: [
     { from: "Speedups (minutes)", to: "Research Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true, silent: true },
     ...BACKPACK_RES_CHEST_RULES,
-    { from: "Fire Crystal", to: "FC Shard", give: 10, get: 13, max: 500 },
+    { from: "Fire Crystal", to: "FC Shard", give: 10, get: 13, perDay: 500 },
+    { from: "Steel", to: "FC Shard", give: 5000, get: 1, perDay: 20 },
   ],
   // A Pet Chest opens into ONE of these (your choice): the planner turns
   // chests into whichever the plan is short of. Hidden - a rule, not a trade.
@@ -20472,9 +20483,33 @@ const TRADE_TARGET_PRIORITY = {
 function calcKeyOfRates(rates) {
   return (rates && rates.__calcKey) || Object.keys(TRADE_DEFAULT_RATES).find((k) => rates === TRADE_DEFAULT_RATES[k]) || "";
 }
+// Daily trade limits (a rule's `perDay`): `max` becomes perDay × 7 (the weekly cap,
+// every later week) and `wk1` = perDay × the days left in this game week (Mon–Sun,
+// UTC, today included). The planner worker is handed the page's day (TRADE_TODAY).
+let TRADE_TODAY = null;
+function tradeDaysLeftInWeek() {
+  const d = (TRADE_TODAY && packParseDay(TRADE_TODAY)) || packStartOfToday();
+  return 7 - ((d.getUTCDay() + 6) % 7);
+}
+// Lots allowed in week i (0 = this week); 0 = no limit.
+function tradeWeekCap(r, i) {
+  if (!(r && r.max > 0)) return 0;
+  return i === 0 && r.wk1 != null ? r.wk1 : r.max;
+}
+// Lots allowed over `weeks` weeks starting with this one (Infinity = no limit).
+function tradeCapLots(r, weeks) {
+  if (!(r && r.max > 0)) return Infinity;
+  const w = Math.max(1, Math.floor(Number(weeks) || 1));
+  return tradeWeekCap(r, 0) + r.max * (w - 1);
+}
+// Weeks (this one included) the limits need for `lots` trades.
+function tradeWeeksForLots(r, lots) {
+  if (!(r && r.max > 0) || !(lots > 0)) return 0;
+  const a = tradeWeekCap(r, 0);
+  return lots <= a ? 1 : 1 + Math.ceil((lots - a) / r.max);
+}
 let TRADE_RATES_CACHE = null;      // { [calcKey]: rates[] } (saved overrides)
 const TRADE_APPLY = {};            // { [calcKey]: true } - use trades in pack cost / budgets
-const TRADE_OPEN = {};             // block collapsed on every load
 // ---- Research Lab -> T12 Pack cost ----
 // The weekly refining plan chosen on the Research Lab page becomes a trade
 // on T12: give that week's Fire Crystal, get that week's expected Refined FC,
@@ -20713,7 +20748,22 @@ function tradeRatesFor(calcKey) {
   // are never shown in the Trade box, so editing a visible rate used to save
   // a list without them and silently drop them. Always keep them.
   if (Array.isArray(saved) && saved.length) defaults.forEach((d) => { if (d.hidden && !rates.some((r) => r.from === d.from && r.to === d.to)) rates.push(d); });
+  // A daily limit: the same object for the same day (callers compare rules by identity).
+  const dl = tradeDaysLeftInWeek();
+  const daily = (r) => {
+    const pd = Number(r.perDay) || 0;
+    if (!(pd > 0)) return null;
+    let m = tradeRatesFor.norm;
+    if (!m) m = tradeRatesFor.norm = new WeakMap();
+    const hit = m.get(r);
+    if (hit && hit.dl === dl) return hit.r;
+    const n = { ...r, max: pd * 7, wk1: pd * dl };
+    m.set(r, { dl, r: n });
+    return n;
+  };
   const out = rates.filter((r) => r.from && r.to && r.give > 0 && r.get > 0).map((r) => {
+    const dr = daily(r);
+    if (dr) return dr;
     if (r.max != null) return r;
     const d = defaults.find((x) => x.from === r.from && x.to === r.to);
     return { ...r, max: d ? d.max : 0 };
@@ -20773,7 +20823,7 @@ function applyTrades(rates, need, owned, weeks) {
       .sort((a, b) => (worth[a.from] * a.give / a.get) - (worth[b.from] * b.give / b.get));
     for (const r of options) {
       if (after[to] <= 0) break;
-      const capLeft = r.max > 0 ? r.max * wk - (usedLots.get(r) || 0) : Infinity;
+      const capLeft = tradeCapLots(r, wk) - (usedLots.get(r) || 0);
       const lots = Math.min(Math.ceil(after[to] / r.get), Math.floor(spare[r.from] / r.give), capLeft);
       if (lots <= 0) continue;
       usedLots.set(r, (usedLots.get(r) || 0) + lots);
@@ -20842,86 +20892,113 @@ function packNeedViaTrades(calcKey, base, supplied, targetDays) {
   });
   return { need, conversions: [], uncovered };
 }
-// The "Trade items" block under a page's Backpack row.
+// The Trades window (design C): the "Use trades in Pack cost" switch, what's
+// still short after trades, one card per item you get with the rules giving
+// it, then the calculator. Numbers are this week's trades as applyTrades
+// works them out (the same split Pack cost uses).
 async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   if (!containerEl) return;
   await ensureTradeRates();
   const rates = tradeRatesFor(calcKey).filter((r) => !r.hidden);
   if (!rates.length) { containerEl.innerHTML = ""; return; }
-  const open = TRADE_OPEN[calcKey] === true;
-  const rerender = () => renderTradeBlock(containerEl, calcKey, groups, owned, onChange);
-  // Card layout: short Fire Crystal names (FC, FCS, RFC).
-  const shortNm = (n) => ({ "Fire Crystal": "FC", "FC Shard": "FCS", "Refined FC": "RFC" }[n]) || materialDisplayName(n);
-  const wire = () => {
-    containerEl.querySelector("[data-tradetoggle]").addEventListener("click", () => { TRADE_OPEN[calcKey] = !open; rerender(); });
-    const applyCb = containerEl.querySelector("[data-tradeapply]");
-    if (applyCb) applyCb.addEventListener("change", async (e) => {
-      TRADE_APPLY[calcKey] = e.target.checked;
-      await saveTradeSettings();
-      if (onChange) onChange();
-    });
-  };
+  const nm = (n) => materialDisplayName(itemShortName(n)).replace(/\s*\((minutes|min)\)$/, "");
+  // Calculator: short Fire Crystal names (FC, FCS, RFC) so it stays on one line.
+  const cnm = (n) => ({ "Fire Crystal": "FC", "FC Shard": "FCS", "Refined FC": "RFC" }[n]) || nm(n);
+  const img = (n, cls) => { const src = materialIconSrc(n); return src ? `<img class="${cls || ""}" src="${esc(src)}" alt="" title="${esc(materialDisplayName(n))}" />` : ""; };
+  const qty = (v) => Math.round(v).toLocaleString();
   const need = {};
   groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { need[n] = (need[n] || 0) + (Number(q) || 0); }));
-  const qty = (v) => Math.round(v).toLocaleString();
-  // Card layout: this week's suggested trades up front (with pictures),
-  // what's still short as chips, rates and the calculator behind a link.
-  const cardHead = `<div class="pc-head"><b>&#8644; ${esc(t("trade_title"))}</b>${IS_OWNER ? `<label class="pc-switch" title="${esc(t("trade_apply"))}"><span>${esc(t("trade_apply_short"))}</span><input type="checkbox" data-tradeapply ${TRADE_APPLY[calcKey] !== false ? "checked" : ""} /><i></i></label>` : ""}</div>`;
-  const cardBody = () => {
-    const img = (n) => { const src = materialIconSrc(n); return src ? `<img src="${esc(src)}" alt="" />` : ""; };
-    // Only what the traded items can become (Fire Crystal → RFC / Shard).
-    const froms = new Set(rates.map((r) => r.from));
-    const allRates = tradeRatesFor(calcKey).filter((r) => froms.has(r.from));
-    const targets = new Set(allRates.map((r) => r.to));
-    const shortNames = Object.keys(need).filter((n) => need[n] > 0 && targets.has(n));
-    // This week's split, the same way Pack cost plans it: the Research Lab
-    // (FC → RFC, once a week) gets its share first, the rest goes to shards.
-    const res = applyTrades(allRates, need, owned, 1);
-    const nm = (n) => shortNm(n).replace(/\s*\((minutes|min)\)$/, "");
-    const bad = shortNames.filter((n) => (res.after[n] || 0) > 0), ok = shortNames.filter((n) => !((res.after[n] || 0) > 0));
-    const chips = bad.map((n) => `<span class="bad">${esc(nm(n))} ${Math.ceil(res.after[n]).toLocaleString()}</span>`).concat(ok.map((n) => `<span class="ok">${esc(nm(n))} &#10003;</span>`));
-    return `${res.trades.length ? res.trades.map((tr) => {
-      const r = allRates.find((x) => x.from === tr.from && x.to === tr.to) || {};
-      const getTxt = tr.lab ? (Math.round(tr.getQty * 10) / 10).toLocaleString() : qty(tr.getQty);
-      return `<div class="pc-trade"><div>${img(tr.from)}<b>${qty(tr.giveQty)}</b><small>${esc(shortNm(tr.from))}</small></div><span>&rarr;</span><div>${img(tr.to)}<b style="color:var(--good);">${getTxt}</b><small>${esc(shortNm(tr.to))}</small></div></div>
-        <div class="meta pc-sub">${tr.lab ? esc(t("trade_lab_line")) : `${esc(t("trade_card_line2").replace("{n}", qty(tr.lots)))}${r.max ? ` · ${esc(t("trade_max_week"))} ${qty(r.max)}` : ""}${tr.capped ? ` · ${esc(t("trade_capped"))}` : ""}`}</div>`;
-    }).join("") : `<div class="meta" style="font-size:11.5px;">${esc(t("trade_none"))}</div>`}
-      ${chips.length ? `<div class="pc-k">${esc(t("trade_after"))}</div><div class="pc-chips">${chips.join("")}</div>` : ""}
-      <button type="button" class="linklike" data-tradetoggle style="margin-top:10px;">${esc(t("trade_calc"))} ${open ? "&#9662;" : "&#9656;"}</button>`;
+  // Only what the traded items can become (Fire Crystal → RFC / Shard).
+  const froms = new Set(rates.map((r) => r.from));
+  const allRates = tradeRatesFor(calcKey).filter((r) => froms.has(r.from));
+  const res = applyTrades(allRates, need, owned, 1);
+  const targets = [...new Set(allRates.map((r) => r.to))];
+  const shortOf = (n) => (need[n] > 0 ? Math.ceil(res.after[n] || 0) : 0);
+  const usedOf = (r) => res.trades.filter((x) => x.from === r.from && x.to === r.to).reduce((a, x) => a + x.lots, 0);
+  const bad = targets.filter((n) => shortOf(n) > 0);
+  const switchHtml = IS_OWNER ? `<label class="trd-use" title="${esc(t("trade_apply"))}"><span>${esc(t("trd_use"))}</span><span class="pc-switch"><input type="checkbox" data-tradeapply ${TRADE_APPLY[calcKey] !== false ? "checked" : ""} /><i></i></span></label>` : "";
+  const shortHtml = bad.length
+    ? `<div class="trd-short"><span class="trd-lb">${esc(t("trd_short"))}</span>${bad.map((n) => `<span class="trd-sc" title="${esc(materialDisplayName(n))}">${img(n)}${shortOf(n).toLocaleString()}</span>`).join("")}</div>`
+    : `<div class="trd-short ok">${esc(t("trd_nothing_short"))}</div>`;
+  const fmtQ = (v) => (v < 10 && v % 1 ? (Math.round(v * 10) / 10).toLocaleString() : qty(v));
+  // Box 1, "Trade this week": what the plan trades this week, as actions.
+  const doRows = rates.filter((r) => usedOf(r) > 0).map((r) => {
+    const u = usedOf(r);
+    const give = u * r.give, get = u * r.get;
+    const wc = tradeWeekCap(r, 0);
+    const pd = Number(r.perDay) || 0;
+    const full = wc > 0 && u >= wc;
+    const act = `<div class="trd-da">${esc(t("trd_do_trade"))} <b>${qty(give)}</b>${img(r.from, "s")}<span class="trd-dn">${esc(nm(r.from))}</span><span class="trd-ar">&rarr;</span><b class="trd-dg">+${fmtQ(get)}</b>${img(r.to, "s")}<span class="trd-dn">${esc(nm(r.to))}</span></div>`;
+    let sub = "";
+    if (pd > 0 && wc > 0) {
+      // Day and Week mini bars. The plan has no per-day split: today's share is this
+      // week's planned trades spread over the days left, capped at the daily limit.
+      const day = Math.min(pd, Math.ceil(u / Math.max(1, tradeDaysLeftInWeek())));
+      const bar = (lb, v, c) => { const z = v >= c; return `<div class="trd-mbr"><span>${esc(t(lb))}</span><div class="trd-bar"><i class="${z ? "z" : ""}" style="width:${Math.min(100, c > 0 ? (v / c) * 100 : 0).toFixed(1)}%"></i></div><span class="trd-nm"><b class="${z ? "z" : ""}">${qty(v)}</b> / ${qty(c)}</span></div>`; };
+      sub = `<div class="trd-mb">${bar("trd_day", day, pd)}${bar("trd_week", u, wc)}</div>`;
+    } else if (wc > 0) {
+      sub = full ? `<div class="trd-ds z">${esc(t("trd_limit_reached"))}</div>` : `<div class="trd-ds">${esc(t("trd_lots_left").replace("{n}", qty(wc - u)))}</div>`;
+    }
+    return `<div class="trd-dr${full ? " z" : ""}">${act}${sub}</div>`;
+  });
+  const gains = targets.map((n) => [n, rates.filter((r) => r.to === n).reduce((a, r) => a + usedOf(r) * r.get, 0)]).filter(([, g]) => g > 0);
+  const sumHtml = gains.length ? `<div class="trd-dsum">${gains.map(([n, g]) => `<span><b>+${fmtQ(g)}</b> ${esc(nm(n))}</span>`).join(" &middot; ")} ${esc(t("trd_from_trades"))}</div>` : "";
+  const doHtml = `<div class="trd-do"><div class="trd-bt">${esc(t("trd_do_title"))}</div>${doRows.length ? doRows.join("") + sumHtml : `<div class="trd-dnone">${esc(t("trd_do_none"))}</div>`}</div>`;
+  // Box 2, "Trade rules": every rule the page allows, by the item you get. No planned numbers.
+  const ruleHtml = (r) => {
+    if (r.rfcLab) return `<div class="trd-gl">${img(r.from, "s")}<span class="trd-rt">${esc(t("trade_lab_line"))}</span></div>`;
+    const pd = Number(r.perDay) || 0;
+    const cap = pd > 0 ? t("trd_per_day").replace("{n}", qty(pd)) : r.max > 0 ? t("trd_per_wk").replace("{n}", qty(r.max)) : "";
+    return `<div class="trd-gl">${img(r.from, "s")}<span class="trd-rt">${qty(r.give)} ${esc(nm(r.from))} &rarr; ${qty(r.get)}</span><span class="trd-cap">${esc(cap)}</span></div>`;
   };
-  if (!open) {
-    containerEl.innerHTML = `<div class="pc-card">${cardHead}${cardBody()}</div>`;
-    wire();
-    return;
-  }
-  const names = [...new Set(rates.flatMap((r) => [r.from, r.to]))];
-  const calcHtml = `
-    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:12px;">
-      <input type="number" min="0" data-tradeqty value="" placeholder="0" style="width:80px; font-size:12px; padding:4px 6px;" />
-      <select data-tradefrom style="font-size:12px;">${names.filter((n) => rates.some((r) => r.from === n)).map((n) => `<option value="${esc(n)}">${esc(shortNm(n))}</option>`).join("")}</select>
-      <span>→</span>
-      <select data-tradeto style="font-size:12px;"></select>
-      <span data-traderesult style="font-weight:700; color:var(--good);"></span>
-    </div>`;
-  containerEl.innerHTML = `
-    <div class="pc-card">${cardHead}${cardBody()}
-      <div style="margin-top:8px;">${calcHtml}</div>
-    </div>`;
-  wire();
-  // Manual converter.
+  const rank = (n) => (shortOf(n) > 0 ? 0 : need[n] > 0 ? 1 : 2);
+  const order = targets.filter((n) => rates.some((r) => r.to === n)).sort((a, b) => rank(a) - rank(b));
+  const cardHtml = (n) => {
+    return `<div class="trd-gc"><div class="trd-gh">${img(n, "s")}<b>${esc(nm(n))}</b></div>${rates.filter((r) => r.to === n).map(ruleHtml).join("")}</div>`;
+  };
+  // Starts folded; Hide / Show kept on the account (calc_state bar_hidden "trd:rules", all pages).
+  await ensureBarHidden();
+  barFoldDefault("trd:rules");
+  const rHid = BAR_SHOW_ALL["trd:rules"] === false;
+  const nRules = order.reduce((a, n) => a + rates.filter((r) => r.to === n).length, 0);
+  const rulesHtml = `<div class="trd-rules${rHid ? " g1-folded" : ""}"><div class="trd-bt trd-rh"><span>${esc(t("trd_rules_title"))} (${nRules})</span><button type="button" class="g1-fold" data-g1fold="trd:rules" aria-expanded="${!rHid}">${esc(t(rHid ? "g1_show" : "g1_hide"))} ${rHid ? "&#9662;" : "&#9652;"}</button></div>${order.map(cardHtml).join("")}</div>`;
+  const calcFroms = [...new Set(rates.map((r) => r.from))];
+  const calcHtml = `<div class="trd-calc"><input type="number" min="0" inputmode="decimal" data-tradeqty value="" placeholder="0" aria-label="${esc(t("trd_calc"))}" />
+      <span class="trd-dd"><span data-tradefromimg>${img(calcFroms[0], "s")}</span><select data-tradefrom aria-label="${esc(t("trd_calc"))}">${calcFroms.map((n) => `<option value="${esc(n)}">${esc(cnm(n))}</option>`).join("")}</select></span>
+      <span class="trd-ar">&rarr;</span>
+      <span class="trd-dd"><span data-tradetoimg></span><select data-tradeto aria-label="${esc(t("trd_calc"))}"></select></span>
+      <span class="trd-res" data-traderesult></span></div>`;
+  containerEl.innerHTML = `<div class="pc-card trd">
+    <div class="pc-head trd-title"><b>&#8644; ${esc(t("trade_title"))}</b></div>
+    ${switchHtml}${shortHtml}
+    ${doHtml}${rulesHtml}
+    <div class="trd-lbl">${esc(t("trd_calc"))}</div>${calcHtml}
+  </div>`;
+  const applyCb = containerEl.querySelector("[data-tradeapply]");
+  if (applyCb) applyCb.addEventListener("change", async (e) => {
+    TRADE_APPLY[calcKey] = e.target.checked;
+    await saveTradeSettings();
+    if (onChange) onChange();
+  });
+  // Calculator.
   const qtyEl = containerEl.querySelector("[data-tradeqty]");
   const fromEl = containerEl.querySelector("[data-tradefrom]");
   const toEl = containerEl.querySelector("[data-tradeto]");
   const outEl = containerEl.querySelector("[data-traderesult]");
+  const fromImg = containerEl.querySelector("[data-tradefromimg]");
+  const toImg = containerEl.querySelector("[data-tradetoimg]");
   const fillTo = () => {
-    toEl.innerHTML = rates.filter((r) => r.from === fromEl.value).map((r) => `<option value="${esc(r.to)}">${esc(shortNm(r.to))}</option>`).join("");
+    toEl.innerHTML = rates.filter((r) => r.from === fromEl.value).map((r) => `<option value="${esc(r.to)}">${esc(cnm(r.to))}</option>`).join("");
+    fromImg.innerHTML = img(fromEl.value, "s");
+    toImg.innerHTML = img(toEl.value, "s");
   };
   const compute = () => {
+    toImg.innerHTML = img(toEl.value, "s");
     const r = rates.find((x) => x.from === fromEl.value && x.to === toEl.value);
     const q = Number(qtyEl.value) || 0;
     if (!r || q <= 0) { outEl.textContent = ""; return; }
     const lots = Math.floor(q / r.give);
-    outEl.textContent = `${(lots * r.get).toLocaleString()} ${shortNm(r.to)}` + (q - lots * r.give > 0 ? ` (${(q - lots * r.give).toLocaleString()} ${shortNm(r.from)} ${t("trade_left_over")})` : "");
+    outEl.textContent = `= ${(lots * r.get).toLocaleString()}` + (q - lots * r.give > 0 ? ` (${(q - lots * r.give).toLocaleString()} ${cnm(r.from)} ${t("trade_left_over")})` : "");
   };
   fillTo();
   fromEl.addEventListener("change", () => { fillTo(); compute(); });
@@ -21908,7 +21985,7 @@ function plannerPagePlans(payload) {
 const PLANNER_CONST_SRC = () => `const BUDGET_RESEARCH_KEYS = ${JSON.stringify(BUDGET_RESEARCH_KEYS)}; const BUDGET_EXPERT_KEYS = ${JSON.stringify(BUDGET_EXPERT_KEYS)};`;
 const PLAN_SOLVER_URL = "https://cdn.jsdelivr.net/npm/highs@1.15.3/build/";
 const PLAN_SOLVER_SRI = { "highs.js": "sha384-8VF/84lUdwWTmd6C4TlyNI0GCoMmX0iTMuYiSgqm4Q+A36WnVSQAAHMvAGdx71U1", "highs.wasm": "sha384-MAiNyO4ydZtZMzFnxQmbxtpRfMmzGm/wbmtOYrOuns7GS6PMI/RukPAEV9MJjvCB" };
-const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packDayBonusList", "packDayBonusGives", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packGroupsSig", "packPlanCacheKey", "packCheapestPlan", "packPlanPrep", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerPayloadDecode", "plannerCombinedLocal", "plannerPagePlans", "plannerDeadlineLocal"];
+const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeDaysLeftInWeek", "tradeWeekCap", "tradeCapLots", "tradeWeeksForLots", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packDayBonusList", "packDayBonusGives", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packGroupsSig", "packPlanCacheKey", "packCheapestPlan", "packPlanPrep", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerPayloadDecode", "plannerCombinedLocal", "plannerPagePlans", "plannerDeadlineLocal"];
 let PLANNER_SEQ = 0;
 // Requests waiting for an answer: id -> { resolve, reject, msg, lane, onPart }.
 // There are two planners ("lanes"), each its own worker with its own line:
@@ -21939,7 +22016,7 @@ function plannerWorker(li) {
       PLANNER_CONST_SRC(),
       `const TRADE_DEFAULT_RATES = ${JSON.stringify(TRADE_DEFAULT_RATES)};`,
       `const TRADE_TARGET_PRIORITY = ${JSON.stringify(TRADE_TARGET_PRIORITY)};`,
-      "let TRADE_RATES_CACHE = null; let TRADE_EXTRA_RATES = {}; let LAST_TRADE = '';",
+      "let TRADE_RATES_CACHE = null; let TRADE_EXTRA_RATES = {}; let LAST_TRADE = ''; let TRADE_TODAY = null;",
       // The exact solver loads once per worker; plans wait for it (or for the
       // time-out), then the greedy planner is used if it couldn't load.
       `const PLAN_SOLVER_URL = ${JSON.stringify(PLAN_SOLVER_URL)}; let PLAN_SOLVER = null, PLAN_SOLVER_P = null;`,
@@ -21950,7 +22027,7 @@ function plannerWorker(li) {
       "const PACK_PLAN_CACHE = new Map(); const PACK_EARLIEST_CACHE = new Map();",
       ...fns,
       "plannerSolver();", // start loading the solver as soon as the worker starts
-      "self.onmessage = async (e) => { await plannerSolver(); const { id, kind, payload, trade, extra } = e.data; const sig = JSON.stringify([trade || null, extra || null]); if (sig !== LAST_TRADE) { LAST_TRADE = sig; PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); } TRADE_RATES_CACHE = trade || null; TRADE_EXTRA_RATES = extra || {};",
+      "self.onmessage = async (e) => { await plannerSolver(); const { id, kind, payload, trade, extra, today } = e.data; TRADE_TODAY = today || null; const sig = JSON.stringify([trade || null, extra || null, today || null]); if (sig !== LAST_TRADE) { LAST_TRADE = sig; PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); } TRADE_RATES_CACHE = trade || null; TRADE_EXTRA_RATES = extra || {};",
       // (A combined plan can hand over the parts that are ready before the whole answer: { id, part }.)
       "  try { const part = (p) => { try { self.postMessage({ id, part: p }); } catch (err) { /* a part that can't be sent is simply not shown early */ } }; const result = kind === 'solver' ? !!PLAN_SOLVER : kind === 'page' ? plannerPagePlans(payload) : kind === 'deadline' ? plannerDeadlineLocal(payload) : plannerCombinedLocal(payload, part); self.postMessage({ id, ok: true, result }); } catch (err) { self.postMessage({ id, ok: false, error: String((err && err.stack) || err) }); } };",
     ].join("\n");
@@ -22005,7 +22082,7 @@ function plannerRun(kind, payload, opts) {
     // Sent at once when the worker is free (copied then, as before); a request
     // that has to wait is copied now, so later changes on the page can't reach it.
     tradeExtraSync();
-    const msg = { id, kind, payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES };
+    const msg = { id, kind, payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, today: packDayKey(packStartOfToday()) };
     const idle = !lane.busy && !lane.queue.length;
     PLANNER_WAIT.set(id, { resolve, reject, msg: idle ? msg : structuredClone(msg), lane: li, onPart: (opts && opts.onPart) || null });
     lane.queue.push(id);
@@ -22080,7 +22157,7 @@ const BUDGET_PLANS_INDEX = "budget_plans_v2", BUDGET_PLAN_ITEM = "budget_plan_v2
 const BUDGET_PLANS_KEPT = 5;
 function budgetPlanFingerprint(payload) {
   tradeExtraSync();
-  const str = JSON.stringify({ v: 4, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
+  const str = JSON.stringify({ v: 5, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
   // cyrb53: a quick 53-bit hash of the text, plus its length.
   let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
   for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
@@ -25223,15 +25300,24 @@ function ensureBarHidden() {
   if (!BAR_HIDDEN_LOAD) BAR_HIDDEN_LOAD = loadCalcState("bar_hidden").then((v) => {
     // Only folds with a ":" key (top cards, lists): the planner pages' own Backpack boxes
     // (keys without one) always show now, so an old "Hide boxes" no longer hides them.
-    Object.entries(v || {}).forEach(([k, h]) => { if (h && String(k).includes(":") && !(k in BAR_SHOW_ALL)) BAR_SHOW_ALL[k] = false; });
+    Object.entries(v || {}).forEach(([k, h]) => {
+      if (k in BAR_SHOW_ALL || !String(k).includes(":")) return;
+      if (BAR_DEFAULT_HIDDEN.has(k)) BAR_SHOW_ALL[k] = !h; else if (h) BAR_SHOW_ALL[k] = false;
+    });
   }).catch(() => {});
   return BAR_HIDDEN_LOAD;
 }
 function saveBarHidden() {
   const out = {};
-  Object.keys(BAR_SHOW_ALL).forEach((k) => { if (BAR_SHOW_ALL[k] === false) out[k] = true; });
+  Object.keys(BAR_SHOW_ALL).forEach((k) => {
+    if (BAR_DEFAULT_HIDDEN.has(k)) out[k] = BAR_SHOW_ALL[k] === false;
+    else if (BAR_SHOW_ALL[k] === false) out[k] = true;
+  });
   saveCalcState("bar_hidden", out);
 }
+// Folds that start hidden: saved as true (hidden) / false (shown); nothing saved = hidden.
+const BAR_DEFAULT_HIDDEN = new Set(["trd:rules"]);
+function barFoldDefault(k) { if (BAR_DEFAULT_HIDDEN.has(k) && !(k in BAR_SHOW_ALL)) BAR_SHOW_ALL[k] = false; }
 // Where a page wants its summary drawn instead of above its boxes (element id).
 const BAR_SUMMARY_HOST = { t12_research: "t12Need", t11_helios: "t11Need", research_center: "rcNeed", chief_gear: "gearNeed", charm: "charmNeed", hero_gear: "heroGearNeed", pets: "petsNeed", pets_refine: "refineNeed" };
 const BAR_AFTER_CHANGE = {}; // { calcKey: fn } called after an owned amount changes
@@ -25318,8 +25404,9 @@ function reachHaveConv(calcKey, calcOwned, hiddenRates, hiddenTrades) {
     have[tr.to] = (have[tr.to] || 0) + q;
   });
   const weekly = TRADE_APPLY[calcKey] === false ? [] : tradeRatesFor(calcKey).filter((r) => !r.hidden && !r.silent && Number(r.max) > 0 && !hiddenRates.includes(r));
-  const conv = hiddenRates.filter((r) => choice.has(r.from)).map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: Number(r.max) || 0 }))
-    .concat(weekly.map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: Number(r.max) || 0, trade: true })));
+  // (This week's limit: a daily one counts only the days left in the week.)
+  const conv = hiddenRates.filter((r) => choice.has(r.from)).map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: tradeWeekCap(r, 0) }))
+    .concat(weekly.map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: tradeWeekCap(r, 0), trade: true })));
   return { have, lab: lab && lab.rfc > 0 ? { rfc: lab.rfc, left: lab.left } : null, conv };
 }
 async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNames, refreshFn, calcKey) {
@@ -25353,7 +25440,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   // Hidden rules always apply; unlimited visible trades (Fire Crystal → FC
   // Shard) apply too unless "use spare items" is switched off for the page.
   // Weekly-capped trades (Charm, Chief Gear) stay in the Trade block only.
-  // Fire Crystal → FC Shard counts too (its 500/week cap is far above what
+  // Fire Crystal → FC Shard counts too (its 500-a-day cap is far above what
   // anyone holds at once).
   const hiddenRates = tradeRatesFor(calcKey || "chief_gear").filter((r) => r.hidden || ((!(r.max > 0) || r.from === "Fire Crystal") && TRADE_APPLY[calcKey || "chief_gear"] !== false));
   hiddenRates.__calcKey = calcKey || "chief_gear";
@@ -32617,7 +32704,7 @@ const BOX_EXPLAIN_KEYS = new Set(["chief_gear", "charm", "hero_gear", "pets", "p
 // box pop-up and the Pack cost card, so both agree.
 function packTradeWhenSplit(x) {
   if (!(x.lots > 0)) return [];
-  const per = x.giveQty / x.lots, gp = x.getQty / x.lots, a = x.max > 0 ? Math.min(x.lots, x.max) : x.lots, b = x.lots - a;
+  const per = x.giveQty / x.lots, gp = x.getQty / x.lots, a = x.max > 0 ? Math.min(x.lots, tradeWeekCap(x, 0)) : x.lots, b = x.lots - a;
   return [a > 0 && { when: "week", from: x.from, to: x.to, give: a * per, get: a * gp, lots: a, lab: x.lab }, b > 0 && { when: "later", from: x.from, to: x.to, give: b * per, get: b * gp, lots: b, lab: x.lab }].filter(Boolean);
 }
 // Redraw the open box pop-up's trades part (after the page's target date has loaded).
@@ -32645,7 +32732,7 @@ function cgBoxExplainHtml(name, c) {
   const rates = tradeRatesFor(calcKey);
   // The Backpack's trades (the Research Lab apart: below).
   const tr = tradeAdjustedStill(calcKey, c.needAll || {}, c.calcOwned || {}, targetDays, true);
-  const trades = tr ? tr.trades.map((x) => { const r = rates.find((q) => q.from === x.from && q.to === x.to) || {}; return { ...x, max: Number(r.max) || 0, hidden: !!r.hidden }; }) : [];
+  const trades = tr ? tr.trades.map((x) => { const r = rates.find((q) => q.from === x.from && q.to === x.to) || {}; return { ...x, max: Number(r.max) || 0, wk1: r.wk1, hidden: !!r.hidden }; }) : [];
   // Rules the Backpack box already counts in "You have" (hidden ones, unlimited ones).
   const inHave = (x) => x.hidden || ((!(x.max > 0) || x.from === "Fire Crystal") && TRADE_APPLY[calcKey] !== false);
   const free = trades.flatMap((x) => (inHave(x) ? [] : packTradeWhenSplit(x)));
@@ -33448,9 +33535,9 @@ function gameRules() {
       get: () => ({ unlock: HERO_UNLOCK_SHARDS, ...NG_HERO_SHARD_PACK }),
       set: (v) => { HERO_UNLOCK_SHARDS = v.unlock != null && v.unlock !== "" && Number.isFinite(Number(v.unlock)) ? Math.max(0, Number(v.unlock)) : 10; NG_HERO_SHARD_PACK.price = Number(v.price) || 0; NG_HERO_SHARD_PACK.shards = Number(v.shards) || 0; } },
     { key: "trades", group: "trades", label: "Built-in trades per page", help: "Item → item rules each page uses (hidden ones are rules, not shown in the Trade box). The page's own Trade box edits still win for visible trades.",
-      cols: [{ key: "page", label: "Page", type: "select", options: () => Object.keys(TRADE_DEFAULT_RATES) }, { key: "from", label: "Give item", type: "text" }, { key: "give", label: "Give", type: "num" }, { key: "to", label: "Get item", type: "text" }, { key: "get", label: "Get", type: "num" }, { key: "max", label: "Weekly max (0 = none)", type: "num" }, { key: "hidden", label: "Hidden rule", type: "check" }],
-      get: () => Object.entries(TRADE_DEFAULT_RATES).flatMap(([pg, rows]) => rows.map((r) => ({ page: pg, from: r.from, give: r.give, to: r.to, get: r.get, max: r.max || 0, hidden: !!r.hidden, ...(r.silent ? { silent: true } : {}) }))),
-      set: (rows) => { const out = {}; Object.keys(TRADE_DEFAULT_RATES).forEach((k) => { out[k] = []; }); rows.filter((r) => r.page && r.from && r.to && Number(r.give) > 0 && Number(r.get) > 0).forEach((r) => { (out[r.page] = out[r.page] || []).push({ from: r.from, to: r.to, give: Number(r.give), get: Number(r.get), max: Number(r.max) || 0, ...(r.hidden ? { hidden: true } : {}), ...(r.hidden && r.silent ? { silent: true } : {}) }); }); ruleSetObject(TRADE_DEFAULT_RATES, out); } },
+      cols: [{ key: "page", label: "Page", type: "select", options: () => Object.keys(TRADE_DEFAULT_RATES) }, { key: "from", label: "Give item", type: "text" }, { key: "give", label: "Give", type: "num" }, { key: "to", label: "Get item", type: "text" }, { key: "get", label: "Get", type: "num" }, { key: "max", label: "Weekly max (0 = none)", type: "num" }, { key: "perDay", label: "Per day (0 = none; wins over weekly)", type: "num" }, { key: "hidden", label: "Hidden rule", type: "check" }],
+      get: () => Object.entries(TRADE_DEFAULT_RATES).flatMap(([pg, rows]) => rows.map((r) => ({ page: pg, from: r.from, give: r.give, to: r.to, get: r.get, max: r.max || 0, perDay: r.perDay || 0, hidden: !!r.hidden, ...(r.silent ? { silent: true } : {}) }))),
+      set: (rows) => { const out = {}; Object.keys(TRADE_DEFAULT_RATES).forEach((k) => { out[k] = []; }); rows.filter((r) => r.page && r.from && r.to && Number(r.give) > 0 && Number(r.get) > 0).forEach((r) => { (out[r.page] = out[r.page] || []).push({ from: r.from, to: r.to, give: Number(r.give), get: Number(r.get), max: Number(r.max) || 0, ...(Number(r.perDay) > 0 ? { perDay: Number(r.perDay) } : {}), ...(r.hidden ? { hidden: true } : {}), ...(r.hidden && r.silent ? { silent: true } : {}) }); }); ruleSetObject(TRADE_DEFAULT_RATES, out); } },
     { key: "advancedMark", group: "trades", label: "Advanced Mark value", type: "fields", help: "How many Common Marks one Advanced Mark is worth on Pet Refine.",
       fields: [num("value", "1 Advanced Mark = Common Marks")],
       get: () => ({ value: ADVANCED_MARK_VALUE }),
