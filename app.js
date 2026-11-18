@@ -30422,7 +30422,7 @@ async function renderExpertsResearchPage() {
       // at ✓ Max what the path gives in all, with nothing done yet what it gives at max.
       const { sigil, stats } = go ? pathRotationOnly(expert, p, cur, des) : { sigil: 0, stats: {} };
       // Each stat is its own small chip that wraps to the next line (owner, 18 Nov 2026).
-      const statChips = (o) => Object.entries(o).filter(([, v]) => v > 0).map(([k, v]) => `<span class="er-st">${bidiNum(`+${Number(v.toFixed(1))}%`)} ${esc(ER_SHORT[k] || k)}</span>`).join("");
+      const statChips = (o) => Object.entries(o).filter(([k, v]) => v > 0 && ER_SHORT[k]).map(([k, v]) => `<span class="er-st">${bidiNum(`+${Number(v.toFixed(1))}%`)} ${esc(ER_SHORT[k])}</span>`).join("");
       let gains = statChips(stats);
       if (!go) {
         const has = cur > 0 ? statChips(pathRotationOnly(expert, p, 0, cur).stats) : "";
@@ -31083,10 +31083,13 @@ async function renderExpertsPage() {
       const curSel = `<select data-expskillcur="${esc(hero)}|${esc(sk)}" aria-label="${esc(t("current_label"))}">${levelOpts(pick, Math.min(cur, pick), max)}</select>`;
       // The skill's stat (the same rows Troops Stats adds up), shown on every row.
       const rows = SKILL_CACHE[`${hero}|${sk}`] || [];
-      const typed = rows.find((r) => r.stat_type);
+      // Only troop stats (ATK / DEF / LETH / HP, what Troops Stats counts) are shown (owner, 18 Nov 2026);
+      // a skill with any other stat (tokens, rally capacity …) shows none.
+      const troopTypes = (r) => (r && r.stat_type ? r.stat_type.split(",").map((k) => k.trim()).filter((k) => EXP_STAT_SHORT[k]) : []);
+      const typed = rows.find((r) => troopTypes(r).length);
       const at = (lv) => { let m = null; rows.forEach((r) => { if (r.level <= lv) m = r; }); return m; };
-      const vAt = (lv) => { const r = at(lv); return r && r.stat_type ? Number(r.stat_value) || 0 : 0; };
-      const typesTxt = typed ? typed.stat_type.split(",").map((k) => EXP_STAT_SHORT[k.trim()] || k.trim()).join(" · ") : "";
+      const vAt = (lv) => { const r = at(lv); return troopTypes(r).length ? Number(r.stat_value) || 0 : 0; };
+      const typesTxt = typed ? troopTypes(typed).map((k) => EXP_STAT_SHORT[k]).join(" · ") : "";
       if (des <= cur && cur >= max) {
         return `<div class="exk-sl"><span class="exk-ck" aria-hidden="true">&#10003;</span><b>${esc(dataName(sk))}${typed ? `<span class="exk-sls"> · ${bidiNum(expPctTxt(vAt(cur)))} ${esc(typesTxt)}</span>` : ""}</b><span class="exk-mx">${esc(t("exp_lv_max_short").replace("{n}", cur))}${curSel}</span></div>`;
       }
