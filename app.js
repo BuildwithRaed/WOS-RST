@@ -29244,7 +29244,7 @@ function computeT11Stats(troop, useMax) {
 }
 
 async function renderT11HeliosPage() {
-  const seq = RENDER_SEQ;
+  const seq = RENDER_SEQ, fresh = pageEntered("t11_helios");
   await ensureT11StateData();
   await ensureResearchSpeedData();
   await ensureResearchPageCountedData();
@@ -29355,7 +29355,7 @@ async function renderT11HeliosPage() {
   const troopsEl = document.getElementById("t11Troops");
   const t11DotsEl = document.getElementById("t11TroopDots");
   const T11_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
-  let t11ActiveTroop = T11_TROOPS[0];
+  let t11ActiveTroop = T11_TROOPS[pagePickIdx("t11_helios", T11_TROOPS, fresh, (tr) => !!T11_NODES_CACHE[tr] && computeNeeded(tr).time_hours > 0)];
   function renderGrandTotal() {
     const grand = { meat: 0, wood: 0, coal: 0, iron: 0, steel: 0, refined_fc: 0, fc_shard: 0, time_hours: 0 };
     T11_TROOPS.forEach((troop) => {
@@ -29419,11 +29419,11 @@ async function renderT11HeliosPage() {
   function render() {
     const troop = t11ActiveTroop;
     t11DotsEl.innerHTML = plxTabsHtml(T11_TROOPS, troop, T11_TROOP_COLORS, (tr) => (T11_NODES_CACHE[tr] ? `${donePct([tr])}% · ${t12FormatTime(applyResearchPct(computeNeeded(tr).time_hours))}` : "—"), "t11tab");
-    t11DotsEl.onclick = (e) => { const b = e.target.closest("[data-t11tab]"); if (b && b.dataset.t11tab !== t11ActiveTroop) { t11ActiveTroop = b.dataset.t11tab; render(); } };
+    t11DotsEl.onclick = (e) => { const b = e.target.closest("[data-t11tab]"); if (b && b.dataset.t11tab !== t11ActiveTroop) { t11ActiveTroop = b.dataset.t11tab; pagePickSet("t11_helios", t11ActiveTroop); render(); } };
     const tracks = T11_NODES_CACHE[troop];
     if (!tracks) {
       troopsEl.innerHTML = `<div class="t12x-sec"><div class="empty" style="padding:16px;">${esc(t("data_not_available_troop"))}</div></div>`;
-      wireTroopSwipe(troopsEl, T11_TROOPS, t11ActiveTroop, (t) => { t11ActiveTroop = t; render(); });
+      wireTroopSwipe(troopsEl, T11_TROOPS, t11ActiveTroop, (t) => { t11ActiveTroop = t; pagePickSet("t11_helios", t); render(); });
       return;
     }
     const stats = computeStats(troop);
@@ -29445,7 +29445,7 @@ async function renderT11HeliosPage() {
         ${box("HP", `+${stats.Health.toFixed(1)}%`, t("t12x_max_pct").replace("{n}", maxStats.Health.toFixed(1)))}
       </div>
       ${plxSectionHtml({ key: "all", title: t("t11_helios_title"), sub: `${t("t12x_nodes").replace("{n}", names.length)} · ${pct >= 100 ? t("t12x_all_maxed") : left || t("t12x_not_planned")}`, pct, open: t11Open, maxKey: "all", body: names.map(node).join("") })}`;
-    wireTroopSwipe(troopsEl, T11_TROOPS, t11ActiveTroop, (t) => { t11ActiveTroop = t; render(); });
+    wireTroopSwipe(troopsEl, T11_TROOPS, t11ActiveTroop, (t) => { t11ActiveTroop = t; pagePickSet("t11_helios", t); render(); });
     const setLevel = (track, v) => {
       T11_STATE[troop][track] = Math.min(tracks[track].length, Math.max(0, v));
       saveCalcState("t11_helios", T11_STATE);
@@ -32155,7 +32155,7 @@ async function renderPetsDataPage() {
 }
 
 async function renderResearchCenterPage() {
-  const seq = RENDER_SEQ;
+  const seq = RENDER_SEQ, fresh = pageEntered("research_center");
   await ensureRCData();
   await ensureResearchSpeedData();
 
@@ -32164,6 +32164,7 @@ async function renderResearchCenterPage() {
   if (seq !== RENDER_SEQ) return;
   const RC_GROUPS = Object.keys(RC_BASE_CATEGORIES);
   let rcActive = RC_GROUPS.includes("Infantry") ? "Infantry" : RC_GROUPS[0];
+  const rcWork = (g) => (RC_BASE_CATEGORIES[g] || []).some((base) => RC_TIERS.some((tier) => RC_NODES_CACHE[`${base} ${tier}`] && computeNeeded(`${base} ${tier}`).time_hours > 0));
   const rcOpen = {};
   content.innerHTML = plxShellHtml({
     title: t("research_center_title"),
@@ -32301,7 +32302,7 @@ async function renderResearchCenterPage() {
   const groupLabel = (g) => (g === "Shared" ? t("shared_label") : troopDisplayName(g));
   function renderGroups() {
     tabsEl.innerHTML = RC_GROUPS.map((g) => `<button type="button" class="${g === rcActive ? "on" : ""}" data-rctab="${esc(g)}" style="--tc:${{ Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" }[g] || "var(--frost)"};">${esc(groupLabel(g))}<small>${pctOf(tracksOf(RC_BASE_CATEGORIES[g]))}%</small></button>`).join("");
-    tabsEl.onclick = (e) => { const b = e.target.closest("[data-rctab]"); if (b && b.dataset.rctab !== rcActive) { rcActive = b.dataset.rctab; renderGroups(); } };
+    tabsEl.onclick = (e) => { const b = e.target.closest("[data-rctab]"); if (b && b.dataset.rctab !== rcActive) { rcActive = b.dataset.rctab; pagePickSet("research_center", rcActive); renderGroups(); } };
     const bases = RC_BASE_CATEGORIES[rcActive] || [];
     const stats = computeStats(bases);
     const box = (k, v) => `<div><div><span>${esc(k)}</span><b>${bidiNum(v)}</b></div></div>`;
@@ -32319,7 +32320,7 @@ async function renderResearchCenterPage() {
         return plxSectionHtml({ key: base, title: dataName(base), sub: `${t("t12x_nodes").replace("{n}", tracks.length)} · ${pct >= 100 ? t("t12x_all_maxed") : left}`, pct, open, maxKey: base,
           body: tracks.map((tr) => plxNodeHtml({ key: tr, label: tr.slice(base.length + 1), cur: RC_STATE[tr] || 0, max: RC_NODES_CACHE[tr].length, rel: rcLen(tr), target: rcTargetOf(tr), cost: costLine(computeNeeded(tr)) })).join("") });
       }).join("")}`;
-    wireTroopSwipe(groupsEl, RC_GROUPS, rcActive, (g) => { rcActive = g; renderGroups(); });
+    wireTroopSwipe(groupsEl, RC_GROUPS, rcActive, (g) => { rcActive = g; pagePickSet("research_center", g); renderGroups(); });
     const setLevel = (tr, v) => {
       RC_STATE[tr] = Math.min(RC_NODES_CACHE[tr].length, Math.max(0, v));
       saveCalcState("research_center", RC_STATE);
@@ -32940,7 +32941,7 @@ async function ensureT12NodesData() {
   T12_NODES_CACHE = c;
 }
 async function renderT12ResearchPage() {
-  const seq = RENDER_SEQ;
+  const seq = RENDER_SEQ, fresh = pageEntered("t12_research");
   await ensureT12NodesData();
   if (!T12_STATE) {
     const saved = await loadCalcState("t12_research");
@@ -33106,7 +33107,7 @@ async function renderT12ResearchPage() {
   }
 
   const T12_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
-  let t12ActiveTroop = T12_TROOPS[0];
+  let t12ActiveTroop = T12_TROOPS[pagePickIdx("t12_research", T12_TROOPS, fresh, (tr) => computeNeeded(T12_STATE[tr], tr).time_hours > 0)];
   const t12Open = {}; // { group: true/false } chosen this visit
   function renderTroopPanels() {
     const troopsEl = document.getElementById("t12Troops");
@@ -33114,7 +33115,7 @@ async function renderT12ResearchPage() {
     const troop = t12ActiveTroop;
     const tabsHtml = () => T12_TROOPS.map((tr) => `<button type="button" class="${tr === troop ? "on" : ""}" data-t12tab="${esc(tr)}" style="--tc:${T12_TROOP_COLORS[tr]};">${esc(troopDisplayName(tr))}<small>${donePct([tr])}% · ${t12FormatTime(applyResearchPct(computeNeeded(T12_STATE[tr], tr).time_hours))}</small></button>`).join("");
     tabsEl.innerHTML = tabsHtml();
-    tabsEl.onclick = (e) => { const b = e.target.closest("[data-t12tab]"); if (b && b.dataset.t12tab !== t12ActiveTroop) { t12ActiveTroop = b.dataset.t12tab; renderTroopPanels(); } };
+    tabsEl.onclick = (e) => { const b = e.target.closest("[data-t12tab]"); if (b && b.dataset.t12tab !== t12ActiveTroop) { t12ActiveTroop = b.dataset.t12tab; pagePickSet("t12_research", t12ActiveTroop); renderTroopPanels(); } };
     const groups = [...new Set(T12_ITEM_DEFS.map((d) => d.group))];
     const statMax = { Attack: 0, Defense: 0, Lethality: 0, Health: 0 };
     T12_ITEM_DEFS.forEach((def) => {
@@ -33176,7 +33177,7 @@ async function renderT12ResearchPage() {
           <div class="t12x-nodes"${open ? "" : ` style="display:none;"`}>${g.defs.map(nodeHtml).join("")}</div>
         </div>`;
       }).join("")}`;
-    wireTroopSwipe(troopsEl, T12_TROOPS, t12ActiveTroop, (tr) => { t12ActiveTroop = tr; renderTroopPanels(); });
+    wireTroopSwipe(troopsEl, T12_TROOPS, t12ActiveTroop, (tr) => { t12ActiveTroop = tr; pagePickSet("t12_research", tr); renderTroopPanels(); });
 
     // A level change redraws only that node, its section header, the troop
     // boxes and the tabs - not every section.
