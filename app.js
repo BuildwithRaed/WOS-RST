@@ -21501,7 +21501,9 @@ async function budgetForPage(calcKey, targetDays, opts = {}) {
   const needStill = {};
   Object.keys(needFull).forEach((n) => { needStill[n] = Math.max(0, needFull[n] - (Number(owned[n]) || 0)); });
   await ensureTradeRates();
-  const traded = tradeAdjustedStill(calcKey, needFull, owned, targetDays);
+  // The Research Lab's weekly refining is left to the planner (like Pack cost): taking this
+  // week's lot here too made the plan count the same week twice (a week early on T12).
+  const traded = tradeAdjustedStill(calcKey, needFull, owned, targetDays, true);
   if (traded) Object.keys(needStill).forEach((n) => { needStill[n] = traded.still[n] || 0; });
   await ensurePetMarksState();
   const packGroups = packGroupsFor(tables, calcKey);
@@ -22120,7 +22122,7 @@ const BUDGET_PLANS_INDEX = "budget_plans_v2", BUDGET_PLAN_ITEM = "budget_plan_v2
 const BUDGET_PLANS_KEPT = 5;
 function budgetPlanFingerprint(payload) {
   tradeExtraSync();
-  const str = JSON.stringify({ v: 3, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
+  const str = JSON.stringify({ v: 4, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
   // cyrb53: a quick 53-bit hash of the text, plus its length.
   let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
   for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
@@ -25576,7 +25578,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const ck = calcKey || "chief_gear", cg = BOX_EXPLAIN_KEYS.has(ck) && needSum(name) > 0;
     const needAll = {};
     names.forEach((n) => { const v = needSum(n); if (v > 0) needAll[n] = v; });
-    const extra = cg ? () => cgBoxExplainHtml(name, { calcKey: ck, need: needSum(name), have: effOwned[name] || 0, needAll, calcOwned }) : null;
+    const extra = cg ? () => cgBoxExplainHtml(name, { calcKey: ck, need: needSum(name), have: effOwned[name] || 0, labHave: hiddenTrades.filter((x) => x.lab && x.to === name).reduce((a, x) => a + (Number(x.getQty) || 0), 0), needAll, calcOwned }) : null;
     if (cg) {
       PACK_PLAN_HOOKS[ck] = () => {
         const md = document.getElementById("bsEditModal"), ex = md && md.style.display !== "none" && md._extra && md.querySelector("[data-bsexplain]");
@@ -32598,7 +32600,10 @@ function cgBoxExplainHtml(name, c) {
   const planOut = (snap.planTrades || []).filter((x) => x.from === name && x.giveQty > 0).map((x) => ({ when: "plan", from: x.from, to: x.to, give: x.giveQty, get: x.getQty }));
   const ins = [...free.filter((x) => x.to === name), ...planIn], outs = [...free.filter((x) => x.from === name), ...planOut];
   const sum = (a, k) => a.reduce((s, x) => s + (Number(x[k]) || 0), 0);
-  const inQ = sum(ins, "get"), outQ = sum(outs, "give");
+  // "You have" (the box) already holds this week's Research Lab lot; the plan's lab weeks list it
+  // again ("This week"), so the totals take it once.
+  const labDup = snap.noPacks ? 0 : Math.min(Number(c.labHave) || 0, sum(planIn.filter((x) => x.lab && x.when === "week"), "get"));
+  const inQ = sum(ins, "get") - labDup, outQ = sum(outs, "give");
   // Each trade is listed once, in the box of the item it makes ("Where the rest comes from").
   // What this item gives away is one short line in the status box: "N goes to Alloy ›",
   // each target tappable (opens that item's box on the page).
