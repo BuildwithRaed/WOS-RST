@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 105; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 106; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -3402,10 +3402,7 @@ const T = {
   rfc_lab_closed: { en: "Off: the lab's Refined FC isn't counted on T12 and Budgets." },
   charm_to_go: { en: "{n} to go" },
   charm_tiles_hint: { en: "Green bar = now, blue = what the target adds. Tap a charm to change it." },
-  charm_needs_this: { en: "Needs for this charm" },
   charm_lv: { en: "Lv" },
-  charm_stage: { en: "Stage {a} / {b}" },
-  charm_target_max: { en: "Target = Max ({lv})" },
   gs_nothing: { en: "Nothing needed" },
   gs_done: { en: "Done" },
   cg_slots_hint: { en: "Each picture is the game's picture for the piece's tier. Badge top-left = now, blue = target. Tap a piece to change it." },
@@ -3419,6 +3416,17 @@ const T = {
   hg_needs_this: { en: "Needs for this piece" },
   hg_max_piece: { en: "Max this piece" },
   cg_trades: { en: "Trades" },
+  cgw_needs: { en: "This piece needs" },
+  cgw_have: { en: "have {n}" },
+  cgw_short: { en: "{n} short" },
+  cgw_stage: { en: "Stage" },
+  cgw_swipe: { en: "Swipe down to close" },
+  chw_charm_n: { en: "charm {n}" },
+  chw_needs: { en: "This charm needs" },
+  chw_stage_of: { en: "Stage of Lv {n}" },
+  chw_not_open: { en: "Not open yet" },
+  chw_nothing: { en: "nothing needed" },
+  chw_enough: { en: "enough" },
   bsx_rest: { en: "Where the rest comes from" },
   bsx_spare: { en: "Spare {n}" },
   bsx_goes_to: { en: "goes to" },
@@ -3427,8 +3435,11 @@ const T = {
   bsx_lab: { en: "Research Lab" },
   bsx_trade: { en: "Trade {n}" },
   bsx_covered: { en: "Covered by your Backpack" },
+  bsx_cando: { en: "Can do now:" },
+  bsx_cando_none: { en: "Nothing yet" },
   bsx_cov_trades: { en: "Covered with trades" },
   bsx_still_short: { en: "Still {n} short after trades" },
+  mkc_at_target: { en: "At target" },
   cdp_pages_up: { en: "Pages that can go up" },
   cdp_of: { en: "{n} of {m}" },
   cdp_runs_out: { en: "runs out first:" },
@@ -6380,13 +6391,27 @@ async function renderGearLevelingGroup(target) {
       for (let i = from + 1; i <= to && i < rows.length; i++) cols.forEach(([col, name]) => { const v = Number(rows[i][col]) || 0; if (v) need[name] = (need[name] || 0) + v; });
     });
     const needs = Object.entries(need);
+    // "This piece needs" boxes like the Chief Gear window: one box per needed
+    // item (amount, what the page's Backpack boxes count, short / ✓).
+    const needsBoxes = () => {
+      const have = BAR_EFF_OWNED.hero_gear || {};
+      const big = (v) => (Math.abs(v) < 1e6 ? Math.round(v).toLocaleString() : shortAmount(v));
+      const small = (v) => (Math.abs(v) < 1e5 ? Math.round(v).toLocaleString() : shortAmount(v));
+      const ic = (nm) => { const s = materialIconSrc(nm); return s ? `<img src="${esc(s)}" alt="" />` : ""; };
+      const body = needs.length ? needs.map(([nm, q]) => {
+        const h = Number(have[nm]) || 0, sh = Math.max(0, q - h);
+        return `<div class="cgw-nb${sh > 0 ? " bad" : " ok"}" title="${esc(materialDisplayName(nm))}">${ic(nm)}<b>${bidiNum(big(q))}</b><small>${esc(t("cgw_have").replace("{n}", small(h)))}</small><span>${sh > 0 ? esc(t("cgw_short").replace("{n}", small(sh))) : "&#10003;"}</span></div>`;
+      }).join("") : `<div class="cgw-nb ok"><span>&#10003;</span><small class="g">${esc(t("gs_nothing"))}</small></div>`;
+      return `<div class="cgw-nh">${esc(t("hg_needs_this"))}</div><div class="cgw-nd" style="grid-template-columns:repeat(${needs.length ? Math.max(needs.length, 2) : 1}, minmax(0, 1fr));">${body}</div>`;
+    };
     const atMax = GEAR_LEVELING_TABLES.every((tb) => cur(troop, piece, tb).to >= Math.max(cur(troop, piece, tb).from, heroTrackCapIdx(tb)));
     m.innerHTML = `<div class="modal-box adm-sheet gs-box ch-sheet hg-sh" role="dialog" aria-modal="true">
       <div class="gs-head">${nav(-1)}<img class="hg-sh-pic" src="${heroGearIcon(troop, piece)}" alt="" /><div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(piece))} · ${esc(troopDisplayName(troop))}</b></div>
         ${nav(1)}${closeXHtml("data-gsclose")}</div>
       <div class="plx-piecestat hgc-stat" data-hgstat="${esc(troop)}|${esc(piece)}"></div>
       ${GEAR_LEVELING_TABLES.map(sec).join("")}
-      <div class="gs-needs"><div class="meta">${esc(t("hg_needs_this"))}</div><div class="gs-chips">${needs.length ? needs.map(([nm, q]) => `<span class="gs-chip" title="${esc(materialDisplayName(nm))}"><img src="${esc(materialIconSrc(nm))}" alt="" />${bidiNum(Math.round(q).toLocaleString())}</span>`).join("") : `<span class="gs-chip ok">&#10003; ${esc(t("gs_nothing"))}</span>`}</div></div>
+      ${mkCanHtml("herogearcalc", `${troop}|${piece}`)}
+      ${needsBoxes()}
       <div class="gs-foot ch-foot"><button type="button" class="btn ghost" data-hgpmax ${atMax ? "disabled" : ""}>${esc(t("hg_max_piece"))}</button><button type="button" class="btn" data-gsclose>${esc(t("gs_done"))}</button></div>
     </div>`;
     m.querySelectorAll("select.lvchip[data-troop]").forEach((c) => { const v = cur(c.dataset.troop, c.dataset.piece, c.dataset.track); c.value = String(c.dataset.role === "to" ? v.to : v.from); });
@@ -7809,7 +7834,37 @@ async function mkCompute() {
     MK = { tab, list, plan };
     document.querySelectorAll("#content .mk").forEach((m) => m.remove());
     mkApply();
+    mkCanFill();
   } catch (e) { console.warn("marks", e); }
+}
+// One piece window's "Can do now" line (Heroes Gears, Chief Gear, Chief Charm): how far the
+// Backpack (+ this week's trades, never packs) takes THIS piece, from the page marks' plan.
+// The slot is `<div data-mkcan="<tab>|<track id or prefix>">`, filled now and again when
+// the marks are worked out (mkCompute). Empty while the plan isn't there / not allowed.
+function mkCanHtml(tab, key) {
+  return `<div class="mk-canslot" data-mkcan="${esc(tab)}|${esc(key)}">${mkCanInner(tab, key)}</div>`;
+}
+function mkCanInner(tab, key) {
+  if (!visitorCan("cando") || !MK || MK.tab !== tab || !MK.plan || TAB !== tab) return "";
+  const list = MK.list.filter((x) => { const r = String(x.tr.raw); return r === key || r.startsWith(`${key}|`); });
+  if (!list.length) return "";
+  const named = list.length > 1;
+  const nm = (tr) => { const tb = String(tr.raw).split("|")[2]; return tb ? trackDisplayName(tb) : (tr.name || ""); };
+  let txt, icon = "&#9889; ";
+  if (list.every((x) => !(x.tr.to > x.tr.from))) { txt = `<b>&#10003; ${esc(t("mkc_at_target"))}</b>`; icon = ""; }
+  else {
+    const up = list.filter((x) => (MK.plan.lv[x.tr.id] || 0) > x.tr.from);
+    txt = up.length
+      ? `${esc(t("bsx_cando"))} <b>${up.map((x) => `${named ? `${esc(nm(x.tr))} ` : ""}${esc(mkLab(x.tr, x.tr.from))} &rarr; ${esc(mkLab(x.tr, MK.plan.lv[x.tr.id]))}`).join(" · ")}</b>`
+      : `${esc(t("bsx_cando"))} <b>${esc(t("bsx_cando_none"))}</b>`;
+  }
+  return `<div class="bsx-can"><span>${icon}${txt}</span></div>`;
+}
+function mkCanFill() {
+  document.querySelectorAll("[data-mkcan]").forEach((el) => {
+    const v = el.dataset.mkcan, i = v.indexOf("|"), html = mkCanInner(v.slice(0, i), v.slice(i + 1));
+    if (el.innerHTML !== html) el.innerHTML = html;
+  });
 }
 // Worked out after the page draws and again after a change on it.
 function mkSoon(ms) { if (!visitorCan("cando")) return; clearTimeout(MK_T); MK_T = setTimeout(mkCompute, ms == null ? 450 : ms); }
@@ -24531,75 +24586,111 @@ async function renderCharmsCalc() {
     rowsEl.querySelectorAll("[data-chtile]").forEach((b) => b.addEventListener("click", () => openCharmSheet(Number(b.dataset.chtile))));
   }
 
-  // The sheet for one charm (bottom sheet on phones, small window on PC).
+  // One charm's window (like Chief Gear's piece window): NOW and TARGET as level
+  // chips (each with its picture, scrolling sideways, a thin line where the number of
+  // stages changes) and the picked level's stage dots, then what this charm needs
+  // against the Backpack. No buttons: swipe down, tap the dim page or Esc to close.
   function openCharmSheet(n) {
     const m = gearSheetEl();
-    // Sheet 1: Now and Target each pick the level by its
-    // picture (a strip of the 18 levels) and the stage on the bar under it.
+    const MATS = ["Charm Guides", "Charm Designs", "Jewel Secrets"];
+    const big = (v) => (Math.abs(v) < 1e6 ? Math.round(v).toLocaleString() : shortAmount(v));
+    const small = (v) => (Math.abs(v) < 1e5 ? Math.round(v).toLocaleString() : shortAmount(v));
+    const block = (role, sel, ci, cap, groups, troop) => {
+      const majors = [...groups.keys()].filter((k) => role === "current" || k > 0);
+      const cm = charmMajor(CHARM_LEVELS[ci]), sm = charmMajor(CHARM_LEVELS[sel]);
+      const lo = role === "target" ? ci : 0;
+      let prevN = null;
+      const chips = majors.map((k) => {
+        const g = groups.get(k), first = g[0], up = first > cap, off = role === "target" && k < cm;
+        // A thin line between runs of levels with a different number of stages (1–3 · 4–10 · 11–15 · 16–17 · 18).
+        const sep = k > 0 && prevN != null && prevN !== g.length ? `<i class="chw-sep"></i>` : "";
+        if (k > 0) prevN = g.length;
+        return `${sep}<button type="button" class="chw-c${k === sm ? " on" : ""}${up ? " up" : ""}" data-chw="${role}|l|${k}"${off ? " disabled" : ""}${up ? ` title="${esc(t("upcoming_tag"))}"` : ""}><span class="ch-pic${k > 0 ? "" : " none"}"><img src="${charmIconSrc(troop, k)}" alt="" loading="lazy" /></span><b>${k > 0 ? k : "0"}</b></button>`;
+      }).join("");
+      const g = groups.get(sm) || [sel];
+      const stages = g.length > 1 ? `<div class="chw-sl">${esc(t("chw_stage_of").replace("{n}", sm))}</div><div class="chw-dots">${g.map((i, j) => {
+        const done = i < ci || (role === "current" && i < sel);
+        return `<button type="button" class="cgw-d${i === sel ? " on" : done ? " done" : ""}${i > cap ? " up" : ""}" data-chw="${role}|i|${i}"${i < lo ? " disabled" : ""}>.${j}</button>`;
+      }).join("")}</div>` : "";
+      const tag = sel > cap ? `<span class="cgw-up">${esc(t("chw_not_open"))}</span>` : "";
+      const mx = Math.max(ci, cap);
+      const maxBtn = role === "target" ? `<button type="button" class="plx-maxbtn plx-max cgw-max" data-chwmax${sel === mx ? " disabled" : ""}>${esc(t("max_button"))}</button>` : "";
+      const lab = sel > 0 || role === "target" ? `${esc(t("charm_lv"))} ${esc(CHARM_LEVELS[sel])}` : "0";
+      return `<div class="ch-sec cgw-blk${role === "target" ? " tgt" : ""}"><div class="ch-sec-h"><b>${esc(t(role === "target" ? "t12x_target" : "t12x_now"))}</b><span class="cgw-v${sel > cap ? " up" : ""}">${lab}</span>${tag}<i class="cgw-sp"></i>${maxBtn}</div>
+        <div class="chw-lvs" data-chwrow="${role}">${chips}</div>${stages}</div>`;
+    };
+    const needsHtml = (ci, ti) => {
+      const have = BAR_EFF_OWNED.charm || {};
+      const a = CHARM_CUMULATIVE[CHARM_LEVELS[ci]] || [0, 0, 0], b = CHARM_CUMULATIVE[CHARM_LEVELS[ti]] || [0, 0, 0];
+      return `<div class="cgw-nh">${esc(t("chw_needs"))}</div><div class="cgw-nd" style="grid-template-columns:repeat(${MATS.length}, minmax(0, 1fr));">${MATS.map((nm, k) => {
+        const q = Math.max(0, (b[k] || 0) - (a[k] || 0)), h = Number(have[nm]) || 0, sh = Math.max(0, q - h), ic = materialIconSrc(nm);
+        if (!(q > 0)) return `<div class="cgw-nb ok" title="${esc(materialDisplayName(nm))}">${ic ? `<img src="${esc(ic)}" alt="" />` : ""}<span>&#10003;</span><small class="g">${esc(t("chw_nothing"))}</small></div>`;
+        return `<div class="cgw-nb${sh > 0 ? " bad" : ""}" title="${esc(materialDisplayName(nm))}">${ic ? `<img src="${esc(ic)}" alt="" />` : ""}<b>${bidiNum(big(q))}</b><small>${esc(t("cgw_have").replace("{n}", small(h)))}</small><span>${sh > 0 ? esc(t("cgw_short").replace("{n}", small(sh))) : `&#10003; ${esc(t("chw_enough"))}`}</span></div>`;
+      }).join("")}</div>`;
+    };
     const draw = () => {
       const troop = plxTroopOf("charm"), flat = charmFlat(troop), c = flat[n], cap = charmCapIdx();
+      if (!c) { closeGearSheet(); return; }
       const st = CHARM_CALC_STATE[c.piece.key][c.slot];
-      const ci = CHARM_LEVELS.indexOf(String(st.current)), ti = Math.max(ci, CHARM_LEVELS.indexOf(String(st.target)));
+      const ci = Math.max(0, CHARM_LEVELS.indexOf(String(st.current))), ti = Math.max(ci, CHARM_LEVELS.indexOf(String(st.target)));
       const groups = charmStageGroups();
-      const a = CHARM_CUMULATIVE[st.current] || [0, 0, 0], b = CHARM_CUMULATIVE[CHARM_LEVELS[ti]] || [0, 0, 0];
-      const needs = [["Charm Guides", b[0] - a[0]], ["Charm Designs", b[1] - a[1]], ["Jewel Secrets", b[2] - a[2]]].filter(([, q]) => q > 0);
-      const stageTxt = (i) => {
-        const g = groups.get(charmMajor(CHARM_LEVELS[i])) || [i];
-        return g.length > 1 ? `${esc(t("charm_stage").replace("{a}", g.indexOf(i)).replace("{b}", g.length - 1))} · ${esc(CHARM_LEVELS[i])}` : esc(CHARM_LEVELS[i]);
-      };
-      const strip = (role, i) => {
-        const cm = charmMajor(CHARM_LEVELS[ci]), sel = charmMajor(CHARM_LEVELS[i]);
-        return `<div class="ch-strip" data-chstrip>${[...groups.keys()].filter((k) => role === "current" || k > 0).map((k) => {
-          const first = groups.get(k)[0], up = first > cap, off = role === "target" && k < cm;
-          const tag = up ? `<small class="up">${esc(t("upcoming_tag").replace(/^\s*·\s*/, ""))}</small>` : role === "target" && k === cm && k !== sel ? `<small>${esc(t("t12x_now"))}</small>` : "";
-          return `<button type="button" class="ch-lvp${k === sel ? " on" : ""}${up ? " up" : ""}" data-chlv="${role}|${k}" ${off ? "disabled" : ""}><span class="ch-pic strip${k > 0 ? "" : " none"}"><img src="${charmIconSrc(troop, k)}" alt="" loading="lazy" /></span><b>${k > 0 ? `${esc(t("charm_lv"))} ${k}` : "0"}</b>${tag}</button>`;
-        }).join("")}</div>`;
-      };
-      const sec = (role, i) => `<div class="ch-sec${role === "target" ? " tgt" : ""}"><div class="ch-sec-h"><b>${esc(t(role === "target" ? "t12x_target" : "t12x_now"))}</b><span class="${i > cap ? "up" : ""}">${stageTxt(i)}${i > cap ? ` · ${esc(t("upcoming_tag").replace(/^\s*·\s*/, ""))}` : ""}</span></div>${strip(role, i)}${charmStageBarHtml(ci, ti, role, groups)}</div>`;
-      const nav = (d) => `<button type="button" class="ch-nav" data-gsnav="${d}" ${n + d < 0 || n + d >= flat.length ? "disabled" : ""} aria-label="${d < 0 ? "‹" : "›"}">${d < 0 ? "&#8249;" : "&#8250;"}</button>`;
-      m.innerHTML = `<div class="modal-box adm-sheet gs-box ch-sheet" role="dialog" aria-modal="true">
-        <div class="gs-head">${nav(-1)}<div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(c.piece.name))} · ${esc(t("charm_slot_label"))} ${c.slot + 1}</b>
-          <div class="meta">${esc(st.current)}${ti > ci ? ` &rarr; ${esc(CHARM_LEVELS[ti])} · <span style="color:var(--good);">${pctShort(charmStatAt(CHARM_LEVELS[ti]) - charmStatAt(st.current))} LETH/HP</span>` : ` · ${pctShort(charmStatAt(st.current))} LETH/HP`}</div></div>
-          ${nav(1)}${closeXHtml("data-gsclose")}</div>
-        ${sec("current", ci)}${sec("target", ti)}
-        <div class="gs-needs"><div class="meta">${esc(t("charm_needs_this"))}</div><div class="gs-chips">${needs.length ? needs.map(([nm, q]) => `<span class="gs-chip" title="${esc(materialDisplayName(nm))}"><img src="${esc(materialIconSrc(nm))}" alt="" />${bidiNum(q.toLocaleString())}</span>`).join("") : `<span class="gs-chip ok">&#10003; ${esc(t("gs_nothing"))}</span>`}</div></div>
-        <div class="gs-foot ch-foot"><button type="button" class="btn ghost" data-gsmax ${ti === Math.max(ci, cap) ? "disabled" : ""}>${esc(t("charm_target_max").replace("{lv}", CHARM_LEVELS[Math.max(ci, cap)]))}</button><button type="button" class="btn" data-gsclose>${esc(t("gs_done"))}</button></div>
+      const keep = {};
+      m.querySelectorAll("[data-chwrow]").forEach((x) => { keep[x.dataset.chwrow] = x.scrollLeft; });
+      const first = !m.querySelector(".chw");
+      const top = CHARM_LEVELS.length - 1, now = charmStatAt(CHARM_LEVELS[ci]), tg = charmStatAt(CHARM_LEVELS[ti]);
+      const title = `${pieceDisplayName(c.piece.name)} ${t("chw_charm_n").replace("{n}", c.slot + 1)} · ${troopDisplayName(troop)}`;
+      const stat = ti > ci ? `<span style="color:var(--good);">${pctShort(now)}</span> &rarr; <span style="color:var(--ice);">${pctShort(tg)}</span>`
+        : `<span style="color:var(--good);">${pctShort(now)}</span>${ci >= Math.min(cap, top) ? ` · <span style="color:var(--good);">&#10003; ${esc(t("max_button"))}</span>` : ""}`;
+      m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw chw" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+        <div class="cgw-top" data-cgwgrab><div class="cgw-grab" title="${esc(t("cgw_swipe"))}"></div>
+        <div class="gs-head"><span class="ch-pic chw-hpic${ci > 0 ? "" : " none"}"><img src="${charmIconSrc(troop, CHARM_LEVELS[ci])}" alt="" /></span><div style="flex:1; min-width:0;"><b>${esc(title)}</b>
+          <div class="meta">LETH &amp; HP ${stat}</div></div></div></div>
+        ${block("current", ci, ci, cap, groups, troop)}
+        ${block("target", ti, ci, cap, groups, troop)}
+        ${mkCanHtml("charmscalc", `${c.piece.key}|${c.slot}`)}
+        ${needsHtml(ci, ti)}
       </div>`;
-      // Each strip starts with its chosen level in view (no page scroll).
-      m.querySelectorAll("[data-chstrip]").forEach((sb) => { const on = sb.querySelector(".on"); if (on) sb.scrollLeft = on.offsetLeft - (sb.clientWidth - on.offsetWidth) / 2; });
+      m.querySelectorAll("[data-chwrow]").forEach((x) => {
+        if (!first && keep[x.dataset.chwrow] != null) { x.scrollLeft = keep[x.dataset.chwrow]; return; }
+        const on = x.querySelector(".on");
+        if (on) x.scrollLeft = Math.max(0, on.offsetLeft - x.offsetLeft - x.clientWidth / 2 + on.offsetWidth / 2);
+      });
     };
-    const changed = () => {
-      const keep = [...m.querySelectorAll("[data-chstrip]")].map((x) => x.scrollLeft);
-      saveCalcState("charm", CHARM_CALC_STATE); draw(); renderTroopSections(); updateCharmTotals();
-      m.querySelectorAll("[data-chstrip]").forEach((x, i) => { if (keep[i] != null) x.scrollLeft = keep[i]; });
+    const changed = () => { saveCalcState("charm", CHARM_CALC_STATE); draw(); renderTroopSections(); updateCharmTotals(); };
+    // Picking: a level = its first stage (the target's own level when it is Now's
+    // level keeps Now's stage); Now above the target pulls the target along.
+    const pick = (role, kind, val) => {
+      const c = charmFlat(plxTroopOf("charm"))[n], st = CHARM_CALC_STATE[c.piece.key][c.slot];
+      const ci = Math.max(0, CHARM_LEVELS.indexOf(String(st.current))), ti = Math.max(ci, CHARM_LEVELS.indexOf(String(st.target)));
+      let k;
+      if (kind === "i") k = Number(val);
+      else {
+        const mj = Number(val), g = charmStageGroups().get(mj) || [];
+        if (!g.length) return;
+        const cur = role === "current" ? ci : ti;
+        if (charmMajor(CHARM_LEVELS[cur]) === mj) return;
+        k = role === "target" && charmMajor(CHARM_LEVELS[ci]) === mj ? ci : g[0];
+      }
+      if (!(k >= 0) || k >= CHARM_LEVELS.length) return;
+      if (role === "current") { st.current = CHARM_LEVELS[k]; if (ti < k) st.target = st.current; }
+      else { if (k < ci) return; st.target = CHARM_LEVELS[k]; }
+      changed();
     };
     m.onclick = (ev) => {
-      if (ev.target === m || ev.target.closest("[data-gsclose]")) { closeGearSheet(); return; }
-      const flat = charmFlat(plxTroopOf("charm")), c = flat[n], st = CHARM_CALC_STATE[c.piece.key][c.slot];
-      const ci = CHARM_LEVELS.indexOf(String(st.current)), ti = Math.max(ci, CHARM_LEVELS.indexOf(String(st.target)));
-      const set = (role, k) => {
-        if (role === "current") { st.current = CHARM_LEVELS[k]; if (ti < k) st.target = st.current; } // the target is never below now
-        else st.target = CHARM_LEVELS[Math.max(ci, k)];
+      if (sw.dragged) { sw.dragged = false; return; }
+      if (ev.target === m) { closeGearSheet(); return; }
+      const b = ev.target.closest("[data-chw]");
+      if (b && !b.disabled) { const [role, kind, val] = b.dataset.chw.split("|"); pick(role, kind, val); return; }
+      if (ev.target.closest("[data-chwmax]")) {
+        const c = charmFlat(plxTroopOf("charm"))[n], st = CHARM_CALC_STATE[c.piece.key][c.slot];
+        const ci = Math.max(0, CHARM_LEVELS.indexOf(String(st.current)));
+        st.target = CHARM_LEVELS[Math.max(ci, charmCapIdx())];
         changed();
-      };
-      const lvb = ev.target.closest("[data-chlv]");
-      if (lvb && !lvb.disabled) {
-        const [role, mj] = lvb.dataset.chlv.split("|");
-        const g = charmStageGroups().get(Number(mj)) || [];
-        const cur = role === "current" ? ci : ti;
-        if (charmMajor(CHARM_LEVELS[cur]) === Number(mj)) return;
-        // A level picked = its first stage (the target's own level keeps now's stage).
-        set(role, role === "target" && charmMajor(CHARM_LEVELS[ci]) === Number(mj) ? ci : g[0]);
-        return;
       }
-      const sg = ev.target.closest("[data-chseg]");
-      if (sg && !sg.disabled) { const [role, k] = sg.dataset.chseg.split("|"); set(role, Number(k)); return; }
-      if (ev.target.closest("[data-gsmax]")) { st.target = CHARM_LEVELS[Math.max(ci, charmCapIdx())]; changed(); return; }
-      const nv = ev.target.closest("[data-gsnav]");
-      if (nv && !nv.disabled) { n = Math.max(0, Math.min(flat.length - 1, n + Number(nv.dataset.gsnav))); draw(); }
     };
-    draw();
+    const sw = wireSheetSwipe(m);
     m.style.display = "flex";
+    draw();
   }
 
   wirePlxTroopSwitch(content, "charm", () => { renderTroopSections(); updateCharmCurrentStats(); });
@@ -24658,6 +24749,12 @@ function wireSheetSwipe(m, o = {}) {
   m.onpointercancel = end;
   return s;
 }
+// Esc closes the Chief Gear piece / Chief Charm window (it has no buttons of its own).
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  const m = document.getElementById("gearSheet");
+  if (m && m.style.display !== "none" && m.querySelector(".cgw")) { e.stopImmediatePropagation(); closeGearSheet(); }
+}, true);
 
 // Sums Guides/Designs/Secrets across all 18 charm slots.
 async function updateCharmTotals() {
@@ -24957,52 +25054,110 @@ async function renderChiefGearCalc() {
     b.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse" && !pinned) show(false); });
   }
 
-  // The sheet for one piece: Now and Target lists side by side.
+  // One piece's window: Now and Target as tier / star / stage chips, then what
+  // this piece needs (Now → Target) against the Backpack. No buttons: swipe it
+  // down, tap the dim page or Esc to close. Every tap saves and redraws the page.
   function openGearSheet(key) {
     const m = gearSheetEl();
-    const draw = (keepScroll) => {
+    const MATS = [["hardened_alloy", "Hardened Alloy"], ["polishing_solution", "Polishing Solution"], ["design_plan", "Design Plan"], ["amber", "Amber"]];
+    // The tiers in row order (each a run of rows), worked out from the rows themselves.
+    const tiers = [];
+    rows.forEach((r, i) => { const tk = String(r.tier ?? ""), g = tiers[tiers.length - 1]; if (!g || g.tier !== tk) tiers.push({ tier: tk, first: i, last: i }); else g.last = i; });
+    const tierAt = (i) => tiers.findIndex((g) => i >= g.first && i <= g.last);
+    const tierName = (tk) => String(CHIEF_GEAR_TIER_SHORT[tk] || tk || "").replace(/^(Red|Legendary) (?=T\d)/, "");
+    const tierCls = (tk) => { const l = chiefGearLook(tk); return l === "uncommon" ? "green" : l === "rare" ? "blue" : l === "epic" ? "purple" : l === "mythic" ? "gold" : "red"; };
+    const lvName = (r) => (r ? `${tierName(r.tier)}${r.stars != null ? ` ★${r.stars}` : ""}${r.stars != null && r.stage != null ? `.${r.stage}` : ""}` : "");
+    const idxs = (g) => { const a = []; for (let i = g.first; i <= g.last; i++) a.push(i); return a; };
+    const sameStar = (a, b) => String(rows[a].stars) === String(rows[b].stars);
+    const pct = (i) => parseStatPct(rows[i]?.stat) || 0;
+    const big = (v) => (Math.abs(v) < 1e6 ? Math.round(v).toLocaleString() : shortAmount(v));
+    const small = (v) => (Math.abs(v) < 1e5 ? Math.round(v).toLocaleString() : shortAmount(v));
+    const block = (role, sel, lo, cap) => {
+      const ti = tierAt(sel), g = tiers[ti], r = rows[sel];
+      const up = (i) => (i > cap ? " up" : "");
+      const tierChips = tiers.map((x, k) => {
+        const off = x.last < lo, first = Math.max(x.first, lo);
+        return `<button type="button" class="cgw-c ${tierCls(x.tier)}${k === ti ? " on" : ""}${up(first)}" data-cgw="${role}|t|${k}"${off ? " disabled" : ""}${first > cap ? ` title="${esc(t("upcoming_tag"))}"` : ""}>${esc(tierName(x.tier))}</button>`;
+      }).join("");
+      const inTier = idxs(g);
+      const stars = [...new Set(inTier.map((i) => rows[i].stars).filter((s) => s != null).map(String))];
+      const starRow = stars.length ? `<div class="cgw-stars" style="--n:${stars.length};">${stars.map((s) => {
+        const ok = inTier.filter((i) => String(rows[i].stars) === s && i >= lo);
+        return `<button type="button" class="cgw-c${String(r.stars) === s ? " on" : ""}${ok.length ? up(ok[0]) : ""}" data-cgw="${role}|s|${s}"${ok.length ? "" : " disabled"}>&#9733;${esc(s)}</button>`;
+      }).join("")}</div>` : "";
+      const stg = r.stars != null ? inTier.filter((i) => sameStar(i, sel) && rows[i].stage != null) : [];
+      const stageRow = stg.length > 1 ? `<div class="cgw-dots"><span class="cgw-dl">${esc(t("cgw_stage"))}</span>${stg.map((i) => `<button type="button" class="cgw-d${i === sel ? " on" : ""}${up(i)}" data-cgw="${role}|i|${i}"${i < lo ? " disabled" : ""}>.${esc(String(rows[i].stage))}</button>`).join("")}</div>` : "";
+      const tag = role === "to" && sel > cap ? `<span class="cgw-up">${esc(t("upcoming_tag"))}</span>` : "";
+      const mx = Math.max(lo, cap);
+      const maxBtn = role === "to" ? `<button type="button" class="plx-maxbtn plx-max cgw-max" data-cgwmax${sel === mx ? " disabled" : ""}>${esc(t("max_button"))}</button>` : "";
+      return `<div class="ch-sec cgw-blk${role === "to" ? " tgt" : ""}"><div class="ch-sec-h"><b>${esc(t(role === "to" ? "t12x_target" : "t12x_now"))}</b><span class="cgw-v${sel > cap ? " up" : ""}">${esc(lvName(r))}</span>${tag}<i class="cgw-sp"></i>${maxBtn}</div>
+        <div class="cgw-tiers" data-cgwrow="${role}">${tierChips}</div>${starRow}${stageRow}</div>`;
+    };
+    const needsHtml = (from, to) => {
+      const have = BAR_EFF_OWNED.chief_gear || {};
+      const need = {};
+      MATS.forEach(([col, n]) => { let s = 0; for (let i = from + 1; i <= to; i++) s += Number(rows[i][col]) || 0; need[n] = s; });
+      return `<div class="cgw-nh">${esc(t("cgw_needs"))}</div><div class="cgw-nd">${MATS.map(([, n]) => {
+        const h = Number(have[n]) || 0, sh = Math.max(0, need[n] - h), ic = materialIconSrc(n);
+        return `<div class="cgw-nb${need[n] > 0 && sh > 0 ? " bad" : need[n] > 0 ? " ok" : ""}" title="${esc(materialDisplayName(n))}">${ic ? `<img src="${esc(ic)}" alt="" />` : ""}<b>${bidiNum(big(need[n]))}</b><small>${esc(t("cgw_have").replace("{n}", small(h)))}</small><span>${need[n] > 0 ? (sh > 0 ? esc(t("cgw_short").replace("{n}", small(sh))) : "&#10003;") : "&#10003;"}</span></div>`;
+      }).join("")}</div>`;
+    };
+    const draw = () => {
       const p = pieceOf(key), st = CHIEF_GEAR_STATE[p.key], cap = chiefGearCapIdx();
-      const from = st.from, to = Math.max(from, st.to ?? from);
-      const keep = keepScroll ? [...m.querySelectorAll(".gs-list")].map((x) => x.scrollTop) : null;
-      const pct = (i) => parseStatPct(rows[i]?.stat) || 0;
-      const list = (role, sel, lo) => {
-        let tier = null, out = "";
-        rows.forEach((r, i) => {
-          if (r.tier !== tier) { tier = r.tier; out += `<div class="gs-grp">${esc(CHIEF_GEAR_TIER_SHORT[r.tier] || r.tier || "")}</div>`; }
-          out += `<button type="button" class="gs-opt${i === sel ? " on" : ""}${i > cap ? " up" : ""}" data-gspick="${role}|${i}" ${i < lo ? "disabled" : ""}>${esc(cgBadge(r))}${i === sel ? " &#10003;" : ""}${i > cap ? `<small> · ${esc(t("upcoming_tag"))}</small>` : ""}</button>`;
-        });
-        return `<div class="gs-list" data-gslist="${role}">${out}</div>`;
-      };
-      const k = ORDER.indexOf(key);
-      const nav = (d) => { const nk = ORDER[k + d]; return nk ? `<button type="button" class="btn ghost" data-gsnav="${d}">${d < 0 ? "&#8249; " : ""}${esc(pieceDisplayName(pieceOf(nk).name))}${d > 0 ? " &#8250;" : ""}</button>` : `<span></span>`; };
-      m.innerHTML = `<div class="modal-box adm-sheet gs-box" role="dialog" aria-modal="true">
+      const from = Math.min(st.from, rows.length - 1), to = Math.min(Math.max(from, st.to ?? from), rows.length - 1);
+      const keep = {};
+      m.querySelectorAll("[data-cgwrow]").forEach((x) => { keep[x.dataset.cgwrow] = x.scrollLeft; });
+      const first = !m.querySelector(".cgw");
+      m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw" role="dialog" aria-modal="true" aria-label="${esc(`${pieceDisplayName(p.name)} · ${troopDisplayName(p.troop)}`)}">
+        <div class="cgw-top" data-cgwgrab><div class="cgw-grab" title="${esc(t("cgw_swipe"))}"></div>
         <div class="gs-head"><span class="cg-pic sm"><img src="${chiefGearIcon(p.key, from)}" alt="" /></span><div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(p.name))} · ${esc(troopDisplayName(p.troop))}</b>
-          <div class="meta">ATK &amp; DEF <span style="color:var(--good);">${pctShort(pct(from))}</span>${to > from ? ` &rarr; <span style="color:var(--ice);">${pctShort(pct(to))}</span>` : ""}</div></div>
-          ${closeXHtml("data-gsclose")}</div>
-        <div class="gs-lists"><div><div class="gs-l">${esc(t("t12x_now"))}</div>${list("from", from, 0)}</div><div><div class="gs-l">${esc(t("t12x_target"))}</div>${list("to", to, from)}</div></div>
-        <div class="gs-foot">${nav(-1)}<button type="button" class="btn" data-gsclose>${esc(t("gs_done"))}</button>${nav(1)}</div>
+          <div class="meta">ATK &amp; DEF <span style="color:var(--good);">${pctShort(pct(from))}</span>${to > from ? ` &rarr; <span style="color:var(--ice);">${pctShort(pct(to))}</span>` : ""}</div></div></div></div>
+        ${block("from", from, 0, cap)}
+        ${block("to", to, from, cap)}
+        ${mkCanHtml("chiefgear", p.key)}
+        ${needsHtml(from, to)}
       </div>`;
-      const lists = [...m.querySelectorAll(".gs-list")];
-      lists.forEach((l, i) => {
-        if (keep) { l.scrollTop = keep[i]; return; }
-        const on = l.querySelector(".gs-opt.on");
-        if (on) l.scrollTop = Math.max(0, on.offsetTop - l.clientHeight / 2 + on.offsetHeight / 2);
+      m.querySelectorAll("[data-cgwrow]").forEach((x) => {
+        if (!first && keep[x.dataset.cgwrow] != null) { x.scrollLeft = keep[x.dataset.cgwrow]; return; }
+        const on = x.querySelector(".on");
+        if (on) x.scrollLeft = Math.max(0, on.offsetLeft - x.offsetLeft - x.clientWidth / 2 + on.offsetWidth / 2);
       });
     };
-    m.onclick = (ev) => {
-      if (ev.target === m || ev.target.closest("[data-gsclose]")) { closeGearSheet(); return; }
-      const pk = ev.target.closest("[data-gspick]");
-      if (pk) {
-        const [role, i] = pk.dataset.gspick.split("|"), st = CHIEF_GEAR_STATE[key], v = Number(i);
-        st[role] = v;
-        if (role === "from" && (st.to ?? 0) < v) st.to = v; // the target is never below now
-        changed(); draw(true); return;
+    // Picking: a tier takes its first level that is valid for the block (Target keeps
+    // its star / stage when the new tier has it); a star keeps the stage when it can.
+    const pick = (role, kind, val) => {
+      const st = CHIEF_GEAR_STATE[key], from = st.from, cur = role === "from" ? from : Math.max(from, st.to ?? from), lo = role === "from" ? 0 : from;
+      const r0 = rows[cur];
+      let v = null;
+      if (kind === "i") v = Number(val);
+      else if (kind === "t") {
+        const ok = idxs(tiers[Number(val)]).filter((i) => i >= lo);
+        if (!ok.length) return;
+        v = role === "to" ? (ok.find((i) => String(rows[i].stars) === String(r0.stars) && String(rows[i].stage) === String(r0.stage)) ?? ok[0]) : ok[0];
+      } else if (kind === "s") {
+        const ok = idxs(tiers[tierAt(cur)]).filter((i) => String(rows[i].stars) === String(val) && i >= lo);
+        if (!ok.length) return;
+        v = ok.find((i) => String(rows[i].stage) === String(r0.stage)) ?? ok[0];
       }
-      const nv = ev.target.closest("[data-gsnav]");
-      if (nv) { key = ORDER[ORDER.indexOf(key) + Number(nv.dataset.gsnav)] || key; draw(false); }
+      if (v == null || v < lo) return;
+      st[role] = v;
+      if (role === "from" && (st.to ?? 0) < v) st.to = v; // the target is never below now
+      changed(); draw();
     };
+    m.onclick = (ev) => {
+      if (sw.dragged) { sw.dragged = false; return; }
+      if (ev.target === m) { closeGearSheet(); return; }
+      const c = ev.target.closest("[data-cgw]");
+      if (c && !c.disabled) { const [role, kind, val] = c.dataset.cgw.split("|"); pick(role, kind, val); return; }
+      if (ev.target.closest("[data-cgwmax]")) {
+        const st = CHIEF_GEAR_STATE[key];
+        st.to = Math.max(st.from, chiefGearCapIdx());
+        changed(); draw();
+      }
+    };
+    const sw = wireSheetSwipe(m);
     m.style.display = "flex";
-    draw(false);
+    draw();
   }
 
   // Max: every piece's current level and target to the highest open level,
@@ -25041,6 +25196,7 @@ const BAR_SUMMARY_KEYS = new Set(["t12_research", "t11_helios", "research_center
 // Research pages show research speedups in their time box, not as a square.
 const BAR_TIME_KEYS = new Set(["t12_research", "t11_helios", "research_center"]);
 const BAR_SHOW_ALL = {}; // { calcKey: false } - item tiles hidden (they start shown)
+const BAR_EFF_OWNED = {}; // { calcKey: { item: amount } } what the Backpack boxes count (chests and hidden trades in)
 // "Hide boxes" is remembered per page on the person's account (owner, 20 Oct
 // 2026): calc_state "bar_hidden" = { calcKey: true }.
 let BAR_HIDDEN_LOAD = null;
@@ -25206,7 +25362,9 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     }).filter((tr) => !tr.lab || tr.getQty > 0);
     hiddenTrades.forEach((tr) => { effOwned[tr.to] = (effOwned[tr.to] || 0) + tr.getQty; });
   }
+  const noteEff = () => { BAR_EFF_OWNED[calcKey || "chief_gear"] = effOwned; };
   recomputeEffOwned();
+  noteEff();
   // What the page's "can reach" marks spend; redrawn
   // when a box amount changes too.
   const reachRefresh = () => {
@@ -25540,6 +25698,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     if (note) note.innerHTML = backpackLinkNoteHtml(calcKey || "chief_gear", name, link);
     // A chest / convertible item changes other materials' status too.
     recomputeEffOwned();
+    noteEff();
     reachRefresh();
     names.forEach((n) => groups.forEach((g) => {
       const needed = Number((g.totals || {})[n]) || 0;
