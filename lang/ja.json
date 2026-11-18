@@ -124,8 +124,6 @@
  "t:bs_have_of": "{need}中 {have}所持",
  "t:bs_your_amounts": "バッグ",
  "t:bs_from_backpack": "バッグ",
- "t:bs_show_all": "すべて表示 / 編集",
- "t:bs_hide": "非表示",
  "t:bp_link_from": "バッグから",
  "t:bp_link_typed": "手入力",
  "t:bp_chest_chance": "ランダム宝箱:計算に含めません",

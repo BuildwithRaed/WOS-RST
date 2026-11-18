@@ -124,8 +124,6 @@
  "t:bs_have_of": "已有 {have} / {need}",
  "t:bs_your_amounts": "背包",
  "t:bs_from_backpack": "背包",
- "t:bs_show_all": "全部显示 / 编辑",
- "t:bs_hide": "隐藏",
  "t:bp_link_from": "来自背包",
  "t:bp_link_typed": "手动输入",
  "t:bp_chest_chance": "概率宝箱：不计入",

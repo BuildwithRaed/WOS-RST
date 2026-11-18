@@ -124,8 +124,6 @@
  "t:bs_have_of": "есть {have} из {need}",
  "t:bs_your_amounts": "Рюкзак",
  "t:bs_from_backpack": "Рюкзак",
- "t:bs_show_all": "Показать всё / изменить",
- "t:bs_hide": "Скрыть поля",
  "t:bp_link_from": "Из рюкзака",
  "t:bp_link_typed": "Введено",
  "t:bp_chest_chance": "Сундук с шансом: не учитывается",

@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 102; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 103; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -1663,8 +1663,6 @@ const T = {
   bs_have_of: { en: "have {have} of {need}" },
   bs_your_amounts: { en: "Backpack" },
   bs_from_backpack: { en: "Backpack" },
-  bs_show_all: { en: "Show all / edit" },
-  bs_hide: { en: "Hide boxes" },
   bp_link_from: { en: "From Backpack" },
   bp_link_typed: { en: "Typed" },
   bp_chest_chance: { en: "Chance chest: not counted" },
@@ -2630,6 +2628,12 @@ const T = {
   trade_then: { en: "Then trade" },
   trade_via_packs: { en: "Bought as packs then traded" },
   trade_calc: { en: "Trade calculator" },
+  tr_rules: { en: "Trade rules" },
+  tr_up_to: { en: "up to {n} a week" },
+  tr_no_limit: { en: "no limit" },
+  tr_week_plan: { en: "this week: {n} planned · {m} left" },
+  tr_on: { en: "On" },
+  tr_off: { en: "Off" },
   trade_left_over: { en: "left over" },
   pack_group_placeholder: { en: "Group…" },
   pack_group_title: { en: "Main name this table sits under. Tables with the same group name are shown together." },
@@ -3450,7 +3454,8 @@ const T = {
   bsx_no_trades: { en: "No trades for this item" },
   bsx_cov_trades: { en: "Covered with trades" },
   bsx_still_short: { en: "Still {n} short" },
-  bsx_cov_packs: { en: "Covered with the plan's packs" },
+  bsx_cov_after_packs: { en: "Covered after buying packs · see Pack cost" },
+  mkc_at_target: { en: "At target" },
   bsx_wait: { en: "Working out where the rest comes from…" },
   bsx_shared: { en: "Shared with your other pages: this page's part of the price." },
   cdp_pages_up: { en: "Pages that can go up" },
@@ -6423,6 +6428,7 @@ async function renderGearLevelingGroup(target) {
         ${nav(1)}${closeXHtml("data-gsclose")}</div>
       <div class="plx-piecestat hgc-stat" data-hgstat="${esc(troop)}|${esc(piece)}"></div>
       ${GEAR_LEVELING_TABLES.map(sec).join("")}
+      ${mkCanHtml("herogearcalc", `${troop}|${piece}`)}
       ${needsBoxes()}
       <div class="gs-foot ch-foot"><button type="button" class="btn ghost" data-hgpmax ${atMax ? "disabled" : ""}>${esc(t("hg_max_piece"))}</button><button type="button" class="btn" data-gsclose>${esc(t("gs_done"))}</button></div>
     </div>`;
@@ -7846,7 +7852,37 @@ async function mkCompute() {
     MK = { tab, list, plan };
     document.querySelectorAll("#content .mk").forEach((m) => m.remove());
     mkApply();
+    mkCanFill();
   } catch (e) { console.warn("marks", e); }
+}
+// One piece window's "Can do now" line (Heroes Gears, Chief Gear, Chief Charm): how far the
+// Backpack (+ this week's trades, never packs) takes THIS piece, from the page marks' plan.
+// The slot is `<div data-mkcan="<tab>|<track id or prefix>">`, filled now and again when
+// the marks are worked out (mkCompute). Empty while the plan isn't there / not allowed.
+function mkCanHtml(tab, key) {
+  return `<div class="mk-canslot" data-mkcan="${esc(tab)}|${esc(key)}">${mkCanInner(tab, key)}</div>`;
+}
+function mkCanInner(tab, key) {
+  if (!visitorCan("cando") || !MK || MK.tab !== tab || !MK.plan || TAB !== tab) return "";
+  const list = MK.list.filter((x) => { const r = String(x.tr.raw); return r === key || r.startsWith(`${key}|`); });
+  if (!list.length) return "";
+  const named = list.length > 1;
+  const nm = (tr) => { const tb = String(tr.raw).split("|")[2]; return tb ? trackDisplayName(tb) : (tr.name || ""); };
+  let txt;
+  if (list.every((x) => !(x.tr.to > x.tr.from))) txt = `<b>&#10003; ${esc(t("mkc_at_target"))}</b>`;
+  else {
+    const up = list.filter((x) => (MK.plan.lv[x.tr.id] || 0) > x.tr.from);
+    txt = up.length
+      ? `${esc(t("bsx_cando"))} <b>${up.map((x) => `${named ? `${esc(nm(x.tr))} ` : ""}${esc(mkLab(x.tr, x.tr.from))} &rarr; ${esc(mkLab(x.tr, MK.plan.lv[x.tr.id]))}`).join(" · ")}</b>`
+      : `${esc(t("bsx_cando"))} <b>${esc(t("bsx_cando_none"))}</b>`;
+  }
+  return `<div class="bsx-can"><span>&#9889; ${txt}</span></div>`;
+}
+function mkCanFill() {
+  document.querySelectorAll("[data-mkcan]").forEach((el) => {
+    const v = el.dataset.mkcan, i = v.indexOf("|"), html = mkCanInner(v.slice(0, i), v.slice(i + 1));
+    if (el.innerHTML !== html) el.innerHTML = html;
+  });
 }
 // Worked out after the page draws and again after a change on it.
 function mkSoon(ms) { if (!visitorCan("cando")) return; clearTimeout(MK_T); MK_T = setTimeout(mkCompute, ms == null ? 450 : ms); }
@@ -20467,7 +20503,7 @@ function calcKeyOfRates(rates) {
 }
 let TRADE_RATES_CACHE = null;      // { [calcKey]: rates[] } (saved overrides)
 const TRADE_APPLY = {};            // { [calcKey]: true } - use trades in pack cost / budgets
-const TRADE_OPEN = {};             // block collapsed on every load
+const TRADE_OPEN = {};             // { calcKey: false } - calculator folded (starts open)
 // ---- Research Lab -> T12 Pack cost ----
 // The weekly refining plan chosen on the Research Lab page becomes a trade
 // on T12: give that week's Fire Crystal, get that week's expected Refined FC,
@@ -20841,7 +20877,7 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   await ensureTradeRates();
   const rates = tradeRatesFor(calcKey).filter((r) => !r.hidden);
   if (!rates.length) { containerEl.innerHTML = ""; return; }
-  const open = TRADE_OPEN[calcKey] === true;
+  const open = TRADE_OPEN[calcKey] !== false;
   const rerender = () => renderTradeBlock(containerEl, calcKey, groups, owned, onChange);
   // Card layout: short Fire Crystal names (FC, FCS, RFC).
   const shortNm = (n) => ({ "Fire Crystal": "FC", "FC Shard": "FCS", "Refined FC": "RFC" }[n]) || materialDisplayName(n);
@@ -20860,6 +20896,18 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   // Card layout: this week's suggested trades up front (with pictures),
   // what's still short as chips, rates and the calculator behind a link.
   const cardHead = `<div class="pc-head"><b>&#8644; ${esc(t("trade_title"))}</b>${IS_OWNER ? `<label class="pc-switch" title="${esc(t("trade_apply"))}"><span>${esc(t("trade_apply_short"))}</span><input type="checkbox" data-tradeapply ${TRADE_APPLY[calcKey] !== false ? "checked" : ""} /><i></i></label>` : ""}</div>`;
+  // Every trade this page allows (always shown): give → get, the weekly limit, this
+  // week's plan use / what's left, and whether the page uses trades (the switch).
+  const rulesHtml = (res, img) => {
+    const on = TRADE_APPLY[calcKey] !== false;
+    const num = (v) => (Math.round(v * 10) / 10).toLocaleString();
+    return `<div class="pc-k">${esc(t("tr_rules"))}</div><div class="tr-rules">${rates.map((r) => {
+      const used = (res.trades || []).filter((x) => x.from === r.from && x.to === r.to).reduce((a, x) => a + (Number(x.lots) || 0), 0);
+      const lim = r.lab ? esc(t("trade_lab_line")) : r.max > 0 ? esc(t("tr_up_to").replace("{n}", qty(r.max))) : esc(t("tr_no_limit"));
+      const wk = !r.lab && r.max > 0 && used > 0 ? ` · ${esc(t("tr_week_plan").replace("{n}", qty(used)).replace("{m}", qty(Math.max(0, r.max - used))))}` : "";
+      return `<div class="tr-rule"><span class="tr-r-x">${img(r.from)}<b>${num(r.give)}</b><small>${esc(shortNm(r.from))}</small></span><span class="tr-r-a">&rarr;</span><span class="tr-r-x">${img(r.to)}<b>${num(r.get)}</b><small>${esc(shortNm(r.to))}</small></span><span class="tr-r-on${on ? " on" : ""}">${esc(t(on ? "tr_on" : "tr_off"))}</span><div class="tr-r-m">${lim}${wk}</div></div>`;
+    }).join("")}</div>`;
+  };
   const cardBody = () => {
     const img = (n) => { const src = materialIconSrc(n); return src ? `<img src="${esc(src)}" alt="" />` : ""; };
     // Only what the traded items can become (Fire Crystal → RFC / Shard).
@@ -20880,6 +20928,7 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
         <div class="meta pc-sub">${tr.lab ? esc(t("trade_lab_line")) : `${esc(t("trade_card_line2").replace("{n}", qty(tr.lots)))}${r.max ? ` · ${esc(t("trade_max_week"))} ${qty(r.max)}` : ""}${tr.capped ? ` · ${esc(t("trade_capped"))}` : ""}`}</div>`;
     }).join("") : `<div class="meta" style="font-size:11.5px;">${esc(t("trade_none"))}</div>`}
       ${chips.length ? `<div class="pc-k">${esc(t("trade_after"))}</div><div class="pc-chips">${chips.join("")}</div>` : ""}
+      ${rulesHtml(res, img)}
       <button type="button" class="linklike" data-tradetoggle style="margin-top:10px;">${esc(t("trade_calc"))} ${open ? "&#9662;" : "&#9656;"}</button>`;
   };
   if (!open) {
@@ -24652,6 +24701,7 @@ async function renderCharmsCalc() {
           <div class="meta">LETH &amp; HP ${stat}</div></div></div></div>
         ${block("current", ci, ci, cap, groups, troop)}
         ${block("target", ti, ci, cap, groups, troop)}
+        ${mkCanHtml("charmscalc", `${c.piece.key}|${c.slot}`)}
         ${needsHtml(ci, ti)}
       </div>`;
       m.querySelectorAll("[data-chwrow]").forEach((x) => {
@@ -25118,6 +25168,7 @@ async function renderChiefGearCalc() {
           <div class="meta">ATK &amp; DEF <span style="color:var(--good);">${pctShort(pct(from))}</span>${to > from ? ` &rarr; <span style="color:var(--ice);">${pctShort(pct(to))}</span>` : ""}</div></div></div></div>
         ${block("from", from, 0, cap)}
         ${block("to", to, from, cap)}
+        ${mkCanHtml("chiefgear", p.key)}
         ${needsHtml(from, to)}
       </div>`;
       m.querySelectorAll("[data-cgwrow]").forEach((x) => {
@@ -25205,7 +25256,9 @@ const BAR_EFF_OWNED = {}; // { calcKey: { item: amount } } what the Backpack box
 let BAR_HIDDEN_LOAD = null;
 function ensureBarHidden() {
   if (!BAR_HIDDEN_LOAD) BAR_HIDDEN_LOAD = loadCalcState("bar_hidden").then((v) => {
-    Object.entries(v || {}).forEach(([k, h]) => { if (h && !(k in BAR_SHOW_ALL)) BAR_SHOW_ALL[k] = false; });
+    // Only folds with a ":" key (top cards, lists): the planner pages' own Backpack boxes
+    // (keys without one) always show now, so an old "Hide boxes" no longer hides them.
+    Object.entries(v || {}).forEach(([k, h]) => { if (h && String(k).includes(":") && !(k in BAR_SHOW_ALL)) BAR_SHOW_ALL[k] = false; });
   }).catch(() => {});
   return BAR_HIDDEN_LOAD;
 }
@@ -25414,7 +25467,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   };
   // Short summary: items still missing (with how much), ready ones as chips.
   // "Amounts from your Backpack · Show all / edit" line.
-  const footHtml = () => `<div class="bs-foot"><span>${Object.keys(link.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : `&#127890; ${esc(t("bs_your_amounts"))}`}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL[calcKey] !== false ? "bs_hide" : "bs_show_all"))}</button>${plxBuyBtnsHtml(calcKey)}</div>`;
+  const footHtml = () => `<div class="bs-foot"><span>${Object.keys(link.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : `&#127890; ${esc(t("bs_your_amounts"))}`}</span>${plxBuyBtnsHtml(calcKey)}</div>`;
   const summaryHtml = () => {
     const needOf = (n) => groups.reduce((sum, g) => sum + (Number((g.totals || {})[n]) || 0), 0);
     const amount = (n, v) => (/\(minutes\)$/.test(n) ? t12FormatTime(v / 60) : shortAmount(v));
@@ -25662,18 +25715,6 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     });
   });
   el.querySelectorAll("[data-chestopen]").forEach((btn) => { btn.onclick = () => goToTab("backpack"); });
-  const toggleBoxes = () => {
-    BAR_SHOW_ALL[calcKey] = BAR_SHOW_ALL[calcKey] === false;
-    document.getElementById(rowsId).style.display = BAR_SHOW_ALL[calcKey] ? "" : "none";
-    bsFoldMark(el, !BAR_SHOW_ALL[calcKey]);
-    saveBarHidden();
-    document.getElementById(`${rowsId}_sum`).innerHTML = summaryHtml();
-    const foot = document.getElementById(`${rowsId}_foot`);
-    if (foot) foot.innerHTML = footHtml();
-    if (BAR_SHOW_ALL[calcKey] && sumHost) document.getElementById(rowsId).scrollIntoView({ behavior: "smooth", block: "nearest" });
-  };
-  // Summary drawn elsewhere: its "Show all / edit" link (onclick, so redraws don't stack).
-  if (sumHost) sumHost.onclick = (e) => { if (e.target.closest("[data-bstoggle]")) toggleBoxes(); };
   // onclick, not addEventListener: the bar is redrawn into the same element,
   // and stacked listeners toggled "Hide boxes" twice (= no change).
   el.onclick = (e) => {
@@ -25701,7 +25742,6 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       });
       return;
     }
-    if (e.target.closest("[data-bstoggle]")) { toggleBoxes(); return; }
     const b = e.target.closest("[data-bpuse]");
     if (!b) return;
     const name = b.dataset.bpuse;
@@ -27457,7 +27497,7 @@ async function renderIslandGallery() {
     // The Pack cost button sits on the Target row, always there (greyed when nothing to buy).
     const canBuy = mkTotal > 0 && visitorCan("packcost");
     const priceBtn = canBuy ? `<button type="button" class="cg-bpbtn ice isl-pcb" data-islpc data-islmkprice>${plxPriceLabel("islands")}</button>` : `<button type="button" class="cg-bpbtn isl-pcb off" disabled>${esc(t("isl_pc_none"))}</button>`;
-    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.min(5, Math.max(3, tiles.length))}; --nm:${Math.min(5, Math.max(3, tiles.length))}; --ns:${Math.min(4, Math.max(3, tiles.length))};">${tiles.join("")}</div>` : ""}</div>`;
+    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.min(5, Math.max(3, tiles.length))}; --nm:${Math.min(5, Math.max(3, tiles.length))}; --ns:${Math.min(4, Math.max(3, tiles.length))};">${tiles.join("")}</div>` : ""}</div>`;
     const inc = islIncome(st), sd = islShardsDay(st);
     // Free Construction Contracts (owner, 16 Nov 2026): weekly + each KOI / SvS, counted before the pack.
     let ctLine = "";
@@ -27512,7 +27552,6 @@ async function renderIslandGallery() {
         plxAmountModal({ label: t(k === "essence" ? "isl_essence" : "isl_shards"), icon: k === "essence" ? "icons/life-essence.png" : "icons/island-shard.png", value: ISL_SHARDS[k] || 0, needBox: nd > 0 ? { need: nd, have: ISL_SHARDS[k] || 0 } : null, onSave: (v) => { const n = k === "essence" ? "Life Essence" : "Mythic Island Shards", q = Math.floor(v); ISL_SHARDS[k] = q; loadCalcState("backpack").catch(() => null).then((b) => { islBp = { ...(b || islBp || {}), [n]: q }; saveCalcState("backpack", islBp); budgetInvalidate(); }); keepPlace(() => computeAndRender()); } });
         return;
       }
-      if (e.target.closest("[data-bstoggle]")) { BAR_SHOW_ALL.islands = BAR_SHOW_ALL.islands === false; saveBarHidden(); drawPlan(); return; }
       if (e.target.closest("[data-islpc]")) { islOpenPacks(); return; }
       if (e.target.closest("[data-islscan]")) { openIslandScan(); return; }
       if (e.target.closest("[data-islinc]")) islIncomeSheet(() => { if (document.getElementById("islandShardPlan")) { drawPlan(); } });
@@ -30197,26 +30236,9 @@ async function renderExpertsResearchPage() {
   });
   // The sigil boxes fold like the other pages' Backpack boxes,
   // remembered on the account (calc_state bar_hidden, key experts_research).
-  const erHidden = () => BAR_SHOW_ALL.experts_research === false;
-  document.getElementById("expResearchAmounts").innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t("bs_your_amounts"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(erHidden() ? "bs_show_all" : "bs_hide"))}</button>${plxBuyBtnsHtml("experts_research").replace(/<button[^>]*data-plxsheet="trades"[\s\S]*?<\/button>/, "")}</div>
-    <div id="expResearchOwned"${erHidden() ? ' style="display:none;"' : ""}></div>
+  document.getElementById("expResearchAmounts").innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t("bs_your_amounts"))}</span>${plxBuyBtnsHtml("experts_research").replace(/<button[^>]*data-plxsheet="trades"[\s\S]*?<\/button>/, "")}</div>
+    <div id="expResearchOwned"></div>
 `;
-  {
-    const amts = document.getElementById("expResearchAmounts");
-    const sync = () => {
-      const h = erHidden(), o = document.getElementById("expResearchOwned"), b = amts.querySelector("[data-bstoggle]");
-      if (o) o.style.display = h ? "none" : "";
-      if (b) b.textContent = t(h ? "bs_show_all" : "bs_hide");
-      bsFoldMark(amts, h);
-    };
-    amts.addEventListener("click", (ev) => {
-      if (!ev.target.closest("[data-bstoggle]")) return;
-      BAR_SHOW_ALL.experts_research = erHidden();
-      sync();
-      saveBarHidden();
-    });
-    ensureBarHidden().then(sync);
-  }
   { const b = document.getElementById("expResearchAmounts_buy"); (b.querySelector("[data-buybody]") || b).innerHTML = `<div id="expResearchPacks"></div>`; }
 
   let ER_SIG = { need: {}, left: {}, general: 0 }; // per expert: sigils needed / own left (for the card)
@@ -30906,14 +30928,6 @@ async function renderExpertsPage() {
   // What each Backpack tile still lacks (set by renderTotals, drawn by renderInventory).
   let tileNeed = null;
   let packIn = null; // what the Pack cost card plans from: { needAll, owned }
-  footEl.addEventListener("click", (ev) => {
-    if (!ev.target.closest("[data-bstoggle]")) return;
-    BAR_SHOW_ALL.experts = BAR_SHOW_ALL.experts === false;
-    document.getElementById("expertsInventory").style.display = BAR_SHOW_ALL.experts !== false ? "" : "none";
-    bsFoldMark(footEl, BAR_SHOW_ALL.experts === false);
-    saveBarHidden();
-    renderTotals();
-  });
   function renderTotals() {
     let totalExp = 0, totalBook = 0, totalAffinity = 0, totalSigil = 0;
     const sigilNeededByExpert = {};
@@ -30975,7 +30989,7 @@ async function renderExpertsPage() {
     Object.keys(AFFINITY_ITEM_VALUE).forEach((n) => { tileNeed[n] = { need: totalAffinity, short: affShort, aff: true }; });
     if (document.getElementById("expertsInventory").firstChild) renderInventory();
     bsFoldMark(footEl, BAR_SHOW_ALL.experts === false);
-    footEl.innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t(Object.keys(bpLink.bp).length ? "bs_from_backpack" : "bs_your_amounts"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL.experts !== false ? "bs_hide" : "bs_show_all"))}</button>${plxBuyBtnsHtml("experts").replace(/<button[^>]*data-plxsheet="trades"[\s\S]*?<\/button>/, "")}</div>`;
+    footEl.innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t(Object.keys(bpLink.bp).length ? "bs_from_backpack" : "bs_your_amounts"))}</span>${plxBuyBtnsHtml("experts").replace(/<button[^>]*data-plxsheet="trades"[\s\S]*?<\/button>/, "")}</div>`;
     totalsEl.innerHTML = `${rows.length ? "" : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
       <div class="bs-box"><div class="bs-sq" style="--n:${Math.max(1, Math.min(7, rows.length))};">
       ${short.map((r) => `<div class="bs-row"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>${bsShortHtml(amt(r, r.need - r.have))}</b></div>`).join("")}
@@ -32607,7 +32621,7 @@ function cgBoxExplainHtml(name, c) {
     return `<div class="bsx-goes">${ic(name)}<span>${esc(t(pkPart > 0.5 ? "bsx_goes" : "bsx_goes_spare").replace("{n}", num(outQ)))}</span>${toHtml}${tos.some(tileOf) ? '<span class="bsx-ga">&#8250;</span>' : ""}</div>${packQ > 0 && pkPart > 0.5 ? `<div class="bsx-gpk">${esc(t("bsx_goes_pk").replace("{p}", num(Math.min(pkPart, packQ))))}</div>` : ""}`;
   })() : "";
   const stat = ok
-    ? `<div class="bsx-tot ok${goes ? " gl" : ""}"><b>&#10003; ${esc(t(ownOk ? "bsx_covered" : viaPacks ? "bsx_cov_packs" : "bsx_cov_trades"))}</b>${goes}</div>`
+    ? `<div class="bsx-tot ok${goes ? " gl" : ""}"><b>&#10003; ${esc(t(ownOk ? "bsx_covered" : viaPacks ? "bsx_cov_after_packs" : "bsx_cov_trades"))}</b>${goes}</div>`
     : `<div class="bsx-tot bad${goes ? " gl" : ""}"><b>${esc(t("bsx_still_short").replace("{n}", num(short)))}</b>${snap.cant && !snap.noPacks ? `<span>${esc(t("bsx_cant"))}</span>` : ""}${goes}</div>`;
   // What the Backpack already lets the page do (the page marks), when they are worked out.
   let canTxt = null;
