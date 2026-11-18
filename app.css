@@ -4999,6 +4999,14 @@ span.mk.mk svg{flex:none}
   .g1-fold.g1-sq{ display:inline-flex; align-items:center; justify-content:center; width:30px; min-width:30px; padding:0; font-size:12px; }
   .bs-foot > .g1-sq{ flex:none; margin-inline-start:6px; }
   .g1-hd[hidden]{ display:none !important; }
+  /* Research pages: the troop tabs in the top box look like the troop switch; the page's own stat boxes hide. */
+  .g1-top .g1-sw .t12x-top{ margin:0; }
+  .g1-top .g1-sw .t12x-tabs{ flex:1 1 auto; max-width:none; margin:0; gap:4px; padding:3px; border:0; border-radius:11px; background:rgba(255,255,255,.04); }
+  .g1-top .g1-sw .t12x-tabs button{ min-height:34px; border-radius:9px; font-weight:700; font-size:13px; padding:0 2px; line-height:normal; }
+  .g1-top .g1-sw .t12x-tabs button small{ font-size:10.5px; font-weight:600; opacity:.8; margin-top:1px; white-space:nowrap; }
+  .g1-top .g1-sw .t12x-tabs button.on{ background:var(--tc, var(--ice)); color:#0f141b; box-shadow:none; }
+  .g1-top.g1-rs .g1-st .plx-tsw-stats{ margin-top:0; }
+  @media (max-width: 900px){ .g1:has(.g1-top.g1-rs) .t12x-main .t12x-boxes{ display:none; } }
   .g1-top .g1-sw:empty, .g1-top .g1-gem:empty{ display:none; }
   .g1-top .g1-sw{ margin:0 0 8px; }
   .g1-top .g1-sw .plx-tsw.hg-bar{ position:static !important; margin:0; padding:0; gap:6px; background:none; border:0; box-shadow:none; }
@@ -5046,7 +5054,6 @@ span.mk.mk svg{flex:none}
   #islandShardPlan .isl-bp .bs-foot .plx-bpb{ display:flex; flex:none; width:auto; margin:0; margin-inline-start:auto; gap:6px; }
   #islandShardPlan .isl-bp .bs-foot > span:first-child{ margin-inline-end:auto; }
   /* Research pages' top box: one line between Settings and BACKPACK (the BACKPACK section's own line), not two. */
-  .g1-top.g1-nost .g1-set:not(:empty){ margin-bottom:0; padding-bottom:0; border-bottom:0; }
   /* Folded top card: the BACKPACK row sits in the middle, the same space above (to the line) and below (to the card's edge). */
   .cg-ans.g1-folded:has(.g1-bp, #cgBp, .isl-bp){ padding-bottom:10px !important; }
   .cg-ans.g1-folded :is(.g1-bp, #cgBp, .isl-bp) .bs-foot{ margin-bottom:0 !important; }

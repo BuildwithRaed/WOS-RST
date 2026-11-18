@@ -18826,10 +18826,14 @@ function infoize(root) {
 // Chief Gear's top box on the other planner pages: on phones one card at the top holds the stats (troop switch), "Can do
 // now" and the Backpack boxes with Trades / Pack cost. The page's own elements move
 // in (their redraws keep working: anything redrawn outside is moved in again).
-const TOPBOX_TABS = { charmscalc: "LETH & HP", herogearcalc: "hg", refinepage: "", petsdata: "", t12research: "nostats", t11helios: "nostats", researchcenter: "nostats", expertspage: "experts", expertsresearchpage: "experts" };
+const TOPBOX_TABS = { charmscalc: "LETH & HP", herogearcalc: "hg", refinepage: "", petsdata: "", t12research: "research", t11helios: "research", researchcenter: "research", expertspage: "experts", expertsresearchpage: "experts" };
 const TOPBOX_MQ = window.matchMedia("(max-width: 900px)");
 // Pages whose Settings line moves into the top box, above the stats.
 const TOPBOX_SET_TABS = new Set(["t12research", "t11helios", "researchcenter"]);
+// Research pages (T12 / T11 / Research Center): the stats of the troop on screen,
+// [{ label, val, max, dp }], kept by each page as it draws its stat boxes; on
+// phones the top box shows them as stat boxes under the moved troop tabs.
+const PLX_TOP_STATS = {};
 // The one ▴ Hide square of a top card: at the end of its BACKPACK row (else
 // the card's title line until the Backpack row is drawn).
 function g1FoldHome(fold, foot, home) {
@@ -18844,9 +18848,9 @@ function plxTopBox(root) {
   const kind = TOPBOX_TABS[TAB];
   if (!box) {
     box = document.createElement("div");
-    box.className = `panel cg-ans g1-top${kind === "nostats" ? " g1-nost" : ""}`;
+    box.className = `panel cg-ans g1-top${kind === "research" ? " g1-rs" : ""}`;
     // Settings row, "TROOPS STATS" title, troop switch, stats, BACKPACK row (with the ▴ Hide square) and its boxes.
-    box.innerHTML = `<div class="g1-set"></div><div class="g1-hd"${kind === "nostats" ? " hidden" : ""}><span class="g1-hd-t">${esc(t("troops_stats_title"))}</span></div><div class="g1-sw"></div><div class="g1-st"></div><div class="g1-mk"></div><div class="cg-sec g1-can"></div><div class="cg-sec cg-bp g1-bp"></div><div class="g1-gem"></div>`;
+    box.innerHTML = `<div class="g1-set"></div><div class="g1-hd"><span class="g1-hd-t">${esc(t("troops_stats_title"))}</span></div><div class="g1-sw"></div><div class="g1-st"></div><div class="g1-mk"></div><div class="cg-sec g1-can"></div><div class="cg-sec cg-bp g1-bp"></div><div class="g1-gem"></div>`;
     main.insertBefore(box, main.firstChild);
     if (TAB === "refinepage") {
       const d = document.createElement("p"); d.className = "desc"; d.textContent = t("rf_stats_info");
@@ -18863,8 +18867,14 @@ function plxTopBox(root) {
   if (TOPBOX_SET_TABS.has(TAB)) put(box.querySelector(".g1-set"), shell.querySelector(".t12x-side > .t12x-settings"));
   // Pets Refine: "Pack gems count as marks" is a slim line under the Backpack boxes.
   if (TAB === "refinepage") put(box.querySelector(".g1-gem"), shell.querySelector(".t12x-side > .t12x-settings"));
-  // Research pages keep their stats where they are.
-  if (kind === "experts") {
+  if (kind === "research") {
+    // Research pages: the troop tabs move in (same element, its clicks keep working)
+    // and the troop's stats show as stat boxes under them.
+    put(box.querySelector(".g1-sw"), shell.querySelector(".t12x-main > .t12x-top"));
+    const st = box.querySelector(".g1-st"), list = PLX_TOP_STATS[TAB];
+    const html = list ? `<div class="plx-tsw-stats">${plxStatBoxesHtml(list, true)}</div>` : "";
+    if (st._h !== html) { st._h = html; st.innerHTML = html; }
+  } else if (kind === "experts") {
     // Experts Level / Research: the Troops Stats card moves in, and
     // its title (with the (i) of what each tab counts) becomes the box's title.
     put(box.querySelector(".g1-st"), shell.querySelector(".t12x-main > .plx-stats-top"));
@@ -18877,7 +18887,7 @@ function plxTopBox(root) {
     put(box.querySelector(".g1-st"), shell.querySelector("#hgStats"));
     const s = shell.querySelector("[data-rchsum][data-rchpage='hero_gear']");
     if (s && s.innerHTML.trim()) put(box.querySelector(".g1-can"), s);
-  } else if (kind !== "nostats") put(box.querySelector(".g1-st"), shell.querySelector(".plx-tsw:not(.g1-top .plx-tsw)") || shell.querySelector("#refineStats") || shell.querySelector("#petsTotals"));
+  } else put(box.querySelector(".g1-st"), shell.querySelector(".plx-tsw:not(.g1-top .plx-tsw)") || shell.querySelector("#refineStats") || shell.querySelector("#petsTotals"));
   const sums = kind === "hg" ? [] : [...shell.querySelectorAll("[data-rchsum]")].filter((x) => !box.contains(x) && x.offsetParent !== null && x.innerHTML.trim());
   if (sums.length) put(box.querySelector(".g1-can"), sums[0]);
   put(box.querySelector(".g1-mk"), shell.querySelector("#refineMk"));
@@ -29493,6 +29503,7 @@ async function renderT11HeliosPage() {
     const all = names.reduce((a, tr) => a + tracks[tr].length, 0), cur = names.reduce((a, tr) => a + Math.min(tracks[tr].length, T11_STATE[troop][tr] || 0), 0);
     const pct = all ? Math.floor((cur / all) * 100) : 0;
     const left = costLine(computeNeeded(troop));
+    PLX_TOP_STATS.t11helios = [["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].map(([label, k]) => ({ label, val: stats[k], max: maxStats[k], dp: 1 }));
     troopsEl.innerHTML = `
       <div class="t12x-boxes">
         ${box("ATK", `+${stats.Attack.toFixed(1)}%`, t("t12x_max_pct").replace("{n}", maxStats.Attack.toFixed(1)))}
@@ -32346,6 +32357,7 @@ async function renderResearchCenterPage() {
     const bases = RC_BASE_CATEGORIES[rcActive] || [];
     const stats = computeStats(bases);
     const box = (k, v) => `<div><div><span>${esc(k)}</span><b>${bidiNum(v)}</b></div></div>`;
+    PLX_TOP_STATS.researchcenter = [["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].map(([label, k]) => ({ label, val: stats[k], dp: 1 }));
     groupsEl.innerHTML = `
       <div class="t12x-boxes">
         ${box("ATK", `+${stats.Attack.toFixed(1)}%`)}${box("DEF", `+${stats.Defense.toFixed(1)}%`)}${box("LETH", `+${stats.Lethality.toFixed(1)}%`)}${box("HP", `+${stats.Health.toFixed(1)}%`)}
@@ -33139,6 +33151,8 @@ async function renderT12ResearchPage() {
     });
     const headHtml = () => {
       const stats = computeT12Stats(T12_STATE[troop]);
+      const dpOf = (v) => Math.min(2, (String(v).split(".")[1] || "").length);
+      PLX_TOP_STATS.t12research = [["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].map(([label, k]) => ({ label, val: stats[k], max: statMax[k], dp: dpOf(stats[k]) }));
       const box = (k, v, sub, icon) => `<div>${icon ? `<img src="${esc(icon)}" alt="" />` : ""}<div><span>${esc(k)}</span><b>${bidiNum(v)}</b><small>${esc(sub).replace(/[+\-\u2212]?[\d.,]+%/g, (m) => bidiNum(m))}</small></div></div>`;
       return `<div class="t12x-boxes">
         ${box("ATK", `+${stats.Attack}%`, t("t12x_max_pct").replace("{n}", statMax.Attack))}
