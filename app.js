@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 103; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 104; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -1641,13 +1641,20 @@ const T = {
   bs_nb_have: { en: "You have" },
   bs_nb_spare: { en: "Spare" },
   bs_nb_short: { en: "Short" },
-  bs_nb_in_bp: { en: "{n} in your Backpack" },
-  bs_nb_from_trade: { en: "{n} from {item} (trade)" },
-  bs_nb_from_chest: { en: "{n} from chests" },
-  bs_nb_from: { en: "{n} from {item}" },
-  bs_nb_lab: { en: "{n} from the Research Lab ({left} refinements left this week)" },
-  bs_nb_bought: { en: "{n} bought with {g} {item}" },
-  bs_nb_counted: { en: "{g} {item} (counted as {n})" },
+  bs_hv_backpack: { en: "Backpack" },
+  bs_hv_xp_items: { en: "XP items" },
+  bs_hv_trade: { en: "{item} (trade)" },
+  bs_hv_trade_week: { en: "this week's trade" },
+  bs_hv_traded: { en: "{g} traded" },
+  bs_hv_opened: { en: "{g} opened" },
+  bs_hv_bought: { en: "bought with {g} {item}" },
+  bs_hv_counted: { en: "{g} counted as {item}" },
+  bs_hv_lab: { en: "Research Lab" },
+  bs_hv_lab_left: { en: "{left} refinements left this week" },
+  bs_hv_chests: { en: "from {n} chests" },
+  bs_hv_chest: { en: "Chests" },
+  bs_hv_gear: { en: "Hero gear" },
+  bs_hv_gear_sub: { en: "from {p} hero gear pieces" },
   bs_title_t12: { en: "Total research resources needed · all 3 troops" },
   bs_title_needed: { en: "Total resources needed" },
   bs_used_trades: { en: "used in trades" },
@@ -1703,8 +1710,6 @@ const T = {
   gx_tip: { en: "Tip: Gear Reforge in the game gives this XP back as XP items." },
   gx_worn: { en: "Gear that a hero is wearing still counts — take it off in the game before using it." },
   gx_tile: { en: "+ {n} XP" },
-  bs_nb_xp_items: { en: "{n} from XP items" },
-  bs_nb_gear: { en: "{n} from {p} hero gear pieces" },
   scan_gx_unread: { en: "{n} purple pieces whose \"+\" couldn't be read — add them in XP 10." },
   scan_gx_hint: { en: "Purple gear, read by its \"+\" number. Saving replaces your hero gear for XP." },
   chest_open_tag: { en: "Open in game" },
@@ -25438,7 +25443,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       </div>`;
   };
 
-  // Where "You have" comes from when trades or chests add to the box: "2,115 in your Backpack + 1,703 from Fire Crystal (trade)".
+  // Where "You have" comes from when trades, the Lab or chests add to the box:
+  // a small card, one row per source (Backpack, then each extra in green).
   function haveFromHtml(name) {
     const fmt = /\(minutes\)$/.test(name) ? bsTime : bsNbNum;
     const byFrom = {}, gave = {}, lab = hiddenTrades.find((tr) => tr.lab && tr.to === name && tr.getQty > 0);
@@ -25447,23 +25453,41 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     // XP Component from the Backpack: XP items + hero gear below Mythic.
     const gear = name === "XP Component" && backpackLinked(calcKey || "chief_gear", name, link) ? gearXpOf(link.bp) : null;
     if (!Object.keys(byFrom).length && !lab && !(chest > 0) && !(gear && gear.xp > 0)) return "";
-    const b = (v) => `<b>${bidiNum(fmt(v))}</b>`;
-    const parts = gear && gear.xp > 0
-      ? [esc(t("bs_nb_xp_items")).replace("{n}", b(Math.max(0, (Number(owned[name]) || 0) - gear.xp))), esc(t("bs_nb_gear")).replace("{n}", b(gear.xp)).replace("{p}", b(gear.pieces))]
-      : [esc(t("bs_nb_in_bp")).replace("{n}", b(Number(owned[name]) || 0))];
+    const num = (v) => bidiNum(fmt(v));
+    const pic = (src) => (src ? `<img src="${esc(src)}" alt="" />` : '<span class="bs-hv-i"></span>');
+    const row = (icon, label, sub, v, extra) => `<div class="bs-hv-r">${icon}<span class="bs-hv-n">${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ""}</span><b${extra ? ' class="g"' : ""}>${extra ? "+" : ""}${num(v)}</b></div>`;
+    const bpIc = '<span class="bs-hv-i" aria-hidden="true">&#127890;</span>';
+    const nm = (n) => materialDisplayName(itemShortName(n));
+    const rows = gear && gear.xp > 0
+      ? [row(bpIc, t("bs_hv_backpack"), t("bs_hv_xp_items"), Math.max(0, (Number(owned[name]) || 0) - gear.xp)),
+        row(pic("icons/hero-gear-goggles.webp"), t("bs_hv_gear"), t("bs_hv_gear_sub").replace("{p}", bsNbNum(gear.pieces)), gear.xp, true)]
+      : [row(bpIc, t("bs_hv_backpack"), "", Number(owned[name]) || 0)];
     Object.entries(byFrom).forEach(([from, q]) => {
-      const ic = iconFor(from), item = `${ic ? `<img src="${esc(ic)}" alt="" />` : ""}${esc(materialDisplayName(itemShortName(from)))}`;
       const rule = hiddenRates.find((r) => r.from === from && r.to === name);
-      // Only real in-game trades say "(trade)": Gems buy
-      // Common Marks; an Advanced Mark isn't traded, it counts as 8 Common;
-      // chests (Pet Chest) just open into the item.
-      const key = from === "Gems" ? "bs_nb_bought" : from === "Advanced Marks" ? "bs_nb_counted" : rule && rule.hidden ? "bs_nb_from" : "bs_nb_from_trade";
-      parts.push(esc(t(key)).replace("{n}", b(q)).replace("{g}", b(gave[from] || 0)).replace("{item}", item));
+      const g = bsNbNum(gave[from] || 0);
+      // Only real in-game trades say "(trade)": Gems buy Common Marks; an
+      // Advanced Mark isn't traded, it counts as 8 Common; chests (Pet Chest)
+      // just open into the item.
+      const label = from === "Gems" || from === "Advanced Marks" || (rule && rule.hidden) ? nm(from) : t("bs_hv_trade").replace("{item}", nm(from));
+      const sub = from === "Gems" ? t("bs_hv_bought").replace("{g}", g).replace("{item}", nm(from))
+        : from === "Advanced Marks" ? t("bs_hv_counted").replace("{g}", g).replace("{item}", nm(name))
+        : rule && rule.hidden ? t("bs_hv_opened").replace("{g}", g)
+        : rule && rule.max > 0 ? t("bs_hv_trade_week") : t("bs_hv_traded").replace("{g}", g);
+      rows.push(row(pic(iconFor(from)), label, sub, q, true));
     });
     // This week's Research Lab refinements still left (counted here once).
-    if (lab) parts.push(esc(t("bs_nb_lab")).replace("{n}", b(lab.getQty)).replace("{left}", Math.round(lab.labLeft || 0).toLocaleString()));
-    if (chest > 0) parts.push(esc(t("bs_nb_from_chest")).replace("{n}", b(chest)));
-    return parts.join(" + ");
+    if (lab) rows.push(row(pic(materialIconSrc("Refined FC") || "icons/item_icon_100082.png"), t("bs_hv_lab"), t("bs_hv_lab_left").replace("{left}", Math.round(lab.labLeft || 0).toLocaleString()), lab.getQty, true));
+    if (chest > 0) {
+      // One row per chest that opens into this item (Chief Gear Chest …).
+      const per = (itemPageMaps().fixed[calcKey || "chief_gear"] || []).map((ch) => {
+        const qty = backpackAmountFor(ch, link.bp), v = Number(chestGives(ch)[name]) || 0;
+        return { ch, qty, q: qty * v };
+      }).filter((x) => x.q > 0);
+      const sum = per.reduce((s2, x) => s2 + x.q, 0);
+      if (per.length && Math.abs(sum - chest) < 1e-6) per.forEach((x) => rows.push(row(pic(iconFor(x.ch)), nm(x.ch), t("bs_hv_chests").replace("{n}", bsNbNum(x.qty)), x.q, true)));
+      else rows.push(row(pic(per.length ? iconFor(per[0].ch) : ""), t("bs_hv_chest"), "", chest, true));
+    }
+    return `<div class="bs-hv">${rows.join("")}</div>`;
   }
   // What all groups (troops) together need of an item.
   const needSum = (n) => groups.reduce((sum, g) => sum + (Number((g.totals || {})[n]) || 0), 0);
@@ -32592,7 +32616,7 @@ function bsNeedBoxesHtml(o) {
         : `<div class="bs-nbx ok"><small>${esc(t("bs_nb_spare"))}</small><b>&#10003;${spare > 0 ? ` ${bidiNum(fmt(spare))}` : ""}</b></div>`}
     </div>
     ${short > 0 ? `<div class="t12x-prog bs-nb-bar"><i style="width:${pct}%;"></i></div>` : ""}
-    ${o.from ? `<div class="bs-nb-from">${o.from}</div>` : ""}
+    ${o.from || ""}
     ${parts.length > 1 ? `<div class="bs-nb-parts">${parts.map(([l, v]) => `${esc(l)} <b>${bidiNum(fmt(v))}</b>`).join(" &middot; ")}</div>` : ""}`;
 }
 // "Hide boxes": the card then holds only its title (and time line), so drop
