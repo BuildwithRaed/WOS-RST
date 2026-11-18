@@ -3541,6 +3541,14 @@ const T = {
   pca_packs: { en: "{n} packs" },
   pca_target: { en: "Target" },
   pca_buy: { en: "What to buy" },
+  pca_pack1: { en: "1 pack" },
+  pca_trades: { en: "Trades" },
+  pca_tr_week: { en: "This week" },
+  pca_tr_plan: { en: "After the pack" },
+  pca_tr_later: { en: "Next weeks" },
+  pca_trn_week: { en: "{n} this week" },
+  pca_trn_plan: { en: "{n} after the pack" },
+  pca_trn_later: { en: "{n} next weeks" },
   pca_only: { en: "Only {page}" },
   pca_with_others: { en: "With my other pages" },
   pca_not_cheaper: { en: "Checked, not cheaper" },
@@ -18858,7 +18866,7 @@ function plxTopBox(root) {
 // keys "top:<tab>").
 function g1FoldSync(root) {
   (root || document).querySelectorAll("[data-g1fold]").forEach((b) => {
-    const folded = BAR_SHOW_ALL[b.dataset.g1fold] === false, box = b.closest(".g1-top, .cg-ans, .b3-hd");
+    const folded = BAR_SHOW_ALL[b.dataset.g1fold] === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc");
     if (box) box.classList.toggle("g1-folded", folded);
     // Compared as text: innerHTML gives back the real arrow, not "&#9662;", so an
     // HTML compare rewrote the button every time and the #content observer looped.
@@ -19160,11 +19168,24 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   };
   // Free trades counted before buying, one row each, by when they happen (like the box pop-up).
   const freeParts = freeTrades.flatMap(packTradeWhenSplit).sort((a, b) => (a.when === "week" ? 0 : 1) - (b.when === "week" ? 0 : 1));
-  const pcaFree = () => {
-    if (!freeParts.length) return "";
-    return `<div class="pca-h">${esc(t("pca_trade_first"))}</div>${freeParts.map((x) => `<div class="pca-tr" title="${esc(`${materialDisplayName(x.from)} \u2192 ${materialDisplayName(x.to)}`)}"><span class="pca-wh">${esc(t(x.when === "week" ? "bsx_week" : "bsx_later"))}</span>${pcaIcon(x.from)}<b>${qty(x.give)}</b><span class="pca-ar">&rarr;</span>${pcaIcon(x.to)}<b class="g">${qty(x.get)}</b></div>`).join("")}`;
+  // One "⇄ Trades · N" card before "What to buy" with every trade: the free ones (this week /
+  // next weeks, packTradeWhenSplit) and the pack plan's own (after the pack), grouped by a
+  // small chip. Hide ▴ / Show ▾ (g1-fold) folds it to one line with the counts; kept per page
+  // in calc_state bar_hidden ("pc:trades:<calcKey>"). No trades: no card.
+  const tradesCard = (planTrades) => {
+    const groups = [
+      ["week", freeParts.filter((x) => x.when === "week")],
+      ["plan", (planTrades || []).filter((x) => x.giveQty > 0).map((x) => ({ from: x.from, to: x.to, give: x.giveQty, get: x.getQty, lab: x.lab, lots: x.lots }))],
+      ["later", freeParts.filter((x) => x.when === "later")],
+    ].filter(([, a]) => a.length);
+    const n = groups.reduce((a, [, r]) => a + r.length, 0);
+    if (!n) return "";
+    const fk = `pc:trades:${calcKey}`, folded = BAR_SHOW_ALL[fk] === false;
+    const row = (x) => `<div class="pca-tr" title="${esc(`${materialDisplayName(x.from)} \u2192 ${materialDisplayName(x.to)}`)}">${pcaIcon(x.from)}<b>${qty(x.give)}</b><span class="pca-ar">&rarr;</span>${pcaIcon(x.to)}<b class="g">${qty(x.get)}</b>${x.lab ? ` <small class="meta">(${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})</small>` : ""}</div>`;
+    const counts = groups.map(([k, r]) => t(`pca_trn_${k}`).replace("{n}", r.length)).join(" \u00b7 ");
+    return `<div class="pca-tc${folded ? " g1-folded" : ""}"><div class="pca-tch"><span>&#8644; ${esc(t("pca_trades"))}</span><span class="pca-tcn op">&middot; ${n}</span><span class="pca-tcn fd">&middot; ${esc(counts)}</span><button type="button" class="g1-fold" data-g1fold="${esc(fk)}" aria-expanded="${!folded}">${esc(t(folded ? "g1_show" : "g1_hide"))} ${folded ? "&#9662;" : "&#9652;"}</button></div>
+      <div class="pca-tcb">${groups.map(([k, r]) => `<span class="pca-wk ${k}">${esc(t(`pca_tr_${k}`))}</span>${r.map(row).join("")}`).join("")}</div></div>`;
   };
-  const pcaTrades = (trades) => (trades || []).length ? `<div class="pca-h">${esc(t("trade_then"))}</div>${trades.map((x) => `<div class="pca-tr" title="${esc(`${materialDisplayName(x.from)} \u2192 ${materialDisplayName(x.to)}`)}">${pcaIcon(x.from)}<b>${qty(x.giveQty)}</b><span class="pca-ar">&rarr;</span>${pcaIcon(x.to)}<b class="g">${qty(x.getQty)}</b>${x.lab ? ` <small class="meta">(${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})</small>` : ""}</div>`).join("")}` : "";
   // Islands: packs that give Mythic Island Shards (Myriad Bazaar steps) can
   // stand in for Marks / Tomes (hidden trades, islShardTradesNow). Listed
   // greyed when the plan doesn't use them ("Checked, not cheaper", their real
@@ -19262,12 +19283,12 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       if (got > 0) inPlanHtml = `<div class="pca-h">${esc(t("pca_in_plan"))}</div>${lines}<div class="pca-note ok">&#10003; ${esc(t("pca_free_shards").replace("{n}", qty(got)).replace("{c}", qty(Math.floor(got / islPc))))}</div>`;
     }
     snapShared = { rows: mineShare.rows, planTrades: trades, days: p.days, shared: true };
-    const sharedFree = pcaFree();
+    const sharedFree = tradesCard(trades);
     sharedSections = `<div class="pc-plans">
         <div class="pc-plan on" style="cursor:default;"><div class="pc-k">${esc(t("combined_share"))}</div><b>${big(packSharesLocal(mineShare))}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(whenTxt)}</small></div>
         <button type="button" class="pc-plan" data-gotobudgets title="${esc(t("combined_desc").replace("{pages}", shared.sharedWith.map(packPageLabel).join(", ")))}"><div class="pc-k">${esc(t("pc_all_pages"))}</div><b>${big(packPlanLocal(p))}</b><small>${esc(t("budgets_title"))} &rarr;</small></button>
       </div>
-      <div class="pc-list">${sharedFree}${inPlanHtml}${mineShare.rows.length ? `<div class="pca-h">${esc(t(inPlanHtml || sharedFree ? "pca_then_buy" : "pca_buy"))}</div>${pcaRows(byPack, mineShare.rows, packShareLocal, (r) => (r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""))}` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${pcaTrades(trades)}${islCopiesLine(p)}</div>`;
+      <div class="pc-list">${sharedFree}${inPlanHtml}${mineShare.rows.length ? `<div class="pca-h">${esc(t("pca_buy"))}</div>${pcaRows(byPack, mineShare.rows, packShareLocal, (r) => (r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""))}` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${islCopiesLine(p)}</div>`;
   }
   const viewSig = `${JSON.stringify(need)}|${targetDate}|${BUDGET_TARGET || ""}|${JSON.stringify(BUDGET_SELECTED || {})}`;
   const skipPagePlan = !!sharedSections;
@@ -19276,7 +19297,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   } else if (!Object.keys(need).length) {
     snapPage = { rows: [], planTrades: [], days: 0 };
     sections = Object.keys(viaTrades.uncovered).length ? "" : `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--good);">${esc(t("pack_nothing_needed"))}</div>
-      ${freeParts.length ? `<div class="pc-list">${pcaFree()}</div>` : ""}`;
+      ${freeParts.length ? `<div class="pc-list">${tradesCard([])}</div>` : ""}`;
   } else if (skipPagePlan) {
     sections = "";
   } else {
@@ -19346,7 +19367,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }) + packYearMark(d); } catch (e) { short = fmtDate(c.plan.days); }
           // Islands' Fastest date is when its packs are bought (free income does the rest later).
           const when = c.plan.days === 0 ? t("pack_ready_now") : packsByDate(c) ? t("pca_packs_by").replace("{d}", short) : `${short} · ${c.plan.days}d`;
-          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(when)}</small></button>`;
+          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(when)}</small>${c === pick && byPack.length ? `<span class="pc-npk">${esc(byPack.length === 1 ? t("pca_pack1") : t("pca_packs").replace("{n}", byPack.length))}</span>` : ""}</button>`;
         };
         const p = pick && pick.plan;
         if (p) snapPage = { rows: p.rows, planTrades: p.trades || [], days: p.days };
@@ -19361,17 +19382,12 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div><div class="pc-list"></div>`;
         if (p) {
           aBuilt = true;
-          const shortDay = (days) => { const d = new Date(today.getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }) + packYearMark(d); } catch (e) { return fmtDate(days); } };
-          const late = targetDays != null && p.days > targetDays;
-          const done = p.days === 0 ? t("pack_ready_now") : `${packsByDate(pick) ? t("pca_packs_by").replace("{d}", shortDay(p.days)) : `${t("pca_done")} ${shortDay(p.days)}`} \u00b7 ${t("pca_in_days").replace("{n}", p.days)}`;
-          const sumA = `<div class="pca-sum${late ? " late" : ""}"><div><b class="pca-big">${pcaCur(pickedTotalText)}</b><span class="pca-done">${esc(done)}</span></div><span class="pca-n">${esc(t("pca_packs").replace("{n}", byPack.length))}</span></div>`;
           const targetA = `<div class="pca-tg"><span aria-hidden="true">&#127919;</span><span>${esc(t("pca_target"))}</span><input type="date" data-packtarget value="${esc(targetDate)}" aria-label="${esc(t("pack_target_by"))}" />${targetDays != null ? `<span class="${targetDays < 0 ? "bad" : "left"}">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : `<span>${esc(t("pack_no_date"))}</span>`}${targetDate ? `<button type="button" class="pca-x" data-packtargetclear title="${esc(t("pack_no_date"))}" aria-label="${esc(t("pack_no_date"))}">&times;</button>` : ""}</div>`;
           const rowsA = pcaRows(byPack, p.rows, packRowLocal, null);
-          const freeA = pcaFree();
-          const tradesA = pcaTrades(p.trades) + islCopiesLine(p);
+          const tradesA = tradesCard(p.trades);
           // Free day bonus (Shining City Pack's first buy of each event day): not a pack row.
           const bonusA = Object.entries(p.bonus || {}).map(([n, v]) => `<div class="pca-bonus">${pcaIcon(n)}<span>${esc(t("pca_day_bonus").replace("{q}", (Number(ISL_RULES.tomeFreeDay) || 0).toLocaleString()).replace("{n}", qty(v)))}</span></div>`).join("");
-          sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${sumA}${targetA}<div class="pc-list">${freeA}<div class="pca-h">${esc(t(freeA ? "pca_then_buy" : "pca_buy"))}</div>${rowsA}${bonusA}${tradesA}${islCheckedHtml(p.rows)}@@PCFREE@@</div>`;
+          sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${targetA}<div class="pc-list">${tradesA}<div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${bonusA}${islCopiesLine(p)}${islCheckedHtml(p.rows)}@@PCFREE@@</div>`;
         }
       }
     }
@@ -19407,7 +19423,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   const freeBits = activeCards.used.map((u) => `${u.title}${u.until ? ` (${t("pk_active_until")} ${u.until.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" })})` : ""}`);
   let freeHtml = freeBits.length ? `<details class="pc-free"><summary>&#10003; ${esc(t("pc_cards_count").replace("{c}", activeCards.used.length))}</summary><div>${freeBits.map((b) => `<div>${esc(b)}</div>`).join("")}</div></details>` : "";
   // (No plan list drawn, e.g. packs can't cover it: the free trades still get their rows.)
-  if (freeParts.length && !/pca-wh/.test(sections)) freeHtml += `<div class="pc-list">${pcaFree()}</div>`;
+  if (freeParts.length && !/pca-tc/.test(sections)) freeHtml += `<div class="pc-list">${tradesCard([])}</div>`;
   containerEl.style.minHeight = "";
   containerEl.innerHTML = `
     <div class="pc-card pca">
