@@ -30421,19 +30421,21 @@ async function renderExpertsResearchPage() {
       // The path's stats are always shown (owner, 18 Nov 2026): what the levels to the target add,
       // at ✓ Max what the path gives in all, with nothing done yet what it gives at max.
       const { sigil, stats } = go ? pathRotationOnly(expert, p, cur, des) : { sigil: 0, stats: {} };
-      const statTxt = (o) => Object.entries(o).filter(([, v]) => v > 0).map(([k, v]) => `+${Number(v.toFixed(1))}% ${ER_SHORT[k] || k}`).join(" · ");
-      let gains = statTxt(stats);
+      // Each stat is its own small chip that wraps to the next line (owner, 18 Nov 2026).
+      const statChips = (o) => Object.entries(o).filter(([, v]) => v > 0).map(([k, v]) => `<span class="er-st">${bidiNum(`+${Number(v.toFixed(1))}%`)} ${esc(ER_SHORT[k] || k)}</span>`).join("");
+      let gains = statChips(stats);
       if (!go) {
-        const has = cur > 0 ? statTxt(pathRotationOnly(expert, p, 0, cur).stats) : "";
-        const mx = done ? "" : statTxt(pathRotationOnly(expert, p, 0, top).stats);
-        gains = [has, mx ? t("pkd_up_to").replace("{list}", mx) : ""].filter(Boolean).join(" · ");
+        const has = cur > 0 ? statChips(pathRotationOnly(expert, p, 0, cur).stats) : "";
+        const mx = done ? "" : statChips(pathRotationOnly(expert, p, 0, top).stats);
+        const upTo = t("pkd_up_to").replace("{list}", "").trim();
+        gains = has + (mx ? `<span class="er-stl">${esc(upTo)}</span>${mx}` : "");
       }
       const curSel = `<select data-expresearchcur="${esc(expert)}|${p}" aria-label="${esc(t("current_label"))}">${pathLevelOpts(expert, p, cur)}</select>`;
       const desSel = `<select data-expresearchdes="${esc(expert)}|${p}" aria-label="${esc(t("target_label"))}">${pathLevelOpts(expert, p, des)}</select>`;
       const right = go ? `<span class="exp-rst meta">${bidiNum(Math.round(sigil).toLocaleString())} ${esc(t("resource_sigils"))}</span>`
         : done ? `<span class="exp-rst meta ok">&#10003; ${esc(t("max_button"))}</span>` : `<span class="exp-rst meta">${esc(t("exp_no_target"))}</span>`;
       return `<div class="exk-r er-r" data-erpath="${p}">
-          <div class="exk-l1"><div class="exk-nm"><b>${esc(erPathName(expert, p))}</b>${gains ? `<div class="exk-bn">${esc(gains)}</div>` : ""}</div><span class="exk-v">${val(String(cur), curSel)}<span class="a" aria-hidden="true">&rarr;</span>${val(String(des), desSel, true)}</span></div>
+          <div class="exk-l1"><div class="exk-nm"><b>${esc(erPathName(expert, p))}</b>${gains ? `<div class="exk-bn er-sts">${gains}</div>` : ""}</div><span class="exk-v">${val(String(cur), curSel)}<span class="a" aria-hidden="true">&rarr;</span>${val(String(des), desSel, true)}</span></div>
           <div class="exp-skr-b"><span class="exp-bar"><i style="width:${pct(cur)}%"></i><b style="width:${Math.max(0, pct(des) - pct(cur))}%"></b></span>${right}</div>
         </div>`;
     };
