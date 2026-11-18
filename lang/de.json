@@ -2789,5 +2789,15 @@
 "t:pk_ng_after":"Beginnt nach den neuen Helden",
 "t:pk_ng_after_desc":"Tage ab dem Tag, an dem neue Helden kommen (0 = am selben Tag). Pakete mit denselben Daten folgen diesem.",
 "t:rv_adv":"Erweitert (Seitenaufbau)",
-"t:rv_adv_warn":"Diese legen fest, wie die Forschungsseiten aufgebaut sind. Eine falsche Änderung kann diese Seiten kaputt machen."
+"t:rv_adv_warn":"Diese legen fest, wie die Forschungsseiten aufgebaut sind. Eine falsche Änderung kann diese Seiten kaputt machen.",
+"t:pc_cards_count":"Bereits gezählt: {c} aktive Karten",
+"t:pca_pack1":"1 Paket",
+"t:pca_trades":"Tausche",
+"t:pca_tr_week":"Diese Woche",
+"t:pca_tr_plan":"Nach dem Paket",
+"t:pca_tr_later":"Nächste Wochen",
+"t:pca_trn_week":"{n} diese Woche",
+"t:pca_trn_plan":"{n} nach dem Paket",
+"t:pca_trn_later":"{n} in den nächsten Wochen",
+"t:pca_trade_first":"Erster Tausch"
 }

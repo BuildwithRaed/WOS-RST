@@ -2789,5 +2789,15 @@
 "t:pk_ng_after":"Zaczyna się po nowych bohaterach",
 "t:pk_ng_after_desc":"Dni od dnia przyjścia nowych bohaterów (0 = ten sam dzień). Pakiety z tymi samymi datami podążają za tym.",
 "t:rv_adv":"Zaawansowane (struktura strony)",
-"t:rv_adv_warn":"Określają, jak zbudowane są strony badań. Błędna zmiana może zepsuć te strony."
+"t:rv_adv_warn":"Określają, jak zbudowane są strony badań. Błędna zmiana może zepsuć te strony.",
+"t:pc_cards_count":"Już policzone: {c} aktywnych kart",
+"t:pca_pack1":"1 paczka",
+"t:pca_trades":"Wymiany",
+"t:pca_tr_week":"Ten tydzień",
+"t:pca_tr_plan":"Po paczce",
+"t:pca_tr_later":"Kolejne tygodnie",
+"t:pca_trn_week":"{n} w tym tygodniu",
+"t:pca_trn_plan":"{n} po paczce",
+"t:pca_trn_later":"{n} w kolejnych tygodniach",
+"t:pca_trade_first":"Pierwsza wymiana"
 }
