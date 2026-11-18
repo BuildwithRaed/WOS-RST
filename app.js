@@ -2617,7 +2617,7 @@ const T = {
   budgets_plan_detail: { en: "What's being upgraded" },
   budgets_snapshot_note: { en: "Numbers from the last time that page was opened." },
   budgets_stats_unavailable: { en: "Current dashboard stats couldn't be loaded — showing increases only." },
-  trade_title: { en: "Trade items" },
+  trade_title: { en: "Trades" },
   trd_use: { en: "Use trades in Pack cost" },
   trd_short: { en: "Still short after trades" },
   trd_nothing_short: { en: "\u2713 Nothing short" },
