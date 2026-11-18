@@ -3432,6 +3432,8 @@ const T = {
   bsx_week: { en: "This week" },
   bsx_later: { en: "Next weeks" },
   bsx_plan: { en: "Pack plan" },
+  bsx_lab: { en: "Research Lab" },
+  bsx_lab_week: { en: "Lab · {n} refinements left" },
   bsx_buy: { en: "Buy" },
   bsx_cards: { en: "Coming" },
   bsx_cards_l: { en: "Packs in My Purchases and running cards" },
@@ -19093,7 +19095,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   // Spare items traded into missing ones first, when trades are switched on
   // (weekly trade limits scale with the weeks left until the target).
   await ensureTradeRates();
-  const traded = PACK_COST_MODE === "still" ? tradeAdjustedStill(calcKey, needFull, owned, targetDays) : null;
+  const traded = PACK_COST_MODE === "still" ? tradeAdjustedStill(calcKey, needFull, owned, targetDays, true) : null;
   // The free trades with their weekly limit: the same snapshot the Backpack box pop-ups read (PACK_COST_PLAN).
   const tradeRates = tradeRatesFor(calcKey);
   const freeTrades = traded ? traded.trades.map((x) => { const r = tradeRates.find((q) => q.from === x.from && q.to === x.to) || {}; return { ...x, max: Number(r.max) || 0, hidden: !!r.hidden }; }) : [];
@@ -19184,15 +19186,18 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   // small chip. Hide ▴ / Show ▾ (g1-fold) folds it to one line with the counts; kept per page
   // in calc_state bar_hidden ("pc:trades:<calcKey>"). No trades: no card.
   const tradesCard = (planTrades) => {
+    // The Research Lab (planned by the pack planner, one refining week a lot): this week's
+    // lot, then the next weeks', each listed once.
+    const labParts = (planTrades || []).filter((x) => x.lab && x.giveQty > 0).flatMap((x) => packTradeWhenSplit({ ...x, max: 1 }));
     const groups = [
-      ["week", freeParts.filter((x) => x.when === "week")],
-      ["plan", (planTrades || []).filter((x) => x.giveQty > 0).map((x) => ({ from: x.from, to: x.to, give: x.giveQty, get: x.getQty, lab: x.lab, lots: x.lots }))],
-      ["later", freeParts.filter((x) => x.when === "later")],
+      ["week", [...freeParts.filter((x) => x.when === "week"), ...labParts.filter((x) => x.when === "week")]],
+      ["plan", (planTrades || []).filter((x) => x.giveQty > 0 && !x.lab).map((x) => ({ from: x.from, to: x.to, give: x.giveQty, get: x.getQty, lab: x.lab, lots: x.lots }))],
+      ["later", [...freeParts.filter((x) => x.when === "later"), ...labParts.filter((x) => x.when === "later")]],
     ].filter(([, a]) => a.length);
     const n = groups.reduce((a, [, r]) => a + r.length, 0);
     if (!n) return "";
     const fk = `pc:trades:${calcKey}`, folded = BAR_SHOW_ALL[fk] === false;
-    const row = (x) => `<div class="pca-tr" title="${esc(`${materialDisplayName(x.from)} \u2192 ${materialDisplayName(x.to)}`)}">${pcaIcon(x.from)}<b>${qty(x.give)}</b><span class="pca-ar">&rarr;</span>${pcaIcon(x.to)}<b class="g">${qty(x.get)}</b>${x.lab ? ` <small class="meta">(${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})</small>` : ""}</div>`;
+    const row = (x) => `<div class="pca-tr" title="${esc(`${materialDisplayName(x.from)} \u2192 ${materialDisplayName(x.to)}`)}">${pcaIcon(x.from)}<b>${qty(x.give)}</b><span class="pca-ar">&rarr;</span>${pcaIcon(x.to)}<b class="g">${qty(x.get)}</b>${x.lab ? ` <small class="meta">(${esc(t("rfc_title"))}${x.when === "later" ? `, ${x.lots} ${esc(t("rfc_weeks"))}` : ""})</small>` : ""}</div>`;
     const counts = groups.map(([k, r]) => t(`pca_trn_${k}`).replace("{n}", r.length)).join(" \u00b7 ");
     return `<div class="pca-tc${folded ? " g1-folded" : ""}"><div class="pca-tch"><span>&#8644; ${esc(t("pca_trades"))}</span><span class="pca-tcn op">&middot; ${n}</span><span class="pca-tcn fd">&middot; ${esc(counts)}</span><button type="button" class="g1-fold" data-g1fold="${esc(fk)}" aria-expanded="${!folded}">${esc(t(folded ? "g1_show" : "g1_hide"))} ${folded ? "&#9662;" : "&#9652;"}</button></div>
       <div class="pca-tcb">${groups.map(([k, r]) => `<span class="pca-wk ${k}">${esc(t(`pca_tr_${k}`))}</span>${r.map(row).join("")}`).join("")}</div></div>`;
@@ -20778,9 +20783,12 @@ function applyTrades(rates, need, owned, weeks) {
 function tradeWeeksFor(targetDays) {
   return targetDays != null && targetDays > 0 ? Math.floor(targetDays / 7) + 1 : 1;
 }
-function tradeAdjustedStill(calcKey, needFull, owned, targetDays) {
+// noLab: leave the Research Lab's weekly refining (T12's hidden FC → Refined FC rule) to the
+// pack planner, which counts its weeks up to each plan's day (Pack cost); taking this week's
+// refining here too made the planner count the same week twice.
+function tradeAdjustedStill(calcKey, needFull, owned, targetDays, noLab) {
   if (TRADE_APPLY[calcKey] === false) return null; // on by default
-  const rates = tradeRatesFor(calcKey);
+  const rates = tradeRatesFor(calcKey).filter((r) => !(noLab && r.rfcLab));
   if (!rates.length) return null;
   const res = applyTrades(rates, needFull, owned, tradeWeeksFor(targetDays));
   const still = {};
@@ -32452,12 +32460,21 @@ function plxAmountModal(o) {
   if (!modal) { modal = document.createElement("div"); modal.id = "bsEditModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
   // Chief Gear / Chief Charm: the typing box + Save on top, then Needed / You have and where it comes from (o.extra).
   // Phones: a sheet from the bottom with a grab handle (swipe down closes it); PC: a centred window.
+  // Minutes: typed as a plain number of minutes (number pad; "5d 18h" still read), the
+  // days / hours / minutes shown under the name as they type.
+  const raw = "rawValue" in o ? o.rawValue : Number(o.value) || 0;
+  const init = o.minutes ? Math.round(Number(raw) || 0) : raw;
+  const durTxt = (v) => (Number.isNaN(v) ? "" : formatTimeDHM((Number(v) || 0) / 60));
+  const dur = o.minutes ? `<small class="bsm-dur" data-bsmdur>${esc(durTxt(init))}</small>` : "";
+  // "Use Backpack": shown once the box holds a typed amount (or as soon as the person types).
+  const canUse = o.linked != null && !!o.onUse;
+  const mode = o.minutes ? "numeric" : "decimal";
   modal.classList.toggle("bsm-ov", !!o.top);
   modal.innerHTML = o.top ? `<div class="modal-box bsm-top">
       <div class="bsm-grab" data-cgwgrab aria-hidden="true"></div>
-      <div class="bsm-h">${o.icon ? `<img src="${esc(o.icon)}" alt="" />` : ""}<div><b>${esc(o.label)}</b>${o.linked != null ? `<small>${o.linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</small>` : ""}</div>${closeXHtml("data-bsmclose")}</div>
-      <div class="bsm-in"><input id="bsEditQty" type="text" inputmode="${o.minutes ? "text" : "decimal"}" autocomplete="off" aria-label="${esc(o.label)}" value="${"rawValue" in o ? o.rawValue : Number(o.value) || 0}" /><button class="btn" type="button" id="bsEditSave">${esc(t("save"))}</button></div>
-      ${o.linked === false && o.onUse ? `<div class="bsm-ln"><button class="linklike" type="button" id="bsEditUse">&#127890; ${esc(t("bp_link_use"))}</button></div>` : ""}
+      <div class="bsm-h">${o.icon ? `<img src="${esc(o.icon)}" alt="" />` : ""}<div><b>${esc(o.label)}</b>${o.linked != null ? `<small>${o.linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</small>` : ""}${dur}</div>${closeXHtml("data-bsmclose")}</div>
+      <div class="bsm-in"><input id="bsEditQty" type="text" inputmode="${mode}" autocomplete="off" aria-label="${esc(o.label)}" value="${esc(String(init))}" /><button class="btn" type="button" id="bsEditSave">${esc(t("save"))}</button></div>
+      ${canUse ? `<div class="bsm-ln"${o.linked ? " hidden" : ""}><button class="linklike" type="button" id="bsEditUse">&#127890; ${esc(t("bp_link_use"))}</button></div>` : ""}
       ${o.needBox ? bsNeedBoxesHtml(o.needBox) : ""}
       ${o.extra ? `<div class="bsx" data-bsexplain>${o.extra()}</div>` : ""}
     </div>` : `<div class="modal-box" style="max-width:300px; text-align:center;">
@@ -32465,10 +32482,11 @@ function plxAmountModal(o) {
       <h2 style="margin:6px 0 4px; font-size:16px;">${esc(o.label)}</h2>
       ${o.linked != null ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${o.linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</div>` : ""}
       ${o.needBox ? bsNeedBoxesHtml(o.needBox) : ""}
-      <input id="bsEditQty" type="text" inputmode="${o.minutes ? "text" : "decimal"}" autocomplete="off" value="${"rawValue" in o ? o.rawValue : Number(o.value) || 0}" style="width:100%; text-align:center; font-size:18px;" />
+      <input id="bsEditQty" type="text" inputmode="${mode}" autocomplete="off" value="${esc(String(init))}" style="width:100%; text-align:center; font-size:18px;" />
+      ${o.minutes ? `<div class="meta" style="font-size:12px; margin-top:4px;">${dur}</div>` : ""}
       <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t(o.minutes ? "bs_edit_hint_min" : "bs_edit_hint"))}</div>
       <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
-        ${o.linked === false && o.onUse ? `<button class="btn ghost" type="button" id="bsEditUse">&#127890; ${esc(t("bp_link_use"))}</button>` : ""}
+        ${canUse ? `<button class="btn ghost" type="button" id="bsEditUse"${o.linked ? " hidden" : ""}>&#127890; ${esc(t("bp_link_use"))}</button>` : ""}
         <button class="btn ghost" type="button" id="bsEditCancel">${esc(t("cancel"))}</button>
         <button class="btn" type="button" id="bsEditSave">${esc(t("save"))}</button>
       </div></div>`;
@@ -32490,8 +32508,15 @@ function plxAmountModal(o) {
     if (ev.target === modal || ev.target.closest("[data-bsmclose]")) close();
   };
   const input = modal.querySelector("#bsEditQty");
-  // (Box on top: phones don't open the keyboard at once, so the list under it stays in view.)
-  if (!o.top || !window.matchMedia("(pointer: coarse)").matches) { input.focus(); input.select(); }
+  const durEl = modal.querySelector("[data-bsmdur]");
+  const use = modal.querySelector("#bsEditUse");
+  const useBox = use && (use.closest(".bsm-ln") || use);
+  input.oninput = () => {
+    if (durEl) durEl.textContent = durTxt(parseMinutes(input.value));
+    if (useBox && o.linked) useBox.hidden = input.value.trim() === String(init);
+  };
+  // Phones never open the keyboard by themselves: the person taps the box to type.
+  if (!window.matchMedia("(pointer: coarse)").matches) { input.focus(); input.select(); }
   const save = () => {
     let val = o.minutes ? parseMinutes(input.value) : parseAmount(input.value);
     if (Number.isNaN(val)) { input.style.borderColor = "var(--danger)"; return; }
@@ -32503,8 +32528,11 @@ function plxAmountModal(o) {
   const cancel = modal.querySelector("#bsEditCancel");
   if (cancel) cancel.onclick = close;
   input.onkeydown = (ev) => { if (ev.key === "Enter") save(); else if (ev.key === "Escape") close(); };
-  const use = modal.querySelector("#bsEditUse");
-  if (use) use.onclick = () => { close(); o.onUse(); };
+  // Already the Backpack's amount: just put the box back. Typed before: back to the Backpack link.
+  if (use) use.onclick = () => {
+    if (o.linked) { input.value = String(init); input.oninput(); return; }
+    close(); o.onUse();
+  };
 }
 // Planner pages' Backpack box pop-up: the trades into this item ("Where the rest comes from":
 // this week / next weeks / after the pack plan; each trade only in the box of the item it
@@ -32551,7 +32579,8 @@ function cgBoxExplainHtml(name, c) {
   // Coming packs (My Purchases, running cards) only count when the Backpack alone isn't enough.
   const bpOk = c.have - outAll >= c.need - 0.5;
   const cards = bpOk ? 0 : Number((snap.cards || {})[name]) || 0;
-  const planIn = (snap.planTrades || []).filter((x) => x.to === name && x.getQty > 0).map((x) => ({ when: "plan", from: x.from, to: x.to, give: x.giveQty, get: x.getQty }));
+  // The Research Lab (T12): the plan's refining weeks, this week's lot first, then the next weeks'.
+  const planIn = (snap.planTrades || []).filter((x) => x.to === name && x.getQty > 0).flatMap((x) => (x.lab ? packTradeWhenSplit({ ...x, max: 1 }) : [{ when: "plan", from: x.from, to: x.to, give: x.giveQty, get: x.getQty }]));
   const planOut = (snap.planTrades || []).filter((x) => x.from === name && x.giveQty > 0).map((x) => ({ when: "plan", from: x.from, to: x.to, give: x.giveQty, get: x.getQty }));
   const ins = [...free.filter((x) => x.to === name), ...planIn], outs = [...free.filter((x) => x.from === name), ...planOut];
   const sum = (a, k) => a.reduce((s, x) => s + (Number(x[k]) || 0), 0);
@@ -32560,7 +32589,9 @@ function cgBoxExplainHtml(name, c) {
   // What this item gives away is one short line in the status box: "N goes to Alloy ›",
   // each target tappable (opens that item's box on the page).
   let body = "";
-  if (ins.length || cards > 0) body += `<div class="bsx-h">${esc(t("bsx_rest"))}</div><div class="bsx-list">${ins.map((x) => line(x.when, `${ic(x.from)}<span>${esc(t("bsx_trade").replace("{n}", num(x.give, x.from)))} ${nm(x.from)}</span>`, `+${num(x.get)}`)).join("")}${cards > 0 ? line("cards", `${ic(name)}<span>${esc(t("bsx_cards_l"))}</span>`, `+${num(cards)}`) : ""}</div>`;
+  const labLeft = typeof rfcLabWeekLeft === "function" ? rfcLabWeekLeft().left : 0;
+  const labMid = (x) => `<img src="icons/quick/microscope.png" alt="" title="${esc(t("bsx_trade").replace("{n}", num(x.give, x.from)))} ${nm(x.from)}" /><span>${esc(x.when === "week" && labLeft > 0 ? t("bsx_lab_week").replace("{n}", Math.round(labLeft).toLocaleString()) : t("bsx_lab"))}</span>`;
+  if (ins.length || cards > 0) body += `<div class="bsx-h">${esc(t("bsx_rest"))}</div><div class="bsx-list">${ins.map((x) => line(x.when, x.lab ? labMid(x) : `${ic(x.from)}<span>${esc(t("bsx_trade").replace("{n}", num(x.give, x.from)))} ${nm(x.from)}</span>`, `+${num(x.get)}`)).join("")}${cards > 0 ? line("cards", `${ic(name)}<span>${esc(t("bsx_cards_l"))}</span>`, `+${num(cards)}`) : ""}</div>`;
   else if (!outs.length) body += `<div class="bsx-none">${esc(t("bsx_no_trades"))}</div>`;
   // Backpack + trades in + coming packs + the plan's packs that give it, minus what is traded out.
   const noPk = c.have + cards + inQ - outQ, after = noPk + packQ, short = c.need - after;
