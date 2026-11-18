@@ -1713,9 +1713,12 @@ const T = {
   gx_Orange: { en: "Orange" },
   go_enh_ph: { en: "+ (0–{max})" },
   go_ms_ph: { en: "Lv. (0–{max})" },
-  go_each: { en: "{xp} XP each · {es} Essence Stones each" },
-  go_tot: { en: "{xp} XP · {es} Essence Stones" },
-  go_sum: { en: "{n} pieces · {xp} XP · {es} Essence Stones" },
+  go_each: { en: "{xp} XP each · {es} Stones each" },
+  go_tot: { en: "{xp} XP · {es} Stones" },
+  go_tot_n: { en: "×{n} · {xp} XP · {es} Stones" },
+  go_line: { en: "×{n} pieces · {xp} XP · {es} Stones" },
+  go_line1: { en: "×1 piece · {xp} XP · {es} Stones" },
+  go_sum: { en: "{n} pieces · {xp} XP · {es} Stones" },
   scan_gx_unread: { en: "{n} pieces whose \"+\" or \"Lv.\" couldn't be read — add them in XP 10." },
   scan_gx_hint: { en: "Purple gear read by its \"+\", orange by its \"+\" and \"Lv.\". Saving replaces your hero gear for XP." },
   chest_open_tag: { en: "Open in game" },
@@ -15036,7 +15039,7 @@ async function renderInventory() {
               <input type="number" min="0" inputmode="numeric" data-gxn="${esc(r.key)}" value="${r.n}" />
               <button type="button" data-gxstep="${esc(r.key)}|1" aria-label="+">+</button>
               <span class="gx-tot">${isOr
-                ? `${esc(t("go_each").replace("{xp}", r.each.toLocaleString()).replace("{es}", (r.es || 0).toLocaleString())).replace(" · ", "<br>")}<b>${esc(t("go_tot").replace("{xp}", (r.n * r.each).toLocaleString()).replace("{es}", (r.n * (r.es || 0)).toLocaleString())).replace(" · ", "<br>")}</b>`
+                ? `${esc(t("go_each").replace("{xp}", r.each.toLocaleString()).replace("{es}", (r.es || 0).toLocaleString())).replace(" · ", "<br>")}<b>${esc(t("go_tot_n").replace("{n}", r.n.toLocaleString()).replace("{xp}", (r.n * r.each).toLocaleString()).replace("{es}", (r.n * (r.es || 0)).toLocaleString())).replace(/ · (?=[^·]*$)/, "<br>")}</b>`
                 : `${esc(t("gx_each").replace("{n}", r.each.toLocaleString()))}<b>${esc(t("gx_xp").replace("{n}", (r.n * r.each).toLocaleString()))}</b>`}</span></div>`).join("")}
             ${gxAdd === c.key ? `<div class="gx-addrow"><input type="number" min="0" max="${c.max}" inputmode="numeric" id="gxAddLv" placeholder="${esc(t(c.key === "Orange" ? "go_enh_ph" : "gx_level_ph").replace("{max}", c.max))}" />${c.key === "Orange" ? `<input type="number" min="0" max="${GEAR_ORANGE_MASTERY_MAX}" inputmode="numeric" id="gxAddMs" placeholder="${esc(t("go_ms_ph").replace("{max}", GEAR_ORANGE_MASTERY_MAX))}" />` : ""}<button type="button" class="btn small" data-gxaddgo="${c.key}">${esc(t("gx_add").replace(/^\+\s*/, ""))}</button></div>`
               : rows.length ? `<div class="gx-addrow">${addBtn("", "gx_add_level")}</div>` : ""}
@@ -15234,7 +15237,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=e45318ae6a";
+      s.src = "scan.min.js?v=64a7ef20ff";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }

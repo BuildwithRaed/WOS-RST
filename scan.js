@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "e45318ae6a";
+window.SCAN_BUILD = "64a7ef20ff";
 
 
 // ---- Backpack: read game screenshots ----
@@ -1332,11 +1332,15 @@ function openBackpackScanMain(groups, bp, done, more) {
       ...gearOrangeOf(gearLow).rows.sort((a, b) => b.enh - a.enh || b.lv - a.lv).map((r) => ({ key: r.key, lab: `+${r.enh} Lv.${r.lv}`, colour: "Orange", n: r.n, each: r.xp, es: r.es })),
       ...gearXpOf(gearLow).rows.sort((a, b) => b.lvl - a.lvl).map((r) => ({ key: r.key, lab: `+${r.lvl}`, colour: r.colour, n: r.n, each: r.each })),
     ] : [];
+    // An orange line's totals: "×2 pieces · 2,300 XP · 60 Essence Stones".
+    const goLine = (n, xp, es) => t(n === 1 ? "go_line1" : "go_line").replace("{n}", n.toLocaleString()).replace("{xp}", (n * xp).toLocaleString()).replace("{es}", (n * es).toLocaleString());
     const gxSum = gxRows.reduce((a, r) => ({ n: a.n + r.n, xp: a.xp + r.n * r.each, es: a.es + r.n * (r.es || 0) }), { n: 0, xp: 0, es: 0 });
     const gearHtml = gearLow === null ? "" : `<div class="scan-row unsure" style="display:block;">
       <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" data-scangxtick checked /><b>${esc(t("gx_title"))}</b><em class="meta" style="font-size:11.5px;">${esc(t("scan_please_check"))}</em></label>
       <div class="meta" style="font-size:11.5px; margin:2px 0 4px;">${esc(t("scan_gx_hint"))}</div>
-      ${gxRows.map((r) => `<div class="gx-line${r.colour === "Orange" ? " go" : ""}"><span class="gx-lv">${esc(r.lab)}</span><span class="meta" style="font-size:12px;">${esc(t("gx_" + r.colour))} · ${esc(r.colour === "Orange" ? t("go_each").replace("{xp}", r.each.toLocaleString()).replace("{es}", (r.es || 0).toLocaleString()) : t("gx_each").replace("{n}", r.each.toLocaleString()))}</span>
+      ${gxRows.map((r) => `<div class="gx-line${r.colour === "Orange" ? " go" : ""}"><span class="gx-lv">${esc(r.lab)}</span>${r.colour === "Orange"
+        ? `<span class="go-sc"><b data-gotot="${esc(r.key)}" data-goxp="${r.each}" data-goes="${r.es || 0}">${esc(goLine(r.n, r.each, r.es || 0))}</b><small class="meta">${esc(t("gx_Orange"))} · ${esc(t("go_each").replace("{xp}", r.each.toLocaleString()).replace("{es}", (r.es || 0).toLocaleString()))}</small></span>`
+        : `<span class="meta" style="font-size:12px;">${esc(t("gx_" + r.colour))} · ${esc(t("gx_each").replace("{n}", r.each.toLocaleString()))}</span>`}
         <input type="text" inputmode="numeric" data-scangx="${esc(r.key)}" value="${r.n}" style="margin-inline-start:auto;" /></div>`).join("") || `<div class="meta" style="font-size:12px;">0</div>`}
       ${gearLowUnread ? `<div class="meta" style="font-size:11.5px; margin-top:4px;">&#9888; ${esc(t("scan_gx_unread").replace("{n}", gearLowUnread))}</div>` : ""}
       <div class="gx-sum" style="margin-top:6px;">&rarr; <b>${esc(gxSum.es ? t("go_tot").replace("{xp}", gxSum.xp.toLocaleString()).replace("{es}", gxSum.es.toLocaleString()) : t("gx_xp").replace("{n}", gxSum.xp.toLocaleString()))}</b> (${esc(t("gx_pieces").replace("{n}", gxSum.n.toLocaleString()))})</div>
@@ -1398,6 +1402,10 @@ function openBackpackScanMain(groups, bp, done, more) {
     modal.querySelectorAll("[data-scanval]").forEach((el) => el.addEventListener("change", () => {
       const r = results.get(el.dataset.scanval), v = el.value.replace(/\D/g, "");
       r.value = v ? Number(v) : null; r.sure = true;
+    }));
+    modal.querySelectorAll("[data-scangx]").forEach((el) => el.addEventListener("input", () => {
+      const b = modal.querySelector(`[data-gotot="${window.CSS.escape(el.dataset.scangx)}"]`);
+      if (b) b.textContent = goLine(Number(el.value.replace(/\D/g, "")) || 0, Number(b.dataset.goxp), Number(b.dataset.goes));
     }));
     const save = modal.querySelector("[data-scansave]");
     if (save) save.onclick = () => {
