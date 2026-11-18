@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 104; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 108; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -1624,9 +1624,7 @@ const T = {
   t12x_max_all: { en: "Max all" },
   t12x_reset: { en: "Reset" },
   t12x_shard: { en: "Shard" },
-  trade_apply_short: { en: "Use in pack cost" },
   trade_lab_line: { en: "Research Lab · once a week (plan set on the Research Lab page)" },
-  trade_card_line2: { en: "{n} trades this week" },
   pc_cards_count: { en: "Already counted: {c} active cards" },
   pc_card_days: { en: "{n} days each" },
   pc_title: { en: "Pack Cost" },
@@ -2641,19 +2639,27 @@ const T = {
   budgets_plan_detail: { en: "What's being upgraded" },
   budgets_snapshot_note: { en: "Numbers from the last time that page was opened." },
   budgets_stats_unavailable: { en: "Current dashboard stats couldn't be loaded — showing increases only." },
-  trade_title: { en: "Trade items" },
+  trade_title: { en: "Trades" },
+  trd_use: { en: "Use trades in Pack cost" },
+  trd_short: { en: "Still short after trades" },
+  trd_nothing_short: { en: "\u2713 Nothing short" },
+  trd_do_title: { en: "Trade this week" },
+  trd_do_trade: { en: "Trade" },
+  trd_do_none: { en: "Nothing to trade this week" },
+  trd_lots_left: { en: "{n} trades left this week" },
+  trd_limit_reached: { en: "limit reached" },
+  trd_from_trades: { en: "from trades" },
+  trd_rules_title: { en: "Trade rules" },
+  trd_per_day: { en: "{n}/day" },
+  trd_per_wk: { en: "{n}/wk" },
+  trd_day: { en: "Day" },
+  trd_week: { en: "Week" },
+  trd_calc: { en: "Calculator" },
   trade_apply: { en: "Use my spare items (trades) in pack cost" },
   trade_rates: { en: "Trade rates" },
-  trade_none: { en: "No spare items to trade, or nothing missing." },
-  trade_after: { en: "Still short after trades:" },
-  trade_max_week: { en: "Max / week" },
-  trade_per_day: { en: "{n}/day" },
-  trade_week_left: { en: "{l} left this week" },
-  trade_capped: { en: "weekly limit reached" },
   trade_free: { en: "Free from your spare items (trade, no purchase)" },
   trade_then: { en: "Then trade" },
   trade_via_packs: { en: "Bought as packs then traded" },
-  trade_calc: { en: "Trade calculator" },
   trade_left_over: { en: "left over" },
   pack_group_placeholder: { en: "Group…" },
   pack_group_title: { en: "Main name this table sits under. Tables with the same group name are shown together." },
@@ -3418,10 +3424,7 @@ const T = {
   rfc_lab_closed: { en: "Off: the lab's Refined FC isn't counted on T12 and Budgets." },
   charm_to_go: { en: "{n} to go" },
   charm_tiles_hint: { en: "Green bar = now, blue = what the target adds. Tap a charm to change it." },
-  charm_needs_this: { en: "Needs for this charm" },
   charm_lv: { en: "Lv" },
-  charm_stage: { en: "Stage {a} / {b}" },
-  charm_target_max: { en: "Target = Max ({lv})" },
   gs_nothing: { en: "Nothing needed" },
   gs_done: { en: "Done" },
   cg_slots_hint: { en: "Each picture is the game's picture for the piece's tier. Badge top-left = now, blue = target. Tap a piece to change it." },
@@ -18976,7 +18979,7 @@ function plxTopBox(root) {
 // keys "top:<tab>").
 function g1FoldSync(root) {
   (root || document).querySelectorAll("[data-g1fold]").forEach((b) => {
-    const folded = BAR_SHOW_ALL[b.dataset.g1fold] === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc");
+    const folded = BAR_SHOW_ALL[b.dataset.g1fold] === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc, .trd-rules");
     if (box) box.classList.toggle("g1-folded", folded);
     // Compared as text: innerHTML gives back the real arrow, not "&#9662;", so an
     // HTML compare rewrote the button every time and the #content observer looped.
@@ -20576,7 +20579,6 @@ function tradeWeeksForLots(r, lots) {
 }
 let TRADE_RATES_CACHE = null;      // { [calcKey]: rates[] } (saved overrides)
 const TRADE_APPLY = {};            // { [calcKey]: true } - use trades in pack cost / budgets
-const TRADE_OPEN = {};             // block collapsed on every load
 // ---- Research Lab -> T12 Pack cost ----
 // The weekly refining plan chosen on the Research Lab page becomes a trade
 // on T12: give that week's Fire Crystal, get that week's expected Refined FC,
@@ -20959,86 +20961,113 @@ function packNeedViaTrades(calcKey, base, supplied, targetDays) {
   });
   return { need, conversions: [], uncovered };
 }
-// The "Trade items" block under a page's Backpack row.
+// The Trades window (design C): the "Use trades in Pack cost" switch, what's
+// still short after trades, one card per item you get with the rules giving
+// it, then the calculator. Numbers are this week's trades as applyTrades
+// works them out (the same split Pack cost uses).
 async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   if (!containerEl) return;
   await ensureTradeRates();
   const rates = tradeRatesFor(calcKey).filter((r) => !r.hidden);
   if (!rates.length) { containerEl.innerHTML = ""; return; }
-  const open = TRADE_OPEN[calcKey] === true;
-  const rerender = () => renderTradeBlock(containerEl, calcKey, groups, owned, onChange);
-  // Card layout: short Fire Crystal names (FC, FCS, RFC).
-  const shortNm = (n) => ({ "Fire Crystal": "FC", "FC Shard": "FCS", "Refined FC": "RFC" }[n]) || materialDisplayName(n);
-  const wire = () => {
-    containerEl.querySelector("[data-tradetoggle]").addEventListener("click", () => { TRADE_OPEN[calcKey] = !open; rerender(); });
-    const applyCb = containerEl.querySelector("[data-tradeapply]");
-    if (applyCb) applyCb.addEventListener("change", async (e) => {
-      TRADE_APPLY[calcKey] = e.target.checked;
-      await saveTradeSettings();
-      if (onChange) onChange();
-    });
-  };
+  const nm = (n) => materialDisplayName(itemShortName(n)).replace(/\s*\((minutes|min)\)$/, "");
+  // Calculator: short Fire Crystal names (FC, FCS, RFC) so it stays on one line.
+  const cnm = (n) => ({ "Fire Crystal": "FC", "FC Shard": "FCS", "Refined FC": "RFC" }[n]) || nm(n);
+  const img = (n, cls) => { const src = materialIconSrc(n); return src ? `<img class="${cls || ""}" src="${esc(src)}" alt="" title="${esc(materialDisplayName(n))}" />` : ""; };
+  const qty = (v) => Math.round(v).toLocaleString();
   const need = {};
   groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { need[n] = (need[n] || 0) + (Number(q) || 0); }));
-  const qty = (v) => Math.round(v).toLocaleString();
-  // Card layout: this week's suggested trades up front (with pictures),
-  // what's still short as chips, rates and the calculator behind a link.
-  const cardHead = `<div class="pc-head"><b>&#8644; ${esc(t("trade_title"))}</b>${IS_OWNER ? `<label class="pc-switch" title="${esc(t("trade_apply"))}"><span>${esc(t("trade_apply_short"))}</span><input type="checkbox" data-tradeapply ${TRADE_APPLY[calcKey] !== false ? "checked" : ""} /><i></i></label>` : ""}</div>`;
-  const cardBody = () => {
-    const img = (n) => { const src = materialIconSrc(n); return src ? `<img src="${esc(src)}" alt="" />` : ""; };
-    // Only what the traded items can become (Fire Crystal → RFC / Shard).
-    const froms = new Set(rates.map((r) => r.from));
-    const allRates = tradeRatesFor(calcKey).filter((r) => froms.has(r.from));
-    const targets = new Set(allRates.map((r) => r.to));
-    const shortNames = Object.keys(need).filter((n) => need[n] > 0 && targets.has(n));
-    // This week's split, the same way Pack cost plans it: the Research Lab
-    // (FC → RFC, once a week) gets its share first, the rest goes to shards.
-    const res = applyTrades(allRates, need, owned, 1);
-    const nm = (n) => shortNm(n).replace(/\s*\((minutes|min)\)$/, "");
-    const bad = shortNames.filter((n) => (res.after[n] || 0) > 0), ok = shortNames.filter((n) => !((res.after[n] || 0) > 0));
-    const chips = bad.map((n) => `<span class="bad">${esc(nm(n))} ${Math.ceil(res.after[n]).toLocaleString()}</span>`).concat(ok.map((n) => `<span class="ok">${esc(nm(n))} &#10003;</span>`));
-    return `${res.trades.length ? res.trades.map((tr) => {
-      const r = allRates.find((x) => x.from === tr.from && x.to === tr.to) || {};
-      const getTxt = tr.lab ? (Math.round(tr.getQty * 10) / 10).toLocaleString() : qty(tr.getQty);
-      return `<div class="pc-trade"><div>${img(tr.from)}<b>${qty(tr.giveQty)}</b><small>${esc(shortNm(tr.from))}</small></div><span>&rarr;</span><div>${img(tr.to)}<b style="color:var(--good);">${getTxt}</b><small>${esc(shortNm(tr.to))}</small></div></div>
-        <div class="meta pc-sub">${tr.lab ? esc(t("trade_lab_line")) : `${esc(t("trade_card_line2").replace("{n}", qty(tr.lots)))}${r.perDay > 0 ? ` · ${esc(t("trade_per_day").replace("{n}", qty(r.perDay)))} · ${esc(t("trade_week_left").replace("{l}", qty(Math.max(0, tradeWeekCap(r, 0) - tr.lots))))}` : r.max ? ` · ${esc(t("trade_max_week"))} ${qty(r.max)}` : ""}${tr.capped ? ` · ${esc(t("trade_capped"))}` : ""}`}</div>`;
-    }).join("") : `<div class="meta" style="font-size:11.5px;">${esc(t("trade_none"))}</div>`}
-      ${chips.length ? `<div class="pc-k">${esc(t("trade_after"))}</div><div class="pc-chips">${chips.join("")}</div>` : ""}
-      <button type="button" class="linklike" data-tradetoggle style="margin-top:10px;">${esc(t("trade_calc"))} ${open ? "&#9662;" : "&#9656;"}</button>`;
+  // Only what the traded items can become (Fire Crystal → RFC / Shard).
+  const froms = new Set(rates.map((r) => r.from));
+  const allRates = tradeRatesFor(calcKey).filter((r) => froms.has(r.from));
+  const res = applyTrades(allRates, need, owned, 1);
+  const targets = [...new Set(allRates.map((r) => r.to))];
+  const shortOf = (n) => (need[n] > 0 ? Math.ceil(res.after[n] || 0) : 0);
+  const usedOf = (r) => res.trades.filter((x) => x.from === r.from && x.to === r.to).reduce((a, x) => a + x.lots, 0);
+  const bad = targets.filter((n) => shortOf(n) > 0);
+  const switchHtml = IS_OWNER ? `<label class="trd-use" title="${esc(t("trade_apply"))}"><span>${esc(t("trd_use"))}</span><span class="pc-switch"><input type="checkbox" data-tradeapply ${TRADE_APPLY[calcKey] !== false ? "checked" : ""} /><i></i></span></label>` : "";
+  const shortHtml = bad.length
+    ? `<div class="trd-short"><span class="trd-lb">${esc(t("trd_short"))}</span>${bad.map((n) => `<span class="trd-sc" title="${esc(materialDisplayName(n))}">${img(n)}${shortOf(n).toLocaleString()}</span>`).join("")}</div>`
+    : `<div class="trd-short ok">${esc(t("trd_nothing_short"))}</div>`;
+  const fmtQ = (v) => (v < 10 && v % 1 ? (Math.round(v * 10) / 10).toLocaleString() : qty(v));
+  // Box 1, "Trade this week": what the plan trades this week, as actions.
+  const doRows = rates.filter((r) => usedOf(r) > 0).map((r) => {
+    const u = usedOf(r);
+    const give = u * r.give, get = u * r.get;
+    const wc = tradeWeekCap(r, 0);
+    const pd = Number(r.perDay) || 0;
+    const full = wc > 0 && u >= wc;
+    const act = `<div class="trd-da">${esc(t("trd_do_trade"))} <b>${qty(give)}</b>${img(r.from, "s")}<span class="trd-dn">${esc(nm(r.from))}</span><span class="trd-ar">&rarr;</span><b class="trd-dg">+${fmtQ(get)}</b>${img(r.to, "s")}<span class="trd-dn">${esc(nm(r.to))}</span></div>`;
+    let sub = "";
+    if (pd > 0 && wc > 0) {
+      // Day and Week mini bars. The plan has no per-day split: today's share is this
+      // week's planned trades spread over the days left, capped at the daily limit.
+      const day = Math.min(pd, Math.ceil(u / Math.max(1, tradeDaysLeftInWeek())));
+      const bar = (lb, v, c) => { const z = v >= c; return `<div class="trd-mbr"><span>${esc(t(lb))}</span><div class="trd-bar"><i class="${z ? "z" : ""}" style="width:${Math.min(100, c > 0 ? (v / c) * 100 : 0).toFixed(1)}%"></i></div><span class="trd-nm"><b class="${z ? "z" : ""}">${qty(v)}</b> / ${qty(c)}</span></div>`; };
+      sub = `<div class="trd-mb">${bar("trd_day", day, pd)}${bar("trd_week", u, wc)}</div>`;
+    } else if (wc > 0) {
+      sub = full ? `<div class="trd-ds z">${esc(t("trd_limit_reached"))}</div>` : `<div class="trd-ds">${esc(t("trd_lots_left").replace("{n}", qty(wc - u)))}</div>`;
+    }
+    return `<div class="trd-dr${full ? " z" : ""}">${act}${sub}</div>`;
+  });
+  const gains = targets.map((n) => [n, rates.filter((r) => r.to === n).reduce((a, r) => a + usedOf(r) * r.get, 0)]).filter(([, g]) => g > 0);
+  const sumHtml = gains.length ? `<div class="trd-dsum">${gains.map(([n, g]) => `<span><b>+${fmtQ(g)}</b> ${esc(nm(n))}</span>`).join(" &middot; ")} ${esc(t("trd_from_trades"))}</div>` : "";
+  const doHtml = `<div class="trd-do"><div class="trd-bt">${esc(t("trd_do_title"))}</div>${doRows.length ? doRows.join("") + sumHtml : `<div class="trd-dnone">${esc(t("trd_do_none"))}</div>`}</div>`;
+  // Box 2, "Trade rules": every rule the page allows, by the item you get. No planned numbers.
+  const ruleHtml = (r) => {
+    if (r.rfcLab) return `<div class="trd-gl">${img(r.from, "s")}<span class="trd-rt">${esc(t("trade_lab_line"))}</span></div>`;
+    const pd = Number(r.perDay) || 0;
+    const cap = pd > 0 ? t("trd_per_day").replace("{n}", qty(pd)) : r.max > 0 ? t("trd_per_wk").replace("{n}", qty(r.max)) : "";
+    return `<div class="trd-gl">${img(r.from, "s")}<span class="trd-rt">${qty(r.give)} ${esc(nm(r.from))} &rarr; ${qty(r.get)}</span><span class="trd-cap">${esc(cap)}</span></div>`;
   };
-  if (!open) {
-    containerEl.innerHTML = `<div class="pc-card">${cardHead}${cardBody()}</div>`;
-    wire();
-    return;
-  }
-  const names = [...new Set(rates.flatMap((r) => [r.from, r.to]))];
-  const calcHtml = `
-    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:12px;">
-      <input type="number" min="0" data-tradeqty value="" placeholder="0" style="width:80px; font-size:12px; padding:4px 6px;" />
-      <select data-tradefrom style="font-size:12px;">${names.filter((n) => rates.some((r) => r.from === n)).map((n) => `<option value="${esc(n)}">${esc(shortNm(n))}</option>`).join("")}</select>
-      <span>→</span>
-      <select data-tradeto style="font-size:12px;"></select>
-      <span data-traderesult style="font-weight:700; color:var(--good);"></span>
-    </div>`;
-  containerEl.innerHTML = `
-    <div class="pc-card">${cardHead}${cardBody()}
-      <div style="margin-top:8px;">${calcHtml}</div>
-    </div>`;
-  wire();
-  // Manual converter.
+  const rank = (n) => (shortOf(n) > 0 ? 0 : need[n] > 0 ? 1 : 2);
+  const order = targets.filter((n) => rates.some((r) => r.to === n)).sort((a, b) => rank(a) - rank(b));
+  const cardHtml = (n) => {
+    return `<div class="trd-gc"><div class="trd-gh">${img(n, "s")}<b>${esc(nm(n))}</b></div>${rates.filter((r) => r.to === n).map(ruleHtml).join("")}</div>`;
+  };
+  // Starts folded; Hide / Show kept on the account (calc_state bar_hidden "trd:rules", all pages).
+  await ensureBarHidden();
+  barFoldDefault("trd:rules");
+  const rHid = BAR_SHOW_ALL["trd:rules"] === false;
+  const nRules = order.reduce((a, n) => a + rates.filter((r) => r.to === n).length, 0);
+  const rulesHtml = `<div class="trd-rules${rHid ? " g1-folded" : ""}"><div class="trd-bt trd-rh"><span>${esc(t("trd_rules_title"))} (${nRules})</span><button type="button" class="g1-fold" data-g1fold="trd:rules" aria-expanded="${!rHid}">${esc(t(rHid ? "g1_show" : "g1_hide"))} ${rHid ? "&#9662;" : "&#9652;"}</button></div>${order.map(cardHtml).join("")}</div>`;
+  const calcFroms = [...new Set(rates.map((r) => r.from))];
+  const calcHtml = `<div class="trd-calc"><input type="number" min="0" inputmode="decimal" data-tradeqty value="" placeholder="0" aria-label="${esc(t("trd_calc"))}" />
+      <span class="trd-dd"><span data-tradefromimg>${img(calcFroms[0], "s")}</span><select data-tradefrom aria-label="${esc(t("trd_calc"))}">${calcFroms.map((n) => `<option value="${esc(n)}">${esc(cnm(n))}</option>`).join("")}</select></span>
+      <span class="trd-ar">&rarr;</span>
+      <span class="trd-dd"><span data-tradetoimg></span><select data-tradeto aria-label="${esc(t("trd_calc"))}"></select></span>
+      <span class="trd-res" data-traderesult></span></div>`;
+  containerEl.innerHTML = `<div class="pc-card trd">
+    <div class="pc-head trd-title"><b>&#8644; ${esc(t("trade_title"))}</b></div>
+    ${switchHtml}${shortHtml}
+    ${doHtml}${rulesHtml}
+    <div class="trd-lbl">${esc(t("trd_calc"))}</div>${calcHtml}
+  </div>`;
+  const applyCb = containerEl.querySelector("[data-tradeapply]");
+  if (applyCb) applyCb.addEventListener("change", async (e) => {
+    TRADE_APPLY[calcKey] = e.target.checked;
+    await saveTradeSettings();
+    if (onChange) onChange();
+  });
+  // Calculator.
   const qtyEl = containerEl.querySelector("[data-tradeqty]");
   const fromEl = containerEl.querySelector("[data-tradefrom]");
   const toEl = containerEl.querySelector("[data-tradeto]");
   const outEl = containerEl.querySelector("[data-traderesult]");
+  const fromImg = containerEl.querySelector("[data-tradefromimg]");
+  const toImg = containerEl.querySelector("[data-tradetoimg]");
   const fillTo = () => {
-    toEl.innerHTML = rates.filter((r) => r.from === fromEl.value).map((r) => `<option value="${esc(r.to)}">${esc(shortNm(r.to))}</option>`).join("");
+    toEl.innerHTML = rates.filter((r) => r.from === fromEl.value).map((r) => `<option value="${esc(r.to)}">${esc(cnm(r.to))}</option>`).join("");
+    fromImg.innerHTML = img(fromEl.value, "s");
+    toImg.innerHTML = img(toEl.value, "s");
   };
   const compute = () => {
+    toImg.innerHTML = img(toEl.value, "s");
     const r = rates.find((x) => x.from === fromEl.value && x.to === toEl.value);
     const q = Number(qtyEl.value) || 0;
     if (!r || q <= 0) { outEl.textContent = ""; return; }
     const lots = Math.floor(q / r.give);
-    outEl.textContent = `${(lots * r.get).toLocaleString()} ${shortNm(r.to)}` + (q - lots * r.give > 0 ? ` (${(q - lots * r.give).toLocaleString()} ${shortNm(r.from)} ${t("trade_left_over")})` : "");
+    outEl.textContent = `= ${(lots * r.get).toLocaleString()}` + (q - lots * r.give > 0 ? ` (${(q - lots * r.give).toLocaleString()} ${cnm(r.from)} ${t("trade_left_over")})` : "");
   };
   fillTo();
   fromEl.addEventListener("change", () => { fillTo(); compute(); });
@@ -25335,15 +25364,24 @@ function ensureBarHidden() {
   if (!BAR_HIDDEN_LOAD) BAR_HIDDEN_LOAD = loadCalcState("bar_hidden").then((v) => {
     // Only folds with a ":" key (top cards, lists): the planner pages' own Backpack boxes
     // (keys without one) always show now, so an old "Hide boxes" no longer hides them.
-    Object.entries(v || {}).forEach(([k, h]) => { if (h && String(k).includes(":") && !(k in BAR_SHOW_ALL)) BAR_SHOW_ALL[k] = false; });
+    Object.entries(v || {}).forEach(([k, h]) => {
+      if (k in BAR_SHOW_ALL || !String(k).includes(":")) return;
+      if (BAR_DEFAULT_HIDDEN.has(k)) BAR_SHOW_ALL[k] = !h; else if (h) BAR_SHOW_ALL[k] = false;
+    });
   }).catch(() => {});
   return BAR_HIDDEN_LOAD;
 }
 function saveBarHidden() {
   const out = {};
-  Object.keys(BAR_SHOW_ALL).forEach((k) => { if (BAR_SHOW_ALL[k] === false) out[k] = true; });
+  Object.keys(BAR_SHOW_ALL).forEach((k) => {
+    if (BAR_DEFAULT_HIDDEN.has(k)) out[k] = BAR_SHOW_ALL[k] === false;
+    else if (BAR_SHOW_ALL[k] === false) out[k] = true;
+  });
   saveCalcState("bar_hidden", out);
 }
+// Folds that start hidden: saved as true (hidden) / false (shown); nothing saved = hidden.
+const BAR_DEFAULT_HIDDEN = new Set(["trd:rules"]);
+function barFoldDefault(k) { if (BAR_DEFAULT_HIDDEN.has(k) && !(k in BAR_SHOW_ALL)) BAR_SHOW_ALL[k] = false; }
 // Where a page wants its summary drawn instead of above its boxes (element id).
 const BAR_SUMMARY_HOST = { t12_research: "t12Need", t11_helios: "t11Need", research_center: "rcNeed", chief_gear: "gearNeed", charm: "charmNeed", hero_gear: "heroGearNeed", pets: "petsNeed", pets_refine: "refineNeed" };
 const BAR_AFTER_CHANGE = {}; // { calcKey: fn } called after an owned amount changes
