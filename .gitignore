@@ -4,3 +4,6 @@ CLAUDE.local.md
 
 # Maintainer tools (tools/package.json): installed with npm ci, not published
 tools/node_modules/
+
+# (also when it is a symlink)
+tools/node_modules

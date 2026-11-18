@@ -100,7 +100,6 @@
 "t:trade_apply_short":"Usar no custo dos pacotes",
 "t:trade_lab_line":"Laboratório de Pesquisa · uma vez por semana (plano definido na página do Laboratório de Pesquisa)",
 "t:trade_card_line2":"{n} trocas esta semana",
-"t:pc_free_count":"Já contado: {c} cartões ativos · {t} trocas grátis",
 "t:pc_card_days":"{n} dias cada",
 "t:pc_title":"Custo dos pacotes",
 "t:pc_fastest":"Mais rápido",

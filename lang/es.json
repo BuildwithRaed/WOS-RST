@@ -101,7 +101,6 @@
  "t:trade_apply_short": "Usar en coste de paquetes",
  "t:trade_lab_line": "Laboratorio de Investigación · una vez por semana (plan en la página del Laboratorio)",
  "t:trade_card_line2": "{n} intercambios esta semana",
- "t:pc_free_count": "Ya contado: {c} tarjetas activas · {t} intercambios gratis",
  "t:pc_card_days": "{n} días cada una",
  "t:pc_title": "Coste de paquetes",
  "t:pc_fastest": "Más rápido",

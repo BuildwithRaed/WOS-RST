@@ -101,7 +101,6 @@
  "t:trade_apply_short": "用于礼包花费",
  "t:trade_lab_line": "研究实验室 · 每周一次（在研究实验室页面设置计划）",
  "t:trade_card_line2": "本周 {n} 次兑换",
- "t:pc_free_count": "已计入：{c} 张生效卡 · {t} 次免费兑换",
  "t:pc_card_days": "每张 {n} 天",
  "t:pc_title": "礼包花费",
  "t:pc_fastest": "最快",
