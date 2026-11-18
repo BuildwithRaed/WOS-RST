@@ -5035,3 +5035,11 @@ span.mk.mk svg{flex:none}
   .g1-hd-t, .cg-kr .cg-k, .sg-k > span:first-child, .bn-k > span:first-child{ font-size:11.5px !important; }
   #islandShardPlan .isl-bp .bs-foot .plx-bpb{ display:flex; flex:none; width:auto; margin:0; margin-inline-start:auto; gap:6px; }
   #islandShardPlan .isl-bp .bs-foot > span:first-child{ margin-inline-end:auto; }
+  /* Research pages' top box: one line between Settings and BACKPACK (the BACKPACK section's own line), not two. */
+  .g1-top.g1-nost .g1-set:not(:empty){ margin-bottom:0; padding-bottom:0; border-bottom:0; }
+  /* Folded top card: the BACKPACK row sits in the middle, the same space above (to the line) and below (to the card's edge). */
+  .cg-ans.g1-folded:has(.g1-bp, #cgBp, .isl-bp){ padding-bottom:10px !important; }
+  .cg-ans.g1-folded :is(.g1-bp, #cgBp){ padding-top:10px; }
+  .cg-ans.g1-folded :is(.g1-bp, #cgBp, .isl-bp) .bs-foot{ margin-bottom:0 !important; }
+  .sg-ans.g1-folded #islandShardPlan .isl-pl{ padding-top:10px; }
+  .sg-ans.g1-folded #islandShardPlan .isl-bp{ margin-top:0; }
