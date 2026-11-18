@@ -100,7 +100,6 @@
 "t:trade_apply_short":"Dùng trong chi phí gói",
 "t:trade_lab_line":"Phòng Nghiên Cứu · mỗi tuần một lần (kế hoạch đặt ở trang Phòng Nghiên Cứu)",
 "t:trade_card_line2":"{n} lượt đổi tuần này",
-"t:pc_free_count":"Đã tính: {c} thẻ đang hoạt động · {t} lượt đổi miễn phí",
 "t:pc_card_days":"mỗi thẻ {n} ngày",
 "t:pc_title":"Chi phí gói",
 "t:pc_fastest":"Nhanh nhất",
@@ -2799,5 +2798,15 @@
 "t:pk_ng_after":"Bắt đầu sau anh hùng mới",
 "t:pk_ng_after_desc":"Số ngày tính từ ngày anh hùng mới đến (0 = cùng ngày). Các gói có cùng ngày sẽ theo gói này.",
 "t:rv_adv":"Nâng cao (cấu trúc trang)",
-"t:rv_adv_warn":"Các mục này quy định cách dựng trang nghiên cứu. Sửa sai có thể làm hỏng các trang đó."
+"t:rv_adv_warn":"Các mục này quy định cách dựng trang nghiên cứu. Sửa sai có thể làm hỏng các trang đó.",
+"t:pc_cards_count":"Đã tính: {c} thẻ đang hoạt động",
+"t:pca_pack1":"1 gói",
+"t:pca_trades":"Đổi",
+"t:pca_tr_week":"Tuần này",
+"t:pca_tr_plan":"Sau khi mua gói",
+"t:pca_tr_later":"Các tuần sau",
+"t:pca_trn_week":"{n} tuần này",
+"t:pca_trn_plan":"{n} sau khi mua gói",
+"t:pca_trn_later":"{n} các tuần sau",
+"t:pca_trade_first":"Lượt đổi đầu tiên"
 }

@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 101; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 102; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -1628,7 +1628,7 @@ const T = {
   trade_apply_short: { en: "Use in pack cost" },
   trade_lab_line: { en: "Research Lab · once a week (plan set on the Research Lab page)" },
   trade_card_line2: { en: "{n} trades this week" },
-  pc_free_count: { en: "Already counted: {c} active cards · {t} free trades" },
+  pc_cards_count: { en: "Already counted: {c} active cards" },
   pc_card_days: { en: "{n} days each" },
   pc_title: { en: "Pack Cost" },
   pc_fastest: { en: "Fastest" },
@@ -3505,6 +3505,14 @@ const T = {
   pca_packs: { en: "{n} packs" },
   pca_target: { en: "Target" },
   pca_buy: { en: "What to buy" },
+  pca_pack1: { en: "1 pack" },
+  pca_trades: { en: "Trades" },
+  pca_tr_week: { en: "This week" },
+  pca_tr_plan: { en: "After the pack" },
+  pca_tr_later: { en: "Next weeks" },
+  pca_trn_week: { en: "{n} this week" },
+  pca_trn_plan: { en: "{n} after the pack" },
+  pca_trn_later: { en: "{n} next weeks" },
   pca_only: { en: "Only {page}" },
   pca_with_others: { en: "With my other pages" },
   pca_not_cheaper: { en: "Checked, not cheaper" },
@@ -3516,6 +3524,7 @@ const T = {
   pca_free_shards: { en: "+{n} shards from packs your other pages buy ({c} copies)" },
   pca_isl_copies: { en: "+{n} shards → {c} building copies (instead of buying them with Marks / Tomes)" },
   pca_then_buy: { en: "Then buy" },
+  pca_trade_first: { en: "First trade" },
   cg_reset_tip: { en: "Put back the current levels and targets you had before Max" },
   cg_max_tip: { en: "Max every piece: current levels and targets go to the highest level open in your state" },
   cg_all_max: { en: "Every piece is at max" },
@@ -7777,12 +7786,9 @@ async function mkCompute() {
     } else b = await cdaBuildPage(pg);
     if (seq !== MK_SEQ || TAB !== tab) return;
     if (!b || !b.tracks) { MK = null; return; }
+    // Only what the Backpack holds (chests in it and this week's trades of its items): never
+    // packs, not even Free now's "Include this week's packs" (that switch stays Budgets' own).
     const have = { ...(b.have || {}) };
-    if (CDA_SET.packs) {
-      if (!CDA_PACKS) CDA_PACKS = await cdaWeekPacks().catch(() => null);
-      if (CDA_PACKS) Object.entries(CDA_PACKS.items).forEach(([k, v]) => { have[k] = (have[k] || 0) + v; });
-    }
-    if (seq !== MK_SEQ || TAB !== tab) return;
     const plan = reachPlan(b.tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, b.conv || []);
     const list = b.tracks.map((tr, k) => ({ tr, html: mkHtml(tr, plan, k) }));
     MK = { tab, list, plan };
@@ -18812,7 +18818,7 @@ function plxTopBox(root) {
 // keys "top:<tab>").
 function g1FoldSync(root) {
   (root || document).querySelectorAll("[data-g1fold]").forEach((b) => {
-    const folded = BAR_SHOW_ALL[b.dataset.g1fold] === false, box = b.closest(".g1-top, .cg-ans, .b3-hd");
+    const folded = BAR_SHOW_ALL[b.dataset.g1fold] === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc");
     if (box) box.classList.toggle("g1-folded", folded);
     // Compared as text: innerHTML gives back the real arrow, not "&#9662;", so an
     // HTML compare rewrote the button every time and the #content observer looped.
@@ -19026,7 +19032,10 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   // Spare items traded into missing ones first, when trades are switched on
   // (weekly trade limits scale with the weeks left until the target).
   await ensureTradeRates();
-  const traded = PACK_COST_MODE === "still" ? tradeAdjustedStill(calcKey, needFull, owned, targetDays) : null;
+  const traded = PACK_COST_MODE === "still" ? tradeAdjustedStill(calcKey, needFull, owned, targetDays, true) : null;
+  // The free trades with their weekly limit (split this week / next weeks like the Backpack box pop-ups).
+  const tradeRates = tradeRatesFor(calcKey);
+  const freeTrades = traded ? traded.trades.map((x) => { const r = tradeRates.find((q) => q.from === x.from && q.to === x.to) || {}; return { ...x, max: Number(r.max) || 0, hidden: !!r.hidden }; }) : [];
   const base = PACK_COST_MODE === "full" ? needFull : (traded ? traded.still : needStill);
   const packGroups = packGroupsFor(tables, calcKey);
   const supplied = new Set();
@@ -19106,7 +19115,29 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         <div class="pc-lines">${g.lines.slice().sort((a, b) => b.count - a.count).map((r) => `<div><span>${qty(r.count)}&times;</span><span>${esc(r.label)}${noteOf ? noteOf(r) : ""}</span><span class="meta">${packFmtLocal(priceOf(r), r.currency, false, r.price)}</span></div>`).join("")}</div></details>`;
     }).join("");
   };
-  const pcaTrades = (trades) => (trades || []).length ? `<div class="pca-h">${esc(t("trade_then"))}</div>${trades.map((x) => `<div class="pca-tr" title="${esc(`${materialDisplayName(x.from)} \u2192 ${materialDisplayName(x.to)}`)}">${pcaIcon(x.from)}<b>${qty(x.giveQty)}</b><span class="pca-ar">&rarr;</span>${pcaIcon(x.to)}<b class="g">${qty(x.getQty)}</b>${x.lab ? ` <small class="meta">(${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})</small>` : ""}</div>`).join("")}` : "";
+  // Free trades counted before buying, one row each, by when they happen (like the box pop-up).
+  const freeParts = freeTrades.flatMap(packTradeWhenSplit).sort((a, b) => (a.when === "week" ? 0 : 1) - (b.when === "week" ? 0 : 1));
+  // One "⇄ Trades · N" card before "What to buy" with every trade: the free ones (this week /
+  // next weeks, packTradeWhenSplit) and the pack plan's own (after the pack), grouped by a
+  // small chip. Hide ▴ / Show ▾ (g1-fold) folds it to one line with the counts; kept per page
+  // in calc_state bar_hidden ("pc:trades:<calcKey>"). No trades: no card.
+  const tradesCard = (planTrades) => {
+    // The Research Lab (planned by the pack planner, one refining week a lot): this week's
+    // lot, then the next weeks', each listed once.
+    const labParts = (planTrades || []).filter((x) => x.lab && x.giveQty > 0).flatMap((x) => packTradeWhenSplit({ ...x, max: 1 }));
+    const groups = [
+      ["week", [...freeParts.filter((x) => x.when === "week"), ...labParts.filter((x) => x.when === "week")]],
+      ["plan", (planTrades || []).filter((x) => x.giveQty > 0 && !x.lab).map((x) => ({ from: x.from, to: x.to, give: x.giveQty, get: x.getQty, lab: x.lab, lots: x.lots }))],
+      ["later", [...freeParts.filter((x) => x.when === "later"), ...labParts.filter((x) => x.when === "later")]],
+    ].filter(([, a]) => a.length);
+    const n = groups.reduce((a, [, r]) => a + r.length, 0);
+    if (!n) return "";
+    const fk = `pc:trades:${calcKey}`, folded = BAR_SHOW_ALL[fk] === false;
+    const row = (x) => `<div class="pca-tr" title="${esc(`${materialDisplayName(x.from)} \u2192 ${materialDisplayName(x.to)}`)}">${pcaIcon(x.from)}<b>${qty(x.give)}</b><span class="pca-ar">&rarr;</span>${pcaIcon(x.to)}<b class="g">${qty(x.get)}</b>${x.lab ? ` <small class="meta">(${esc(t("rfc_title"))}${x.when === "later" ? `, ${x.lots} ${esc(t("rfc_weeks"))}` : ""})</small>` : ""}</div>`;
+    const counts = groups.map(([k, r]) => t(`pca_trn_${k}`).replace("{n}", r.length)).join(" \u00b7 ");
+    return `<div class="pca-tc${folded ? " g1-folded" : ""}"><div class="pca-tch"><span>&#8644; ${esc(t("pca_trades"))}</span><span class="pca-tcn op">&middot; ${n}</span><span class="pca-tcn fd">&middot; ${esc(counts)}</span><button type="button" class="g1-fold" data-g1fold="${esc(fk)}" aria-expanded="${!folded}">${esc(t(folded ? "g1_show" : "g1_hide"))} ${folded ? "&#9662;" : "&#9652;"}</button></div>
+      <div class="pca-tcb">${groups.map(([k, r]) => `<span class="pca-wk ${k}">${esc(t(`pca_tr_${k}`))}</span>${r.map(row).join("")}`).join("")}</div></div>`;
+  };
   // Islands: packs that give Mythic Island Shards (Myriad Bazaar steps) can
   // stand in for Marks / Tomes (hidden trades, islShardTradesNow). Listed
   // greyed when the plan doesn't use them ("Checked, not cheaper", their real
@@ -19203,11 +19234,12 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       }).join("");
       if (got > 0) inPlanHtml = `<div class="pca-h">${esc(t("pca_in_plan"))}</div>${lines}<div class="pca-note ok">&#10003; ${esc(t("pca_free_shards").replace("{n}", qty(got)).replace("{c}", qty(Math.floor(got / islPc))))}</div>`;
     }
+    const sharedFree = tradesCard(trades);
     sharedSections = `<div class="pc-plans">
         <div class="pc-plan on" style="cursor:default;"><div class="pc-k">${esc(t("combined_share"))}</div><b>${big(packSharesLocal(mineShare))}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(whenTxt)}</small></div>
         <button type="button" class="pc-plan" data-gotobudgets title="${esc(t("combined_desc").replace("{pages}", shared.sharedWith.map(packPageLabel).join(", ")))}"><div class="pc-k">${esc(t("pc_all_pages"))}</div><b>${big(packPlanLocal(p))}</b><small>${esc(t("budgets_title"))} &rarr;</small></button>
       </div>
-      <div class="pc-list">${inPlanHtml}${mineShare.rows.length ? `<div class="pca-h">${esc(t(inPlanHtml ? "pca_then_buy" : "pca_buy"))}</div>${pcaRows(byPack, mineShare.rows, packShareLocal, (r) => (r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""))}` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${pcaTrades(trades)}${islCopiesLine(p)}</div>`;
+      <div class="pc-list">${sharedFree}${inPlanHtml}${mineShare.rows.length ? `<div class="pca-h">${esc(t("pca_buy"))}</div>${pcaRows(byPack, mineShare.rows, packShareLocal, (r) => (r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""))}` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${islCopiesLine(p)}</div>`;
   }
   const viewSig = `${JSON.stringify(need)}|${targetDate}|${BUDGET_TARGET || ""}|${JSON.stringify(BUDGET_SELECTED || {})}`;
   const skipPagePlan = !!sharedSections;
@@ -19215,7 +19247,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     sections = `<div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("pack_no_columns"))}</div>`;
   } else if (!Object.keys(need).length) {
     sections = Object.keys(viaTrades.uncovered).length ? "" : `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--good);">${esc(t("pack_nothing_needed"))}</div>
-      ${traded && traded.trades.length ? `<div class="meta" style="font-size:10px; margin:4px 0; color:var(--good);">${esc(t("trade_free"))}: ${traded.trades.map((x) => `${Math.round(x.giveQty).toLocaleString()} ${esc(materialDisplayName(x.from))} → ${Math.round(x.getQty).toLocaleString()} ${esc(materialDisplayName(x.to))}`).join(" &middot; ")}</div>` : ""}`;
+      ${freeParts.length ? `<div class="pc-list">${tradesCard([])}</div>` : ""}`;
   } else if (skipPagePlan) {
     sections = "";
   } else {
@@ -19284,7 +19316,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }) + packYearMark(d); } catch (e) { short = fmtDate(c.plan.days); }
           // Islands' Fastest date is when its packs are bought (free income does the rest later).
           const when = c.plan.days === 0 ? t("pack_ready_now") : packsByDate(c) ? t("pca_packs_by").replace("{d}", short) : `${short} · ${c.plan.days}d`;
-          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(when)}</small></button>`;
+          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(when)}</small>${c === pick && byPack.length ? `<span class="pc-npk">${esc(byPack.length === 1 ? t("pca_pack1") : t("pca_packs").replace("{n}", byPack.length))}</span>` : ""}</button>`;
         };
         const p = pick && pick.plan;
         if (p) pickedTotalText = packFmtLocal(Math.ceil(packPlanLocal(p)), currency, true, p.rows[0]?.price);
@@ -19298,16 +19330,12 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div><div class="pc-list"></div>`;
         if (p) {
           aBuilt = true;
-          const shortDay = (days) => { const d = new Date(today.getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }) + packYearMark(d); } catch (e) { return fmtDate(days); } };
-          const late = targetDays != null && p.days > targetDays;
-          const done = p.days === 0 ? t("pack_ready_now") : `${packsByDate(pick) ? t("pca_packs_by").replace("{d}", shortDay(p.days)) : `${t("pca_done")} ${shortDay(p.days)}`} \u00b7 ${t("pca_in_days").replace("{n}", p.days)}`;
-          const sumA = `<div class="pca-sum${late ? " late" : ""}"><div><b class="pca-big">${pcaCur(pickedTotalText)}</b><span class="pca-done">${esc(done)}</span></div><span class="pca-n">${esc(t("pca_packs").replace("{n}", byPack.length))}</span></div>`;
           const targetA = `<div class="pca-tg"><span aria-hidden="true">&#127919;</span><span>${esc(t("pca_target"))}</span><input type="date" data-packtarget value="${esc(targetDate)}" aria-label="${esc(t("pack_target_by"))}" />${targetDays != null ? `<span class="${targetDays < 0 ? "bad" : "left"}">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : `<span>${esc(t("pack_no_date"))}</span>`}${targetDate ? `<button type="button" class="pca-x" data-packtargetclear title="${esc(t("pack_no_date"))}" aria-label="${esc(t("pack_no_date"))}">&times;</button>` : ""}</div>`;
           const rowsA = pcaRows(byPack, p.rows, packRowLocal, null);
-          const tradesA = pcaTrades(p.trades) + islCopiesLine(p);
+          const tradesA = tradesCard(p.trades);
           // Free day bonus (Shining City Pack's first buy of each event day): not a pack row.
           const bonusA = Object.entries(p.bonus || {}).map(([n, v]) => `<div class="pca-bonus">${pcaIcon(n)}<span>${esc(t("pca_day_bonus").replace("{q}", (Number(ISL_RULES.tomeFreeDay) || 0).toLocaleString()).replace("{n}", qty(v)))}</span></div>`).join("");
-          sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${sumA}${targetA}<div class="pc-list"><div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${bonusA}${tradesA}${islCheckedHtml(p.rows)}@@PCFREE@@</div>`;
+          sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${targetA}<div class="pc-list">${tradesA}<div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${bonusA}${islCopiesLine(p)}${islCheckedHtml(p.rows)}@@PCFREE@@</div>`;
         }
       }
     }
@@ -19330,11 +19358,11 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     if (shared.notIncluded) fallbackNote = sharedNote(t("combined_not_included"));
     else if (shared.combined && Object.keys(need).length && (!shared.combined.chosen || !shared.included)) fallbackNote = sharedNote(t("combined_cant"));
   }
-  const freeBits = [
-    ...activeCards.used.map((u) => `${u.title}${u.until ? ` (${t("pk_active_until")} ${u.until.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" })})` : ""}`),
-    ...(traded && traded.trades.length ? traded.trades.map((x) => `${qty(x.giveQty)} ${materialDisplayName(x.from)} → ${qty(x.getQty)} ${materialDisplayName(x.to)}`) : []),
-  ];
-  const freeHtml = freeBits.length ? `<details class="pc-free"><summary>&#10003; ${esc(t("pc_free_count").replace("{c}", activeCards.used.length).replace("{t}", traded && traded.trades.length ? traded.trades.length : 0))}</summary><div>${freeBits.map((b) => `<div>${esc(b)}</div>`).join("")}</div></details>` : "";
+  // "Already counted": the running cards only (every trade has its own row in the list).
+  const freeBits = activeCards.used.map((u) => `${u.title}${u.until ? ` (${t("pk_active_until")} ${u.until.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" })})` : ""}`);
+  let freeHtml = freeBits.length ? `<details class="pc-free"><summary>&#10003; ${esc(t("pc_cards_count").replace("{c}", activeCards.used.length))}</summary><div>${freeBits.map((b) => `<div>${esc(b)}</div>`).join("")}</div></details>` : "";
+  // (No plan list drawn, e.g. packs can't cover it: the free trades still get their rows.)
+  if (freeParts.length && !/pca-tc/.test(sections)) freeHtml += `<div class="pc-list">${tradesCard([])}</div>`;
   containerEl.style.minHeight = "";
   containerEl.innerHTML = `
     <div class="pc-card pca">
@@ -20678,9 +20706,12 @@ function applyTrades(rates, need, owned, weeks) {
 function tradeWeeksFor(targetDays) {
   return targetDays != null && targetDays > 0 ? Math.floor(targetDays / 7) + 1 : 1;
 }
-function tradeAdjustedStill(calcKey, needFull, owned, targetDays) {
+// noLab: leave the Research Lab's weekly refining (T12's hidden FC → Refined FC rule) to the
+// pack planner, which counts its weeks up to each plan's day (Pack cost); taking this week's
+// refining here too made the planner count the same week twice.
+function tradeAdjustedStill(calcKey, needFull, owned, targetDays, noLab) {
   if (TRADE_APPLY[calcKey] === false) return null; // on by default
-  const rates = tradeRatesFor(calcKey);
+  const rates = tradeRatesFor(calcKey).filter((r) => !(noLab && r.rfcLab));
   if (!rates.length) return null;
   const res = applyTrades(rates, needFull, owned, tradeWeeksFor(targetDays));
   const still = {};
@@ -21344,7 +21375,9 @@ async function budgetForPage(calcKey, targetDays, opts = {}) {
   const needStill = {};
   Object.keys(needFull).forEach((n) => { needStill[n] = Math.max(0, needFull[n] - (Number(owned[n]) || 0)); });
   await ensureTradeRates();
-  const traded = tradeAdjustedStill(calcKey, needFull, owned, targetDays);
+  // The Research Lab's weekly refining is left to the planner (like Pack cost): taking this
+  // week's lot here too made the plan count the same week twice (a week early on T12).
+  const traded = tradeAdjustedStill(calcKey, needFull, owned, targetDays, true);
   if (traded) Object.keys(needStill).forEach((n) => { needStill[n] = traded.still[n] || 0; });
   await ensurePetMarksState();
   const packGroups = packGroupsFor(tables, calcKey);
@@ -21963,7 +21996,7 @@ const BUDGET_PLANS_INDEX = "budget_plans_v2", BUDGET_PLAN_ITEM = "budget_plan_v2
 const BUDGET_PLANS_KEPT = 5;
 function budgetPlanFingerprint(payload) {
   tradeExtraSync();
-  const str = JSON.stringify({ v: 3, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
+  const str = JSON.stringify({ v: 4, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
   // cyrb53: a quick 53-bit hash of the text, plus its length.
   let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
   for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
@@ -32209,6 +32242,13 @@ function plxAmountModal(o) {
   input.onkeydown = (ev) => { if (ev.key === "Enter") save(); else if (ev.key === "Escape") close(); };
   const use = modal.querySelector("#bsEditUse");
   if (use) use.onclick = () => { close(); o.onUse(); };
+}
+// A free trade (with its weekly limit `max`) split by when it happens: lots up to the weekly
+// limit "this week", the rest "next weeks" (no limit = all this week). Used by the Pack cost card.
+function packTradeWhenSplit(x) {
+  if (!(x.lots > 0)) return [];
+  const per = x.giveQty / x.lots, gp = x.getQty / x.lots, a = x.max > 0 ? Math.min(x.lots, x.max) : x.lots, b = x.lots - a;
+  return [a > 0 && { when: "week", from: x.from, to: x.to, give: a * per, get: a * gp, lots: a, lab: x.lab }, b > 0 && { when: "later", from: x.from, to: x.to, give: b * per, get: b * gp, lots: b, lab: x.lab }].filter(Boolean);
 }
 // Third line of a Backpack tile: red "N short", green ✓, or grey — when
 // this page doesn't use it (need 0). { html, off }.

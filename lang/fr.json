@@ -101,7 +101,6 @@
  "t:trade_apply_short": "Utiliser dans le coût des packs",
  "t:trade_lab_line": "Labo de recherche · une fois par semaine (plan réglé sur la page Labo de recherche)",
  "t:trade_card_line2": "{n} échanges cette semaine",
- "t:pc_free_count": "Déjà comptés : {c} cartes actives · {t} échanges gratuits",
  "t:pc_card_days": "{n} jours chacune",
  "t:pc_title": "Coût des packs",
  "t:pc_fastest": "Plus rapide",
@@ -2800,5 +2799,15 @@
 "t:pk_ng_after":"Commence après les nouveaux héros",
 "t:pk_ng_after_desc":"Jours après l'arrivée des nouveaux héros (0 = le même jour). Les packs aux mêmes dates suivent celui-ci.",
 "t:rv_adv":"Avancé (structure de page)",
-"t:rv_adv_warn":"Ces réglages définissent la construction des pages de recherche. Une mauvaise modification peut casser ces pages."
+"t:rv_adv_warn":"Ces réglages définissent la construction des pages de recherche. Une mauvaise modification peut casser ces pages.",
+"t:pc_cards_count":"Déjà comptés : {c} cartes actives",
+"t:pca_pack1":"1 pack",
+"t:pca_trades":"Échanges",
+"t:pca_tr_week":"Cette semaine",
+"t:pca_tr_plan":"Après le pack",
+"t:pca_tr_later":"Semaines suivantes",
+"t:pca_trn_week":"{n} cette semaine",
+"t:pca_trn_plan":"{n} après le pack",
+"t:pca_trn_later":"{n} les semaines suivantes",
+"t:pca_trade_first":"Premier échange"
 }

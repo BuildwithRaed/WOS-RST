@@ -100,7 +100,6 @@
 "t:trade_apply_short":"Pakai di biaya paket",
 "t:trade_lab_line":"Research Lab · seminggu sekali (rencana diatur di halaman Research Lab)",
 "t:trade_card_line2":"{n} tukar minggu ini",
-"t:pc_free_count":"Sudah dihitung: {c} kartu aktif · {t} tukar gratis",
 "t:pc_card_days":"masing-masing {n} hari",
 "t:pc_title":"Biaya Paket",
 "t:pc_fastest":"Tercepat",
@@ -2799,5 +2798,15 @@
 "t:pk_ng_after":"Mulai setelah hero baru",
 "t:pk_ng_after_desc":"Hari sejak hero baru datang (0 = hari yang sama). Paket dengan tanggal yang sama mengikuti paket ini.",
 "t:rv_adv":"Lanjutan (struktur halaman)",
-"t:rv_adv_warn":"Ini mengatur cara halaman riset dibangun. Edit yang salah bisa merusak halaman itu."
+"t:rv_adv_warn":"Ini mengatur cara halaman riset dibangun. Edit yang salah bisa merusak halaman itu.",
+"t:pc_cards_count":"Sudah dihitung: {c} kartu aktif",
+"t:pca_pack1":"1 paket",
+"t:pca_trades":"Tukar",
+"t:pca_tr_week":"Minggu ini",
+"t:pca_tr_plan":"Setelah paket",
+"t:pca_tr_later":"Minggu-minggu berikutnya",
+"t:pca_trn_week":"{n} minggu ini",
+"t:pca_trn_plan":"{n} setelah paket",
+"t:pca_trn_later":"{n} minggu berikutnya",
+"t:pca_trade_first":"Tukar pertama"
 }

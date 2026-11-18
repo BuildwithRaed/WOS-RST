@@ -100,7 +100,6 @@
 "t:trade_apply_short":"Paket maliyetinde kullan",
 "t:trade_lab_line":"Araştırma Laboratuvarı · haftada bir (plan Araştırma Laboratuvarı sayfasında)",
 "t:trade_card_line2":"Bu hafta {n} takas",
-"t:pc_free_count":"Zaten sayıldı: {c} aktif kart · {t} ücretsiz takas",
 "t:pc_card_days":"her biri {n} gün",
 "t:pc_title":"Paket Maliyeti",
 "t:pc_fastest":"En hızlı",
@@ -2799,5 +2798,15 @@
 "t:pk_ng_after":"Yeni kahramanlardan sonra başlar",
 "t:pk_ng_after_desc":"Yeni kahramanların geldiği günden itibaren gün (0 = aynı gün). Aynı tarihli paketler bunu izler.",
 "t:rv_adv":"Gelişmiş (sayfa yapısı)",
-"t:rv_adv_warn":"Bunlar araştırma sayfalarının nasıl kurulduğunu belirler. Yanlış bir düzenleme o sayfaları bozabilir."
+"t:rv_adv_warn":"Bunlar araştırma sayfalarının nasıl kurulduğunu belirler. Yanlış bir düzenleme o sayfaları bozabilir.",
+"t:pc_cards_count":"Zaten sayıldı: {c} aktif kart",
+"t:pca_pack1":"1 paket",
+"t:pca_trades":"Takaslar",
+"t:pca_tr_week":"Bu hafta",
+"t:pca_tr_plan":"Paketten sonra",
+"t:pca_tr_later":"Sonraki haftalar",
+"t:pca_trn_week":"bu hafta {n}",
+"t:pca_trn_plan":"paketten sonra {n}",
+"t:pca_trn_later":"sonraki haftalarda {n}",
+"t:pca_trade_first":"İlk takas"
 }
