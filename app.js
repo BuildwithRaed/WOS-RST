@@ -2625,11 +2625,16 @@ const T = {
   trd_use: { en: "Use trades in Pack cost" },
   trd_short: { en: "Still short after trades" },
   trd_nothing_short: { en: "\u2713 Nothing short" },
-  trd_none: { en: "No spare items to trade this week" },
-  trd_get_from: { en: "Get \u00b7 from" },
+  trd_do_title: { en: "Trade this week" },
+  trd_do_trade: { en: "Trade" },
+  trd_do_none: { en: "Nothing to trade this week" },
+  trd_lots_left: { en: "{n} trades left this week" },
+  trd_limit_reached: { en: "limit reached" },
+  trd_from_trades: { en: "from trades" },
+  trd_rules_title: { en: "Trade rules" },
+  trd_per_day: { en: "{n}/day" },
   trd_enough: { en: "\u2713 enough" },
   trd_short_n: { en: "{n} short" },
-  trd_wk_gain: { en: "+{n} this wk" },
   trd_per_wk: { en: "{n}/wk" },
   trd_day: { en: "Day" },
   trd_week: { en: "Week" },
@@ -20899,38 +20904,50 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   const targets = [...new Set(allRates.map((r) => r.to))];
   const shortOf = (n) => (need[n] > 0 ? Math.ceil(res.after[n] || 0) : 0);
   const usedOf = (r) => res.trades.filter((x) => x.from === r.from && x.to === r.to).reduce((a, x) => a + x.lots, 0);
-  const gainOf = (n) => res.trades.filter((x) => x.to === n).reduce((a, x) => a + x.getQty, 0);
   const bad = targets.filter((n) => shortOf(n) > 0);
   const switchHtml = IS_OWNER ? `<label class="trd-use" title="${esc(t("trade_apply"))}"><span>${esc(t("trd_use"))}</span><span class="pc-switch"><input type="checkbox" data-tradeapply ${TRADE_APPLY[calcKey] !== false ? "checked" : ""} /><i></i></span></label>` : "";
   const shortHtml = bad.length
     ? `<div class="trd-short"><span class="trd-lb">${esc(t("trd_short"))}</span>${bad.map((n) => `<span class="trd-sc" title="${esc(materialDisplayName(n))}">${img(n)}${shortOf(n).toLocaleString()}</span>`).join("")}</div>`
     : `<div class="trd-short ok">${esc(t("trd_nothing_short"))}</div>`;
-  // Short items first, then items this week's trades add to, then the rest.
-  const rank = (n) => (shortOf(n) > 0 ? 0 : gainOf(n) > 0 ? 1 : 2);
-  const order = targets.slice().sort((a, b) => rank(a) - rank(b));
-  const lineHtml = (r) => {
+  const fmtQ = (v) => (v < 10 && v % 1 ? (Math.round(v * 10) / 10).toLocaleString() : qty(v));
+  // Box 1, "Trade this week": what the plan trades this week, as actions.
+  const doRows = rates.filter((r) => usedOf(r) > 0).map((r) => {
     const u = usedOf(r);
-    if (r.rfcLab) return `<div class="trd-gl">${img(r.from, "s")}<span class="trd-rt">${esc(t("trade_lab_line"))}</span></div>`;
-    const head = (cap) => `<div class="trd-gl">${img(r.from, "s")}<span class="trd-rt">${qty(r.give)} ${esc(nm(r.from))} &rarr; ${qty(r.get)}</span><span class="trd-cap">${cap}</span></div>`;
-    // This week's cap (a daily rule: perDay × the days left in the game week).
+    const give = u * r.give, get = u * r.get;
     const wc = tradeWeekCap(r, 0);
     const pd = Number(r.perDay) || 0;
+    const full = wc > 0 && u >= wc;
+    const act = `<div class="trd-da">${esc(t("trd_do_trade"))} <b>${qty(give)}</b>${img(r.from, "s")}<span class="trd-dn">${esc(nm(r.from))}</span><span class="trd-ar">&rarr;</span><b class="trd-dg">+${fmtQ(get)}</b>${img(r.to, "s")}<span class="trd-dn">${esc(nm(r.to))}</span></div>`;
+    let sub = "";
     if (pd > 0 && wc > 0) {
       // Day and Week mini bars. The plan has no per-day split: today's share is this
       // week's planned trades spread over the days left, capped at the daily limit.
       const day = Math.min(pd, Math.ceil(u / Math.max(1, tradeDaysLeftInWeek())));
       const bar = (lb, v, c) => { const z = v >= c; return `<div class="trd-mbr"><span>${esc(t(lb))}</span><div class="trd-bar"><i class="${z ? "z" : ""}" style="width:${Math.min(100, c > 0 ? (v / c) * 100 : 0).toFixed(1)}%"></i></div><span class="trd-nm"><b class="${z ? "z" : ""}">${qty(v)}</b> / ${qty(c)}</span></div>`; };
-      return `${head("")}<div class="trd-mb">${bar("trd_day", day, pd)}${bar("trd_week", u, wc)}</div>`;
+      sub = `<div class="trd-mb">${bar("trd_day", day, pd)}${bar("trd_week", u, wc)}</div>`;
+    } else if (wc > 0) {
+      sub = full ? `<div class="trd-ds z">${esc(t("trd_limit_reached"))}</div>` : `<div class="trd-ds">${esc(t("trd_lots_left").replace("{n}", qty(wc - u)))}</div>`;
     }
-    const cap = wc > 0 ? (u ? `<b class="${u >= wc ? "z" : ""}">${qty(u)}/${qty(wc)}</b>` : esc(t("trd_per_wk").replace("{n}", qty(wc)))) : (u ? `<b>${qty(u)}&times;</b>` : "");
-    return head(cap);
+    return `<div class="trd-dr${full ? " z" : ""}">${act}${sub}</div>`;
+  });
+  const gains = targets.map((n) => [n, rates.filter((r) => r.to === n).reduce((a, r) => a + usedOf(r) * r.get, 0)]).filter(([, g]) => g > 0);
+  const sumHtml = gains.length ? `<div class="trd-dsum">${gains.map(([n, g]) => `<span><b>+${fmtQ(g)}</b> ${esc(nm(n))}</span>`).join(" &middot; ")} ${esc(t("trd_from_trades"))}</div>` : "";
+  const doHtml = `<div class="trd-do"><div class="trd-bt">${esc(t("trd_do_title"))}</div>${doRows.length ? doRows.join("") + sumHtml : `<div class="trd-dnone">${esc(t("trd_do_none"))}</div>`}</div>`;
+  // Box 2, "Trade rules": every rule the page allows, by the item you get. No planned numbers.
+  const ruleHtml = (r) => {
+    if (r.rfcLab) return `<div class="trd-gl">${img(r.from, "s")}<span class="trd-rt">${esc(t("trade_lab_line"))}</span></div>`;
+    const pd = Number(r.perDay) || 0;
+    const cap = pd > 0 ? t("trd_per_day").replace("{n}", qty(pd)) : r.max > 0 ? t("trd_per_wk").replace("{n}", qty(r.max)) : "";
+    return `<div class="trd-gl">${img(r.from, "s")}<span class="trd-rt">${qty(r.give)} ${esc(nm(r.from))} &rarr; ${qty(r.get)}</span><span class="trd-cap">${esc(cap)}</span></div>`;
   };
+  const rank = (n) => (shortOf(n) > 0 ? 0 : need[n] > 0 ? 1 : 2);
+  const order = targets.filter((n) => rates.some((r) => r.to === n)).sort((a, b) => rank(a) - rank(b));
   const cardHtml = (n) => {
-    const s = shortOf(n), g = gainOf(n);
+    const s = shortOf(n);
     const tag = s > 0 ? `<span class="trd-st bad">${esc(t("trd_short_n").replace("{n}", s.toLocaleString()))}</span>` : need[n] > 0 ? `<span class="trd-st ok">${esc(t("trd_enough"))}</span>` : "";
-    const gTxt = g > 0 ? `<span class="trd-gain">${esc(t("trd_wk_gain").replace("{n}", g < 10 && g % 1 ? (Math.round(g * 10) / 10).toLocaleString() : qty(g)))}</span>` : "";
-    return `<div class="trd-gc${g > 0 ? " hot" : ""}"><div class="trd-gh">${img(n)}<b>${esc(nm(n))}</b>${gTxt}<span class="trd-sp"></span>${tag}</div>${allRates.filter((r) => r.to === n).map(lineHtml).join("")}</div>`;
+    return `<div class="trd-gc"><div class="trd-gh">${img(n, "s")}<b>${esc(nm(n))}</b><span class="trd-sp"></span>${tag}</div>${rates.filter((r) => r.to === n).map(ruleHtml).join("")}</div>`;
   };
+  const rulesHtml = `<div class="trd-rules"><div class="trd-bt">${esc(t("trd_rules_title"))}</div>${order.map(cardHtml).join("")}</div>`;
   const calcFroms = [...new Set(rates.map((r) => r.from))];
   const calcHtml = `<div class="trd-calc"><input type="number" min="0" inputmode="decimal" data-tradeqty value="" placeholder="0" aria-label="${esc(t("trd_calc"))}" />
       <span class="trd-dd"><span data-tradefromimg>${img(calcFroms[0], "s")}</span><select data-tradefrom aria-label="${esc(t("trd_calc"))}">${calcFroms.map((n) => `<option value="${esc(n)}">${esc(cnm(n))}</option>`).join("")}</select></span>
@@ -20940,8 +20957,7 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   containerEl.innerHTML = `<div class="pc-card trd">
     <div class="pc-head trd-title"><b>&#8644; ${esc(t("trade_title"))}</b></div>
     ${switchHtml}${shortHtml}
-    ${res.trades.length ? "" : `<div class="trd-none">${esc(t("trd_none"))}</div>`}
-    <div class="trd-lbl">${esc(t("trd_get_from"))}</div>${order.map(cardHtml).join("")}
+    ${doHtml}${rulesHtml}
     <div class="trd-lbl">${esc(t("trd_calc"))}</div>${calcHtml}
   </div>`;
   const applyCb = containerEl.querySelector("[data-tradeapply]");
