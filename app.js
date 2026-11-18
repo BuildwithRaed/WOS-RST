@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 103; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 104; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -1549,7 +1549,6 @@ const T = {
   max_possible: { en: "Max possible" },
   current_label: { en: "Current" },
   difference_label: { en: "Difference" },
-  max_label: { en: "Max" },
   no_sources_yet: { en: "No sources yet" },
   hero_gear_switch_note: { en: "Switches which Hero Gears loadout is counted \u2014 everything else stays the same." },
   roster_heroes_title: { en: "Roster" },
@@ -1853,7 +1852,6 @@ const T = {
   isl_desc: { en: "Tap an island (or its level) to set its level: 0 = not built. \u2193 in a picture's corner moves it to \"Not counted in Dashboard\"." },
   sg_owned_of: { en: "{n} of {total} owned" },
   sg_built_of: { en: "{n} of {total} built" },
-  sg_left: { en: "left" },
   sg_globe_title: { en: "Globe Level" },
   sg_globe_lv: { en: "Globe Level {n}" },
   sg_globe_none: { en: "Globe Level \u00b7 not set" },
@@ -1881,6 +1879,7 @@ const T = {
   isl_pop_hold: { en: "Hold + to go faster" },
   isl_pop_out: { en: "Tap outside to close" },
   isl_target_all: { en: "Target all" },
+  isl_buildings: { en: "Buildings" },
   isl_pc_none: { en: "Nothing to buy" },
   isl_mixed: { en: "Mixed" },
   isl_you_have: { en: "You have" },
@@ -2058,8 +2057,6 @@ const T = {
   hs_no_heroes: { en: "No heroes here yet." },
   pets_level_title: { en: "Pets Level" },
   pets_summed_desc: { en: "Summed across all 15 pets, based on current levels." },
-  troops_attack: { en: "Troops Attack" },
-  troops_defense: { en: "Troops Defense" },
   not_started: { en: "Not started" },
   max_suffix: { en: " (Max)" },
   upcoming_tag: { en: "Upcoming" },
@@ -2544,7 +2541,6 @@ const T = {
   b3_tick: { en: "Count in this budget" },
   b3_ring_tip: { en: "You already have {p}% of what this page needs (Backpack + trades)" },
   b3_missing: { en: "{n} pages not in the plan yet" },
-  b3_set_target: { en: "Target {date}" },
   b3_week: { en: "This week {v}" },
   b3_week_n: { en: "{n} packs" },
   budgets_desc: { en: "Every upgrade plan in one place: materials still needed, what the assigned packs cost, and the stat increase you'd get." },
@@ -2810,7 +2806,6 @@ const T = {
   rf_mk_common: { en: "Common" },
   rf_mk_or_adv: { en: "or {n} Advanced" },
   rf_mk_calc: { en: "Calculator" },
-  rf_left: { en: "{v}% left" },
   rf_stats_info: { en: "Each box is the refine bonus of all your counted pets together for the troop picked above, out of the most they can reach now." },
   marks_desc: { en: "Refining is random, so this is the closest average formula: every missing 1% of a stat costs the Common Marks rate of the stage it's in. Tune the rates or the overall adjustment as your own results come in. These are the fewest marks that reach the target on average; your real count may differ." },
   marks_rates: { en: "Common Marks per 1% (by stage)" },
@@ -3004,8 +2999,6 @@ const T = {
   vip_bundle_go: { en: "Budgets \u203a" },
   vip_bundle_30d: { en: "in the next 30 days" },
   vip_bundle_by: { en: "by {date}" },
-  bn_stats_all: { en: "Troop stats · all troops" },
-  bn_stats: { en: "Troop stats" },
   bn_left: { en: "+{n} left" },
   bn_max: { en: "✓ max" },
   bn_of_owned: { en: "of {n} owned" },
@@ -9856,7 +9849,7 @@ async function renderPurchasesPage() {
   const pane = (k, body) => `<div class="pur-o1-pane" data-purpane="${k}"${PUR_TAB === k ? "" : " hidden"}>${body}</div>`;
 
   content.innerHTML = `
-    <div class="plx-head pur-a2-head"><h2>${esc(t("pur_title"))}</h2><button type="button" class="btn pur-a2-add" data-pursheet="add">+ ${esc(t("pur_a2_add"))}</button></div>
+    <div class="plx-head pur-a2-head"><h2>${esc(t("pur_title"))}</h2><button type="button" class="btn pur-a2-add hd-btn" data-pursheet="add">+ ${esc(t("pur_a2_add"))}</button></div>
     <p class="desc">${esc(t("pur_desc"))} ${esc(t("pur_how"))}</p>
     <div class="pur-a2">
       <div class="pur-a2-l">
@@ -11684,7 +11677,7 @@ async function renderPackCalendarPage() {
 
     const y = window.scrollY;
     content.innerHTML = `
-      <div class="plx-head pcl-head"><h2>${esc(t("pack_cal_title"))}</h2><button type="button" class="pcl-fbtn" data-pclfilter>&#9881; ${esc(t("pcl_filter"))}${nCh ? `<span class="pcl-badge">${nCh}</span>` : ""}</button></div>
+      <div class="plx-head pcl-head"><h2>${esc(t("pack_cal_title"))}</h2><button type="button" class="pcl-fbtn hd-btn" data-pclfilter>&#9881; ${esc(t("pcl_filter"))}${nCh ? `<span class="pcl-badge">${nCh}</span>` : ""}</button></div>
       <p class="desc">${esc(t("pcl_desc"))}</p>
       <div class="panel pcl-ans">
         <div class="pcl-two">
@@ -11837,8 +11830,8 @@ async function renderPacksPage() {
         <p class="desc">${esc(IS_OWNER ? t("packs_desc") : t("packs_desc_visitor"))}</p>
       </div>
       <div class="pkb-hbtns">
-        ${hiddenForVisitor("page", "packcalendar") ? "" : `<button class="btn ghost" id="packsCalendarBtn">📅 ${esc(t("pack_cal_button"))}</button>`}
-        ${IS_OWNER ? `<button class="btn pkb-add" id="packsAddTable" title="${esc(t("add_table_button"))}" aria-label="${esc(t("add_table_button"))}">+</button>` : ""}
+        ${hiddenForVisitor("page", "packcalendar") ? "" : `<button class="btn ghost hd-btn" id="packsCalendarBtn">📅 ${esc(t("pack_cal_button"))}</button>`}
+        ${IS_OWNER ? `<button class="btn pkb-add hd-btn" id="packsAddTable" title="${esc(t("add_table_button"))}" aria-label="${esc(t("add_table_button"))}">+</button>` : ""}
       </div>
     </div>
     <div class="pk-zone-note">ℹ️ ${esc(t("pk_zone_note"))}</div>
@@ -18830,53 +18823,63 @@ function infoize(root) {
 const TOPBOX_TABS = { charmscalc: "LETH & HP", herogearcalc: "hg", refinepage: "", petsdata: "", t12research: "nostats", t11helios: "nostats", researchcenter: "nostats", expertspage: "experts", expertsresearchpage: "experts" };
 const TOPBOX_MQ = window.matchMedia("(max-width: 900px)");
 // Pages whose Settings line moves into the top box, above the stats.
-const TOPBOX_SET_TABS = new Set(["refinepage", "t12research", "t11helios", "researchcenter"]);
+const TOPBOX_SET_TABS = new Set(["t12research", "t11helios", "researchcenter"]);
+// The one ▴ Hide square of a top card: at the end of its BACKPACK row (else
+// the card's title line until the Backpack row is drawn).
+function g1FoldHome(fold, foot, home) {
+  const at = foot || home;
+  if (at && (fold.parentNode !== at || at.lastElementChild !== fold)) at.appendChild(fold);
+}
 function plxTopBox(root) {
   if (!(TAB in TOPBOX_TABS) || !TOPBOX_MQ.matches) return;
   const shell = root.querySelector(".t12x.g1:not(.cg1)"), main = shell && shell.querySelector(".t12x-main");
   if (!main) return;
   let box = main.querySelector(":scope > .g1-top");
+  const kind = TOPBOX_TABS[TAB];
   if (!box) {
     box = document.createElement("div");
-    box.className = "panel cg-ans g1-top";
-    // Header with Hide / Show for everything under the stats.
-    box.innerHTML = `<div class="g1-set"></div><div class="g1-hd"><span class="g1-hd-t">${esc(t(TOPBOX_TABS[TAB] === "nostats" ? "bs_from_backpack" : "troops_stats_title"))}</span><button type="button" class="g1-fold" data-g1fold="top:${esc(TAB)}"></button></div><div class="g1-st"></div><div class="g1-mk"></div><div class="cg-sec g1-can"></div><div class="cg-sec cg-bp g1-bp"></div>`;
-    // Heroes Gears (B1): the box sits under the troop switch + Set row.
-    const bar = main.querySelector(":scope > .hg-bar");
-    main.insertBefore(box, bar ? bar.nextSibling : main.firstChild);
-    // Pets Refine: "Troops Stats (i)" in title case.
+    box.className = `panel cg-ans g1-top${kind === "nostats" ? " g1-nost" : ""}`;
+    // Settings row, "TROOPS STATS" title, troop switch, stats, BACKPACK row (with the ▴ Hide square) and its boxes.
+    box.innerHTML = `<div class="g1-set"></div><div class="g1-hd"${kind === "nostats" ? " hidden" : ""}><span class="g1-hd-t">${esc(t("troops_stats_title"))}</span></div><div class="g1-sw"></div><div class="g1-st"></div><div class="g1-mk"></div><div class="cg-sec g1-can"></div><div class="cg-sec cg-bp g1-bp"></div><div class="g1-gem"></div>`;
+    main.insertBefore(box, main.firstChild);
     if (TAB === "refinepage") {
-      box.classList.add("rf-top");
       const d = document.createElement("p"); d.className = "desc"; d.textContent = t("rf_stats_info");
       infoAttach(box.querySelector(".g1-hd-t"), d);
     }
   }
+  let fold = box.querySelector("[data-g1fold]");
+  if (!fold) {
+    fold = document.createElement("button");
+    fold.type = "button"; fold.className = "g1-fold g1-sq"; fold.dataset.g1fold = `top:${TAB}`;
+  }
   const put = (slot, el) => { if (el && !slot.contains(el)) { slot.replaceChildren(el); } };
   // The page's Settings card (same element, so its boxes keep their handlers).
   if (TOPBOX_SET_TABS.has(TAB)) put(box.querySelector(".g1-set"), shell.querySelector(".t12x-side > .t12x-settings"));
+  // Pets Refine: "Pack gems count as marks" is a slim line under the Backpack boxes.
+  if (TAB === "refinepage") put(box.querySelector(".g1-gem"), shell.querySelector(".t12x-side > .t12x-settings"));
   // Research pages keep their stats where they are.
-  if (TOPBOX_TABS[TAB] === "experts") {
+  if (kind === "experts") {
     // Experts Level / Research: the Troops Stats card moves in, and
     // its title (with the (i) of what each tab counts) becomes the box's title.
     put(box.querySelector(".g1-st"), shell.querySelector(".t12x-main > .plx-stats-top"));
     const ttl = box.querySelector(".g1-st > .plx-stats-top > .t12x-title");
     if (ttl) put(box.querySelector(".g1-hd-t"), ttl);
-  } else if (TOPBOX_TABS[TAB] === "hg") {
-    // Heroes Gears (B1): "<Troop> stats", its 4 boxes and its "Can do now".
-    const ht = box.querySelector(".g1-hd-t"), want = hgStatsTitle();
-    if (ht.textContent !== want) ht.textContent = want;
-    ht.dataset.hgsttl = "";
+  } else if (kind === "hg") {
+    // Heroes Gears: the troop switch + Set dropdown inside the card, on one line, then its 4 boxes.
+    const bar = shell.querySelector(".t12x-main > .hg-bar");
+    if (bar) { const ph = bar.previousElementSibling; put(box.querySelector(".g1-sw"), bar); if (ph && ph.classList.contains("plx-pin-ph")) ph.remove(); }
     put(box.querySelector(".g1-st"), shell.querySelector("#hgStats"));
     const s = shell.querySelector("[data-rchsum][data-rchpage='hero_gear']");
     if (s && s.innerHTML.trim()) put(box.querySelector(".g1-can"), s);
-  } else if (TOPBOX_TABS[TAB] !== "nostats") put(box.querySelector(".g1-st"), shell.querySelector(".plx-tsw:not(.g1-top .plx-tsw)") || shell.querySelector("#refineStats") || shell.querySelector("#petsTotals"));
-  const sums = TOPBOX_TABS[TAB] === "hg" ? [] : [...shell.querySelectorAll("[data-rchsum]")].filter((x) => !box.contains(x) && x.offsetParent !== null && x.innerHTML.trim());
+  } else if (kind !== "nostats") put(box.querySelector(".g1-st"), shell.querySelector(".plx-tsw:not(.g1-top .plx-tsw)") || shell.querySelector("#refineStats") || shell.querySelector("#petsTotals"));
+  const sums = kind === "hg" ? [] : [...shell.querySelectorAll("[data-rchsum]")].filter((x) => !box.contains(x) && x.offsetParent !== null && x.innerHTML.trim());
   if (sums.length) put(box.querySelector(".g1-can"), sums[0]);
   put(box.querySelector(".g1-mk"), shell.querySelector("#refineMk"));
   const amts = shell.querySelector(".t12x-amts > [id]");
   put(box.querySelector(".g1-bp"), amts);
   const can = box.querySelector(".g1-can"), noCan = !can.innerHTML.trim();
   if (can.hidden !== noCan) can.hidden = noCan;
+  g1FoldHome(fold, box.querySelector(".g1-bp .bs-foot"), box.querySelector(".g1-hd"));
   g1FoldSync(box);
 }
 // Hide / Show in the top box's header (and Chief Gear's answer card): folds
@@ -18889,8 +18892,10 @@ function g1FoldSync(root) {
     if (box) box.classList.toggle("g1-folded", folded);
     // Compared as text: innerHTML gives back the real arrow, not "&#9662;", so an
     // HTML compare rewrote the button every time and the #content observer looped.
-    const txt = `${t(folded ? "g1_show" : "g1_hide")} ${folded ? "\u25BE" : "\u25B4"}`;
+    const word = t(folded ? "g1_show" : "g1_hide"), sq = b.classList.contains("g1-sq");
+    const txt = sq ? (folded ? "\u25BE" : "\u25B4") : `${word} ${folded ? "\u25BE" : "\u25B4"}`;
     if (b.textContent !== txt) b.textContent = txt;
+    if (sq && b.getAttribute("aria-label") !== word) { b.setAttribute("aria-label", word); b.title = word; }
     if (b.getAttribute("aria-expanded") !== String(!folded)) b.setAttribute("aria-expanded", String(!folded));
   });
 }
@@ -18902,7 +18907,22 @@ document.addEventListener("click", (e) => {
   saveBarHidden();
   g1FoldSync();
 });
-TOPBOX_MQ.addEventListener("change", () => { if (TAB in TOPBOX_TABS) render(); });
+TOPBOX_MQ.addEventListener("change", () => { if (TAB in TOPBOX_TABS || TAB === "chiefgear") render(); });
+// Common page header: the page name exactly as in the Menu (renamed pages follow), and
+// Chief Gear's ▴ Hide square at the end of its BACKPACK row on phones.
+const HDR_TITLE_SKIP = new Set(["overview", "aboutpage", "contactpage", "adminpage"]);
+function hdrSync(c) {
+  if (!HDR_TITLE_SKIP.has(TAB) && NAV_PAGE_LABELS[TAB]) {
+    const h = c.querySelector(".plx-head h2, .page-head h2");
+    const tn = h && [...h.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
+    const want = navLabel(TAB);
+    if (tn && want && tn.textContent.trim() !== want) tn.textContent = want;
+  }
+  if (TAB === "chiefgear") {
+    const fold = c.querySelector(".cg-ans [data-g1fold]");
+    if (fold) g1FoldHome(fold, TOPBOX_MQ.matches ? c.querySelector("#cgBp .bs-foot") : null, c.querySelector(".cg-ans > .cg-kr"));
+  }
+}
 // Backpack boxes on phones: when the last row would hold less than half a row (e.g. 5
 // boxes, 4 a row), all the boxes go in one row that scrolls sideways instead, so the card
 // stays compact. Decided again when the count or the width changes.
@@ -18934,7 +18954,7 @@ document.addEventListener("click", () => { const c = document.getElementById("co
 {
   let queued = false;
   let mkSeen = -1;
-  const run = () => { queued = false; const c = document.getElementById("content"); if (c) { if (visitorCan("cando")) { if (mkSeen !== RENDER_SEQ) { mkSeen = RENDER_SEQ; if (!MK || MK.tab !== TAB) MK = null; mkSoon(500); } mkInfo(c); mkApply(); } infoize(c); plxTopBox(c); bsSlideFit(c); if (DASH_RC_OPEN) { if (TAB !== "overview" || !DASH_RC_MQ.matches) dashRcSheet(null); else if (!document.querySelector(".rc-card.rc-open")) dashRcSheet(DASH_RC_OPEN); } } };
+  const run = () => { queued = false; const c = document.getElementById("content"); if (c) { if (visitorCan("cando")) { if (mkSeen !== RENDER_SEQ) { mkSeen = RENDER_SEQ; if (!MK || MK.tab !== TAB) MK = null; mkSoon(500); } mkInfo(c); mkApply(); } infoize(c); plxTopBox(c); hdrSync(c); bsSlideFit(c); if (DASH_RC_OPEN) { if (TAB !== "overview" || !DASH_RC_MQ.matches) dashRcSheet(null); else if (!document.querySelector(".rc-card.rc-open")) dashRcSheet(DASH_RC_OPEN); } } };
   const c = document.getElementById("content");
   if (c) new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(c, { childList: true, subtree: true });
   let pinned = null;
@@ -20223,7 +20243,7 @@ async function renderRfcLabPage() {
   };
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = `<div class="rl">
-    <div class="plx-head rl-head"><h2>${esc(t("rfc_title"))}</h2><button type="button" class="btn rl-tiers" data-rlopentiers>${esc(t("rl_tiers_btn"))}</button></div>
+    <div class="plx-head rl-head"><h2>${esc(t("rfc_title"))}</h2><button type="button" class="btn rl-tiers hd-btn" data-rlopentiers>${esc(t("rl_tiers_btn"))}</button></div>
     <p class="desc">${esc(t("rl_desc"))}</p>
     <div class="rl-grid">
       <div class="rl-col">${headHtml}${fastHtml}</div>
@@ -24295,7 +24315,8 @@ async function renderBudgetsPage(opts = {}) {
   })();
   const wkTab = "purchases";
   // Settings sits beside ↻ at the top; This week has the bottom row.
-  const setBtnHtml = `<button type="button" class="b3-tile b3-setb" data-b3sheet="settings"><span class="b3-gear">&#9881;</span><span class="b3-lr-t"><b>${esc(t("t12x_settings"))}</b><small>${esc(targetDays != null ? t("b3_set_target").replace("{date}", shortDay(targetDays)) : t("pack_no_date"))} · ${esc(DISPLAY_CURRENCY || "USD")}</small></span></button>`;
+  // Title-row button: "⚙ <target date> · <currency>", opens the Settings sheet.
+  const setBtnHtml = `<button type="button" class="b3-setb hd-btn" data-b3sheet="settings" title="${esc(t("t12x_settings"))}" aria-label="${esc(t("t12x_settings"))}">&#9881; ${esc(targetDays != null ? shortDay(targetDays) : t("pack_no_date"))} · ${esc(DISPLAY_CURRENCY || "USD")}</button>`;
   const lrHtml = `<div class="b3-lr">
       <button type="button" class="b3-tile wk" data-gototab="${wkTab}"><img src="${esc(QUICK_ICONS[wkTab])}" alt="" /><span class="b3-lr-t"><b>${esc(t("b3_week").replace("{v}", wkData ? b3Money(wkData.money) : "…"))}</b><small>${esc(t("b3_week_n").replace("{n}", wkData ? wkData.n : "…"))} · ${esc(navLabel(wkTab))}</small></span><span class="b3-go">&#8250;</span></button>
     </div>`;
@@ -24339,7 +24360,8 @@ async function renderBudgetsPage(opts = {}) {
   if (planPending) holdPageHeight(true);
   keepFolds(content, () => { content.innerHTML = `
     <div class="budget-wrap b3">
-      <div class="plx-head b3-head"><h2 title="${esc(t("budgets_desc"))}">${esc(t("budgets_title"))}</h2>${setBtnHtml}<button type="button" class="b3-sq" data-budgetrecalc title="${esc(t("budgets_recalc_hint"))}" aria-label="${esc(t("budgets_recalc"))}">&#8635;</button></div>
+      <div class="plx-head b3-head"><h2>${esc(t("budgets_title"))}</h2>${setBtnHtml}<button type="button" class="b3-sq hd-btn" data-budgetrecalc title="${esc(t("budgets_recalc_hint"))}" aria-label="${esc(t("budgets_recalc"))}">&#8635;</button></div>
+      <p class="desc">${esc(t("budgets_desc"))}</p>
       <div class="b3-cols">
         <div class="b3-left">${totalHtml}${cdaTileHtml()}${goalFlagsHtml}${lrHtml}</div>
         <div class="b3-right">${tilesHtml}${missHtml}</div>
@@ -24945,7 +24967,8 @@ async function renderChiefGearCalc() {
     maxId: "gearMaxAllBtn",
     amountsId: "gearOwned", needId: "gearNeed",
     statsHtml: `<div class="panel cg-ans">
-        <div class="cg-kr"><span class="cg-k" title="${esc(t("troops_stats_title"))} · ATK &amp; DEF">ATK &amp; DEF</span><span class="cg-sx" id="cgSets"></span><button type="button" class="g1-fold" data-g1fold="top:chiefgear"></button></div>
+        <div class="cg-kr"><span class="cg-k">${esc(t("troops_stats_title"))}</span><button type="button" class="g1-fold g1-sq" data-g1fold="top:chiefgear"></button></div>
+        <div class="cg-sx cg-sxrow" id="cgSets"></div>
         <div id="gearCurrentStats"></div>
         <div class="cg-sec cg-bp" id="cgBp"></div>
       </div>`,
@@ -26072,11 +26095,12 @@ function galStatShort(bt) {
 }
 // Stat boxes of the answer card: label + amber "+N left" (green ✓ at max), the
 // value big, "/ max" small, a bar along the bottom edge. list: [{ label, val, max }]
-function galStatBoxesHtml(list, opts = {}) {
-  return `<div class="sg-s2${list.length === 4 ? " n4" : ""}">${list.map((s) => {
-    const val = Number(s.val || 0), max = s.max == null ? null : Number(s.max), left = max == null ? 0 : Math.max(0, max - val);
-    const pct = max > 0 ? Math.min(100, (val / max) * 100) : 0, done = max > 0 && left < 0.005;
-    return `<div class="sg-sb"><div class="sg-sbt"><span>${esc(s.label)}</span>${max > 0 && !opts.noLeft ? (done ? `<em class="ok">&#10003;</em>` : `<em>${bidiNum(`+${galNum(left)}`)} ${esc(t("sg_left"))}</em>`) : ""}</div><b>${bidiNum(`+${galNum(val)}%`)}</b>${max != null ? `<small>/ ${bidiNum(`${galNum(max)}%`)}</small>` : ""}${max != null ? `<div class="sg-bar${done ? " full" : ""}"><i style="width:${pct}%;"></i></div>` : ""}</div>`;
+function galStatBoxesHtml(list) {
+  // Planner stat style, in one row: label, value, "/ +max", a thin bar.
+  return `<div class="plx-stats one hdr-st" style="--n:${list.length};">${list.map((s) => {
+    const val = Number(s.val || 0), max = s.max == null ? null : Number(s.max);
+    const pct = max > 0 ? Math.min(100, (val / max) * 100) : 0, done = max > 0 && max - val < 0.005;
+    return `<div class="plx-stat"><span>${esc(s.label)}</span><b>${bidiNum(`+${galNum(val)}%`)}</b>${max != null ? `<small>${bidiNum(`/ +${galNum(max)}%`)}</small><div class="t12x-bar"><i style="width:${pct}%;${done ? " background:var(--good);" : ""}"></i></div>` : ""}</div>`;
   }).join("")}</div>`;
 }
 // All / Owned / Not owned + a search button that opens a search row.
@@ -26270,7 +26294,7 @@ async function renderSkinGallery() {
       </div>
     </div>
     <div class="panel cg-ans sg-ans">
-      <div class="sg-k"><span>${esc(t("troops_stats_title"))}</span><span class="sg-kr" id="skinSummaryLine"></span><button type="button" class="g1-fold isl-fold" data-g1fold="top:skingallery" aria-expanded="true"></button></div>
+      <div class="sg-k"><span>${esc(t("troops_stats_title"))}</span><span class="sg-kr" id="skinSummaryLine"></span><button type="button" class="g1-fold g1-sq" data-g1fold="top:skingallery" aria-expanded="true"></button></div>
       <div id="skinTotals"></div>
       <div class="sg-fb">
         <button type="button" class="sg-rb" id="sgGlobeBtn" aria-haspopup="dialog"></button>
@@ -26609,7 +26633,7 @@ async function renderSkinGallery() {
       ? galStatBoxesHtml(totalEntries.map(([type, maxVal]) => {
           const bare = type.replace(/^Troops?\s+/i, "");
           return { label: STAT_ABBR[bare] || tStatLabel(type), val: totalsByType[type] || 0, max: maxVal };
-        }), { noLeft: true })
+        }))
       : `${galStatBoxesHtml([{ label: t("total_bonus"), val: 0 }])}<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mark_skins_owned_hint"))}</div>`;
 
     const sections = document.getElementById("skinSections");
@@ -27103,16 +27127,17 @@ async function renderIslandGallery() {
         <p class="desc">${esc(t("isl_desc"))}</p>
         <div class="sg-lg"><span>${esc(t("isl_lg_tap"))}</span><span>${esc(t("isl_lg_faded"))}</span><span class="g">${esc(t("isl_lg_max"))}</span><span><i class="sg-mvk">&#8595;</i>${esc(t("sg_lg_move"))}</span></div>
       </div>
-      ${visitorCan("islandscan") ? `<button type="button" class="cg-bpbtn isl-scanb isl-scant" data-islscan title="${esc(t("scan_isl_btn"))}">&#128247; <span class="isl-scanw">${esc(t("scan_isl_btn"))}</span><span class="isl-scann">${esc(t("scan_short"))}</span></button>` : ""}
+      ${visitorCan("islandscan") ? `<button type="button" class="cg-bpbtn isl-scanb isl-scant hd-btn" data-islscan title="${esc(t("scan_isl_btn"))}">&#128247; <span class="isl-scanw">${esc(t("scan_isl_btn"))}</span><span class="isl-scann">${esc(t("scan_short"))}</span></button>` : ""}
     </div>
     <div class="panel cg-ans sg-ans">
-      <div class="sg-k"><span>${esc(t("troops_stats_title"))}</span><span class="sg-kr" id="islandSummaryLine"></span><button type="button" class="g1-fold isl-fold" data-g1fold="top:islandgallery" aria-expanded="true"></button></div>
+      <div class="sg-k"><span>${esc(t("troops_stats_title"))}</span><span class="sg-kr" id="islandSummaryLine"></span></div>
       <div id="islandTroopTotals"></div>
       <div id="islandShardPlan"></div>
     </div>
     <div class="g1 isl-g1" id="islMkWrap" hidden><div class="t12x-card t12x-buy" id="islMkBuy"><div class="cg-sh-h"><b data-cgbuyt>${esc(t("pack_cost_title"))}</b>${closeXHtml("data-cgclose")}</div><div data-buybody id="islMkPacks"></div></div><div class="cg-bd" data-islbd hidden></div></div>
     ${galToolsHtml("island", ISLAND_FILTER, t("search_islands_placeholder"))}
     <div id="islandCatSwitcher" class="sg-cats"></div>
+    <div class="isl-lsth" id="islTargetAll"></div>
     <div id="islandSections" class="sg-isl"></div>
   `;
   { const sb = content.querySelector(".isl-head [data-islscan]"); if (sb) sb.onclick = () => openIslandScan(); }
@@ -27456,7 +27481,8 @@ async function renderIslandGallery() {
     const host = document.getElementById("islandShardPlan");
     if (!host) return;
     const list = planList(), tAll = tgtAllList();
-    if (!tAll.length) { host.innerHTML = ""; return; }
+    const tHost = document.getElementById("islTargetAll");
+    if (!tAll.length) { host.innerHTML = ""; if (tHost) tHost.innerHTML = ""; return; }
     const st = ISL_SHARDS;
     const P = planTotals(list), LPn = lightPlan(), left = P.left + LPn.ess, short = Math.max(0, P.left + LPn.ess - P.have);
     // The level last picked shows while every building still follows it (each one
@@ -27483,11 +27509,11 @@ async function renderIslandGallery() {
     tiles.push(tile("tomes", "icons/glorious-tome.png", t("isl_tm_name"), tomeHave(), Math.max(0, tmN), Math.max(0, tmN - tomeHave())));
     // Lighthouse Blueprints as General Accessory Construction Contracts (owner, 16 Nov 2026).
     tiles.push(tile("contracts", CT_ICON, t("isl_lh_ct"), contractHave(), LPn.ct, LPn.short));
-    const boxesOn = BAR_SHOW_ALL.islands !== false, mkTotal = markSheetTotal() + (sharedPlan().tomes || 0) + (sharedPlan().shNeed || 0) + Math.max(0, lightBuy() - contractHave());
+    const boxesOn = true, mkTotal = markSheetTotal() + (sharedPlan().tomes || 0) + (sharedPlan().shNeed || 0) + Math.max(0, lightBuy() - contractHave());
     // The Pack cost button sits on the Target row, always there (greyed when nothing to buy).
     const canBuy = mkTotal > 0 && visitorCan("packcost");
     const priceBtn = canBuy ? `<button type="button" class="cg-bpbtn ice isl-pcb" data-islpc data-islmkprice>${plxPriceLabel("islands")}</button>` : `<button type="button" class="cg-bpbtn isl-pcb off" disabled>${esc(t("isl_pc_none"))}</button>`;
-    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.min(5, Math.max(3, tiles.length))}; --nm:${Math.min(5, Math.max(3, tiles.length))}; --ns:${Math.min(4, Math.max(3, tiles.length))};">${tiles.join("")}</div>` : ""}</div>`;
+    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><span class="cg-bpb plx-bpb">${priceBtn}</span><button type="button" class="g1-fold g1-sq" data-g1fold="top:islandgallery"></button></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.min(5, Math.max(3, tiles.length))}; --nm:${Math.min(5, Math.max(3, tiles.length))}; --ns:${Math.min(4, Math.max(3, tiles.length))};">${tiles.join("")}</div>` : ""}</div>`;
     const inc = islIncome(st), sd = islShardsDay(st);
     // Free Construction Contracts (owner, 16 Nov 2026): weekly + each KOI / SvS, counted before the pack.
     let ctLine = "";
@@ -27507,9 +27533,12 @@ async function renderIslandGallery() {
       ctLine = `<div class="isl-ctl"><span class="isl-ic" aria-hidden="true">${ctImg}</span><span class="tx"><b>${rate}</b><small>${msg}</small></span></div>`;
     }
     const incLine = `<span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(sd)))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(inc.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span>`;
-    host.innerHTML = `<div class="isl-pl"><div class="isl-row isl-tr"><label class="isl-tl"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>${priceBtn}</div>
+    // "Target all" sits on the BUILDINGS list title under the card.
+    if (tHost) tHost.innerHTML = `<span class="isl-lst">${esc(t("isl_buildings"))}</span><label class="isl-tl"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>`;
+    host.innerHTML = `<div class="isl-pl">
       ${res}
       <button type="button" class="isl-inc" data-islinc>${incLine}</button>${ctLine}</div>`;
+    g1FoldSync(host);
     // The plan's details sit behind an (i) beside the Backpack title (owner, 9 Nov 2026); the income bar stays under the boxes.
     const why = document.createElement("div"); why.className = "isl-why"; why.innerHTML = resultLine();
     infoAttach(host.querySelector(".isl-bp .bs-foot > span:first-child"), why);
@@ -27546,6 +27575,7 @@ async function renderIslandGallery() {
       if (e.target.closest("[data-islscan]")) { openIslandScan(); return; }
       if (e.target.closest("[data-islinc]")) islIncomeSheet(() => { if (document.getElementById("islandShardPlan")) { drawPlan(); } });
     };
+    const tHost = document.getElementById("islTargetAll");
     host.onchange = (e) => {
       const sel = e.target.closest("[data-isltall]");
       if (!sel || !sel.value) return;
@@ -27555,6 +27585,7 @@ async function renderIslandGallery() {
       islSave();
       keepPlace(() => computeAndRender());
     };
+    if (tHost) tHost.onchange = host.onchange;
   }
 
   // Mark of Revival for Budgets: every tracked category's Mark-shop buildings together (the
@@ -27665,10 +27696,10 @@ async function renderIslandGallery() {
     const box = (label, tot) => ({ label, val: tot ? tot.cur : 0, max: tot ? tot.max : 0 });
     const troopTab = { Infantry: "Infantry", Lancers: "Lancer", Marksman: "Marksman" };
     document.getElementById("islandTroopTotals").innerHTML = plxStatTabsHtml("islands", [
-      { key: "all", label: t("plx_all_troops"), html: galStatBoxesHtml(RAW_STATS.map((stat) => box(STAT_ABBR2[stat] || stat, generalTotals[stat])), { noLeft: true }) },
+      { key: "all", label: t("plx_all_troops"), html: galStatBoxesHtml(RAW_STATS.map((stat) => box(STAT_ABBR2[stat] || stat, generalTotals[stat]))) },
       ...["Infantry", "Lancers", "Marksman"].map((tr) => ({
         key: tr, label: troopDisplayName(troopTab[tr]), color: PLX_TROOP_COLORS[troopTab[tr]],
-        html: galStatBoxesHtml(["Attack", "Defense"].map((stat) => box(STAT_ABBR2[stat], specificTotals[`${tr} ${stat}`])), { noLeft: true }),
+        html: galStatBoxesHtml(["Attack", "Defense"].map((stat) => box(STAT_ABBR2[stat], specificTotals[`${tr} ${stat}`]))),
       })),
     ]);
   }
@@ -28493,10 +28524,10 @@ function bnAbbr(s) { return BN_ABBR[s] || tStatLabel(s || ""); }
 function bnFmt(v) { return String(Math.round((Number(v) || 0) * 100) / 100); }
 // list: [{ label, val, max }]
 function bnBoxesHtml(list) {
-  return `<div class="bn-s2${list.length >= 4 ? " n4" : ""}">${list.map((s) => {
-    const val = Number(s.val) || 0, max = Number(s.max) || 0, left = Math.max(0, max - val), pct = max > 0 ? Math.min(100, (val / max) * 100) : 0;
-    const tag = left > 1e-9 ? `<em>${bidiNums(esc(t("bn_left").replace("{n}", bnFmt(left))))}</em>` : max > 0 ? `<em class="ok">${esc(t("bn_max"))}</em>` : "";
-    return `<div class="bn-sb"><div class="bn-sb-t"><span>${esc(s.label)}</span>${tag}</div><b>${bidiNum(`+${bnFmt(val)}%`)}</b><small>${bidiNum(`/ ${bnFmt(max)}%`)}</small><span class="bn-bar${max > 0 ? "" : " z"}"><i style="width:${pct.toFixed(1)}%"></i></span></div>`;
+  // Planner stat style, in one row: label, value, "/ +max", a thin bar (green at max).
+  return `<div class="plx-stats one hdr-st" style="--n:${list.length};">${list.map((s) => {
+    const val = Number(s.val) || 0, max = Number(s.max) || 0, pct = max > 0 ? Math.min(100, (val / max) * 100) : 0, done = max > 0 && max - val < 1e-9;
+    return `<div class="plx-stat"><span>${esc(s.label)}</span><b>${bidiNum(`+${bnFmt(val)}%`)}</b><small>${bidiNum(`/ +${bnFmt(max)}%`)}</small><div class="t12x-bar"><i style="width:${pct.toFixed(1)}%;${done ? " background:var(--good);" : ""}"></i></div></div>`;
   }).join("")}</div>`;
 }
 // Card heading (small caps) with an optional right part (already HTML).
@@ -28567,7 +28598,7 @@ async function renderVipTierTable(target) {
     target.innerHTML = `<div class="t12x bn-pg">
       ${bnTitleHtml(navLabel("extrabonus:Vip Tier"), t("vip_tier_desc"))}
       <div class="t12x-card bn-card">
-        ${bnHeadHtml(t("bn_stats_all"), esc(tierName(cur)))}
+        ${bnHeadHtml(t("troops_stats_title"), esc(tierName(cur)))}
         ${bnBoxesHtml(cols.map((c) => ({ label: bnAbbr(c.name), val: valOf(rows[cur], c), max: maxOf(c) })))}
         <div class="bn-lbl">${esc(t("vip_your_tier"))}</div>
         <div class="bn-vt" role="group" aria-label="${esc(t("vip_your_tier"))}">${order.map((i) => `<button type="button" class="${vipTierNumber(rows[i].name) == null ? "w " : ""}${i === cur ? "on" : ""}${i > rel ? " up" : ""}" data-viptier="${i}" aria-pressed="${i === cur}" title="${esc(rows[i].name + upcomingTag(i > rel))}">${esc(tierLabel(i))}</button>`).join("")}</div>
@@ -28669,7 +28700,7 @@ async function renderLevelBonusPage(o) {
   const draw = () => {
     const lv = STATS.reduce((a, st) => a + Math.min(lvOf(st), st.rel), 0), all = STATS.reduce((a, st) => a + st.rel, 0);
     const anyUp = STATS.some((st) => st.rel < st.values.length - 1);
-    card.innerHTML = `${bnHeadHtml(t("bn_stats_all"), bnCountHtml(lv, "bn_of_levels", all))}
+    card.innerHTML = `${bnHeadHtml(t("troops_stats_title"), bnCountHtml(lv, "bn_of_levels", all))}
       ${bnBoxesHtml(STATS.map((st) => ({ label: bnAbbr(st.key), val: Number(saved[st.key]) || 0, max: st.top })))}
       <div class="bn-sep"></div>
       ${bnHeadHtml(t(o.lvTitle))}
@@ -28780,7 +28811,7 @@ async function renderExtraBonusHeroes() {
         <span class="bn-stars" role="group" aria-label="${esc(`${n} ${t("stars_of_5")}`)}">${[1, 2, 3, 4, 5].map((k) => `<button type="button" data-hsstar="${esc(x.key)}|${k}" aria-label="${k}&#9733;">${heroStarSvg(k <= n ? 6 : 0, { size: 28 })}</button>`).join("")}</span></span>
         <span class="bn-vv"><b>${bidiNum(`+${bnFmt(now)}%`)}</b><small>${same ? bidiNums(esc(t("hs_each").replace("{n}", bnFmt(m0)))) : bidiNum(`/ ${maxes.map(bnFmt).join(" · ")}%`)}</small>${left > 1e-9 ? `<em>${bidiNums(esc(t("bn_left").replace("{n}", bnFmt(left))))}</em>` : `<em class="ok">${esc(t("bn_max"))}</em>`}</span></div>`;
     };
-    body.innerHTML = `${ok.length ? `<div class="t12x-card bn-card">${bnHeadHtml(t("bn_stats_all"), bnCountHtml(stars, "bn_of_stars", ok.length * 5))}${bnBoxesHtml(boxes)}</div>` : ""}
+    body.innerHTML = `${ok.length ? `<div class="t12x-card bn-card">${bnHeadHtml(t("troops_stats_title"), bnCountHtml(stars, "bn_of_stars", ok.length * 5))}${bnBoxesHtml(boxes)}</div>` : ""}
       <div class="t12x-card bn-card">${bnHeadHtml(t("hs_heroes"), `<i>${esc(t("hs_tap_star"))}</i>`)}${list.map(row).join("")}</div>`;
   };
   draw();
@@ -28842,8 +28873,8 @@ async function renderAllianceTechPage() {
     const troop = plxTroopOf("alliance_tech");
     const sumLv = items.reduce((a, it) => a + lvl(it), 0), sumMax = items.reduce((a, it) => a + top(it), 0);
     // The troop's own research plus the "Troops X" one (for all three troops); 1% a level.
-    answerEl.innerHTML = `${bnHeadHtml(t("bn_stats"), bnCountHtml(sumLv, "bn_of_levels", sumMax))}
-      <div class="bn-tsw" role="tablist">${TROOPS.map((x) => `<button type="button" role="tab" aria-selected="${x === troop}" class="${x === troop ? "on" : ""}" data-attroop="${x}" style="--tc:${PLX_TROOP_COLORS[x]};"><i></i>${esc(troopDisplayName(x))}</button>`).join("")}</div>
+    answerEl.innerHTML = `${bnHeadHtml(t("troops_stats_title"), bnCountHtml(sumLv, "bn_of_levels", sumMax))}
+      <div class="plx-tsw-seg bn-seg" role="tablist">${TROOPS.map((x) => `<button type="button" role="tab" aria-selected="${x === troop}" class="${x === troop ? "on" : ""}" data-attroop="${x}" style="--tc:${PLX_TROOP_COLORS[x]};">${esc(troopDisplayName(x))}</button>`).join("")}</div>
       ${bnBoxesHtml(BN_STAT_ORDER.map((stat) => {
         const own = items.find((x) => statOf(x) === stat && x.name.startsWith(PREFIX[troop] + " "));
         const all = items.find((x) => statOf(x) === stat && x.name.startsWith("Troops "));
@@ -31527,13 +31558,8 @@ async function renderRefinePage() {
     if (!el || !refineStatsNow) return;
     const [l, h] = { Infantry: ["il", "ih"], Lancer: ["ll", "lh"], Marksman: ["ml", "mh"] }[plxTroopOf("pets_refine")];
     const { grand, grandMax } = refineStatsNow;
-    // Mock-up A boxes: full stat name, "now% / max%", bar, amber "N% left" (✓ at max).
-    const f2 = (v) => (Math.round(v * 100) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const box = (name, v, mx) => {
-      const left = Math.max(0, mx - v), pc = mx > 0 ? Math.min(100, (v / mx) * 100) : 0;
-      return `<div class="rf-sb"><div class="rf-sbk">${esc(tStatLabel(name))}</div><div class="rf-sbv">${bidiNum(f2(v) + "%")}<small> ${bidiNum("/ " + f2(mx) + "%")}</small></div><div class="rf-bar"><i style="width:${pc.toFixed(1)}%;"></i></div><div class="rf-sbl${left > 0.0001 ? "" : " ok"}">${left > 0.0001 ? esc(t("rf_left").replace("{v}", f2(left))) : "&#10003; " + esc(t("max_label"))}</div></div>`;
-    };
-    el.innerHTML = `<div class="rf-sbs">${box("Lethality", grand[l], grandMax[l])}${box("Health", grand[h], grandMax[h])}</div>`;
+    // Planner stat style, in one row: LETH / HP, "+now%", "/ +max%", a thin bar.
+    el.innerHTML = plxStatBoxesHtml([{ label: bnAbbr("Lethality"), val: grand[l], max: grandMax[l], dp: 2 }, { label: bnAbbr("Health"), val: grand[h], max: grandMax[h], dp: 2 }], true);
   }
   wirePlxTroopSwitch(content, "pets_refine", drawRefineStats);
   // The highest stage that's out (stages ticked "Upcoming" in Admin after it).
@@ -31956,7 +31982,7 @@ async function renderPetsDataPage() {
     document.getElementById("petsTotals").innerHTML = `
         <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
         <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("pets_summed_desc"))}</p>
-        ${plxStatBoxesHtml([{ label: t("troops_attack"), val: grandAtk, max: grandAtkMax }, { label: t("troops_defense"), val: grandAtk, max: grandAtkMax }])}
+        ${plxStatBoxesHtml([{ label: bnAbbr("Attack"), val: grandAtk, max: grandAtkMax }, { label: bnAbbr("Defense"), val: grandAtk, max: grandAtkMax }], true)}
     `;
     // Mini targets: one pet up to level N (every 10 levels between now and its target).
     setPageMinis("pets", petNames.filter((pet) => isPetUnlocked(pet)).flatMap((pet) => {
@@ -32371,7 +32397,7 @@ async function renderResearchCenterPage() {
 function plxLabBtnHtml() {
   if (!IS_OWNER && isHiddenFromVisitors("page", "rfclab")) return "";
   const src = materialIconSrc("Refined FC") || "icons/item_icon_100082.png";
-  return `<button type="button" class="plx-labbtn" data-golab title="${esc(t("rl_lab_go"))}"><img src="${esc(src)}" alt="" /><span>${esc(t("rl_lab_btn"))}</span><span class="plx-labcar" aria-hidden="true">&#8250;</span></button>`;
+  return `<button type="button" class="plx-labbtn hd-btn" data-golab title="${esc(t("rl_lab_go"))}"><img src="${esc(src)}" alt="" /><span>${esc(t("rl_lab_btn"))}</span><span class="plx-labcar" aria-hidden="true">&#8250;</span></button>`;
 }
 document.addEventListener("click", (ev) => { const b = ev.target.closest && ev.target.closest("[data-golab]"); if (b) goToTab("rfclab"); });
 function plxShellHtml(o) {
@@ -33121,7 +33147,7 @@ async function renderFacilityPage() {
         <span class="bn-pi">${b.image_url ? `<img src="${esc(b.image_url)}" alt="" loading="lazy" />` : ""}</span>
         <span class="bn-tx"><b>${esc(dataName(b.name))}</b><span>${b.bonus_value != null ? `<em>${bidiNum(`+${bnFmt(b.bonus_value)}%`)} ${esc(bnAbbr(bonusStatKey(b.bonus_type) || ""))}</em> · ${esc(t("bn_all_troops"))}` : esc(t("bonus_unknown"))}${b.owned ? ` · <span class="ok">${esc(t("bn_owned"))}</span>` : ""}</span></span>
         <span class="bn-sw${b.owned ? " on" : ""}"></span></button>`;
-    body.innerHTML = `<div class="t12x-card bn-card">${bnHeadHtml(t("bn_stats_all"), bnCountHtml(owned, "bn_of_owned", buildings.length))}
+    body.innerHTML = `<div class="t12x-card bn-card">${bnHeadHtml(t("troops_stats_title"), bnCountHtml(owned, "bn_of_owned", buildings.length))}
         ${types.length ? bnBoxesHtml(types.map((k) => ({ label: bnAbbr(k), val: totals[k] || 0, max: maxes[k] }))) : bnBoxesHtml([{ label: t("total_bonus"), val: 0, max: 0 }])}</div>
       ${groups.map((g) => { const ts = [...new Set(g.list.map((b) => bonusStatKey(b.bonus_type)).filter(Boolean))]; return `<div class="t12x-card bn-card">${bnHeadHtml(dataName(g.name), ts.length ? `<i>${esc(ts.map(bnAbbr).join(" · "))}</i>` : "")}${g.list.map(row).join("")}</div>`; }).join("")}`;
   }
