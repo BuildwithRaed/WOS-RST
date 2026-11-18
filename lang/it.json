@@ -42,7 +42,6 @@
  "t:max_possible": "Massimo possibile",
  "t:current_label": "Attuale",
  "t:difference_label": "Differenza",
- "t:max_label": "Max",
  "t:no_sources_yet": "Ancora nessuna fonte",
  "t:hero_gear_switch_note": "Cambia quale set di Equipaggiamento Eroe viene contato — tutto il resto rimane uguale.",
  "t:roster_heroes_title": "Squadra",
@@ -239,8 +238,6 @@
  "t:stars_of_5": "/ 5 stelle",
  "t:pets_level_title": "Livello animali",
  "t:pets_summed_desc": "Somma di tutti i 15 animali, in base ai livelli attuali.",
- "t:troops_attack": "Attacco truppe",
- "t:troops_defense": "Difesa truppe",
  "t:not_started": "Non iniziato",
  "t:max_suffix": " (Max)",
  "t:material_food": "Cibo",
@@ -2836,5 +2833,6 @@
 "t:trd_per_wk":"{n}/sett",
 "t:trd_day":"Giorno",
 "t:trd_week":"Settimana",
-"t:trd_calc":"Calcolatrice"
+"t:trd_calc":"Calcolatrice",
+"t:isl_buildings":"Edifici"
 }

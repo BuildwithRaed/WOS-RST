@@ -42,7 +42,6 @@
  "t:max_possible": "Max possible",
  "t:current_label": "Actuel",
  "t:difference_label": "Différence",
- "t:max_label": "Max",
  "t:no_sources_yet": "Aucune source pour l'instant",
  "t:hero_gear_switch_note": "Change l'ensemble d'Équipement de héros compté — tout le reste ne change pas.",
  "t:roster_heroes_title": "Équipe",
@@ -239,8 +238,6 @@
  "t:stars_of_5": "/ 5 étoiles",
  "t:pets_level_title": "Niveau des familiers",
  "t:pets_summed_desc": "Total des 15 familiers, selon les niveaux actuels.",
- "t:troops_attack": "Attaque des troupes",
- "t:troops_defense": "Défense des troupes",
  "t:not_started": "Pas commencé",
  "t:max_suffix": " (Max)",
  "t:material_food": "Nourriture",
@@ -2836,5 +2833,6 @@
 "t:trd_per_wk":"{n}/sem",
 "t:trd_day":"Jour",
 "t:trd_week":"Semaine",
-"t:trd_calc":"Calculateur"
+"t:trd_calc":"Calculateur",
+"t:isl_buildings":"Bâtiments"
 }

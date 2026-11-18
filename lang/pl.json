@@ -42,7 +42,6 @@
  "t:max_possible": "Maks. możliwe",
  "t:current_label": "Obecnie",
  "t:difference_label": "Różnica",
- "t:max_label": "Maks.",
  "t:no_sources_yet": "Brak źródeł",
  "t:hero_gear_switch_note": "Zmienia, który zestaw Sprzętu Bohaterów jest liczony — reszta bez zmian.",
  "t:roster_heroes_title": "Skład",
@@ -239,8 +238,6 @@
  "t:stars_of_5": "/ 5 gwiazdek",
  "t:pets_level_title": "Poziom Zwierzaków",
  "t:pets_summed_desc": "Suma dla wszystkich 15 zwierzaków, wg obecnych poziomów.",
- "t:troops_attack": "Atak jednostek",
- "t:troops_defense": "Obrona jednostek",
  "t:not_started": "Nierozpoczęte",
  "t:max_suffix": " (Maks.)",
  "t:material_food": "Karma",
@@ -2836,5 +2833,6 @@
 "t:trd_per_wk":"{n}/tydz.",
 "t:trd_day":"Dzień",
 "t:trd_week":"Tydzień",
-"t:trd_calc":"Kalkulator"
+"t:trd_calc":"Kalkulator",
+"t:isl_buildings":"Budynki"
 }

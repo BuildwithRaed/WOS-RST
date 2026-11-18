@@ -42,7 +42,6 @@
  "t:max_possible": "最高可达",
  "t:current_label": "当前",
  "t:difference_label": "差值",
- "t:max_label": "最高",
  "t:no_sources_yet": "暂无来源",
  "t:hero_gear_switch_note": "切换计入的英雄装备方案，其他内容不变。",
  "t:roster_heroes_title": "阵容",
@@ -239,8 +238,6 @@
  "t:stars_of_5": "/ 5 星",
  "t:pets_level_title": "宠物等级",
  "t:pets_summed_desc": "按当前等级，汇总全部 15 只宠物。",
- "t:troops_attack": "部队攻击",
- "t:troops_defense": "部队防御",
  "t:not_started": "未开始",
  "t:max_suffix": "（满级）",
  "t:material_food": "粮食",
@@ -2836,5 +2833,6 @@
 "t:trd_per_wk":"{n}/周",
 "t:trd_day":"天",
 "t:trd_week":"周",
-"t:trd_calc":"计算器"
+"t:trd_calc":"计算器",
+"t:isl_buildings":"建筑"
 }

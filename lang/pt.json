@@ -2832,5 +2832,6 @@
 "t:trd_per_wk":"{n}/sem",
 "t:trd_day":"Dia",
 "t:trd_week":"Semana",
-"t:trd_calc":"Calculadora"
+"t:trd_calc":"Calculadora",
+"t:isl_buildings":"Edifícios"
 }

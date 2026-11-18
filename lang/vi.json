@@ -2832,5 +2832,6 @@
 "t:trd_per_wk":"{n}/tuần",
 "t:trd_day":"Ngày",
 "t:trd_week":"Tuần",
-"t:trd_calc":"Máy tính"
+"t:trd_calc":"Máy tính",
+"t:isl_buildings":"Công trình"
 }

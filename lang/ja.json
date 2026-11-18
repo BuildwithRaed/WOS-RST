@@ -42,7 +42,6 @@
  "t:max_possible": "最大値",
  "t:current_label": "現在",
  "t:difference_label": "差分",
- "t:max_label": "最大",
  "t:no_sources_yet": "まだ項目がありません",
  "t:hero_gear_switch_note": "計算に使う英雄装備のセットを切り替えます。他は変わりません。",
  "t:roster_heroes_title": "編成",
@@ -239,8 +238,6 @@
  "t:stars_of_5": "/ 5つ星",
  "t:pets_level_title": "ペットレベル",
  "t:pets_summed_desc": "全15匹のペットの現在レベルによる合計。",
- "t:troops_attack": "部隊攻撃力",
- "t:troops_defense": "部隊防御力",
  "t:not_started": "未着手",
  "t:max_suffix": "(最大)",
  "t:material_food": "フード",
@@ -2836,5 +2833,6 @@
 "t:trd_per_wk":"{n}/週",
 "t:trd_day":"日",
 "t:trd_week":"週",
-"t:trd_calc":"計算機"
+"t:trd_calc":"計算機",
+"t:isl_buildings":"建物"
 }

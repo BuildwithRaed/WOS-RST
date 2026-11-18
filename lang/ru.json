@@ -42,7 +42,6 @@
  "t:max_possible": "Макс. возможно",
  "t:current_label": "Сейчас",
  "t:difference_label": "Разница",
- "t:max_label": "Макс.",
  "t:no_sources_yet": "Пока нет источников",
  "t:hero_gear_switch_note": "Выбирает, какой набор снаряжения героев учитывается — всё остальное без изменений.",
  "t:roster_heroes_title": "Отряд",
@@ -239,8 +238,6 @@
  "t:stars_of_5": "/ 5 звёзд",
  "t:pets_level_title": "Уровень питомцев",
  "t:pets_summed_desc": "Сумма по всем 15 питомцам по текущим уровням.",
- "t:troops_attack": "Атака войск",
- "t:troops_defense": "Защита войск",
  "t:not_started": "Не начато",
  "t:max_suffix": " (Макс.)",
  "t:material_food": "Корм",
@@ -2836,5 +2833,6 @@
 "t:trd_per_wk":"{n}/нед.",
 "t:trd_day":"День",
 "t:trd_week":"Неделя",
-"t:trd_calc":"Калькулятор"
+"t:trd_calc":"Калькулятор",
+"t:isl_buildings":"Здания"
 }

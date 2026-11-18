@@ -2832,5 +2832,6 @@
 "t:trd_per_wk":"{n}/hf",
 "t:trd_day":"Gün",
 "t:trd_week":"Hafta",
-"t:trd_calc":"Hesaplayıcı"
+"t:trd_calc":"Hesaplayıcı",
+"t:isl_buildings":"Binalar"
 }

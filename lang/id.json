@@ -2832,5 +2832,6 @@
 "t:trd_per_wk":"{n}/mgg",
 "t:trd_day":"Hari",
 "t:trd_week":"Minggu",
-"t:trd_calc":"Kalkulator"
+"t:trd_calc":"Kalkulator",
+"t:isl_buildings":"Bangunan"
 }

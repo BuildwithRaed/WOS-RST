@@ -42,7 +42,6 @@
  "t:max_possible": "Max. möglich",
  "t:current_label": "Aktuell",
  "t:difference_label": "Differenz",
- "t:max_label": "Max",
  "t:no_sources_yet": "Noch keine Quellen",
  "t:hero_gear_switch_note": "Wechselt, welches Heldenausrüstungs-Set gezählt wird – alles andere bleibt gleich.",
  "t:roster_heroes_title": "Aufstellung",
@@ -239,8 +238,6 @@
  "t:stars_of_5": "/ 5 Sterne",
  "t:pets_level_title": "Haustier-Stufe",
  "t:pets_summed_desc": "Summe aller 15 Haustiere, nach aktuellen Stufen.",
- "t:troops_attack": "Truppenangriff",
- "t:troops_defense": "Truppenverteidigung",
  "t:not_started": "Nicht begonnen",
  "t:max_suffix": " (Max)",
  "t:material_food": "Futter",
@@ -2836,5 +2833,6 @@
 "t:trd_per_wk":"{n}/Wo.",
 "t:trd_day":"Tag",
 "t:trd_week":"Woche",
-"t:trd_calc":"Rechner"
+"t:trd_calc":"Rechner",
+"t:isl_buildings":"Gebäude"
 }

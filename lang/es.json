@@ -42,7 +42,6 @@
  "t:max_possible": "Máximo posible",
  "t:current_label": "Actual",
  "t:difference_label": "Diferencia",
- "t:max_label": "Máx.",
  "t:no_sources_yet": "Aún no hay fuentes",
  "t:hero_gear_switch_note": "Cambia qué configuración de Equipo de Héroe se cuenta; todo lo demás sigue igual.",
  "t:roster_heroes_title": "Plantilla",
@@ -239,8 +238,6 @@
  "t:stars_of_5": "/ 5 estrellas",
  "t:pets_level_title": "Nivel de Mascotas",
  "t:pets_summed_desc": "Sumado entre las 15 mascotas, según los niveles actuales.",
- "t:troops_attack": "Ataque de tropas",
- "t:troops_defense": "Defensa de tropas",
  "t:not_started": "Sin empezar",
  "t:max_suffix": " (Máx.)",
  "t:material_food": "Comida",
@@ -2836,5 +2833,6 @@
 "t:trd_per_wk":"{n}/sem",
 "t:trd_day":"Día",
 "t:trd_week":"Semana",
-"t:trd_calc":"Calculadora"
+"t:trd_calc":"Calculadora",
+"t:isl_buildings":"Edificios"
 }

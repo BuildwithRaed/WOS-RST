@@ -2832,5 +2832,6 @@
 "t:trd_per_wk":"{n}/주",
 "t:trd_day":"일",
 "t:trd_week":"주",
-"t:trd_calc":"계산기"
+"t:trd_calc":"계산기",
+"t:isl_buildings":"건물"
 }
