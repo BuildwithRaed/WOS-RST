@@ -2824,8 +2824,6 @@ const T = {
   g1_hide: { en: "Hide" },
   er_paths_to_go: { en: "{n} paths to go" },
   er_path_to_go_1: { en: "1 path to go" },
-  er_next_lv: { en: "Sigils · next level" },
-  er_path_n: { en: "path {i} of {n}" },
   er_gives: { en: "These levels give" },
   rc_settings: { en: "Roster settings" },
   rc_count_desc: { en: "Adds these 3 heroes' stats to the troop totals" },
@@ -7752,7 +7750,8 @@ const MK_SLOTS = {
     const cells = [...document.querySelectorAll(`#heroGearTracks .hg-cell[data-hgpc="${mkE(piece)}"]`)];
     return { in: cells[GEAR_LEVELING_TABLES.indexOf(tb)] };
   },
-  petsdata: (tr) => { const s = mkQ(`[data-petfrom="${mkE(tr.raw)}"]`); return { in: s && s.closest(".pc-st") }; },
+  // Beside the NOW label (not under the stepper, which would lift NOW above TARGET).
+  petsdata: (tr) => { const s = mkQ(`[data-petfrom="${mkE(tr.raw)}"]`), st = s && s.closest(".pc-st"); return { in: st && st.querySelector(":scope > span") }; },
   t12research: (tr) => {
     const [troop, key] = String(tr.raw).split("|"), on = mkQ("[data-t12tab].on");
     if (!on || on.dataset.t12tab !== troop) return {};
@@ -7776,8 +7775,8 @@ const MK_SLOTS = {
   expertsresearchpage: (tr) => {
     const i = String(tr.raw).lastIndexOf("|"), ex = String(tr.raw).slice(0, i), path = String(tr.raw).slice(i + 1);
     const mx = mkQ(`[data-expresearchmax="${mkE(ex)}"]`), card = mx && mx.closest(".exp-h4c");
-    const r = card && card.querySelector(`.exp-skr[data-eropen="${mkE(path)}"] .exp-skr-h`);
-    return r ? { in: r, before: r.querySelector(".exp-gt") } : {};
+    const v = card && card.querySelector(`[data-erpath="${mkE(path)}"] .exk-v`);
+    return v ? { in: v, before: v.querySelector(".a") } : {};
   },
   islandgallery: (tr) => { const tl = mkQ(`.sg-t.is[data-island="${mkE(tr.raw)}"]`); return tl ? { in: tl, before: tl.querySelector(".isl-tsh") } : {}; },
   skingallery: (tr) => ({ in: mkQ(`.sg-t[data-skin="${mkE(tr.raw)}"]`) }),
@@ -30113,18 +30112,6 @@ async function renderExpertsResearchPage() {
   // for EVERY level in its block (after the previous row's level, up to its
   // own); rows without it keep the old behaviour: one lump at that level.
   const pathSigils = expertPathSigils;
-  // What the NEXT level after `level` costs on this path (for the card line).
-  function pathNextLevelSigils(pathRows, level) {
-    if (level >= 200) return null;
-    const rows = pathRows.slice().sort((a, b) => Number(a.level) - Number(b.level));
-    const r = rows.find((x) => Number(x.level) > level);
-    if (!r) return null;
-    const per = r.sigil_per_level == null || r.sigil_per_level === "" ? null : Number(r.sigil_per_level);
-    if (per != null && !Number.isNaN(per)) return per;
-    // Per-level rows (1, 2, 3 …): the very next row is the next level's cost.
-    if (Number(r.level) === level + 1) return Number(r.sigil_cost) || 0;
-    return null;
-  }
   function pathCost(expert, pathNum, fromLevel, toLevel) {
     const pathRows = (RESEARCH_CACHE[expert] || {})[pathNum] || [];
     let sigil = pathSigils(pathRows, fromLevel, toLevel);
@@ -30323,8 +30310,7 @@ async function renderExpertsResearchPage() {
   const EXPERT_RESEARCH_IMG = Object.fromEntries(EXPERTS_LIST.map((e) => [e.key, e.img]));
   // Like Experts Level H4: portrait, the main stat now → target, the sigils needed vs had, one
   // row per path (name, "120 → 200", bar; tap → its window), Count and
-  // "Max <expert>". The selects keep their data attributes (handlers unchanged).
-  let ER_PATH_OPEN = null; // path number whose window is open (this expert)
+  // "Max <expert>". The selects keep their data attributes.
   function mainStatAt(expert, key) {
     if (!EXPERT_MAIN_STAT[expert]) return 0;
     return pathNumbersFor(expert).reduce((sum, p) => {
@@ -30341,14 +30327,24 @@ async function renderExpertsResearchPage() {
     const paths = pathNumbersFor(expert);
     const toGo = paths.filter((p) => (Number(saved[expert][p].desired) || 0) > (Number(saved[expert][p].current) || 0)).length;
     const need = Math.round(ER_SIG.need[expert] || 0), own = Math.round(ER_SIG.left[expert] || 0), gen = Math.round(ER_SIG.general || 0);
+    const ER_SHORT = { ATK: "ATK", DEF: "DEF", DMG: "LETH", HP: "HP" };
+    const val = (v, sel, tgt) => `<span class="exk-n${tgt ? " t" : ""}">${esc(v)}${sel}</span>`;
+    // One row per path, all in the card: name, what the levels give, tappable "Now → Target"
+    // (see-through selects over the numbers), bar now / target, the sigils it needs.
     const pathRow = (p) => {
-      const st = saved[expert][p], cur = Number(st.current) || 0, des = Number(st.desired) || 0, top = pathTop(expert, p);
+      const st = saved[expert][p], cur = Number(st.current) || 0, des = Math.max(cur, Number(st.desired) || 0), top = pathTop(expert, p);
       const go = des > cur, done = !go && cur >= top;
       const pct = (v) => Math.min(100, (v / 200) * 100);
-      return `<button type="button" class="exp-skr" data-eropen="${p}">
-          <span class="exp-skr-h"><b>${esc(erPathName(expert, p))}</b>${go ? `<span class="exp-chip">${cur} &rarr; <i>${des}</i></span>` : done ? `<span class="exp-chip ok">${esc(t("charm_lv"))} ${cur} · &#10003; ${esc(t("max_button"))}</span>` : `<span class="exp-chip">${esc(t("charm_lv"))} ${cur}</span>`}<span class="exp-gt" aria-hidden="true">&#8250;</span></span>
-          ${go ? `<span class="exp-skr-b"><span class="exp-bar"><i style="width:${pct(cur)}%"></i><b style="width:${pct(des) - pct(cur)}%"></b></span><span class="exp-rst meta">${bidiNum(Math.round(pathCost(expert, p, cur, des).sigil).toLocaleString())} ${esc(t("resource_sigils"))}</span></span>` : ""}
-        </button>`;
+      const { sigil, stats } = go ? pathRotationOnly(expert, p, cur, des) : { sigil: 0, stats: {} };
+      const gains = Object.entries(stats).filter(([, v]) => v > 0).map(([k, v]) => `+${Number(v.toFixed(1))}% ${ER_SHORT[k] || k}`).join(" · ");
+      const curSel = `<select data-expresearchcur="${esc(expert)}|${p}" aria-label="${esc(t("current_label"))}">${pathLevelOpts(expert, p, cur)}</select>`;
+      const desSel = `<select data-expresearchdes="${esc(expert)}|${p}" aria-label="${esc(t("target_label"))}">${pathLevelOpts(expert, p, des)}</select>`;
+      const right = go ? `<span class="exp-rst meta">${bidiNum(Math.round(sigil).toLocaleString())} ${esc(t("resource_sigils"))}</span>`
+        : done ? `<span class="exp-rst meta ok">&#10003; ${esc(t("max_button"))}</span>` : `<span class="exp-rst meta">${esc(t("exp_no_target"))}</span>`;
+      return `<div class="exk-r er-r" data-erpath="${p}">
+          <div class="exk-l1"><div class="exk-nm"><b>${esc(erPathName(expert, p))}</b>${gains ? `<div class="exk-bn">${esc(gains)}</div>` : ""}</div><span class="exk-v">${val(String(cur), curSel)}<span class="a" aria-hidden="true">&rarr;</span>${val(String(des), desSel, true)}</span></div>
+          <div class="exp-skr-b"><span class="exp-bar"><i style="width:${pct(cur)}%"></i><b style="width:${Math.max(0, pct(des) - pct(cur))}%"></b></span>${right}</div>
+        </div>`;
     };
     return `
       <div class="panel exp-h4c" style="${unlocked ? "" : "opacity:0.55;"}">
@@ -30370,46 +30366,8 @@ async function renderExpertsResearchPage() {
           <button type="button" class="btn ghost exp-maxe" data-expresearchmax="${esc(expert)}">${esc(t("exp_max_one").replace("{name}", dataName(expert)))}</button>
         </div>
       </div>
-      ${ER_PATH_OPEN != null && paths.includes(ER_PATH_OPEN) ? pathSheetHtml(expert, ER_PATH_OPEN) : ""}`;
+      `;
   }
-  // A path's window: ‹ › to the other paths, Now / Target steppers (the old selects
-  // under the numbers), what the levels give, the sigils it still needs, Done.
-  function pathSheetHtml(expert, p) {
-    const paths = pathNumbersFor(expert), i = paths.indexOf(p), n = paths.length;
-    const st = saved[expert][p], cur = Number(st.current) || 0, des = Number(st.desired) || 0;
-    const { sigil, stats } = pathRotationOnly(expert, p, cur, des);
-    const perLevel = pathNextLevelSigils((RESEARCH_CACHE[expert] || {})[p] || [], cur);
-    const gains = Object.entries(stats).filter(([, v]) => v > 0).map(([k, v]) => `+${v.toFixed(1)}% ${tStatLabel(EXPERT_RESEARCH_STAT_LABEL[k])}`).join(" · ");
-    const stp = (role, val, sel, minus, plus) => `<div class="exp-st${role === "des" ? " tgt" : ""}">
-          <button type="button" data-erstep="${role}|-1" ${minus ? "" : "disabled"} aria-label="&minus;">&minus;</button>
-          <span class="exp-st-v">${val}${sel}</span>
-          <button type="button" data-erstep="${role}|1" ${plus ? "" : "disabled"} aria-label="+">+</button>
-        </div>`;
-    const pct = (v) => Math.min(100, (v / 200) * 100);
-    return `<div class="exp-ov" data-erbd>
-      <div class="exp-sk" role="dialog" aria-label="${esc(erPathName(expert, p))}">
-        <div class="exp-sk-h">
-          <button type="button" class="exp-nav" data-ergo="${i - 1}" ${i > 0 ? "" : "disabled"} aria-label="&#8249;">&#8249;</button>
-          <div class="exp-sk-t"><b>${esc(erPathName(expert, p))}</b><small>${esc(dataName(expert))} · ${esc(t("er_path_n").replace("{i}", i + 1).replace("{n}", n))}</small></div>
-          <button type="button" class="exp-nav" data-ergo="${i + 1}" ${i < n - 1 ? "" : "disabled"} aria-label="&#8250;">&#8250;</button>
-          ${closeXHtml("data-erclose", "exp-x")}
-        </div>
-        <div class="exp-sts">
-          <div><small>${esc(t("t12x_now"))}</small>${stp("cur", cur, `<select data-expresearchcur="${esc(expert)}|${p}" aria-label="${esc(t("current_label"))}">${pathLevelOpts(expert, p, cur)}</select>`, cur > 0, cur < 200)}</div>
-          <span class="exp-arr">&rarr;</span>
-          <div><small>${esc(t("t12x_target"))}</small>${stp("des", des, `<select data-expresearchdes="${esc(expert)}|${p}" aria-label="${esc(t("target_label"))}">${pathLevelOpts(expert, p, des)}</select>`, des > cur, des < 200)}</div>
-        </div>
-        <span class="exp-bar big"><i style="width:${pct(cur)}%"></i><b style="width:${Math.max(0, pct(des) - pct(cur))}%"></b></span>
-        ${gains ? `<div class="exp-sk-bonus">${esc(t("er_gives"))}: <b>${esc(gains)}</b></div>` : ""}
-        <div class="exp-nbs">
-          <div class="exp-nb"><img src="${esc(EXPERT_INVENTORY_ICONS[`${expert} Sigils`] || "icons/item_icon_570000.png")}" alt="" /><span><b class="${sigil > 0 ? "" : "ok"}">${sigil > 0 ? bidiNum(Math.round(sigil).toLocaleString()) : "&#10003;"}</b><small>${esc(t("resource_sigils"))}${des > cur ? ` · ${cur} &rarr; ${des}` : ""}</small></span></div>
-          ${perLevel != null && cur < 200 ? `<div class="exp-nb"><img src="${esc(EXPERT_INVENTORY_ICONS[`${expert} Sigils`] || "icons/item_icon_570000.png")}" alt="" /><span><b>${bidiNum(Math.round(perLevel).toLocaleString())}</b><small>${esc(t("er_next_lv"))} · ${cur + 1}</small></span></div>` : ""}
-        </div>
-        <button type="button" class="btn exp-done" data-erclose>${esc(t("exp_done"))}</button>
-      </div>
-    </div>`;
-  }
-
   const expResearchCounterEl = document.getElementById("expResearchSwipeCounter");
   let activeResearchIdx = 0;
   function renderGrid() {
@@ -30421,25 +30379,8 @@ async function renderExpertsResearchPage() {
     gridEl.innerHTML = expertCardHtml(expert);
     wireIndexSwipe(gridEl, EXPERTS_IN_ORDER.length, activeResearchIdx, (next) => {
       activeResearchIdx = next;
-      ER_PATH_OPEN = null;
       renderGrid();
     });
-    // a path's window (open, ‹ ›, close, steppers)
-    gridEl.querySelectorAll("[data-eropen]").forEach((b) => b.addEventListener("click", () => { ER_PATH_OPEN = Number(b.dataset.eropen); renderGrid(); }));
-    gridEl.querySelectorAll("[data-ergo]").forEach((b) => b.addEventListener("click", () => { const pn = pathNumbersFor(expert)[Number(b.dataset.ergo)]; if (pn != null) { ER_PATH_OPEN = pn; renderGrid(); } }));
-    gridEl.querySelectorAll("[data-erclose]").forEach((b) => b.addEventListener("click", () => { ER_PATH_OPEN = null; renderGrid(); }));
-    { const bd = gridEl.querySelector("[data-erbd]"); if (bd) bd.addEventListener("click", (ev) => { if (ev.target === bd) { ER_PATH_OPEN = null; renderGrid(); } }); }
-    gridEl.querySelectorAll("[data-erstep]").forEach((b) => b.addEventListener("click", () => {
-      const [role, d] = b.dataset.erstep.split("|");
-      const st = saved[expert][ER_PATH_OPEN];
-      let cur = Number(st.current) || 0, des = Math.max(cur, Number(st.desired) || 0);
-      if (role === "cur") { cur = Math.max(0, Math.min(200, cur + Number(d))); st.current = cur; if (des < cur) st.desired = cur; }
-      else { des = Math.max(cur, Math.min(200, des + Number(d))); st.desired = des; }
-      saveCalcState("experts_research", saved);
-      renderTotals();
-      renderGrid();
-    }));
-
     const container = gridEl;
     {
       container.querySelectorAll("input[data-expresearchunlock]").forEach((cb) => {
@@ -30491,9 +30432,8 @@ async function renderExpertsResearchPage() {
           const [expert, p] = sel.dataset.expresearchcur.split("|");
           const newCurrent = Number(sel.value);
           saved[expert][p].current = newCurrent;
-          if (newCurrent > 0 && saved[expert][p].desired <= 0) {
-            saved[expert][p].desired = newCurrent;
-          }
+          // Now pushes the target along; the target never stays under Now
+          if ((Number(saved[expert][p].desired) || 0) < newCurrent) saved[expert][p].desired = newCurrent;
           saveCalcState("experts_research", saved);
           renderTotals();
           renderGrid();
@@ -30502,7 +30442,7 @@ async function renderExpertsResearchPage() {
       container.querySelectorAll("select[data-expresearchdes]").forEach((sel) => {
         sel.addEventListener("change", async () => {
           const [expert, p] = sel.dataset.expresearchdes.split("|");
-          saved[expert][p].desired = Number(sel.value);
+          saved[expert][p].desired = Math.max(Number(saved[expert][p].current) || 0, Number(sel.value));
           saveCalcState("experts_research", saved);
           renderTotals();
           renderGrid();
@@ -31069,7 +31009,11 @@ async function renderExpertsPage() {
         booksLeft = Math.max(0, booksLeft - book);
         const xp = skillExpHave(st);
         line = `<div class="exk-m"><img src="${esc(EXPERT_INVENTORY_ICONS["Books of Knowledge"])}" alt="${esc(t("resource_books"))}" title="${esc(t("resource_books"))}" /><b>${num(book)}</b> · ${left > 0 ? `<span class="bad">${esc(t("exp_n_left").replace("{n}", shortAmount(Math.round(left))))}</span>` : `<span class="ok">&#10003;</span>`} · <img src="icons/exp-learn.png" alt="${esc(t("exp_learn_xp"))}" title="${esc(t("exp_learn_xp"))}" /><button type="button" class="exk-ex${xp > 0 ? "" : " e"}" data-expskillexp="${esc(hero)}|${esc(sk)}" aria-label="${esc(t("exp_learn_xp"))}">${num(xp)}</button> / ${num(exp)}</div>`;
-      } else line = `<div class="exk-m">${esc(t("exp_no_target"))}</div>`;
+      } else {
+        // No target yet: still show the Learning XP you have for the next level (tap to change).
+        const xp = skillExpHave(st), nextExp = cur < max ? skillCost(hero, sk, cur, cur + 1).exp : 0;
+        line = `<div class="exk-m">${esc(t("exp_no_target"))}${cur < max ? ` · <img src="icons/exp-learn.png" alt="${esc(t("exp_learn_xp"))}" title="${esc(t("exp_learn_xp"))}" /><button type="button" class="exk-ex${xp > 0 ? "" : " e"}" data-expskillexp="${esc(hero)}|${esc(sk)}" aria-label="${esc(t("exp_learn_xp"))}">${num(xp)}</button>${nextExp > 0 ? ` / ${num(nextExp)}` : ""}` : ""}</div>`;
+      }
       return `<div class="exk-r">
           <div class="exk-l1"><div class="exk-nm"><b>${esc(dataName(sk))}</b>${stat}</div>${vals(String(cur), curSel, String(des), `<select data-expskilldes="${esc(hero)}|${esc(sk)}" aria-label="${esc(t("target_label"))}">${levelOpts(pick, Math.min(des, pick), max)}</select>`)}</div>
           ${line}
@@ -31098,14 +31042,15 @@ async function renderExpertsPage() {
     // tap a need box to change what you have (Affinity already in the bar / the expert's Sigils)
     gridEl.querySelectorAll("[data-expbox]").forEach((b) => b.addEventListener("click", () => {
       if (b.dataset.expbox === "aff") {
-        plxAmountModal({ label: t("exp_in_bar_title").replace("{name}", dataName(hero)), icon: EXPERT_INVENTORY_ICONS.Affinity, value: heroAffinityHave(hero) || 0, onSave: (v) => {
+        plxAmountModal({ top: true, label: t("exp_in_bar_title").replace("{name}", dataName(hero)), icon: EXPERT_INVENTORY_ICONS.Affinity, value: heroAffinityHave(hero) || 0, onSave: (v) => {
           v = Math.max(0, Math.floor(Number(v) || 0));
           if (v) saved[hero].affHave = v; else delete saved[hero].affHave;
           saveCalcState("experts", saved); renderTotals(); renderGrid();
         } });
       } else {
         const key = `${hero} Sigils`;
-        plxAmountModal({ label: t("exp_sigils_of").replace("{name}", dataName(hero)), icon: EXPERT_INVENTORY_ICONS[key] || "icons/item_icon_570000.png", value: Number(invSaved[key]) || 0, onSave: (v) => {
+        const sgLinkable = Object.keys(bpLink.bp).length > 0 && backpackLinks("experts", key);
+        plxAmountModal({ top: true, label: t("exp_sigils_of").replace("{name}", dataName(hero)), icon: EXPERT_INVENTORY_ICONS[key] || "icons/item_icon_570000.png", value: Number(invSaved[key]) || 0, linked: sgLinkable ? backpackLinked("experts", key, bpLink) : null, onUse: () => useBackpackFor(key), onSave: (v) => {
           invSaved[key] = Math.max(0, Math.floor(Number(v) || 0));
           if (Object.keys(bpLink.bp).length) setBackpackManual("experts", key, true, bpLink);
           budgetInvalidate(); saveCalcState("experts_inventory", invSaved); renderTotals(); renderInventory(); renderGrid();
@@ -31115,7 +31060,7 @@ async function renderExpertsPage() {
     // tap the EXP number to type the Learning XP you have for this step (lowers only the time)
     gridEl.querySelectorAll("[data-expskillexp]").forEach((b) => b.addEventListener("click", () => {
       const [h, skill] = b.dataset.expskillexp.split("|");
-      plxAmountModal({ label: `${dataName(skill)} · ${t("exp_learn_xp")}`, icon: "icons/exp-learn.png", value: skillExpHave(saved[h].skills[skill]) || 0, onSave: (v) => {
+      plxAmountModal({ top: true, label: `${dataName(skill)} · ${t("exp_learn_xp")}`, icon: "icons/exp-learn.png", value: skillExpHave(saved[h].skills[skill]) || 0, onSave: (v) => {
         v = Math.max(0, Math.floor(Number(v) || 0));
         if (v) saved[h].skills[skill].expHave = v;
         else delete saved[h].skills[skill].expHave;
@@ -31248,23 +31193,124 @@ async function renderExpertsPage() {
       <div class="t12x-prog bs-time-bar"><i style="width:${Math.min(100, ((tn.need - tn.short) / tn.need) * 100)}%;${tn.short > 0 ? "" : " background:var(--good);"}"></i></div>` : "";
     // Outside the boxes, so it stays when "Hide boxes" folds them (like the research pages).
     document.getElementById("expertsTime").innerHTML = timeLine;
-    // The three Affinity items share one box and one short line.
+    // Boxes that give the same thing share one box and one short line: the three
+    // Affinity items, and Expert + General Speedups (both pay the skills' time).
     const affItems = fields.filter((f) => f in AFFINITY_ITEM_VALUE);
-    const affHtml = () => {
-      const nd = tileNeed && tileNeed[affItems[0]], have = affinityOwnedFrom(invSaved);
+    const spdItems = ["Expert Speedups (minutes)", GENERAL_SPEEDUP_KEY].filter((f) => fields.includes(f));
+    const GROUPS = {
+      aff: { items: affItems, label: t("resource_affinity"), icon: EXPERT_INVENTORY_ICONS.Affinity, fmt: shortAmount, nbFmt: bsNbNum, have: () => affinityOwnedFrom(invSaved), worth: (f, v) => v * AFFINITY_ITEM_VALUE[f], worthTxt: (f, v) => `= ${bsNbNum(v * AFFINITY_ITEM_VALUE[f])} ${t("resource_affinity")}`, minutes: false },
+      spd: { items: spdItems, label: t("backpack_speedups"), icon: "icons/speedup-expert.png", fmt: bsTime, nbFmt: bsTime, have: () => expertSpeedupOwnedFrom(invSaved), worth: (f, v) => v, worthTxt: (f, v) => formatTimeDHM((Number(v) || 0) / 60), minutes: true },
+    };
+    const grpOf = (f) => (affItems.includes(f) ? "aff" : spdItems.length > 1 && spdItems.includes(f) ? "spd" : null);
+    const grpHtml = (k) => {
+      const G = GROUPS[k], nd = tileNeed && tileNeed[G.items[0]], have = G.have();
       const line = !nd || !(nd.need > 0) ? `<span style="color:var(--muted);">\u2014</span>` : nd.short > 0
-        ? `<span style="color:var(--danger);">${esc(t("resource_affinity"))} ${bidiNum(shortAmount(have))} \u00b7 ${bidiNum(shortAmount(nd.short))} ${esc(t("bs_short_word"))}</span>`
-        : `<span style="color:var(--good);">${esc(t("resource_affinity"))} ${bidiNum(shortAmount(have))} \u2713</span>`;
-      const affBag = affItems.some((f) => hasBp && backpackLinks("experts", f) && backpackLinked("experts", f, bpLink));
-      return `<div class="bp-tile bs-tile bs-aff${nd && !(nd.need > 0) ? " off" : ""}">${affBag ? `<span class="bs-mark">&#127890;</span>` : ""}<div class="bs-aff-items">${affItems.map((f) => {
-        const linkable = hasBp && backpackLinks("experts", f), linked = linkable && backpackLinked("experts", f, bpLink);
-        return `<button type="button" class="bs-aff-it" data-expedit="${esc(f)}" title="${esc(materialDisplayName(f))} (= ${AFFINITY_ITEM_VALUE[f]} ${esc(t("resource_affinity"))})">
-          <span class="bs-mark">${linkable ? (linked ? "&#127890;" : "&#9998;") : ""}</span>
-          <img src="${esc(itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f] || "icons/item_icon_570201.png")}" alt="" loading="lazy" />
-          <span class="bp-qty">${shortAmount(Number(invSaved[f]) || 0)}</span></button>`;
+        ? `<span style="color:var(--danger);">${esc(G.label)} ${bidiNum(G.fmt(have))} \u00b7 ${bidiNum(G.fmt(nd.short))} ${esc(t("bs_short_word"))}</span>`
+        : `<span style="color:var(--good);">${esc(G.label)} ${bidiNum(G.fmt(have))} \u2713</span>`;
+      const bag = G.items.some((f) => hasBp && backpackLinks("experts", f) && backpackLinked("experts", f, bpLink));
+      return `<div class="bp-tile bs-tile bs-aff${k === "spd" ? " bs-spd" : ""}${nd && !(nd.need > 0) ? " off" : ""}">${bag ? `<span class="bs-mark">&#127890;</span>` : ""}<div class="bs-aff-items">${G.items.map((f) => {
+        const v = Number(invSaved[f]) || 0;
+        return `<button type="button" class="bs-aff-it" data-expedit="${esc(f)}" title="${esc(materialDisplayName(f))}${k === "aff" ? ` (= ${AFFINITY_ITEM_VALUE[f]} ${esc(t("resource_affinity"))})` : ""}">
+          <img src="${esc(itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f] || (k === "spd" ? (f === GENERAL_SPEEDUP_KEY ? "icons/speedup-general.png" : "icons/speedup-expert.png") : "icons/item_icon_570201.png"))}" alt="" loading="lazy" />
+          <span class="bp-qty">${G.minutes ? bsTime(v) : shortAmount(v)}</span></button>`;
       }).join("")}</div><span class="bs-st">${line}</span></div>`;
     };
-    const tilesHtml = fields.map((f) => (f === affItems[0] ? affHtml() : affItems.includes(f) ? "" : tile(f))).join("");
+    // One pop-up for a shared box: the group's Needed / You have / Short, then
+    // one row per item (picture, name, what it counts as, its own box, Use Backpack), one Save.
+    const openGroup = (k) => {
+      const G = GROUPS[k], nd = tileNeed && tileNeed[G.items[0]];
+      let modal = document.getElementById("bsGrpModal");
+      if (!modal) { modal = document.createElement("div"); modal.id = "bsGrpModal"; modal.className = "modal-overlay bsm-ov"; document.body.appendChild(modal); }
+      const useBp = {}, dirty = {};
+      const bpOf = (f) => backpackAmountFor(f, bpLink.bp);
+      // Minutes are typed as plain minutes (number pad); days / hours / minutes under the name.
+      const valTxt = (v) => String(G.minutes ? Math.round(Number(v) || 0) : Number(v) || 0);
+      const iconOf = (f) => itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f] || (k === "spd" ? (f === GENERAL_SPEEDUP_KEY ? "icons/speedup-general.png" : "icons/speedup-expert.png") : "icons/item_icon_570201.png");
+      const lkTxt = (linked) => (linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`);
+      const rowHtml = (f) => {
+        const v = Number(invSaved[f]) || 0, linkable = hasBp && backpackLinks("experts", f), linked = linkable && backpackLinked("experts", f, bpLink);
+        return `<div class="bsg-row" data-bsgrow="${esc(f)}" data-bsglinked="${linked ? 1 : 0}" data-bsginit="${esc(valTxt(v))}">
+          <div class="bsg-top"><img src="${esc(iconOf(f))}" alt="" />
+          <div class="bsg-t"><b>${esc(materialDisplayName(f).replace(/\s*\((minutes|min)\)$/, ""))}</b><small class="bsg-w" data-bsgworth>${esc(G.worthTxt(f, v))}</small>${linkable ? `<small class="bsg-lk" data-bsglk>${lkTxt(linked)}</small>` : ""}</div>
+          ${linkable ? `<button type="button" class="linklike bsg-use" data-bsguse${linked ? " hidden" : ""}>&#127890; ${esc(t("bp_link_use"))}</button>` : ""}</div>
+          <div class="bsm-in"><input type="text" inputmode="${G.minutes ? "numeric" : "decimal"}" autocomplete="off" value="${esc(valTxt(v))}" aria-label="${esc(materialDisplayName(f))}" /></div>
+        </div>`;
+      };
+      const parse = (inp) => { const x = G.minutes ? parseMinutes(inp.value) : parseAmount(inp.value); return Number.isNaN(x) ? NaN : Math.max(0, x); };
+      // Same look as the single box pop-up: a sheet from the bottom on phones (grab handle,
+      // swipe down / ✕ / outside closes), title row, Needed / You have / Short, then a row
+      // per item with its own box, one Save.
+      modal.innerHTML = `<div class="modal-box bsm-top bsg">
+          <div class="bsm-grab" data-cgwgrab aria-hidden="true"></div>
+          <div class="bsm-h"><img src="${esc(G.icon)}" alt="" /><div><b>${esc(G.label)}</b></div>${closeXHtml("data-bsgclose")}</div>
+          <div data-bsgnb></div>
+          <div class="bsg-rows">${G.items.map(rowHtml).join("")}</div>
+          <button class="btn bsg-save" type="button" data-bsgsave>${esc(t("save"))}</button>
+        </div>`;
+      const nbEl = modal.querySelector("[data-bsgnb]");
+      const refresh = () => {
+        let have = 0;
+        modal.querySelectorAll("[data-bsgrow]").forEach((r) => {
+          const f = r.dataset.bsgrow, inp = r.querySelector("input"), v = parse(inp), ok = !Number.isNaN(v);
+          inp.style.borderColor = ok ? "" : "var(--danger)";
+          const w = ok ? v : Number(invSaved[f]) || 0;
+          have += G.worth(f, w);
+          r.querySelector("[data-bsgworth]").textContent = G.worthTxt(f, w);
+          // "Use Backpack": once the box holds a typed amount, or as soon as the person types.
+          const use = r.querySelector("[data-bsguse]");
+          if (use) use.hidden = r.dataset.bsglinked === "1" ? (useBp[f] || inp.value.trim() === r.dataset.bsginit) : !!useBp[f];
+        });
+        nbEl.innerHTML = nd && nd.need > 0 ? bsNeedBoxesHtml({ need: nd.need, have, fmt: G.nbFmt }) : "";
+      };
+      refresh();
+      modal.style.display = "flex";
+      const close = () => { modal.style.display = "none"; };
+      const sw = wireSheetSwipe(modal, { box: ".bsm-top", close });
+      modal.onclick = (ev) => {
+        if (sw.dragged) { sw.dragged = false; return; }
+        if (ev.target === modal || ev.target.closest("[data-bsgclose]")) { close(); return; }
+        const b = ev.target.closest("[data-bsguse]");
+        if (!b) return;
+        const r = b.closest("[data-bsgrow]"), f = r.dataset.bsgrow;
+        r.querySelector("input").value = valTxt(bpOf(f));
+        delete dirty[f];
+        // Typed before: back to the Backpack link on Save. Linked: just the Backpack's amount again.
+        if (r.dataset.bsglinked !== "1") useBp[f] = true;
+        const lk = r.querySelector("[data-bsglk]");
+        if (lk) lk.innerHTML = lkTxt(true);
+        refresh();
+      };
+      modal.oninput = (ev) => { const r = ev.target.closest && ev.target.closest("[data-bsgrow]"); if (r) { dirty[r.dataset.bsgrow] = true; delete useBp[r.dataset.bsgrow]; const lk = r.querySelector("[data-bsglk]"); if (lk) lk.innerHTML = lkTxt(r.dataset.bsglinked === "1"); } refresh(); };
+      const save = () => {
+        const vals = {};
+        let bad = false;
+        modal.querySelectorAll("[data-bsgrow]").forEach((r) => { const v = parse(r.querySelector("input")); if (Number.isNaN(v)) bad = true; else vals[r.dataset.bsgrow] = v; });
+        if (bad) return;
+        let changed = false;
+        G.items.forEach((f) => {
+          const old = Number(invSaved[f]) || 0, typed = !!dirty[f] && vals[f] !== old;
+          if (useBp[f]) {
+            setBackpackManual("experts", f, false, bpLink);
+            invSaved[f] = bpOf(f);
+          } else if (typed) {
+            invSaved[f] = vals[f];
+            if (hasBp) setBackpackManual("experts", f, true, bpLink);
+          } else return;
+          if (f === GENERAL_SPEEDUP_KEY) RESEARCH_SPEEDUP_MINUTES = invSaved[f];
+          changed = true;
+        });
+        close();
+        if (!changed) return;
+        budgetInvalidate();
+        saveCalcState("experts_inventory", invSaved);
+        renderTotals();
+        renderInventory();
+        renderGrid();
+      };
+      modal.querySelector("[data-bsgsave]").onclick = save;
+      modal.querySelectorAll("input").forEach((i) => { i.onkeydown = (ev) => { if (ev.key === "Enter") save(); else if (ev.key === "Escape") close(); }; });
+    };
+    const tilesHtml = fields.map((f) => { const k = grpOf(f); return k ? (f === GROUPS[k].items[0] ? grpHtml(k) : "") : tile(f); }).join("");
     invEl.innerHTML = `${bsHelpHtml(!!tileNeed && fields.some((f) => tileNeed[f] && !(tileNeed[f].need > 0)), false)}<div class="bs-tiles">${tilesHtml}</div>
       ${(() => { // folded (less on the page); the line says how many are short
         const sg = (tileNeed && tileNeed.sigils) || {}, sh = Object.values(sg).filter((x) => x && x.short > 0).length;
@@ -31274,6 +31320,7 @@ async function renderExpertsPage() {
       <div class="bs-help bs-note">${esc(t("experts_sigils_summary_note"))}</div>`;
     invEl.querySelectorAll("[data-expedit]").forEach((btn) => btn.addEventListener("click", () => {
       const f = btn.dataset.expedit;
+      if (grpOf(f)) { openGroup(grpOf(f)); return; }
       const linkable = hasBp && backpackLinks("experts", f);
       // Books and the speedups (one pool, the plan's "Speedups (minutes)"): the Backpack's trades.
       const item = f === "Books of Knowledge" ? f : tileNeed && tileNeed[f] && tileNeed[f].time ? "Speedups (minutes)" : null;
@@ -32621,18 +32668,22 @@ function expertSigilTilesHtml(inv, experts, need) {
     </div>`;
   }).join("")}</div>`;
 }
-// Picture strip to pick one pet/expert (replaces the ‹ 1/15 › arrows).
-// items: [{ label, img, color, dim }]
+// Pet / expert switcher (owner picked B, 18 Nov 2026; replaces the picture strip):
+// a small "‹ 9 / 11 ›" tab on the card's top edge (arrows grey at the first / last)
+// and the previous / next one's picture peeking out at each side of the card
+// (tap = go there). The card itself still swipes (wireIndexSwipe).
+// items: [{ label, img, color, dim }]; the card is containerEl's next sibling.
 function renderPickStrip(containerEl, items, activeIndex, onPick) {
-  containerEl.className = "plx-pick";
-  containerEl.innerHTML = items.map((it, i) => `<button type="button" class="${i === activeIndex ? "on" : ""}${it.dim ? " dim" : ""}" data-pick="${i}" style="--tc:${it.color || "var(--ice)"};" title="${esc(it.label)}" aria-label="${esc(it.label)}">
-      ${it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy" />` : `<span class="plx-pick-ph">${esc(String(it.label).trim().charAt(0))}</span>`}</button>`).join(""); // pictures only: the card below shows the name
+  containerEl.className = "pkw";
+  const n = items.length, pv = items[activeIndex - 1], nx = items[activeIndex + 1];
+  const pic = (it) => it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy" />` : `<span class="pkw-ph" style="--tc:${it.color || "var(--ice)"};">${esc(String(it.label).trim().charAt(0))}</span>`;
+  const peek = (it, i, side) => it ? `<button type="button" class="pkw-pk ${side}${it.dim ? " dim" : ""}" data-pick="${i}" title="${esc(it.label)}" aria-label="${esc(it.label)}">${pic(it)}</button>` : "";
+  const arrow = (it, i, side, ch) => `<button type="button" class="pkw-a ${side}" ${it ? `data-pick="${i}" title="${esc(it.label)}" aria-label="${esc(it.label)}"` : 'disabled aria-hidden="true"'}>${ch}</button>`;
+  containerEl.innerHTML = `${peek(pv, activeIndex - 1, "s")}${peek(nx, activeIndex + 1, "e")}<div class="pkw-tab">${arrow(pv, activeIndex - 1, "s", "&lsaquo;")}<span>${bidiNum(`${activeIndex + 1} / ${n}`)}</span>${arrow(nx, activeIndex + 1, "e", "&rsaquo;")}</div>`;
   containerEl.onclick = (ev) => {
     const b = ev.target.closest("[data-pick]");
     if (b) onPick(Number(b.dataset.pick));
   };
-  const on = containerEl.querySelector(".on");
-  if (on) containerEl.scrollLeft = Math.max(0, on.offsetLeft - containerEl.clientWidth / 2 + on.offsetWidth / 2);
 }
 // Research time box: time after research speed, and how much of it the
 // general + research speedups you own cover.
