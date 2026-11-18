@@ -2234,6 +2234,7 @@ input,select,textarea{
   .cgw-d.on.up{ background:rgba(232,162,60,.85); border-color:#e8b84a; color:#1a1206; }
   .cgw-nh{ margin:12px 0 7px; color:var(--muted); font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
   .cgw-nd{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; }
+  .hg-sh .cgw-nd{ margin-bottom:12px; }
   .cgw-nb{ display:flex; flex-direction:column; align-items:center; gap:1px; min-width:0; padding:7px 3px; border:1px solid var(--line); border-radius:11px; background:var(--panel-2); text-align:center; }
   .cgw-nb img{ width:26px; height:26px; object-fit:contain; }
   .cgw-nb b{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:15px; }

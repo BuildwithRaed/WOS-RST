@@ -6401,13 +6401,26 @@ async function renderGearLevelingGroup(target) {
       for (let i = from + 1; i <= to && i < rows.length; i++) cols.forEach(([col, name]) => { const v = Number(rows[i][col]) || 0; if (v) need[name] = (need[name] || 0) + v; });
     });
     const needs = Object.entries(need);
+    // "This piece needs" boxes like the Chief Gear window: one box per needed
+    // item (amount, what the page's Backpack boxes count, short / ✓).
+    const needsBoxes = () => {
+      const have = BAR_EFF_OWNED.hero_gear || {};
+      const big = (v) => (Math.abs(v) < 1e6 ? Math.round(v).toLocaleString() : shortAmount(v));
+      const small = (v) => (Math.abs(v) < 1e5 ? Math.round(v).toLocaleString() : shortAmount(v));
+      const ic = (nm) => { const s = materialIconSrc(nm); return s ? `<img src="${esc(s)}" alt="" />` : ""; };
+      const body = needs.length ? needs.map(([nm, q]) => {
+        const h = Number(have[nm]) || 0, sh = Math.max(0, q - h);
+        return `<div class="cgw-nb${sh > 0 ? " bad" : " ok"}" title="${esc(materialDisplayName(nm))}">${ic(nm)}<b>${bidiNum(big(q))}</b><small>${esc(t("cgw_have").replace("{n}", small(h)))}</small><span>${sh > 0 ? esc(t("cgw_short").replace("{n}", small(sh))) : "&#10003;"}</span></div>`;
+      }).join("") : `<div class="cgw-nb ok"><span>&#10003;</span><small class="g">${esc(t("gs_nothing"))}</small></div>`;
+      return `<div class="cgw-nh">${esc(t("hg_needs_this"))}</div><div class="cgw-nd" style="grid-template-columns:repeat(${needs.length ? Math.max(needs.length, 2) : 1}, minmax(0, 1fr));">${body}</div>`;
+    };
     const atMax = GEAR_LEVELING_TABLES.every((tb) => cur(troop, piece, tb).to >= Math.max(cur(troop, piece, tb).from, heroTrackCapIdx(tb)));
     m.innerHTML = `<div class="modal-box adm-sheet gs-box ch-sheet hg-sh" role="dialog" aria-modal="true">
       <div class="gs-head">${nav(-1)}<img class="hg-sh-pic" src="${heroGearIcon(troop, piece)}" alt="" /><div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(piece))} · ${esc(troopDisplayName(troop))}</b></div>
         ${nav(1)}${closeXHtml("data-gsclose")}</div>
       <div class="plx-piecestat hgc-stat" data-hgstat="${esc(troop)}|${esc(piece)}"></div>
       ${GEAR_LEVELING_TABLES.map(sec).join("")}
-      <div class="gs-needs"><div class="meta">${esc(t("hg_needs_this"))}</div><div class="gs-chips">${needs.length ? needs.map(([nm, q]) => `<span class="gs-chip" title="${esc(materialDisplayName(nm))}"><img src="${esc(materialIconSrc(nm))}" alt="" />${bidiNum(Math.round(q).toLocaleString())}</span>`).join("") : `<span class="gs-chip ok">&#10003; ${esc(t("gs_nothing"))}</span>`}</div></div>
+      ${needsBoxes()}
       <div class="gs-foot ch-foot"><button type="button" class="btn ghost" data-hgpmax ${atMax ? "disabled" : ""}>${esc(t("hg_max_piece"))}</button><button type="button" class="btn" data-gsclose>${esc(t("gs_done"))}</button></div>
     </div>`;
     m.querySelectorAll("select.lvchip[data-troop]").forEach((c) => { const v = cur(c.dataset.troop, c.dataset.piece, c.dataset.track); c.value = String(c.dataset.role === "to" ? v.to : v.from); });
