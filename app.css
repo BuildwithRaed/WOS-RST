@@ -5039,7 +5039,8 @@ span.mk.mk svg{flex:none}
   .g1-top.g1-nost .g1-set:not(:empty){ margin-bottom:0; padding-bottom:0; border-bottom:0; }
   /* Folded top card: the BACKPACK row sits in the middle, the same space above (to the line) and below (to the card's edge). */
   .cg-ans.g1-folded:has(.g1-bp, #cgBp, .isl-bp){ padding-bottom:10px !important; }
-  .cg-ans.g1-folded :is(.g1-bp, #cgBp){ padding-top:10px; }
   .cg-ans.g1-folded :is(.g1-bp, #cgBp, .isl-bp) .bs-foot{ margin-bottom:0 !important; }
-  .sg-ans.g1-folded #islandShardPlan .isl-pl{ padding-top:10px; }
-  .sg-ans.g1-folded #islandShardPlan .isl-bp{ margin-top:0; }
+  /* The BACKPACK row stays put when the card folds / opens: 10 px from the line above it in both states. */
+  .cg-ans :is(.g1-bp, #cgBp){ padding-top:10px; }
+  .sg-ans #islandShardPlan .isl-pl{ padding-top:10px; }
+  .sg-ans #islandShardPlan .isl-pl > .isl-bp:first-child{ margin-top:0; }
