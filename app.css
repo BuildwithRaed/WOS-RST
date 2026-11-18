@@ -2311,9 +2311,9 @@ input,select,textarea{
   .bsx-ga{ color:var(--ice); font-weight:700; }
   .bsm-grab{ display:none; }
   @media (max-width:900px){
-    #bsEditModal.bsm-ov{ align-items:flex-end; justify-content:center; padding:0; }
-    #bsEditModal .modal-box.bsm-top{ max-width:none !important; width:100% !important; max-height:92vh; overflow-y:auto; margin:0; border-radius:16px 16px 0 0; padding:6px 14px 18px; animation:bsmUp .22s ease-out; }
-    #bsEditModal .bsm-grab{ display:block; width:44px; height:5px; border-radius:3px; background:#56637a; margin:2px auto 10px; touch-action:none; cursor:grab; }
+    #bsEditModal.bsm-ov, #bsGrpModal.bsm-ov{ align-items:flex-end; justify-content:center; padding:0; }
+    #bsEditModal .modal-box.bsm-top, #bsGrpModal .modal-box.bsm-top{ max-width:none !important; width:100% !important; max-height:92vh; overflow-y:auto; margin:0; border-radius:16px 16px 0 0; padding:6px 14px 18px; animation:bsmUp .22s ease-out; }
+    #bsEditModal .bsm-grab, #bsGrpModal .bsm-grab{ display:block; width:44px; height:5px; border-radius:3px; background:#56637a; margin:2px auto 10px; touch-action:none; cursor:grab; }
   }
   @keyframes bsmUp{ from{ transform:translateY(100%); } to{ transform:none; } }
   /* Chief Gear pieces (pictures with tier edge, now badge, target chip) */
@@ -3342,6 +3342,24 @@ input,select,textarea{
   .bs-aff-it{ position:relative; flex:1; display:flex; flex-direction:column; align-items:center; gap:1px; background:none; border:0; color:inherit; font:inherit; cursor:pointer; padding:2px 0; }
   .bs-aff-it .bs-mark{ top:0; inset-inline-start:4px; }
   .bs-aff .bs-st{ -webkit-line-clamp:1; }
+  .bs-aff.bs-spd{ grid-column:span 2; }
+  .bs-tiles.bs-slide > .bs-aff.bs-spd{ flex-basis:calc(((100% - (var(--bscols, 4) - 1) * 6px) / (var(--bscols, 4) + .35)) * 2 + 6px) !important; }
+  .bsg .bs-nb{ text-align:center; }
+  .bsg-rows{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .bsg-row{ padding:8px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.03); }
+  .bsg-top{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .bsg-top img{ width:36px; height:36px; object-fit:contain; flex:none; }
+  .bsg-t{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:1px; }
+  .bsg-t b{ color:var(--frost); font-size:13px; }
+  .bsg-t small{ color:var(--muted); font-size:11.5px; }
+  .bsg-t small.bsg-w{ color:var(--frost); font-weight:600; font-size:12px; }
+  .bsg-use{ flex:none; min-height:32px; padding:0 4px; border:0; background:none; color:var(--ice); font:inherit; font-size:12.5px; cursor:pointer; }
+  .bsg-use[hidden]{ display:none !important; }
+  .bsg .bsm-in input{ flex:1; min-width:0; text-align:center; font-size:18px; }
+  .bsm-f{ position:relative; flex:1 1 auto; min-width:0; display:flex; }
+  .bsm-f input{ flex:1; min-width:0; width:100%; padding-inline-end:46px !important; }
+  .bsm-u{ position:absolute; inset-inline-end:12px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:13px; font-weight:700; pointer-events:none; }
+  .bsg-save{ display:block; width:100%; margin-top:12px; }
   .bs-help{ font-size:12px; line-height:1.4; color:var(--muted); margin:0 0 10px; }
   .bs-help b{ color:var(--danger); }
   .bs-help .ok{ color:var(--good); font-weight:700; }
