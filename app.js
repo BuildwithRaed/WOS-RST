@@ -1316,7 +1316,6 @@ let LANG = localStorage.getItem("lang") || "en";
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
 const LANG_FILES_VERSION = 105; // bump when a lang/*.json file changes (the offline cache keeps old links)
-const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2273,6 +2272,7 @@ const T = {
   research_speed_label: { en: "RESEARCH SPEED" },
   speedups_label: { en: "GENERAL SPEEDUPS" },
   bs_min_unit: { en: "min" },
+  bs_type_min: { en: "Type each amount in minutes (1h = 60 min)" },
   set_speed: { en: "Research Speed" },
   set_count: { en: "Count" },
   tl_title: { en: "State Timeline" },
@@ -2845,7 +2845,6 @@ const T = {
   exp_lv_max: { en: "Level {n} · max" },
   exp_lv_max_short: { en: "Lv {n} · Max" },
   exp_nothing_needed: { en: "Affinity and Sigils: nothing needed" },
-  exp_all_skills_max: { en: "All skills max" },
   exp_done: { en: "Done" },
   g1_show: { en: "Show" },
   marks_per_pet: { en: "Per pet" },
@@ -30496,8 +30495,16 @@ async function renderExpertsResearchPage() {
       const st = saved[expert][p], cur = Number(st.current) || 0, des = Math.max(cur, Number(st.desired) || 0), top = pathTop(expert, p);
       const go = des > cur, done = !go && cur >= top;
       const pct = (v) => Math.min(100, (v / 200) * 100);
+      // The path's stats are always shown (owner, 18 Nov 2026): what the levels to the target add,
+      // at ✓ Max what the path gives in all, with nothing done yet what it gives at max.
       const { sigil, stats } = go ? pathRotationOnly(expert, p, cur, des) : { sigil: 0, stats: {} };
-      const gains = Object.entries(stats).filter(([, v]) => v > 0).map(([k, v]) => `+${Number(v.toFixed(1))}% ${ER_SHORT[k] || k}`).join(" · ");
+      const statTxt = (o) => Object.entries(o).filter(([, v]) => v > 0).map(([k, v]) => `+${Number(v.toFixed(1))}% ${ER_SHORT[k] || k}`).join(" · ");
+      let gains = statTxt(stats);
+      if (!go) {
+        const has = cur > 0 ? statTxt(pathRotationOnly(expert, p, 0, cur).stats) : "";
+        const mx = done ? "" : statTxt(pathRotationOnly(expert, p, 0, top).stats);
+        gains = [has, mx ? t("pkd_up_to").replace("{list}", mx) : ""].filter(Boolean).join(" · ");
+      }
       const curSel = `<select data-expresearchcur="${esc(expert)}|${p}" aria-label="${esc(t("current_label"))}">${pathLevelOpts(expert, p, cur)}</select>`;
       const desSel = `<select data-expresearchdes="${esc(expert)}|${p}" aria-label="${esc(t("target_label"))}">${pathLevelOpts(expert, p, des)}</select>`;
       const right = go ? `<span class="exp-rst meta">${bidiNum(Math.round(sigil).toLocaleString())} ${esc(t("resource_sigils"))}</span>`
@@ -31132,37 +31139,33 @@ async function renderExpertsPage() {
       : `<small>${esc(alt)}</small><i>&#10003; ${esc(t("exp_done_word"))}</i>`}</span></button>`.replace('class="exk-b"', `class="exk-b${need > 0 ? "" : " done"}"`);
     const sigImg = EXPERT_INVENTORY_ICONS[`${hero} Sigils`] || "icons/item_icon_570000.png";
     // M3 (owner, 10 Nov 2026): a maxed level (at its released max, no higher target) is one green
-    // line; a fully maxed expert also folds its skills into one line. Tap = the normal rows (kept for the visit).
-    const lvMax = di === ci && (Number(s.current) || 0) >= heroMaxLevelValue(hero) - 0.05;
-    const skMax = (sk) => { const st = s.skills[sk], c = Number(st.current) || 0; return Math.max(c, Number(st.desired) || 0) <= c && c >= skillMaxLevel(hero, sk); };
-    const allSkMax = e.skills.every(skMax);
-    const lvShow = lvMax, skShow = lvMax && allSkMax;
-    const lvFold = lvShow && !EXP_MAX_OPEN[`${hero}|level`], skFold = skShow && !EXP_MAX_OPEN[`${hero}|skills`];
-    const m3Line = (key, main, sub) => `<button type="button" class="exk-m3${EXP_MAX_OPEN[key] ? " open" : ""}" data-expmaxopen="${esc(key)}" aria-expanded="${EXP_MAX_OPEN[key] ? "true" : "false"}"><span class="exk-ck" aria-hidden="true">&#10003;</span><span class="exk-m3-t"><b>${main}</b>${sub ? `<small>${sub}</small>` : ""}</span><span class="exk-m3-go" aria-hidden="true">&rsaquo;</span></button>`;
+    // line, never folded (owner, 18 Nov 2026); tapping it opens the level list.
+    const lvShow = di === ci && (Number(s.current) || 0) >= heroMaxLevelValue(hero) - 0.05;
     const noNeed = affNeed <= 0 && sigil <= 0;
-    const levelHtml = lvFold ? "" : `<div class="exk-r exk-lvr">
+    const levelHtml = lvShow ? "" : `<div class="exk-r exk-lvr">
         <div class="exk-b exk-lv"><small>${esc(t("exp_level_word"))}</small>${vals(lvLab(s.current), `<select data-expcur="${esc(hero)}" aria-label="${esc(t("current_label"))}">${heroLevelOpts(hero, s.current)}</select>`, lvLab(pos[di]), `<select data-expdes="${esc(hero)}" aria-label="${esc(t("target_label"))}">${heroLevelOpts(hero, s.desired)}</select>`)}</div>
         ${noNeed ? (lvShow ? "" : `<div class="exk-nn">${esc(t("exp_nothing_needed"))}</div>`) : `<div class="exk-g2">
           ${needBox("aff", EXPERT_INVENTORY_ICONS.Affinity, t("resource_affinity"), affNeed, affShort)}
           ${needBox("sig", sigImg, t("exp_sigils_of").replace("{name}", dataName(hero)), sigil, sigShort)}
         </div>`}
       </div>`;
-    const lvLine = lvShow ? `<div class="exk-m3box">${m3Line(`${hero}|level`, esc(t("exp_lv_max").replace("{n}", lvLab(s.current))), noNeed ? esc(t("exp_nothing_needed")) : "")}</div>` : "";
-    const skLine = skShow ? `<div class="exk-m3box">${m3Line(`${hero}|skills`, esc(t("exp_all_skills_max")), e.skills.map((sk) => `<span class="nw">${esc(dataName(sk))} ${Number(s.skills[sk].current) || 0}</span>`).join(" · "))}</div>` : "";
+    const lvLine = lvShow ? `<div class="exk-m3box"><div class="exk-m3 exk-m3s"><span class="exk-ck" aria-hidden="true">&#10003;</span><span class="exk-m3-t"><b>${esc(t("exp_lv_max").replace("{n}", lvLab(s.current)))}</b>${noNeed ? `<small>${esc(t("exp_nothing_needed"))}</small>` : ""}</span><select data-expcur="${esc(hero)}" aria-label="${esc(t("current_label"))}">${heroLevelOpts(hero, s.current)}</select></div></div>` : "";
     // Books: the Backpack's Books go to the skills in listed order.
     let booksLeft = Number(invSaved["Books of Knowledge"]) || 0;
     const skillRow = (sk) => {
       const st = s.skills[sk], max = skillMaxLevel(hero, sk), pick = skillPickMax(hero, sk);
       const cur = Number(st.current) || 0, des = Math.max(cur, Number(st.desired) || 0);
       const curSel = `<select data-expskillcur="${esc(hero)}|${esc(sk)}" aria-label="${esc(t("current_label"))}">${levelOpts(pick, Math.min(cur, pick), max)}</select>`;
-      if (des <= cur && cur >= max) {
-        return `<div class="exk-sl"><span class="exk-ck" aria-hidden="true">&#10003;</span><b>${esc(dataName(sk))}</b><span class="exk-mx">${esc(t("exp_lv_max_short").replace("{n}", cur))}${curSel}</span></div>`;
-      }
+      // The skill's stat (the same rows Troops Stats adds up), shown on every row.
       const rows = SKILL_CACHE[`${hero}|${sk}`] || [];
       const typed = rows.find((r) => r.stat_type);
       const at = (lv) => { let m = null; rows.forEach((r) => { if (r.level <= lv) m = r; }); return m; };
       const vAt = (lv) => { const r = at(lv); return r && r.stat_type ? Number(r.stat_value) || 0 : 0; };
-      const stat = typed ? `<div class="exk-bn">${esc(typed.stat_type.split(",").map((k) => EXP_STAT_SHORT[k.trim()] || k.trim()).join(" · "))} ${bidiNum(expPctTxt(vAt(cur)))}${des > cur ? ` &rarr; <b>${bidiNum(expPctTxt(vAt(des)))}</b>` : ""}</div>` : "";
+      const typesTxt = typed ? typed.stat_type.split(",").map((k) => EXP_STAT_SHORT[k.trim()] || k.trim()).join(" · ") : "";
+      if (des <= cur && cur >= max) {
+        return `<div class="exk-sl"><span class="exk-ck" aria-hidden="true">&#10003;</span><b>${esc(dataName(sk))}${typed ? `<span class="exk-sls"> · ${bidiNum(expPctTxt(vAt(cur)))} ${esc(typesTxt)}</span>` : ""}</b><span class="exk-mx">${esc(t("exp_lv_max_short").replace("{n}", cur))}${curSel}</span></div>`;
+      }
+      const stat = typed ? `<div class="exk-bn">${esc(typesTxt)} ${bidiNum(expPctTxt(vAt(cur)))}${des > cur ? ` &rarr; <b>${bidiNum(expPctTxt(vAt(des)))}</b>` : ""}</div>` : "";
       let line;
       if (des > cur) {
         const { exp, book } = skillNeed(hero, sk, st);
@@ -31196,10 +31199,9 @@ async function renderExpertsPage() {
           </div>
         </div>
         ${lvLine}${levelHtml}
-        ${skLine}${skFold ? "" : e.skills.map(skillRow).join("")}
+        ${e.skills.map(skillRow).join("")}
       </div>`;
     wireIndexSwipe(gridEl, EXPERTS_SHOWN.length, activeExpertIdx, (next) => { activeExpertIdx = next; renderGrid(); });
-    gridEl.querySelectorAll("[data-expmaxopen]").forEach((b) => b.addEventListener("click", () => { EXP_MAX_OPEN[b.dataset.expmaxopen] = !EXP_MAX_OPEN[b.dataset.expmaxopen]; renderGrid(); }));
     // tap a need box to change what you have (Affinity already in the bar / the expert's Sigils)
     gridEl.querySelectorAll("[data-expbox]").forEach((b) => b.addEventListener("click", () => {
       if (b.dataset.expbox === "aff") {
@@ -32786,6 +32788,7 @@ function bsGroupModal(o) {
           <div class="bsm-h"><img src="${esc(o.icon)}" alt="" /><div><b>${esc(o.label)}</b></div>${closeXHtml("data-bsgclose")}</div>
           <div data-bsgnb></div>
           ${o.extra ? (() => { const ex = o.extra(); return `<div class="bsx" data-bsexplain${ex ? "" : " hidden"}>${ex}</div>`; })() : ""}
+          ${o.minutes ? `<div class="bsg-mh">&#9201; ${esc(t("bs_type_min"))}</div>` : ""}
           <div class="bsg-rows">${o.items.map(rowHtml).join("")}</div>
           <button class="btn bsg-save" type="button" data-bsgsave>${esc(t("save"))}</button>
         </div>`;
