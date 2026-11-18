@@ -100,7 +100,6 @@
 "t:trade_apply_short":"Paket maliyetinde kullan",
 "t:trade_lab_line":"Araştırma Laboratuvarı · haftada bir (plan Araştırma Laboratuvarı sayfasında)",
 "t:trade_card_line2":"Bu hafta {n} takas",
-"t:pc_free_count":"Zaten sayıldı: {c} aktif kart · {t} ücretsiz takas",
 "t:pc_card_days":"her biri {n} gün",
 "t:pc_title":"Paket Maliyeti",
 "t:pc_fastest":"En hızlı",

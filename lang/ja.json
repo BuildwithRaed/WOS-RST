@@ -101,7 +101,6 @@
  "t:trade_apply_short": "パック費用に使う",
  "t:trade_lab_line": "研究所 · 週1回(研究所ページで設定)",
  "t:trade_card_line2": "今週の交換 {n}回",
- "t:pc_free_count": "計算済み:有効なカード {c}枚 · 無料交換 {t}回",
  "t:pc_card_days": "各{n}日",
  "t:pc_title": "パック費用",
  "t:pc_fastest": "最速",

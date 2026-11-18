@@ -2470,6 +2470,7 @@ input,select,textarea{
   .pca-tr img{ width:20px; height:20px; object-fit:contain; }
   .pca-ar{ margin:0 4px; color:var(--good); }
   .pca-tr .g{ color:var(--good); }
+  .pca-tr .pca-wh{ flex:0 0 auto; min-width:84px; color:var(--muted); font-size:12px; }
   .pca .pc-free{ margin-top:8px; }
   .pca .pc-view{ margin-top:0; padding-top:0; border-top:0; }
   .pca-scope .seg{ display:grid; grid-template-columns:1fr 1fr; width:100%; margin:8px 0 0; }

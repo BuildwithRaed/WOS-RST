@@ -100,7 +100,6 @@
 "t:trade_apply_short":"팩 비용에 사용",
 "t:trade_lab_line":"연구소 · 주 1회 (연구소 페이지에서 설정)",
 "t:trade_card_line2":"이번 주 {n}회 교환",
-"t:pc_free_count":"이미 반영: 활성 카드 {c}개 · 무료 교환 {t}개",
 "t:pc_card_days":"각 {n}일",
 "t:pc_title":"팩 비용",
 "t:pc_fastest":"가장 빠름",
