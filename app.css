@@ -3052,15 +3052,22 @@ input,select,textarea{
   .plx-stat-tabs{ overflow-x:auto; scrollbar-width:none; }
   .plx-stat-tabs button{ font-size:12.5px; flex:1 0 auto; white-space:nowrap; padding:7px 10px; }
   /* Pet / expert picker strip */
-  .plx-pick{ display:flex; gap:6px; overflow-x:auto; padding:2px 2px 8px; margin-top:12px; margin-bottom:6px; scrollbar-width:thin; }
-  .plx-pick button{ flex:0 0 auto; width:62px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 4px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font:inherit; font-size:10.5px; cursor:pointer; }
-  .plx-pick button img{ width:48px; height:48px; object-fit:cover; border-radius:8px; }
-  .plx-pick button > span:last-child{ width:100%; text-align:center; line-height:1.15; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
-  .plx-pick-ph{ width:48px; height:48px; border-radius:50%; display:grid; place-items:center; font-size:17px; font-weight:800; color:var(--tc); background:rgba(255,255,255,.05); border:2px solid var(--tc); }
-  .plx-pick button.on{ border-color:var(--tc); color:var(--frost); background:rgba(255,255,255,.07); box-shadow:inset 0 -2px 0 var(--tc); }
-  .plx-pick button.dim{ opacity:.45; }
-  @media (min-width: 901px){ .plx-pick{ flex-wrap:wrap; overflow:visible; } }
-  @media (max-width: 760px){ .plx-head h2{ font-size:19px; } .plx-pick button{ width:56px; padding:5px 2px; font-size:10px; } .plx-pick button img, .plx-pick-ph{ width:44px; height:44px; } }
+  .pkw{ position:relative; height:13px; margin-top:22px; }
+  .pkw + *{ margin-inline:22px; }
+  .pkw-tab{ position:absolute; top:0; left:50%; transform:translateX(-50%); z-index:3; display:flex; align-items:center; gap:2px; height:26px; padding:0 4px; border:1px solid #2f5e86; border-radius:13px; background:#132033; font-size:12.5px; font-weight:700; color:var(--frost); white-space:nowrap; }
+  .pkw-tab > span{ margin:0 4px; }
+  .pkw-a{ width:26px; height:24px; padding:0; border:0; background:none; color:var(--ice); font:inherit; font-size:17px; line-height:1; cursor:pointer; }
+  .pkw-a:disabled{ color:var(--muted); opacity:.35; cursor:default; }
+  [dir="rtl"] .pkw-a{ transform:scaleX(-1); }
+  .pkw-pk{ position:absolute; top:39px; width:28px; height:150px; padding:12px 0 0; border:1px solid rgba(255,255,255,.09); background:#1a2333; overflow:hidden; opacity:.6; display:flex; align-items:flex-start; cursor:pointer; }
+  .pkw-pk.s{ inset-inline-start:-6px; justify-content:flex-end; border-start-start-radius:14px; border-end-start-radius:14px; border-inline-end:0; }
+  .pkw-pk.e{ inset-inline-end:-6px; justify-content:flex-start; border-start-end-radius:14px; border-end-end-radius:14px; border-inline-start:0; }
+  .pkw-pk.dim{ opacity:.35; }
+  .pkw-pk img, .pkw-ph{ width:44px; height:44px; flex:none; border-radius:10px; object-fit:contain; }
+  .pkw-pk.s img, .pkw-pk.s .pkw-ph{ margin-inline-end:-18px; }
+  .pkw-pk.e img, .pkw-pk.e .pkw-ph{ margin-inline-start:-18px; }
+  .pkw-ph{ border-radius:50%; display:grid; place-items:center; font-size:17px; font-weight:800; color:var(--tc); background:rgba(255,255,255,.05); border:2px solid var(--tc); }
+  @media (max-width: 760px){ .plx-head h2{ font-size:19px; } }
   .t12x-tabs{ display:flex; flex:1 1 320px; max-width:560px; margin-inline-start:auto; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:4px; }
   .t12x-tabs button{ flex:1; border:0; background:none; color:var(--muted); font:inherit; font-weight:600; font-size:13px; padding:7px 4px; border-radius:10px; cursor:pointer; }
   .t12x-tabs button small{ display:block; font-weight:400; font-size:10.5px; }

@@ -32269,18 +32269,22 @@ function expertSigilTilesHtml(inv, experts, need) {
     </div>`;
   }).join("")}</div>`;
 }
-// Picture strip to pick one pet/expert (replaces the ‹ 1/15 › arrows).
-// items: [{ label, img, color, dim }]
+// Pet / expert switcher (owner picked B, 18 Nov 2026; replaces the picture strip):
+// a small "‹ 9 / 11 ›" tab on the card's top edge (arrows grey at the first / last)
+// and the previous / next one's picture peeking out at each side of the card
+// (tap = go there). The card itself still swipes (wireIndexSwipe).
+// items: [{ label, img, color, dim }]; the card is containerEl's next sibling.
 function renderPickStrip(containerEl, items, activeIndex, onPick) {
-  containerEl.className = "plx-pick";
-  containerEl.innerHTML = items.map((it, i) => `<button type="button" class="${i === activeIndex ? "on" : ""}${it.dim ? " dim" : ""}" data-pick="${i}" style="--tc:${it.color || "var(--ice)"};" title="${esc(it.label)}" aria-label="${esc(it.label)}">
-      ${it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy" />` : `<span class="plx-pick-ph">${esc(String(it.label).trim().charAt(0))}</span>`}</button>`).join(""); // pictures only: the card below shows the name
+  containerEl.className = "pkw";
+  const n = items.length, pv = items[activeIndex - 1], nx = items[activeIndex + 1];
+  const pic = (it) => it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy" />` : `<span class="pkw-ph" style="--tc:${it.color || "var(--ice)"};">${esc(String(it.label).trim().charAt(0))}</span>`;
+  const peek = (it, i, side) => it ? `<button type="button" class="pkw-pk ${side}${it.dim ? " dim" : ""}" data-pick="${i}" title="${esc(it.label)}" aria-label="${esc(it.label)}">${pic(it)}</button>` : "";
+  const arrow = (it, i, side, ch) => `<button type="button" class="pkw-a ${side}" ${it ? `data-pick="${i}" title="${esc(it.label)}" aria-label="${esc(it.label)}"` : 'disabled aria-hidden="true"'}>${ch}</button>`;
+  containerEl.innerHTML = `${peek(pv, activeIndex - 1, "s")}${peek(nx, activeIndex + 1, "e")}<div class="pkw-tab">${arrow(pv, activeIndex - 1, "s", "&lsaquo;")}<span>${bidiNum(`${activeIndex + 1} / ${n}`)}</span>${arrow(nx, activeIndex + 1, "e", "&rsaquo;")}</div>`;
   containerEl.onclick = (ev) => {
     const b = ev.target.closest("[data-pick]");
     if (b) onPick(Number(b.dataset.pick));
   };
-  const on = containerEl.querySelector(".on");
-  if (on) containerEl.scrollLeft = Math.max(0, on.offsetLeft - containerEl.clientWidth / 2 + on.offsetWidth / 2);
 }
 // Research time box: time after research speed, and how much of it the
 // general + research speedups you own cover.
