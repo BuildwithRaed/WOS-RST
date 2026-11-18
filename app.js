@@ -3420,7 +3420,6 @@ const T = {
   bsx_lab: { en: "Research Lab" },
   bsx_trade: { en: "Trade {n}" },
   bsx_covered: { en: "Covered by your Backpack" },
-  bsx_no_trades: { en: "No trades for this item" },
   bsx_cov_trades: { en: "Covered with trades" },
   bsx_still_short: { en: "Still {n} short after trades" },
   cdp_pages_up: { en: "Pages that can go up" },
@@ -32327,9 +32326,9 @@ function plxAmountModal(o) {
 }
 // Planner pages' Backpack box pop-up: the trades the Backpack itself allows into this item
 // ("Where the rest comes from": this week up to each trade's weekly limit, next weeks up to
-// the page's target date, the Research Lab's next weeks on T12), one status line (covered by
-// the Backpack / covered with trades / still N short after trades) and, on a source item,
-// "Spare N goes to <item> ›". Never packs (owner: packs are Budgets' / Pack cost's job): worked
+// the page's target date, the Research Lab's next weeks on T12) and one status line (covered
+// with trades / still N short after trades), both only when such trades exist; on a source
+// item, "Spare N goes to <item> ›". Never packs (owner: packs are Budgets' / Pack cost's job): worked
 // out from the Backpack amounts and the trade rules only, so nothing here moves with Pack cost.
 // Pages whose Backpack box pop-ups use it.
 const BOX_EXPLAIN_KEYS = new Set(["chief_gear", "charm", "hero_gear", "pets", "pets_refine", "t12_research", "t11_helios", "research_center", "experts"]);
@@ -32385,16 +32384,17 @@ function cgBoxExplainHtml(name, c) {
   const line = (w, mid, v) => `<div class="bsx-l"><span class="bsx-w">${esc(t(w === "week" ? "bsx_week" : "bsx_later"))}</span><span class="bsx-m">${mid}</span><b class="g">${v}</b></div>`;
   const labMid = (x) => `<img src="icons/quick/microscope.png" alt="" title="${esc(t("bsx_trade").replace("{n}", num(x.give, x.from)))} ${nm(x.from)}" /><span>${esc(t("bsx_lab"))}</span>`;
   const inQ = sum(ins, "get"), outQ = sum(outs, "give");
-  // Each trade is listed once, in the box of the item it makes. What this item gives away is
-  // one short line in the status box: "Spare N goes to Alloy ›", each target tappable.
-  let body = "";
-  if (ins.length) body += `<div class="bsx-h">${esc(t("bsx_rest"))}</div><div class="bsx-list">${ins.map((x) => line(x.when, x.lab ? labMid(x) : `${ic(x.from)}<span>${esc(t("bsx_trade").replace("{n}", num(x.give, x.from)))} ${nm(x.from)}</span>`, `+${num(x.get)}`)).join("")}</div>`;
-  else if (!outs.length) body += `<div class="bsx-none">${esc(t("bsx_no_trades"))}</div>`;
+  // Each trade is listed once, in the box of the item it makes. The list and the status line
+  // only show when trades into this item change the answer (owner, 18 Nov 2026): otherwise the
+  // Needed / You have / Short boxes above already say it all. What this item gives away is one
+  // short line, "Spare N goes to Alloy ›", each target tappable.
   const short = c.need - (c.have + inQ - outQ);
   const ownOk = c.have >= c.need - 0.5, ok = ownOk || short <= 0.5;
   const tos = [...new Set(outs.map((x) => x.to))];
   const tileOf = (n) => [...content.querySelectorAll("[data-bsedit], [data-expedit]")].some((b) => (b.dataset.bsedit || b.dataset.expedit) === n);
   const goes = tos.length ? `<div class="bsx-goes">${ic(name)}<span>${esc(t("bsx_goes_spare").replace("{n}", num(outQ)))}</span>${tos.map((n) => (tileOf(n) ? `<button type="button" class="bsx-go" data-bsxgo="${esc(n)}">${ic(n)}<span>${nm(n)}</span></button>` : `<span class="bsx-go off">${ic(n)}<span>${nm(n)}</span></span>`)).join('<span class="bsx-gs">,</span>')}${tos.some(tileOf) ? '<span class="bsx-ga">&#8250;</span>' : ""}</div>` : "";
+  if (!ins.length) return goes;
+  const body = `<div class="bsx-h">${esc(t("bsx_rest"))}</div><div class="bsx-list">${ins.map((x) => line(x.when, x.lab ? labMid(x) : `${ic(x.from)}<span>${esc(t("bsx_trade").replace("{n}", num(x.give, x.from)))} ${nm(x.from)}</span>`, `+${num(x.get)}`)).join("")}</div>`;
   const stat = ok
     ? `<div class="bsx-tot ok${goes ? " gl" : ""}"><b>&#10003; ${esc(t(ownOk ? "bsx_covered" : "bsx_cov_trades"))}</b>${goes}</div>`
     : `<div class="bsx-tot bad${goes ? " gl" : ""}"><b>${esc(t("bsx_still_short").replace("{n}", num(short)))}</b>${goes}</div>`;
