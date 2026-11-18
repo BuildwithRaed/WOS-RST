@@ -24909,7 +24909,7 @@ function cgBadge(r) { return r ? chiefGearRowLabel(r).replace(/^(Green|Blue|Purp
 // Just the stars part when the tier doesn't change ("★3" / "★3.2").
 function cgStars(r) { return r && r.tier && r.stars != null ? `★${r.stars}${r.stage != null && r.stage !== "0" ? "." + r.stage : ""}` : cgBadge(r); }
 async function renderChiefGearCalc() {
-  const seq = RENDER_SEQ, fresh = pageEntered("chief_gear");
+  const seq = RENDER_SEQ;
   const [rows] = await Promise.all([loadChiefGearRows(), ensureUpgradeOrder(), maxBeforeLoad("chief_gear", (v) => v.from)]);
   if (seq !== RENDER_SEQ) return;
   if (!rows.length) {
@@ -25202,20 +25202,6 @@ async function renderChiefGearCalc() {
   }));
   renderPieces();
   updateChiefGearTotals();
-  // Entering the page: bring the first piece below its target into view (a soft scroll,
-  // only when it isn't on screen and the person hasn't scrolled yet).
-  if (fresh) {
-    const key = ORDER.find((k) => { const st = CHIEF_GEAR_STATE[k]; return st && st.to != null && st.to > st.from; });
-    if (key) setTimeout(() => {
-      if (seq !== RENDER_SEQ || window.scrollY > 4) return;
-      const el = rowsEl.querySelector(`[data-cgslot="${key}"]`);
-      if (!el) return;
-      const r = el.getBoundingClientRect(), bar = document.getElementById("mBar");
-      const bottom = window.innerHeight - (bar && bar.offsetHeight ? bar.offsetHeight : 0);
-      if (r.top >= 0 && r.bottom <= bottom) return;
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 350);
-  }
 }
 
 // Sums materials needed across all 6 gear pieces' selected ranges.
