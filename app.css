@@ -1999,6 +1999,7 @@ input,select,textarea{
   .gx-head .meta{ font-size:11.5px; margin-inline-start:auto; }
   .gx-line{ display:flex; align-items:center; gap:6px; padding:5px 0; border-top:1px solid var(--line); }
   .gx-lv{ min-width:38px; white-space:nowrap; font-weight:700; color:#c49af0; font-size:13px; }
+  .gx-line.go .gx-lv{ color:#f5a052; flex:none; }
   .gx-line button{ width:32px; height:32px; padding:0; border-radius:8px; border:1px solid var(--line); background:var(--panel); color:inherit; font-size:16px; }
   .gx-line input{ width:52px; height:32px; text-align:center; font-size:15px; padding:0 2px; }
   .gx-tot{ margin-inline-start:auto; text-align:end; font-size:11px; line-height:1.25; color:var(--muted); }

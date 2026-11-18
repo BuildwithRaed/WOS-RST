@@ -1713,6 +1713,9 @@ const T = {
   gx_Orange: { en: "Orange" },
   go_enh_ph: { en: "+ (0–{max})" },
   go_ms_ph: { en: "Lv. (0–{max})" },
+  go_each: { en: "{xp} XP each · {es} Essence Stones each" },
+  go_tot: { en: "{xp} XP · {es} Essence Stones" },
+  go_sum: { en: "{n} pieces · {xp} XP · {es} Essence Stones" },
   scan_gx_unread: { en: "{n} pieces whose \"+\" or \"Lv.\" couldn't be read — add them in XP 10." },
   scan_gx_hint: { en: "Purple gear read by its \"+\", orange by its \"+\" and \"Lv.\". Saving replaces your hero gear for XP." },
   chest_open_tag: { en: "Open in game" },
@@ -15021,17 +15024,20 @@ async function renderInventory() {
         ${[{ key: "Orange", dot: GEAR_ORANGE_DOT, base: null, max: GEAR_ORANGE_ENH_MAX }, ...GEAR_XP_COLOURS].map((c) => {
           // Orange (Mythic) is one more colour: its lines are "+Enhance Lv.Mastery" (reset gives the Enhance XP back).
           const rows = c.key === "Orange"
-            ? og.rows.slice().sort((a, b) => b.enh - a.enh || b.lv - a.lv || b.st - a.st).map((r) => ({ key: r.key, lab: `+${r.enh} Lv.${r.lv}${r.st ? `.${r.st}` : ""}`, n: r.n, each: r.xp }))
+            ? og.rows.slice().sort((a, b) => b.enh - a.enh || b.lv - a.lv || b.st - a.st).map((r) => ({ key: r.key, lab: `+${r.enh} Lv.${r.lv}${r.st ? `.${r.st}` : ""}`, n: r.n, each: r.xp, es: r.es }))
             : all.rows.filter((r) => r.colour === c.key).sort((a, b) => b.lvl - a.lvl).map((r) => ({ key: r.key, lab: `+${r.lvl}`, n: r.n, each: r.each }));
-          const n = rows.reduce((x, r) => x + r.n, 0), xp = rows.reduce((x, r) => x + r.n * r.each, 0);
+          const n = rows.reduce((x, r) => x + r.n, 0), xp = rows.reduce((x, r) => x + r.n * r.each, 0), es = rows.reduce((x, r) => x + r.n * (r.es || 0), 0);
+          const isOr = c.key === "Orange";
           const addBtn = (cls, key) => `<button type="button" class="gx-addbtn${cls}" data-gxadd="${c.key}">${esc(t(key))}</button>`;
           return `<div class="gx-col">
-            <div class="gx-head"><i style="background:${c.dot};"></i><b>${esc(t("gx_" + c.key))}</b>${rows.length ? `<span class="meta">${esc(t("gx_sum").replace("{n}", n.toLocaleString()).replace("{xp}", xp.toLocaleString()))}</span>` : `${c.base == null ? "" : `<span class="meta" style="margin-inline-start:4px;">${esc(t("gx_base").replace("{n}", c.base))}</span>`}${gxAdd === c.key ? "" : `<span style="margin-inline-start:auto;">${addBtn("", "gx_add")}</span>`}`}</div>
-            ${rows.map((r) => `<div class="gx-line"><span class="gx-lv">${esc(r.lab)}</span>
+            <div class="gx-head"><i style="background:${c.dot};"></i><b>${esc(t("gx_" + c.key))}</b>${rows.length ? `<span class="meta">${esc(t(isOr ? "go_sum" : "gx_sum").replace("{n}", n.toLocaleString()).replace("{xp}", xp.toLocaleString()).replace("{es}", es.toLocaleString()))}</span>` : `${c.base == null ? "" : `<span class="meta" style="margin-inline-start:4px;">${esc(t("gx_base").replace("{n}", c.base))}</span>`}${gxAdd === c.key ? "" : `<span style="margin-inline-start:auto;">${addBtn("", "gx_add")}</span>`}`}</div>
+            ${rows.map((r) => `<div class="gx-line${isOr ? " go" : ""}"><span class="gx-lv">${esc(r.lab)}</span>
               <button type="button" data-gxstep="${esc(r.key)}|-1" aria-label="−">&minus;</button>
               <input type="number" min="0" inputmode="numeric" data-gxn="${esc(r.key)}" value="${r.n}" />
               <button type="button" data-gxstep="${esc(r.key)}|1" aria-label="+">+</button>
-              <span class="gx-tot">${esc(t("gx_each").replace("{n}", r.each.toLocaleString()))}<b>${esc(t("gx_xp").replace("{n}", (r.n * r.each).toLocaleString()))}</b></span></div>`).join("")}
+              <span class="gx-tot">${isOr
+                ? `${esc(t("go_each").replace("{xp}", r.each.toLocaleString()).replace("{es}", (r.es || 0).toLocaleString())).replace(" · ", "<br>")}<b>${esc(t("go_tot").replace("{xp}", (r.n * r.each).toLocaleString()).replace("{es}", (r.n * (r.es || 0)).toLocaleString())).replace(" · ", "<br>")}</b>`
+                : `${esc(t("gx_each").replace("{n}", r.each.toLocaleString()))}<b>${esc(t("gx_xp").replace("{n}", (r.n * r.each).toLocaleString()))}</b>`}</span></div>`).join("")}
             ${gxAdd === c.key ? `<div class="gx-addrow"><input type="number" min="0" max="${c.max}" inputmode="numeric" id="gxAddLv" placeholder="${esc(t(c.key === "Orange" ? "go_enh_ph" : "gx_level_ph").replace("{max}", c.max))}" />${c.key === "Orange" ? `<input type="number" min="0" max="${GEAR_ORANGE_MASTERY_MAX}" inputmode="numeric" id="gxAddMs" placeholder="${esc(t("go_ms_ph").replace("{max}", GEAR_ORANGE_MASTERY_MAX))}" />` : ""}<button type="button" class="btn small" data-gxaddgo="${c.key}">${esc(t("gx_add").replace(/^\+\s*/, ""))}</button></div>`
               : rows.length ? `<div class="gx-addrow">${addBtn("", "gx_add_level")}</div>` : ""}
           </div>`;
@@ -15228,7 +15234,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=3605bddba5";
+      s.src = "scan.min.js?v=e45318ae6a";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }
