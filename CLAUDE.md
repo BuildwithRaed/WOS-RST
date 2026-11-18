@@ -573,6 +573,13 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - **Research pages (T12, T11, Research Center)**: Research Speedups and General Speedups are one shared "Speedups" box with one group pop-up (both amounts, the time line), shared helpers `bsGroupTileHtml(o)` / `bsGroupModal(o)` (no empty trades part).
 - Removed texts `bs_hide`, `bs_show_all`, `bs_nb_in_bp`, `bs_nb_from*`, `bs_nb_bought`, `bs_nb_counted`, `bs_nb_gear`, `bs_nb_xp_items`; new `bs_hv_*`, `bsx_*`, `bs_min_unit` in all 16 lang files (`LANG_FILES_VERSION` 105).
 
+**Upgrade windows (owner, 18 Nov 2026; step 56):**
+- **Chief Gear piece window** (`openGearSheet`): Now and Target as chips (tier, then star, then stage dots, `data-cgw="<role>|…"`; levels past the open cap amber "Not open yet"), Max, then "This piece needs" (`cgw_needs`) as one box per material against what the Backpack boxes count (`BAR_EFF_OWNED[calcKey]`, chests and hidden trades in): amount, "have N", red "N short" or ✓. A grab handle on top: swipe down, tap outside or Esc closes it (`cgw_swipe`).
+- **Chief Charm window** (`openCharmSheet`): level chips with the charm's picture for each level (a thin line where the number of stages changes), stage dots under them ("Stage of Lv N", `chw_stage_of`; none for one-stage levels), needs boxes (`chw_needs`, "nothing needed" ✓ per material when none). Title "<piece> charm N · <troop>" (`chw_charm_n`).
+- **Heroes Gears piece window** (`openHgSheet`): "This piece needs" shown as the same boxes.
+- **Can do line** in the three windows: one line "Can do now: Jacket T6 ★0 → ★1" / "Nothing yet" / "✓ At target" (`mkCanHtml(tab, key)`, `mkCanInner`, `mkCanFill`), from the page marks' plan (Backpack + this week's trades, never packs); follows the Visibility switch "Free now (Can do now)" like the marks.
+- Texts `cgw_*`, `chw_*`, `bsx_cando*`, `mkc_at_target` in all 16 lang files; `charm_needs_this`, `charm_stage`, `charm_target_max` removed (no longer used) (`LANG_FILES_VERSION` 106).
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit (since Speed plan Step 5 it also writes the .min copies the site loads).
@@ -742,3 +749,4 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - Tundra Album / Collection Gallery: level slider
 - Pack cost: one Trades card with every trade, "N packs" tag, Research Lab counted once, Can do marks without packs (step 54)
 - Backpack box pop-up as a bottom sheet with only the Backpack and its trades, "You have" card, one Hide, one Speedups box on the research pages (step 55)
+- Upgrade windows: Chief Gear tier / star / stage chips, Chief Charm level pictures and stage dots, needs boxes, a Can do line (step 56)

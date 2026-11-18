@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 105; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 106; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -3402,10 +3402,7 @@ const T = {
   rfc_lab_closed: { en: "Off: the lab's Refined FC isn't counted on T12 and Budgets." },
   charm_to_go: { en: "{n} to go" },
   charm_tiles_hint: { en: "Green bar = now, blue = what the target adds. Tap a charm to change it." },
-  charm_needs_this: { en: "Needs for this charm" },
   charm_lv: { en: "Lv" },
-  charm_stage: { en: "Stage {a} / {b}" },
-  charm_target_max: { en: "Target = Max ({lv})" },
   gs_nothing: { en: "Nothing needed" },
   gs_done: { en: "Done" },
   cg_slots_hint: { en: "Each picture is the game's picture for the piece's tier. Badge top-left = now, blue = target. Tap a piece to change it." },
