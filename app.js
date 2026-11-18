@@ -1719,6 +1719,14 @@ const T = {
   go_line: { en: "×{n} pieces · {xp} XP · {es} Stones" },
   go_line1: { en: "×1 piece · {xp} XP · {es} Stones" },
   go_sum: { en: "{n} pieces · {xp} XP · {es} Stones" },
+  go_title: { en: "Orange (Mythic)" },
+  go_es_h: { en: "Hero gear resets" },
+  go_es_tile: { en: "+ {n} Stones" },
+  go_es_desc: { en: "Orange gear not worn, Mastery under 10: a reset gives back half the Stones its Mastery used." },
+  go_es_each: { en: "{es} Stones each · {xp} XP each" },
+  go_es_tot: { en: "×{n} · {es} Stones" },
+  go_es_sum: { en: "{n} pieces · {es} Stones" },
+  go_es_total: { en: "Essence Stones {q} + gear resets {g}" },
   scan_gx_unread: { en: "{n} pieces whose \"+\" or \"Lv.\" couldn't be read — add them in XP 10." },
   scan_gx_hint: { en: "Purple gear read by its \"+\", orange by its \"+\" and \"Lv.\". Saving replaces your hero gear for XP." },
   chest_open_tag: { en: "Open in game" },
@@ -14753,6 +14761,7 @@ async function renderInventory() {
       <span class="bp-qty${v ? "" : " zero"}">${fmtShort(v)}</span>
       ${sp ? (kind ? `<span class="bp-name">${esc(kind)}</span>` : "") : `<span class="bp-name">${esc(tileName)}</span>`}
       ${CHANCE_CHESTS.includes(it.name) && v > 0 ? `<span class="bp-avg" title="${esc(chanceAvgParts(it.name, v).join(" · "))}">${esc(chanceTileAvg(it.name, v))}</span>` : ""}
+      ${it.name === "Essence Stones" && gearOrangeOf(bp).es > 0 ? `<span class="bp-gx">${esc(t("go_es_tile").replace("{n}", fmtShort(gearOrangeOf(bp).es)))}</span>` : ""}
       ${it.name === "XP 10" && gearXpOf(bp).xp + gearOrangeOf(bp).xp > 0 ? `<span class="bp-gx">${esc(t("gx_tile").replace("{n}", fmtShort(gearXpOf(bp).xp + gearOrangeOf(bp).xp)))}</span>` : ""}
     </button>`;
   };
@@ -15002,18 +15011,20 @@ async function renderInventory() {
     const it = groups.flatMap((g) => g.items).find((x) => x.name === name) || { name, icon: "" };
     const ic = bpIcon(it);
     const title = it.hero ? `${it.hero} — ${t(it.widget ? "bp_widgets" : "backpack_hero_shards")}` : materialDisplayName(name);
-    const modal = openModal(`<div class="modal-box" style="${name === "XP 10" ? "max-width:400px; max-height:86vh; overflow-y:auto;" : "max-width:300px;"} text-align:center;">
+    const gxMode = name === "XP 10" ? "xp" : name === "Essence Stones" ? "es" : null;
+    const modal = openModal(`<div class="modal-box" style="${gxMode ? "max-width:400px; max-height:86vh; overflow-y:auto;" : "max-width:300px;"} text-align:center;">
         ${ic ? `<img src="${esc(ic)}" alt="" style="width:64px; height:64px; object-fit:contain;" />` : ""}
         <h2 style="margin:6px 0 10px; font-size:16px;">${esc(title)}</h2>
         <input id="bpQty" type="number" min="0" inputmode="numeric" value="${Number(bp[name]) || ""}" placeholder="0" style="width:100%; text-align:center; font-size:18px;" />
-        ${name === "XP 10" ? `<div class="gx-box" id="gxBox"></div>` : ""}
+        ${gxMode ? `<div class="gx-box" id="gxBox"></div>` : ""}
         <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
           ${it.heroKey ? `<button class="btn ghost" type="button" id="bpRemove" style="margin-inline-end:auto; color:var(--danger);">${esc(t("backpack_remove_hero"))}</button>` : ""}
           <button class="btn ghost" type="button" id="bpCancel">${esc(t("cancel"))}</button>
           <button class="btn" type="button" id="bpSave">${esc(t("save"))}</button>
         </div></div>`);
     const input = modal.querySelector("#bpQty");
-    // XP 10 also holds the hero gear below Mythic that counts as XP.
+    // XP 10 also holds the hero gear below Mythic that counts as XP; Essence Stones
+    // shows the same orange (Mythic) pieces, Stones first (one saved list).
     const gxBox = modal.querySelector("#gxBox");
     const gx = {};
     gearXpOf(bp).rows.forEach((r) => { gx[r.key] = r.n; });
@@ -15023,8 +15034,9 @@ async function renderInventory() {
       if (!gxBox) return;
       const box = modal.querySelector(".modal-box"), top = box ? box.scrollTop : 0;
       const all = gearXpOf(gx), og = gearOrangeOf(gx), q = Math.max(0, Math.round(Number(input.value) || 0));
-      gxBox.innerHTML = `<h3>${esc(t("gx_title"))}</h3><div class="meta" style="font-size:12px;">${esc(t("gx_desc"))}</div>
-        ${[{ key: "Orange", dot: GEAR_ORANGE_DOT, base: null, max: GEAR_ORANGE_ENH_MAX }, ...GEAR_XP_COLOURS].map((c) => {
+      const esM = gxMode === "es";
+      gxBox.innerHTML = `<h3>${esc(t(esM ? "go_es_h" : "gx_title"))}</h3><div class="meta" style="font-size:12px;">${esc(t(esM ? "go_es_desc" : "gx_desc"))}</div>
+        ${[{ key: "Orange", dot: GEAR_ORANGE_DOT, base: null, max: GEAR_ORANGE_ENH_MAX }, ...(esM ? [] : GEAR_XP_COLOURS)].map((c) => {
           // Orange (Mythic) is one more colour: its lines are "+Enhance Lv.Mastery" (reset gives the Enhance XP back).
           const rows = c.key === "Orange"
             ? og.rows.slice().sort((a, b) => b.enh - a.enh || b.lv - a.lv || b.st - a.st).map((r) => ({ key: r.key, lab: `+${r.enh} Lv.${r.lv}${r.st ? `.${r.st}` : ""}`, n: r.n, each: r.xp, es: r.es }))
@@ -15033,20 +15045,23 @@ async function renderInventory() {
           const isOr = c.key === "Orange";
           const addBtn = (cls, key) => `<button type="button" class="gx-addbtn${cls}" data-gxadd="${c.key}">${esc(t(key))}</button>`;
           return `<div class="gx-col">
-            <div class="gx-head"><i style="background:${c.dot};"></i><b>${esc(t("gx_" + c.key))}</b>${rows.length ? `<span class="meta">${esc(t(isOr ? "go_sum" : "gx_sum").replace("{n}", n.toLocaleString()).replace("{xp}", xp.toLocaleString()).replace("{es}", es.toLocaleString()))}</span>` : `${c.base == null ? "" : `<span class="meta" style="margin-inline-start:4px;">${esc(t("gx_base").replace("{n}", c.base))}</span>`}${gxAdd === c.key ? "" : `<span style="margin-inline-start:auto;">${addBtn("", "gx_add")}</span>`}`}</div>
+            <div class="gx-head"><i style="background:${c.dot};"></i><b>${esc(t(esM ? "go_title" : "gx_" + c.key))}</b>${rows.length ? `<span class="meta">${esc(t(esM ? "go_es_sum" : isOr ? "go_sum" : "gx_sum").replace("{n}", n.toLocaleString()).replace("{xp}", xp.toLocaleString()).replace("{es}", es.toLocaleString()))}</span>` : `${c.base == null ? "" : `<span class="meta" style="margin-inline-start:4px;">${esc(t("gx_base").replace("{n}", c.base))}</span>`}${gxAdd === c.key ? "" : `<span style="margin-inline-start:auto;">${addBtn("", "gx_add")}</span>`}`}</div>
             ${rows.map((r) => `<div class="gx-line${isOr ? " go" : ""}"><span class="gx-lv">${esc(r.lab)}</span>
               <button type="button" data-gxstep="${esc(r.key)}|-1" aria-label="−">&minus;</button>
               <input type="number" min="0" inputmode="numeric" data-gxn="${esc(r.key)}" value="${r.n}" />
               <button type="button" data-gxstep="${esc(r.key)}|1" aria-label="+">+</button>
-              <span class="gx-tot">${isOr
+              <span class="gx-tot">${esM
+                ? `${esc(t("go_es_each").replace("{xp}", r.each.toLocaleString()).replace("{es}", (r.es || 0).toLocaleString())).replace(" · ", "<br>")}<b>${esc(t("go_es_tot").replace("{n}", r.n.toLocaleString()).replace("{es}", (r.n * (r.es || 0)).toLocaleString()))}</b>`
+                : isOr
                 ? `${esc(t("go_each").replace("{xp}", r.each.toLocaleString()).replace("{es}", (r.es || 0).toLocaleString())).replace(" · ", "<br>")}<b>${esc(t("go_tot_n").replace("{n}", r.n.toLocaleString()).replace("{xp}", (r.n * r.each).toLocaleString()).replace("{es}", (r.n * (r.es || 0)).toLocaleString())).replace(/ · (?=[^·]*$)/, "<br>")}</b>`
                 : `${esc(t("gx_each").replace("{n}", r.each.toLocaleString()))}<b>${esc(t("gx_xp").replace("{n}", (r.n * r.each).toLocaleString()))}</b>`}</span></div>`).join("")}
             ${gxAdd === c.key ? `<div class="gx-addrow"><input type="number" min="0" max="${c.max}" inputmode="numeric" id="gxAddLv" placeholder="${esc(t(c.key === "Orange" ? "go_enh_ph" : "gx_level_ph").replace("{max}", c.max))}" />${c.key === "Orange" ? `<input type="number" min="0" max="${GEAR_ORANGE_MASTERY_MAX}" inputmode="numeric" id="gxAddMs" placeholder="${esc(t("go_ms_ph").replace("{max}", GEAR_ORANGE_MASTERY_MAX))}" />` : ""}<button type="button" class="btn small" data-gxaddgo="${c.key}">${esc(t("gx_add").replace(/^\+\s*/, ""))}</button></div>`
               : rows.length ? `<div class="gx-addrow">${addBtn("", "gx_add_level")}</div>` : ""}
           </div>`;
         }).join("")}
-        <div class="gx-sum">${esc(t("gx_total")).replace("{q}", q.toLocaleString()).replace("{a}", `<b>${(q * 10).toLocaleString()}</b>`).replace("{g}", `<b>${(all.xp + og.xp).toLocaleString()}</b>`)}</div>
-        <div class="gx-note">${esc(t("gx_tip"))}<br>${esc(t("gx_worn"))}</div>`;
+        ${esM ? `<div class="gx-sum">${esc(t("go_es_total")).replace("{q}", `<b>${q.toLocaleString()}</b>`).replace("{g}", `<b>${og.es.toLocaleString()}</b>`)}</div>
+        <div class="gx-note">${esc(t("gx_worn"))}</div>` : `<div class="gx-sum">${esc(t("gx_total")).replace("{q}", q.toLocaleString()).replace("{a}", `<b>${(q * 10).toLocaleString()}</b>`).replace("{g}", `<b>${(all.xp + og.xp).toLocaleString()}</b>`)}</div>
+        <div class="gx-note">${esc(t("gx_tip"))}<br>${esc(t("gx_worn"))}</div>`}`;
       if (box) box.scrollTop = top;
       const lv = focusAdd && gxBox.querySelector("#gxAddLv");
       if (lv) lv.focus();
@@ -15095,8 +15110,10 @@ async function renderInventory() {
       if (gxBox) {
         // A number typed in a box and not left yet still counts.
         gxBox.querySelectorAll("[data-gxn]").forEach((el) => { const n = Math.max(0, Math.round(Number(el.value) || 0)); if (n) gx[el.dataset.gxn] = n; else delete gx[el.dataset.gxn]; });
-        Object.keys(bp).forEach((k) => { if (GEAR_XP_RE.test(k) || GEAR_ORANGE_RE.test(k)) delete bp[k]; });
-        Object.entries(gx).forEach(([k, n]) => { if (n > 0) bp[k] = n; });
+        // Essence Stones edits only the orange pieces; XP 10 every colour.
+        const mine = (k) => GEAR_ORANGE_RE.test(k) || (gxMode === "xp" && GEAR_XP_RE.test(k));
+        Object.keys(bp).forEach((k) => { if (mine(k)) delete bp[k]; });
+        Object.entries(gx).forEach(([k, n]) => { if (n > 0 && mine(k)) bp[k] = n; });
       }
       saveCalcState("backpack", bp);
       budgetInvalidate(); // planner pages read these amounts
