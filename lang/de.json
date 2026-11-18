@@ -101,7 +101,6 @@
  "t:trade_apply_short": "In Paketkosten nutzen",
  "t:trade_lab_line": "Forschungslabor · einmal pro Woche (Plan auf der Forschungslabor-Seite)",
  "t:trade_card_line2": "{n} Tausche diese Woche",
- "t:pc_free_count": "Bereits gezählt: {c} aktive Karten · {t} freie Tausche",
  "t:pc_card_days": "je {n} Tage",
  "t:pc_title": "Paketkosten",
  "t:pc_fastest": "Am schnellsten",

@@ -2200,6 +2200,127 @@ input,select,textarea{
   .gs-opt.up{ color:var(--amber); }
   .gs-opt small{ font-size:10px; }
   .gs-opt:disabled{ opacity:.35; cursor:default; }
+  /* Chief Gear piece window: Now / Target chips, then what the piece needs */
+  .gs-box.cgw{ padding:6px 14px 16px; }
+  .cgw-top{ touch-action:none; cursor:grab; user-select:none; -webkit-user-select:none; }
+  .cgw-grab{ width:44px; height:5px; border-radius:3px; background:#56637a; margin:2px auto 10px; }
+  .cgw .gs-head{ margin-bottom:10px; }
+  .cgw-blk{ padding:9px 10px 10px; margin-bottom:8px; }
+  .cgw-blk .ch-sec-h{ align-items:center; justify-content:flex-start; margin-bottom:8px; }
+  .cgw-blk .ch-sec-h b{ color:var(--muted); }
+  .cgw-blk .ch-sec-h .cgw-v{ color:var(--frost); font-size:14px; font-weight:800; }
+  .cgw-blk.tgt .ch-sec-h .cgw-v{ color:var(--ice); }
+  .cgw-blk .ch-sec-h .cgw-v.up{ color:var(--amber); }
+  .cgw-up{ padding:1px 7px; border:1px solid rgba(232,162,60,.6); border-radius:999px; color:var(--amber); font-size:11px; font-weight:700; }
+  .cgw-sp{ flex:1; }
+  .plx-maxbtn.plx-max.cgw-max{ height:32px; min-height:32px; padding:0 12px; }
+  .cgw-tiers{ display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; padding:1px; }
+  .cgw-tiers::-webkit-scrollbar{ display:none; }
+  .cgw-c{ flex:0 0 auto; min-width:34px; height:34px; padding:0 8px; border:1px solid var(--line); border-radius:9px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; }
+  .cgw-c.green{ color:#7ee6a8; } .cgw-c.blue{ color:#7cb8ff; } .cgw-c.purple{ color:#c39bff; } .cgw-c.gold{ color:#f0c45a; } .cgw-c.red{ color:#ff8f86; }
+  .cgw-c.up{ border-style:dashed; border-color:rgba(232,162,60,.7); color:var(--amber); }
+  .cgw-c.on{ background:rgba(111,211,242,.2); border-color:var(--ice); border-style:solid; color:var(--frost); }
+  .cgw-blk.tgt .cgw-c.on{ background:rgba(232,162,60,.85); border-color:#e8b84a; color:#1a1206; }
+  .cgw-blk.tgt .cgw-c.on:not(.up){ background:rgba(111,211,242,.2); border-color:var(--ice); color:var(--frost); }
+  .cgw-c:disabled{ opacity:.32; cursor:default; }
+  .cgw-stars{ display:grid; grid-template-columns:repeat(var(--n, 4), minmax(0, 1fr)); gap:6px; margin-top:7px; }
+  .cgw-stars .cgw-c{ height:36px; }
+  .cgw-dots{ display:flex; align-items:center; gap:6px; margin-top:7px; }
+  .cgw-dl{ min-width:44px; color:var(--muted); font-size:12px; }
+  .cgw-d{ width:34px; height:30px; border:1px solid var(--line); border-radius:9px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12.5px; cursor:pointer; }
+  .cgw-d.up{ border-style:dashed; border-color:rgba(232,162,60,.7); color:var(--amber); }
+  .cgw-d.on{ background:rgba(111,211,242,.2); border-color:var(--ice); border-style:solid; color:var(--frost); font-weight:800; }
+  .cgw-d:disabled{ opacity:.32; cursor:default; }
+  .cgw-d.on.up{ background:rgba(232,162,60,.85); border-color:#e8b84a; color:#1a1206; }
+  .cgw-nh{ margin:12px 0 7px; color:var(--muted); font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+  .cgw-nd{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; }
+  .hg-sh .cgw-nd{ margin-bottom:12px; }
+  .cgw-nb{ display:flex; flex-direction:column; align-items:center; gap:1px; min-width:0; padding:7px 3px; border:1px solid var(--line); border-radius:11px; background:var(--panel-2); text-align:center; }
+  .cgw-nb img{ width:26px; height:26px; object-fit:contain; }
+  .cgw-nb b{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:15px; }
+  .cgw-nb small{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); font-size:11px; }
+  .cgw-nb span{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--good); font-size:11.5px; font-weight:800; }
+  .cgw-nb.bad span{ color:var(--danger); }
+  .cgw-nb.ok{ border-color:rgba(91,201,138,.5); }
+  /* Chief Charm window: level chips with pictures, stage dots, needs boxes */
+  .chw .ch-pic.chw-hpic{ width:46px; height:46px; }
+  .chw-lvs{ display:flex; align-items:stretch; gap:4px; overflow-x:auto; scrollbar-width:none; padding:1px; }
+  .chw-lvs::-webkit-scrollbar{ display:none; }
+  .chw-c{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; width:40px; padding:4px 0 3px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; cursor:pointer; }
+  .chw-c .ch-pic{ width:28px; height:28px; }
+  .chw-c b{ font-size:12.5px; line-height:1.1; }
+  .chw-c.up{ border-style:dashed; border-color:rgba(232,162,60,.7); }
+  .chw-c.up b{ color:var(--amber); }
+  .chw-c.on{ background:rgba(111,211,242,.2); border-color:var(--ice); border-style:solid; }
+  .chw-c.on b{ color:var(--frost); }
+  .cgw-blk.tgt .chw-c.on.up{ background:rgba(232,162,60,.85); border-color:#e8b84a; }
+  .cgw-blk.tgt .chw-c.on.up b{ color:#1a1206; }
+  .chw-c:disabled{ opacity:.32; cursor:default; }
+  .chw-sep{ flex:0 0 1px; align-self:stretch; margin:4px 2px; background:var(--line); }
+  .chw-sl{ margin:8px 0 5px; color:var(--muted); font-size:12px; }
+  .chw-dots{ display:flex; gap:5px; }
+  .chw-dots .cgw-d{ flex:1 1 0; min-width:0; width:auto; padding:0; }
+  .cgw-d.done{ background:rgba(91,201,138,.16); border-color:rgba(91,201,138,.55); color:var(--good); }
+  .cgw-nb small.g{ color:var(--good); font-weight:700; }
+  .chw .cgw-max:disabled{ opacity:.45; cursor:default; }
+  @media (min-width:700px){ .gs-box.cgw{ max-width:460px !important; padding:10px 18px 18px; } .cgw-grab{ display:none; } .cgw-top{ cursor:default; } }
+  /* Chief Gear Backpack box pop-up: the typing box on top, then where it comes from */
+  .modal-box.bsm-top{ max-width:380px; padding:14px 14px 16px; }
+  .bsm-h{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .bsm-h img{ width:36px; height:36px; object-fit:contain; flex-shrink:0; }
+  .bsm-h > div{ flex:1; min-width:0; }
+  .bsm-h b{ display:block; font-size:16px; }
+  .bsm-h small{ display:block; color:var(--muted); font-size:11.5px; }
+  .bsm-in{ display:flex; gap:8px; }
+  .bsm-in input{ flex:1; min-width:0; text-align:center; font-size:18px; }
+  .bsm-in .btn{ flex:none; min-width:70px; }
+  .bsm-ln{ display:flex; justify-content:flex-start; align-items:center; gap:8px; margin:6px 0 0; font-size:13px; }
+  .bsm-top .bsm-in{ margin-bottom:10px; }
+  .bsm-ln .linklike{ min-height:32px; padding:0; border:0; background:none; color:var(--ice); font:inherit; font-size:13px; cursor:pointer; }
+  .bsm-ln .linklike.bsm-cancel{ color:var(--muted); }
+  .bsm-top .bs-nb{ text-align:center; }
+  .bsx{ margin-top:8px; }
+  .bsx-h{ margin:6px 0 6px; color:var(--muted); font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+  .bsx-list{ border:1px solid var(--line); border-radius:11px; background:var(--panel-2); }
+  .bsx-l{ display:flex; align-items:center; gap:7px; min-height:36px; padding:4px 10px; border-top:1px solid var(--line); font-size:13px; }
+  .bsx-l:first-child{ border-top:0; }
+  .bsx-w{ flex:0 0 68px; color:var(--muted); font-size:11.5px; }
+  .bsx-m{ flex:1; min-width:0; display:flex; align-items:center; gap:5px; }
+  .bsx-m > span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bsx-m > span.bsx-pr{ flex:none; overflow:visible; }
+  .bsx-m img{ flex:none; }
+  .bsx-m img{ width:18px; height:18px; object-fit:contain; }
+  .bsx-l b{ flex:none; color:var(--frost); }
+  .bsx-l.lft .bsx-w{ flex:1; }
+  .bsx-l b.g{ color:var(--good); }
+  .bsx-l b.r{ color:var(--danger); }
+  .bsx-pr{ padding:0 6px; border-radius:6px; background:rgba(232,162,60,.85); color:#1a1206; font-size:11px; font-weight:800; white-space:nowrap; }
+  .bsx-tot{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px; padding:9px 12px; border-radius:11px; font-size:13px; }
+  .bsx-tot b{ font-size:15px; }
+  .bsx-tot.ok{ border:1px solid rgba(91,201,138,.5); background:rgba(91,201,138,.1); color:var(--good); }
+  .bsx-tot.ok b{ color:var(--frost); }
+  .bsx-tot.bad{ border:1px solid rgba(224,100,95,.55); background:rgba(224,100,95,.1); color:var(--danger); }
+  .bsx-can{ display:flex; align-items:center; gap:8px; margin-top:8px; padding:6px 6px 6px 10px; min-height:40px; border:1px solid var(--line); border-inline-start:3px solid var(--good); border-radius:10px; background:rgba(91,201,138,.06); font-size:13px; }
+  .bsx-can > span{ flex:1; min-width:0; }
+  .bsx-none{ margin-top:4px; padding:8px 0 2px; color:var(--muted); font-size:12.5px; }
+  .bsx-tot.bad > span{ font-size:12px; }
+  .bsx-tot.gl{ flex-direction:column; align-items:stretch; gap:4px; }
+  .bsx-goes{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; color:var(--muted); font-size:12.5px; }
+  .bsx-goes img{ width:18px; height:18px; object-fit:contain; flex:none; }
+  .bsx-go{ display:inline-flex; align-items:center; gap:4px; min-height:32px; padding:0 8px; border:1px solid rgba(124,196,255,.45); border-radius:10px; background:rgba(124,196,255,.12); color:var(--ice); font:inherit; font-size:12.5px; font-weight:700; cursor:pointer; }
+  .bsx-go.off{ min-height:0; padding:0; border:0; background:none; color:var(--frost); cursor:default; }
+  .bsx-gs{ margin-inline-start:-4px; }
+  .bsx-ga{ color:var(--ice); font-weight:700; }
+  .bsx-gpk{ color:var(--muted); font-size:11.5px; }
+  .bsm-grab{ display:none; }
+  @media (max-width:900px){
+    #bsEditModal.bsm-ov{ align-items:flex-end; justify-content:center; padding:0; }
+    #bsEditModal .modal-box.bsm-top{ max-width:none !important; width:100% !important; max-height:92vh; overflow-y:auto; margin:0; border-radius:16px 16px 0 0; padding:6px 14px 18px; animation:bsmUp .22s ease-out; }
+    #bsEditModal .bsm-grab{ display:block; width:44px; height:5px; border-radius:3px; background:#56637a; margin:2px auto 10px; touch-action:none; cursor:grab; }
+  }
+  @keyframes bsmUp{ from{ transform:translateY(100%); } to{ transform:none; } }
+  .bsx-note{ margin-top:6px; color:var(--muted); font-size:11.5px; }
+  .bsx-wait{ padding:10px 0; color:var(--muted); font-size:12.5px; }
   /* Chief Gear pieces (pictures with tier edge, now badge, target chip) */
   .cg-pic{ position:relative; display:block; width:min(78px, 100%); aspect-ratio:1; }
   .cg-pic img{ width:100%; height:100%; object-fit:contain; display:block; }
@@ -2366,9 +2487,21 @@ input,select,textarea{
   .pca-pr{ flex:none; font-size:14px; font-weight:800; white-space:nowrap; }
   .pca-pk .pc-lines{ margin:0 0 8px 50px; }
   .pca-tr{ display:flex; align-items:center; gap:6px; padding:4px 0; font-size:13px; }
+  .pca-tc{ margin:2px 0 10px; padding:4px 10px 6px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); }
+  .pca-tch{ display:flex; align-items:center; gap:6px; min-height:32px; font-size:13px; font-weight:800; }
+  .pca-tch > span:first-child{ flex:none; white-space:nowrap; }
+  .pca-tch .pca-tcn{ flex:1; min-width:0; color:var(--muted); font-size:12px; font-weight:600; line-height:1.3; }
+  .pca-tch .g1-fold{ margin-inline-start:auto; flex:none; }
+  .pca-tc .pca-tcn.fd, .pca-tc.g1-folded .pca-tcn.op, .pca-tc.g1-folded .pca-tcb{ display:none; }
+  .pca-tc.g1-folded .pca-tcn.fd{ display:inline; }
+  .pca-wk{ display:inline-block; margin:6px 0 1px; padding:1px 7px; border:1px solid var(--line); border-radius:999px; color:var(--ice); background:rgba(124,196,255,.07); font-size:11px; font-weight:700; }
+  .pca-wk.plan{ color:var(--gold, #e0b25a); background:rgba(224,178,90,.07); }
+  .pca-wk.later{ color:var(--muted); background:none; }
+  .pc-plan .pc-npk{ display:inline-block; margin-top:3px; padding:1px 6px; border-radius:999px; background:rgba(124,196,255,.12); color:var(--ice); font-size:10.5px; font-weight:700; }
   .pca-tr img{ width:20px; height:20px; object-fit:contain; }
   .pca-ar{ margin:0 4px; color:var(--good); }
   .pca-tr .g{ color:var(--good); }
+  .pca-tr .pca-wh{ flex:0 0 auto; min-width:84px; color:var(--muted); font-size:12px; }
   .pca .pc-free{ margin-top:8px; }
   .pca .pc-view{ margin-top:0; padding-top:0; border-top:0; }
   .pca-scope .seg{ display:grid; grid-template-columns:1fr 1fr; width:100%; margin:8px 0 0; }
