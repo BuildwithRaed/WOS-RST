@@ -3313,10 +3313,6 @@ input,select,textarea{
   .trd-gc .trd-rt{ color:var(--muted); }
   .trd-gh{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; font-size:13.5px; margin-bottom:2px; min-width:0; }
   .trd-gh b{ color:var(--frost); }
-  .trd-sp{ flex:1; }
-  .trd-st{ font-size:11.5px; font-weight:600; white-space:nowrap; }
-  .trd-st.bad{ color:var(--danger); }
-  .trd-st.ok{ color:var(--good); }
   .trd-gl{ display:flex; align-items:center; gap:6px; font-size:12.5px; padding:4px 0 3px 4px; border-top:1px solid var(--line); }
   .trd-rt{ color:var(--frost); min-width:0; }
   .trd-cap{ margin-inline-start:auto; font-size:11.5px; color:var(--muted); white-space:nowrap; }

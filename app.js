@@ -2633,8 +2633,6 @@ const T = {
   trd_from_trades: { en: "from trades" },
   trd_rules_title: { en: "Trade rules" },
   trd_per_day: { en: "{n}/day" },
-  trd_enough: { en: "\u2713 enough" },
-  trd_short_n: { en: "{n} short" },
   trd_per_wk: { en: "{n}/wk" },
   trd_day: { en: "Day" },
   trd_week: { en: "Week" },
@@ -20943,9 +20941,7 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   const rank = (n) => (shortOf(n) > 0 ? 0 : need[n] > 0 ? 1 : 2);
   const order = targets.filter((n) => rates.some((r) => r.to === n)).sort((a, b) => rank(a) - rank(b));
   const cardHtml = (n) => {
-    const s = shortOf(n);
-    const tag = s > 0 ? `<span class="trd-st bad">${esc(t("trd_short_n").replace("{n}", s.toLocaleString()))}</span>` : need[n] > 0 ? `<span class="trd-st ok">${esc(t("trd_enough"))}</span>` : "";
-    return `<div class="trd-gc"><div class="trd-gh">${img(n, "s")}<b>${esc(nm(n))}</b><span class="trd-sp"></span>${tag}</div>${rates.filter((r) => r.to === n).map(ruleHtml).join("")}</div>`;
+    return `<div class="trd-gc"><div class="trd-gh">${img(n, "s")}<b>${esc(nm(n))}</b></div>${rates.filter((r) => r.to === n).map(ruleHtml).join("")}</div>`;
   };
   const rulesHtml = `<div class="trd-rules"><div class="trd-bt">${esc(t("trd_rules_title"))}</div>${order.map(cardHtml).join("")}</div>`;
   const calcFroms = [...new Set(rates.map((r) => r.from))];
