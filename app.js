@@ -7868,15 +7868,15 @@ function mkCanInner(tab, key) {
   if (!list.length) return "";
   const named = list.length > 1;
   const nm = (tr) => { const tb = String(tr.raw).split("|")[2]; return tb ? trackDisplayName(tb) : (tr.name || ""); };
-  let txt;
-  if (list.every((x) => !(x.tr.to > x.tr.from))) txt = `<b>&#10003; ${esc(t("mkc_at_target"))}</b>`;
+  let txt, icon = "&#9889; ";
+  if (list.every((x) => !(x.tr.to > x.tr.from))) { txt = `<b>&#10003; ${esc(t("mkc_at_target"))}</b>`; icon = ""; }
   else {
     const up = list.filter((x) => (MK.plan.lv[x.tr.id] || 0) > x.tr.from);
     txt = up.length
       ? `${esc(t("bsx_cando"))} <b>${up.map((x) => `${named ? `${esc(nm(x.tr))} ` : ""}${esc(mkLab(x.tr, x.tr.from))} &rarr; ${esc(mkLab(x.tr, MK.plan.lv[x.tr.id]))}`).join(" · ")}</b>`
       : `${esc(t("bsx_cando"))} <b>${esc(t("bsx_cando_none"))}</b>`;
   }
-  return `<div class="bsx-can"><span>&#9889; ${txt}</span></div>`;
+  return `<div class="bsx-can"><span>${icon}${txt}</span></div>`;
 }
 function mkCanFill() {
   document.querySelectorAll("[data-mkcan]").forEach((el) => {
