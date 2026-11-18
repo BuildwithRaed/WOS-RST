@@ -565,6 +565,14 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - **Can do / page marks** count only the Backpack and this week's trades (`mkCompute` no longer adds this week's packs, `cdaWeekPacks`); Free now's "Include this week's packs" switch works only inside Budgets.
 - T keys in all 16 lang files (`LANG_FILES_VERSION` 102).
 
+**Backpack boxes on the planner pages (owner, 18 Nov 2026; step 55):**
+- **Box pop-up** (`plxAmountModal` with `top: true`, used by every planner page's Backpack box): the box and Save on top, a bottom sheet on phones with a grab handle (swipe down closes it, `wireSheetSwipe(modal, { box, close })`; Esc / tapping outside too), no Cancel, no phone keyboard on open, "Use Backpack" once the box holds a typed amount; minute boxes are typed as plain minutes with a "min" label (`bs_min_unit`) and days / hours / minutes under the name.
+- **Under the box only the Backpack and its trades, never packs or Can do** (`cgBoxExplainHtml(name, c)`, `BOX_EXPLAIN_KEYS` = Chief Gear, Charms, Heroes Gears, Pets, Pet Refine, T12, T11, Research Center, Experts; `boxExplainRefresh`): "Where the rest comes from" (This week / Next weeks, on T12 the Research Lab's next weeks) and one status line ("Covered with trades" / "Still N short after trades") only when a trade changes the answer; no trades into the item = the window ends at the Needed / You have / Short boxes. A spare that a trade uses is one green bar "✓ Spare N → goes to Alloy ›" (taps open that box). The Research Lab counts only this week's refinements still left, once.
+- **"You have" card (design C)**: one row per source with its picture (Backpack, XP items, hero gear with the Heroes Gears picture `QUICK_ICONS.herogearcalc`, each trade, chests, Research Lab "N refinements left this week"); texts `bs_hv_*`.
+- **One Hide for the Backpack**: the "Hide boxes / Show all" link is gone; the page's top-box Hide / Show (`g1-fold`, calc_state `bar_hidden` "top:<tab>") is the only one; old box-level values in `bar_hidden` (keys without ":") are ignored, not deleted. On the top-box pages the Trades / Pack cost buttons sit on the BACKPACK title row.
+- **Research pages (T12, T11, Research Center)**: Research Speedups and General Speedups are one shared "Speedups" box with one group pop-up (both amounts, the time line), shared helpers `bsGroupTileHtml(o)` / `bsGroupModal(o)` (no empty trades part).
+- Removed texts `bs_hide`, `bs_show_all`, `bs_nb_in_bp`, `bs_nb_from*`, `bs_nb_bought`, `bs_nb_counted`, `bs_nb_gear`, `bs_nb_xp_items`; new `bs_hv_*`, `bsx_*`, `bs_min_unit` in all 16 lang files (`LANG_FILES_VERSION` 105).
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit (since Speed plan Step 5 it also writes the .min copies the site loads).
@@ -733,3 +741,4 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - Footer links on their own line on phones; Backpack 4 tiles a row
 - Tundra Album / Collection Gallery: level slider
 - Pack cost: one Trades card with every trade, "N packs" tag, Research Lab counted once, Can do marks without packs (step 54)
+- Backpack box pop-up as a bottom sheet with only the Backpack and its trades, "You have" card, one Hide, one Speedups box on the research pages (step 55)

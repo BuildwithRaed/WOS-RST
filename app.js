@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 102; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 105; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -1641,12 +1641,20 @@ const T = {
   bs_nb_have: { en: "You have" },
   bs_nb_spare: { en: "Spare" },
   bs_nb_short: { en: "Short" },
-  bs_nb_in_bp: { en: "{n} in your Backpack" },
-  bs_nb_from_trade: { en: "{n} from {item} (trade)" },
-  bs_nb_from_chest: { en: "{n} from chests" },
-  bs_nb_from: { en: "{n} from {item}" },
-  bs_nb_bought: { en: "{n} bought with {g} {item}" },
-  bs_nb_counted: { en: "{g} {item} (counted as {n})" },
+  bs_hv_backpack: { en: "Backpack" },
+  bs_hv_xp_items: { en: "XP items" },
+  bs_hv_trade: { en: "{item} (trade)" },
+  bs_hv_trade_week: { en: "this week's trade" },
+  bs_hv_traded: { en: "{g} traded" },
+  bs_hv_opened: { en: "{g} opened" },
+  bs_hv_bought: { en: "bought with {g} {item}" },
+  bs_hv_counted: { en: "{g} counted as {item}" },
+  bs_hv_lab: { en: "Research Lab" },
+  bs_hv_lab_left: { en: "{left} refinements left this week" },
+  bs_hv_chests: { en: "from {n} chests" },
+  bs_hv_chest: { en: "Chests" },
+  bs_hv_gear: { en: "Hero gear" },
+  bs_hv_gear_sub: { en: "from {p} hero gear pieces" },
   bs_title_t12: { en: "Total research resources needed · all 3 troops" },
   bs_title_needed: { en: "Total resources needed" },
   bs_used_trades: { en: "used in trades" },
@@ -1663,8 +1671,6 @@ const T = {
   bs_have_of: { en: "have {have} of {need}" },
   bs_your_amounts: { en: "Backpack" },
   bs_from_backpack: { en: "Backpack" },
-  bs_show_all: { en: "Show all / edit" },
-  bs_hide: { en: "Hide boxes" },
   bp_link_from: { en: "From Backpack" },
   bp_link_typed: { en: "Typed" },
   bp_chest_chance: { en: "Chance chest: not counted" },
@@ -1704,8 +1710,6 @@ const T = {
   gx_tip: { en: "Tip: Gear Reforge in the game gives this XP back as XP items." },
   gx_worn: { en: "Gear that a hero is wearing still counts — take it off in the game before using it." },
   gx_tile: { en: "+ {n} XP" },
-  bs_nb_xp_items: { en: "{n} from XP items" },
-  bs_nb_gear: { en: "{n} from {p} hero gear pieces" },
   scan_gx_unread: { en: "{n} purple pieces whose \"+\" couldn't be read — add them in XP 10." },
   scan_gx_hint: { en: "Purple gear, read by its \"+\" number. Saving replaces your hero gear for XP." },
   chest_open_tag: { en: "Open in game" },
@@ -2271,6 +2275,7 @@ const T = {
   path_label: { en: "Path" },
   research_speed_label: { en: "RESEARCH SPEED" },
   speedups_label: { en: "GENERAL SPEEDUPS" },
+  bs_min_unit: { en: "min" },
   set_speed: { en: "Research Speed" },
   set_count: { en: "Count" },
   tl_title: { en: "State Timeline" },
@@ -3414,6 +3419,16 @@ const T = {
   hg_needs_this: { en: "Needs for this piece" },
   hg_max_piece: { en: "Max this piece" },
   cg_trades: { en: "Trades" },
+  bsx_rest: { en: "Where the rest comes from" },
+  bsx_spare: { en: "Spare {n}" },
+  bsx_goes_to: { en: "goes to" },
+  bsx_week: { en: "This week" },
+  bsx_later: { en: "Next weeks" },
+  bsx_lab: { en: "Research Lab" },
+  bsx_trade: { en: "Trade {n}" },
+  bsx_covered: { en: "Covered by your Backpack" },
+  bsx_cov_trades: { en: "Covered with trades" },
+  bsx_still_short: { en: "Still {n} short after trades" },
   cdp_pages_up: { en: "Pages that can go up" },
   cdp_of: { en: "{n} of {m}" },
   cdp_runs_out: { en: "runs out first:" },
@@ -24608,6 +24623,41 @@ function gearSheetEl() {
   return m;
 }
 function closeGearSheet() { const m = document.getElementById("gearSheet"); if (m) m.style.display = "none"; }
+// Swipe down (the handle or the header, [data-cgwgrab]) closes a .cgw window of
+// #gearSheet; a short drag springs back. Returns { dragged } (true right after a drag,
+// so the click that ends it is ignored).
+// o: { box (selector of the sliding box, default the piece window), close } for other sheets.
+function wireSheetSwipe(m, o = {}) {
+  const s = { dragged: false };
+  let sy = null, t0 = 0, dy = 0;
+  const box = () => m.querySelector(o.box || ".cgw");
+  m.onpointerdown = (ev) => {
+    s.dragged = false;
+    if (!ev.isPrimary || !ev.target.closest("[data-cgwgrab]") || !box()) return;
+    sy = ev.clientY; t0 = performance.now(); dy = 0;
+    box().style.transition = "none";
+  };
+  m.onpointermove = (ev) => {
+    if (sy == null || !box()) return;
+    dy = Math.max(0, ev.clientY - sy);
+    if (dy > 6) s.dragged = true;
+    box().style.transform = dy ? `translateY(${dy}px)` : "";
+  };
+  const end = () => {
+    if (sy == null) return;
+    const b = box(), fast = dy > 24 && dy / Math.max(1, performance.now() - t0) > 0.5;
+    sy = null;
+    if (!b) return;
+    b.style.transition = "transform .18s ease";
+    if (dy > 80 || fast) {
+      b.style.transform = "translateY(100%)";
+      setTimeout(() => { (o.close || closeGearSheet)(); b.style.transform = ""; b.style.transition = ""; }, 180);
+    } else b.style.transform = "";
+  };
+  m.onpointerup = end;
+  m.onpointercancel = end;
+  return s;
+}
 
 // Sums Guides/Designs/Secrets across all 18 charm slots.
 async function updateCharmTotals() {
@@ -24996,7 +25046,9 @@ const BAR_SHOW_ALL = {}; // { calcKey: false } - item tiles hidden (they start s
 let BAR_HIDDEN_LOAD = null;
 function ensureBarHidden() {
   if (!BAR_HIDDEN_LOAD) BAR_HIDDEN_LOAD = loadCalcState("bar_hidden").then((v) => {
-    Object.entries(v || {}).forEach(([k, h]) => { if (h && !(k in BAR_SHOW_ALL)) BAR_SHOW_ALL[k] = false; });
+    // Only folds with a ":" key (top cards, lists): the planner pages' own Backpack boxes
+    // (keys without one) always show now, so an old "Hide boxes" no longer hides them.
+    Object.entries(v || {}).forEach(([k, h]) => { if (h && String(k).includes(":") && !(k in BAR_SHOW_ALL)) BAR_SHOW_ALL[k] = false; });
   }).catch(() => {});
   return BAR_HIDDEN_LOAD;
 }
@@ -25131,24 +25183,34 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   const hiddenRates = tradeRatesFor(calcKey || "chief_gear").filter((r) => r.hidden || ((!(r.max > 0) || r.from === "Fire Crystal") && TRADE_APPLY[calcKey || "chief_gear"] !== false));
   hiddenRates.__calcKey = calcKey || "chief_gear";
   let effOwned = { ...owned };
-  let hiddenTrades = []; // what owned chests/convertibles were turned into
+  let hiddenTrades = []; // what owned chests/convertibles were turned into (the Research Lab: only this week's refinements left)
+  let hiddenTradesRaw = []; // the same with the Lab's whole weekly lot (reachHaveConv scales it itself)
   // What the page calculates with: the boxes plus chests with fixed contents.
   let calcOwned = owned;
   function recomputeEffOwned() {
     calcOwned = ownedWithChests(calcKey || "chief_gear", owned, link);
     effOwned = { ...calcOwned };
     hiddenTrades = [];
+    hiddenTradesRaw = [];
     if (!hiddenRates.length) return;
     const totalNeed = {};
     groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { totalNeed[n] = (totalNeed[n] || 0) + (Number(q) || 0); }));
-    hiddenTrades = applyTrades(hiddenRates, totalNeed, calcOwned, 1).trades;
+    hiddenTradesRaw = applyTrades(hiddenRates, totalNeed, calcOwned, 1).trades;
+    // The Research Lab's weekly lot counts only for the refinements still left this week
+    // (the game's count / the plan's days so far are already in the Backpack).
+    let lab = null;
+    hiddenTrades = hiddenTradesRaw.map((tr) => {
+      if (!tr.lab) return tr;
+      if (!lab) { try { lab = rfcLabWeekLeft(); } catch (e) { lab = { share: 0, left: 0 }; } }
+      return { ...tr, getQty: tr.getQty * lab.share, giveQty: tr.giveQty * lab.share, labLeft: lab.left };
+    }).filter((tr) => !tr.lab || tr.getQty > 0);
     hiddenTrades.forEach((tr) => { effOwned[tr.to] = (effOwned[tr.to] || 0) + tr.getQty; });
   }
   recomputeEffOwned();
   // What the page's "can reach" marks spend; redrawn
   // when a box amount changes too.
   const reachRefresh = () => {
-    const r = reachHaveConv(calcKey || "chief_gear", calcOwned, hiddenRates, hiddenTrades);
+    const r = reachHaveConv(calcKey || "chief_gear", calcOwned, hiddenRates, hiddenTradesRaw);
     BAR_HAVE[calcKey || "chief_gear"] = r.have;
     BAR_LAB[calcKey || "chief_gear"] = r.lab;
     BAR_CONV[calcKey || "chief_gear"] = r.conv;
@@ -25203,7 +25265,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   };
   // Short summary: items still missing (with how much), ready ones as chips.
   // "Amounts from your Backpack · Show all / edit" line.
-  const footHtml = () => `<div class="bs-foot"><span>${Object.keys(link.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : `&#127890; ${esc(t("bs_your_amounts"))}`}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL[calcKey] !== false ? "bs_hide" : "bs_show_all"))}</button>${plxBuyBtnsHtml(calcKey)}</div>`;
+  const footHtml = () => `<div class="bs-foot"><span>${Object.keys(link.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : `&#127890; ${esc(t("bs_your_amounts"))}`}</span>${plxBuyBtnsHtml(calcKey)}</div>`;
   const summaryHtml = () => {
     const needOf = (n) => groups.reduce((sum, g) => sum + (Number((g.totals || {})[n]) || 0), 0);
     const amount = (n, v) => (/\(minutes\)$/.test(n) ? t12FormatTime(v / 60) : shortAmount(v));
@@ -25222,30 +25284,51 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       </div>`;
   };
 
-  // Where "You have" comes from when trades or chests add to the box: "2,115 in your Backpack + 1,703 from Fire Crystal (trade)".
+  // Where "You have" comes from when trades, the Lab or chests add to the box:
+  // a small card, one row per source (Backpack, then each extra in green).
   function haveFromHtml(name) {
     const fmt = /\(minutes\)$/.test(name) ? bsTime : bsNbNum;
-    const byFrom = {}, gave = {};
-    hiddenTrades.filter((tr) => tr.to === name && tr.getQty > 0).forEach((tr) => { byFrom[tr.from] = (byFrom[tr.from] || 0) + tr.getQty; gave[tr.from] = (gave[tr.from] || 0) + (tr.giveQty || 0); });
+    const byFrom = {}, gave = {}, lab = hiddenTrades.find((tr) => tr.lab && tr.to === name && tr.getQty > 0);
+    hiddenTrades.filter((tr) => !tr.lab && tr.to === name && tr.getQty > 0).forEach((tr) => { byFrom[tr.from] = (byFrom[tr.from] || 0) + tr.getQty; gave[tr.from] = (gave[tr.from] || 0) + (tr.giveQty || 0); });
     const chest = Math.max(0, (Number(calcOwned[name]) || 0) - (Number(owned[name]) || 0));
     // XP Component from the Backpack: XP items + hero gear below Mythic.
     const gear = name === "XP Component" && backpackLinked(calcKey || "chief_gear", name, link) ? gearXpOf(link.bp) : null;
-    if (!Object.keys(byFrom).length && !(chest > 0) && !(gear && gear.xp > 0)) return "";
-    const b = (v) => `<b>${bidiNum(fmt(v))}</b>`;
-    const parts = gear && gear.xp > 0
-      ? [esc(t("bs_nb_xp_items")).replace("{n}", b(Math.max(0, (Number(owned[name]) || 0) - gear.xp))), esc(t("bs_nb_gear")).replace("{n}", b(gear.xp)).replace("{p}", b(gear.pieces))]
-      : [esc(t("bs_nb_in_bp")).replace("{n}", b(Number(owned[name]) || 0))];
+    if (!Object.keys(byFrom).length && !lab && !(chest > 0) && !(gear && gear.xp > 0)) return "";
+    const num = (v) => bidiNum(fmt(v));
+    const pic = (src) => (src ? `<img src="${esc(src)}" alt="" />` : '<span class="bs-hv-i"></span>');
+    const row = (icon, label, sub, v, extra) => `<div class="bs-hv-r">${icon}<span class="bs-hv-n">${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ""}</span><b${extra ? ' class="g"' : ""}>${extra ? "+" : ""}${num(v)}</b></div>`;
+    const bpIc = '<span class="bs-hv-i" aria-hidden="true">&#127890;</span>';
+    const nm = (n) => materialDisplayName(itemShortName(n));
+    const rows = gear && gear.xp > 0
+      ? [row(bpIc, t("bs_hv_backpack"), t("bs_hv_xp_items"), Math.max(0, (Number(owned[name]) || 0) - gear.xp)),
+        row(pic(QUICK_ICONS.herogearcalc || "icons/quick/hero-gear.png"), t("bs_hv_gear"), t("bs_hv_gear_sub").replace("{p}", bsNbNum(gear.pieces)), gear.xp, true)]
+      : [row(bpIc, t("bs_hv_backpack"), "", Number(owned[name]) || 0)];
     Object.entries(byFrom).forEach(([from, q]) => {
-      const ic = iconFor(from), item = `${ic ? `<img src="${esc(ic)}" alt="" />` : ""}${esc(materialDisplayName(itemShortName(from)))}`;
       const rule = hiddenRates.find((r) => r.from === from && r.to === name);
-      // Only real in-game trades say "(trade)": Gems buy
-      // Common Marks; an Advanced Mark isn't traded, it counts as 8 Common;
-      // chests (Pet Chest) just open into the item.
-      const key = from === "Gems" ? "bs_nb_bought" : from === "Advanced Marks" ? "bs_nb_counted" : rule && rule.hidden ? "bs_nb_from" : "bs_nb_from_trade";
-      parts.push(esc(t(key)).replace("{n}", b(q)).replace("{g}", b(gave[from] || 0)).replace("{item}", item));
+      const g = bsNbNum(gave[from] || 0);
+      // Only real in-game trades say "(trade)": Gems buy Common Marks; an
+      // Advanced Mark isn't traded, it counts as 8 Common; chests (Pet Chest)
+      // just open into the item.
+      const label = from === "Gems" || from === "Advanced Marks" || (rule && rule.hidden) ? nm(from) : t("bs_hv_trade").replace("{item}", nm(from));
+      const sub = from === "Gems" ? t("bs_hv_bought").replace("{g}", g).replace("{item}", nm(from))
+        : from === "Advanced Marks" ? t("bs_hv_counted").replace("{g}", g).replace("{item}", nm(name))
+        : rule && rule.hidden ? t("bs_hv_opened").replace("{g}", g)
+        : rule && rule.max > 0 ? t("bs_hv_trade_week") : t("bs_hv_traded").replace("{g}", g);
+      rows.push(row(pic(iconFor(from)), label, sub, q, true));
     });
-    if (chest > 0) parts.push(esc(t("bs_nb_from_chest")).replace("{n}", b(chest)));
-    return parts.join(" + ");
+    // This week's Research Lab refinements still left (counted here once).
+    if (lab) rows.push(row(pic(materialIconSrc("Refined FC") || "icons/item_icon_100082.png"), t("bs_hv_lab"), t("bs_hv_lab_left").replace("{left}", Math.round(lab.labLeft || 0).toLocaleString()), lab.getQty, true));
+    if (chest > 0) {
+      // One row per chest that opens into this item (Chief Gear Chest …).
+      const per = (itemPageMaps().fixed[calcKey || "chief_gear"] || []).map((ch) => {
+        const qty = backpackAmountFor(ch, link.bp), v = Number(chestGives(ch)[name]) || 0;
+        return { ch, qty, q: qty * v };
+      }).filter((x) => x.q > 0);
+      const sum = per.reduce((s2, x) => s2 + x.q, 0);
+      if (per.length && Math.abs(sum - chest) < 1e-6) per.forEach((x) => rows.push(row(pic(iconFor(x.ch)), nm(x.ch), t("bs_hv_chests").replace("{n}", bsNbNum(x.qty)), x.q, true)));
+      else rows.push(row(pic(per.length ? iconFor(per[0].ch) : ""), t("bs_hv_chest"), "", chest, true));
+    }
+    return `<div class="bs-hv">${rows.join("")}</div>`;
   }
   // What all groups (troops) together need of an item.
   const needSum = (n) => groups.reduce((sum, g) => sum + (Number((g.totals || {})[n]) || 0), 0);
@@ -25281,6 +25364,61 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const tot = RESEARCH_TIME_NEED[calcKey] || 0, gen = Number(RESEARCH_SPEEDUP_MINUTES) || 0, res = Number(owned["Research Speedups (minutes)"]) || 0;
     return { tot, gen, res, short: Math.max(0, tot - gen - res) };
   };
+  // Research + General Speedups: one shared box (both pay the research time), one pop-up.
+  const RS_KEY = "Research Speedups (minutes)";
+  const spdGroup = timePage && names.includes(RS_KEY);
+  const spdItems = () => {
+    const lk = GENERAL_SPEEDUP_LINK, ck = calcKey || "chief_gear", hasBp = Object.keys(link.bp).length > 0, gHasBp = Object.keys(lk.bp || {}).length > 0;
+    const rLinkable = hasBp && backpackLinks(ck, RS_KEY);
+    return [
+      { key: RS_KEY, name: materialDisplayName(itemShortName(RS_KEY)).replace(/\s*\((minutes|min)\)$/, ""), icon: iconFor(RS_KEY), value: Number(owned[RS_KEY]) || 0, linkable: rLinkable, linked: rLinkable && backpackLinked(ck, RS_KEY, link), bpValue: backpackAmountFor(RS_KEY, link.bp) },
+      { key: GENERAL_SPEEDUP_KEY, name: materialDisplayName(GENERAL_SPEEDUP_KEY).replace(/\s*\((minutes|min)\)$/, ""), icon: "icons/speedup-general.png", value: Number(RESEARCH_SPEEDUP_MINUTES) || 0, linkable: gHasBp, linked: gHasBp && backpackLinked("experts", GENERAL_SPEEDUP_KEY, lk), bpValue: backpackAmountFor(GENERAL_SPEEDUP_KEY, lk.bp || {}) },
+    ];
+  };
+  function spdGroupHtml() {
+    const { tot, gen, res, short } = timeNums(), its = spdItems();
+    return bsGroupTileHtml({
+      cls: "bs-spd", host: "data-bsspdbox", off: !(tot > 0), bag: its.some((it) => it.linked), attr: "data-bsspd",
+      items: its.map((it) => ({ key: it.key, icon: it.icon, qty: bsTime(it.value), title: it.name })),
+      label: t("backpack_speedups"), have: gen + res, need: tot, short, fmt: bsTime,
+    });
+  }
+  function openSpdGroup() {
+    const ck = calcKey || "chief_gear", tn = timeNums();
+    const needAll = {};
+    names.forEach((n) => { const v = needSum(n); if (v > 0) needAll[n] = v; });
+    const extra = BOX_EXPLAIN_KEYS.has(ck) && tn.tot > 0 ? () => { const x = timeNums(); return cgBoxExplainHtml(RS_KEY, { calcKey: ck, need: x.tot, have: x.gen + (effOwned[RS_KEY] || 0), needAll, calcOwned }); } : null;
+    bsGroupModal({
+      label: t("backpack_speedups"), icon: "icons/speedup-research.png", need: tn.tot, nbFmt: bsTime, minutes: true, extra,
+      worth: (k, v) => v, worthTxt: (k, v) => formatTimeDHM((Number(v) || 0) / 60),
+      items: spdItems(),
+      onSave: async (changes) => {
+        // The research box first (its Backpack link is saved at once), then the shared general pool.
+        const res = changes.find((c) => c.key === RS_KEY), gen = changes.find((c) => c.key === GENERAL_SPEEDUP_KEY);
+        if (res) {
+          const canLink = Object.keys(link.bp).length && backpackLinks(ck, RS_KEY);
+          owned[RS_KEY] = res.value;
+          if (canLink) setBackpackManual(ck, RS_KEY, !res.use, link);
+        }
+        if (!gen) { ownedChanged(RS_KEY); return; }
+        if (res) { budgetInvalidate(); saveCalcState(`material_owned_${ck}`, owned); }
+        if (gen.use) {
+          const lk = await backpackLinkState();
+          setBackpackManual("experts", GENERAL_SPEEDUP_KEY, false, lk);
+          GENERAL_SPEEDUP_LINK = lk;
+          RESEARCH_SPEEDUP_MINUTES = backpackAmountFor(GENERAL_SPEEDUP_KEY, lk.bp);
+          const inv = (await loadCalcState("experts_inventory")) || {};
+          inv[GENERAL_SPEEDUP_KEY] = RESEARCH_SPEEDUP_MINUTES;
+          saveCalcState("experts_inventory", inv);
+          budgetInvalidate();
+        } else {
+          await saveGeneralSpeedupMinutes(gen.value);
+          GENERAL_SPEEDUP_LINK = await backpackLinkState();
+        }
+        refreshFn();
+      },
+    });
+  }
   function genTileHtml() {
     const { tot, gen, short } = timeNums(), lk = GENERAL_SPEEDUP_LINK;
     const st = bsTileStatus(tot, short, bsTime);
@@ -25307,7 +25445,16 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   function editTileModal(name) {
     const canLink = Object.keys(link.bp).length && backpackLinks(calcKey || "chief_gear", name);
     const linked = canLink && backpackLinked(calcKey || "chief_gear", name, link);
+    // Planner pages: the box on top and the Backpack's trades into / out of the item
+    // (only for items the page needs: chests and trade-only boxes keep the plain pop-up).
+    const ck = calcKey || "chief_gear", cg = BOX_EXPLAIN_KEYS.has(ck) && needSum(name) > 0;
+    const needAll = {};
+    names.forEach((n) => { const v = needSum(n); if (v > 0) needAll[n] = v; });
+    const given = {};
+    hiddenTrades.forEach((x) => { given[x.from] = (given[x.from] || 0) + (Number(x.giveQty) || 0); });
+    const extra = cg ? () => cgBoxExplainHtml(name, { calcKey: ck, need: needSum(name), have: effOwned[name] || 0, given, needAll, calcOwned }) : null;
     plxAmountModal({
+      top: true, extra,
       label: materialDisplayName(itemShortName(name)),
       icon: iconFor(name),
       rawValue: owned[name] || 0,
@@ -25367,7 +25514,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     ${timePage ? `<div id="${rowsId}_time">${timeLineHtml()}</div>` : ""}
     ${summaryOn && !sumHost ? `<div id="${rowsId}_sum" class="bs-box">${summaryHtml()}</div>` : ""}
     <div id="${rowsId}" class="${summaryOn ? "bs-edit" : "mat-row"}"${summaryOn && BAR_SHOW_ALL[calcKey] === false ? ` style="display:none;"` : ""}>${summaryOn
-      ? `${bsHelpHtml(matEntries.some(([n]) => tileOff(n)), chests.some((n) => matEntries.some(([m]) => m === n)))}<div class="bs-tiles">${[...matEntries].sort((a, b) => ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(a[0])) - ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(b[0]))).map(([n]) => editRowHtml(n)).join("")}${timePage ? genTileHtml() : ""}</div>`
+      ? `${bsHelpHtml(matEntries.some(([n]) => tileOff(n)), chests.some((n) => matEntries.some(([m]) => m === n)))}<div class="bs-tiles">${[...matEntries].sort((a, b) => ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(a[0])) - ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(b[0]))).map(([n]) => (spdGroup && n === RS_KEY ? spdGroupHtml() : editRowHtml(n))).join("")}${timePage && !spdGroup ? genTileHtml() : ""}</div>`
       : matEntries.map(materialCellHtml).join("")}</div>
     ${(() => { const ch = chests.filter((n) => CHANCE_CHESTS.includes(n) && (owned[n] || 0) > 0); return ch.length ? ch.map((n) => `<div class="chest-open">${iconFor(n) ? `<img src="${esc(iconFor(n))}" alt="" loading="lazy" />` : ""}<span>${esc(chanceChestLine(n, owned[n]))}</span><button type="button" class="linklike" data-chestopen>${esc(t("chest_open_do"))} &rsaquo;</button></div>`).join("") : ""; })()}
     ${buyHost ? "" : `<div id="${rowsId}_trades"></div>
@@ -25412,6 +25559,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     if (tl) tl.innerHTML = timeLineHtml();
     const gt = el.querySelector("[data-bsgen]");
     if (gt) gt.outerHTML = genTileHtml();
+    const sg = el.querySelector("[data-bsspdbox]");
+    if (sg) sg.outerHTML = spdGroupHtml();
     if (BAR_AFTER_CHANGE[calcKey]) BAR_AFTER_CHANGE[calcKey]();
   };
   el.querySelectorAll("[data-ownedmat]").forEach((input) => {
@@ -25432,26 +25581,16 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     });
   });
   el.querySelectorAll("[data-chestopen]").forEach((btn) => { btn.onclick = () => goToTab("backpack"); });
-  const toggleBoxes = () => {
-    BAR_SHOW_ALL[calcKey] = BAR_SHOW_ALL[calcKey] === false;
-    document.getElementById(rowsId).style.display = BAR_SHOW_ALL[calcKey] ? "" : "none";
-    bsFoldMark(el, !BAR_SHOW_ALL[calcKey]);
-    saveBarHidden();
-    document.getElementById(`${rowsId}_sum`).innerHTML = summaryHtml();
-    const foot = document.getElementById(`${rowsId}_foot`);
-    if (foot) foot.innerHTML = footHtml();
-    if (BAR_SHOW_ALL[calcKey] && sumHost) document.getElementById(rowsId).scrollIntoView({ behavior: "smooth", block: "nearest" });
-  };
-  // Summary drawn elsewhere: its "Show all / edit" link (onclick, so redraws don't stack).
-  if (sumHost) sumHost.onclick = (e) => { if (e.target.closest("[data-bstoggle]")) toggleBoxes(); };
   // onclick, not addEventListener: the bar is redrawn into the same element,
   // and stacked listeners toggled "Hide boxes" twice (= no change).
   el.onclick = (e) => {
     const tileEl = e.target.closest("[data-bsedit]");
     if (tileEl) { editTileModal(tileEl.dataset.bsedit); return; }
+    if (e.target.closest("[data-bsspd]")) { openSpdGroup(); return; }
     if (e.target.closest("[data-bsgen]")) {
       const lk = GENERAL_SPEEDUP_LINK, linkable = Object.keys(lk.bp || {}).length > 0;
       plxAmountModal({
+        top: true,
         label: t("speedups_label"), icon: "icons/speedup-general.png", value: Number(RESEARCH_SPEEDUP_MINUTES) || 0, minutes: true,
         linked: linkable ? backpackLinked("experts", GENERAL_SPEEDUP_KEY, lk) : null,
         needBox: (() => { const tn = timeNums(); return { need: tn.tot, have: tn.gen, short: tn.short, fmt: bsTime }; })(),
@@ -25470,7 +25609,6 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       });
       return;
     }
-    if (e.target.closest("[data-bstoggle]")) { toggleBoxes(); return; }
     const b = e.target.closest("[data-bpuse]");
     if (!b) return;
     const name = b.dataset.bpuse;
@@ -27226,7 +27364,7 @@ async function renderIslandGallery() {
     // The Pack cost button sits on the Target row, always there (greyed when nothing to buy).
     const canBuy = mkTotal > 0 && visitorCan("packcost");
     const priceBtn = canBuy ? `<button type="button" class="cg-bpbtn ice isl-pcb" data-islpc data-islmkprice>${plxPriceLabel("islands")}</button>` : `<button type="button" class="cg-bpbtn isl-pcb off" disabled>${esc(t("isl_pc_none"))}</button>`;
-    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.min(5, Math.max(3, tiles.length))}; --nm:${Math.min(5, Math.max(3, tiles.length))}; --ns:${Math.min(4, Math.max(3, tiles.length))};">${tiles.join("")}</div>` : ""}</div>`;
+    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.min(5, Math.max(3, tiles.length))}; --nm:${Math.min(5, Math.max(3, tiles.length))}; --ns:${Math.min(4, Math.max(3, tiles.length))};">${tiles.join("")}</div>` : ""}</div>`;
     const inc = islIncome(st), sd = islShardsDay(st);
     // Free Construction Contracts (owner, 16 Nov 2026): weekly + each KOI / SvS, counted before the pack.
     let ctLine = "";
@@ -27281,7 +27419,6 @@ async function renderIslandGallery() {
         plxAmountModal({ label: t(k === "essence" ? "isl_essence" : "isl_shards"), icon: k === "essence" ? "icons/life-essence.png" : "icons/island-shard.png", value: ISL_SHARDS[k] || 0, needBox: nd > 0 ? { need: nd, have: ISL_SHARDS[k] || 0 } : null, onSave: (v) => { const n = k === "essence" ? "Life Essence" : "Mythic Island Shards", q = Math.floor(v); ISL_SHARDS[k] = q; loadCalcState("backpack").catch(() => null).then((b) => { islBp = { ...(b || islBp || {}), [n]: q }; saveCalcState("backpack", islBp); budgetInvalidate(); }); keepPlace(() => computeAndRender()); } });
         return;
       }
-      if (e.target.closest("[data-bstoggle]")) { BAR_SHOW_ALL.islands = BAR_SHOW_ALL.islands === false; saveBarHidden(); drawPlan(); return; }
       if (e.target.closest("[data-islpc]")) { islOpenPacks(); return; }
       if (e.target.closest("[data-islscan]")) { openIslandScan(); return; }
       if (e.target.closest("[data-islinc]")) islIncomeSheet(() => { if (document.getElementById("islandShardPlan")) { drawPlan(); } });
@@ -29966,26 +30103,9 @@ async function renderExpertsResearchPage() {
   });
   // The sigil boxes fold like the other pages' Backpack boxes,
   // remembered on the account (calc_state bar_hidden, key experts_research).
-  const erHidden = () => BAR_SHOW_ALL.experts_research === false;
-  document.getElementById("expResearchAmounts").innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t("bs_your_amounts"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(erHidden() ? "bs_show_all" : "bs_hide"))}</button>${plxBuyBtnsHtml("experts_research").replace(/<button[^>]*data-plxsheet="trades"[\s\S]*?<\/button>/, "")}</div>
-    <div id="expResearchOwned"${erHidden() ? ' style="display:none;"' : ""}></div>
+  document.getElementById("expResearchAmounts").innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t("bs_your_amounts"))}</span>${plxBuyBtnsHtml("experts_research").replace(/<button[^>]*data-plxsheet="trades"[\s\S]*?<\/button>/, "")}</div>
+    <div id="expResearchOwned"></div>
 `;
-  {
-    const amts = document.getElementById("expResearchAmounts");
-    const sync = () => {
-      const h = erHidden(), o = document.getElementById("expResearchOwned"), b = amts.querySelector("[data-bstoggle]");
-      if (o) o.style.display = h ? "none" : "";
-      if (b) b.textContent = t(h ? "bs_show_all" : "bs_hide");
-      bsFoldMark(amts, h);
-    };
-    amts.addEventListener("click", (ev) => {
-      if (!ev.target.closest("[data-bstoggle]")) return;
-      BAR_SHOW_ALL.experts_research = erHidden();
-      sync();
-      saveBarHidden();
-    });
-    ensureBarHidden().then(sync);
-  }
   { const b = document.getElementById("expResearchAmounts_buy"); (b.querySelector("[data-buybody]") || b).innerHTML = `<div id="expResearchPacks"></div>`; }
 
   let ER_SIG = { need: {}, left: {}, general: 0 }; // per expert: sigils needed / own left (for the card)
@@ -30674,14 +30794,7 @@ async function renderExpertsPage() {
   const footEl = document.getElementById("expertsFoot");
   // What each Backpack tile still lacks (set by renderTotals, drawn by renderInventory).
   let tileNeed = null;
-  footEl.addEventListener("click", (ev) => {
-    if (!ev.target.closest("[data-bstoggle]")) return;
-    BAR_SHOW_ALL.experts = BAR_SHOW_ALL.experts === false;
-    document.getElementById("expertsInventory").style.display = BAR_SHOW_ALL.experts !== false ? "" : "none";
-    bsFoldMark(footEl, BAR_SHOW_ALL.experts === false);
-    saveBarHidden();
-    renderTotals();
-  });
+  let packIn = null; // what the Pack cost card plans from: { needAll, owned }
   function renderTotals() {
     let totalExp = 0, totalBook = 0, totalAffinity = 0, totalSigil = 0;
     const sigilNeededByExpert = {};
@@ -30743,7 +30856,7 @@ async function renderExpertsPage() {
     Object.keys(AFFINITY_ITEM_VALUE).forEach((n) => { tileNeed[n] = { need: totalAffinity, short: affShort, aff: true }; });
     if (document.getElementById("expertsInventory").firstChild) renderInventory();
     bsFoldMark(footEl, BAR_SHOW_ALL.experts === false);
-    footEl.innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t(Object.keys(bpLink.bp).length ? "bs_from_backpack" : "bs_your_amounts"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL.experts !== false ? "bs_hide" : "bs_show_all"))}</button>${plxBuyBtnsHtml("experts").replace(/<button[^>]*data-plxsheet="trades"[\s\S]*?<\/button>/, "")}</div>`;
+    footEl.innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t(Object.keys(bpLink.bp).length ? "bs_from_backpack" : "bs_your_amounts"))}</span>${plxBuyBtnsHtml("experts").replace(/<button[^>]*data-plxsheet="trades"[\s\S]*?<\/button>/, "")}</div>`;
     totalsEl.innerHTML = `${rows.length ? "" : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
       <div class="bs-box"><div class="bs-sq" style="--n:${Math.max(1, Math.min(7, rows.length))};">
       ${short.map((r) => `<div class="bs-row"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>${bsShortHtml(amt(r, r.need - r.have))}</b></div>`).join("")}
@@ -30757,6 +30870,7 @@ async function renderExpertsPage() {
     EXPERTS_SHOWN.forEach((e) => { const short = Math.max(0, (sigilNeededByExpert[e.key] || 0) - (Number(invSaved[`${e.key} Sigils`]) || 0)); if (short > 0) sigilTotals[`${e.key} Sigils`] = short; });
     const packGroups = [{ label: null, totals: { "Books of Knowledge": totalBook, "Affinity": totalAffinity, ...sigilTotals, "Speedups (minutes)": Math.round(totalTimeHours * 60) } }];
     const packOwned = { "Books of Knowledge": Number(invSaved["Books of Knowledge"]) || 0, "Affinity": affinityOwnedFrom(invSaved), "General Sigils": Number(invSaved["General Sigils"]) || 0, "Speedups (minutes)": expertSpeedupOwnedFrom(invSaved) };
+    packIn = { needAll: packGroups[0].totals, owned: packOwned };
     renderPackCostBlock(document.getElementById("expertsPacks"), "experts", packGroups, packOwned);
     // Mini targets: one expert up to level N (every 10 levels between now and its target).
     setPageMinis("experts", EXPERTS_SHOWN.filter((e) => isExpertUnlocked(e.key)).flatMap((e) => {
@@ -31083,7 +31197,12 @@ async function renderExpertsPage() {
     invEl.querySelectorAll("[data-expedit]").forEach((btn) => btn.addEventListener("click", () => {
       const f = btn.dataset.expedit;
       const linkable = hasBp && backpackLinks("experts", f);
+      // Books and the speedups (one pool, the plan's "Speedups (minutes)"): the Backpack's trades.
+      const item = f === "Books of Knowledge" ? f : tileNeed && tileNeed[f] && tileNeed[f].time ? "Speedups (minutes)" : null;
+      const exNeed = item && packIn ? Number(packIn.needAll[item]) || 0 : 0;
+      const extra = exNeed > 0 ? () => cgBoxExplainHtml(item, { calcKey: "experts", need: exNeed, have: Number(packIn.owned[item]) || 0, needAll: packIn.needAll, calcOwned: packIn.owned }) : null;
       plxAmountModal({
+        top: true, extra,
         label: materialDisplayName(f), icon: itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f], value: invSaved[f] || 0, minutes: /\(minutes\)$/.test(f),
         linked: linkable ? backpackLinked("experts", f, bpLink) : null,
         needBox: (() => { const nd = tileNeed && tileNeed[f]; return nd && !nd.aff ? { need: nd.need, have: Number(invSaved[f]) || 0, short: nd.short, fmt: nd.time ? bsTime : bsNbNum } : null; })(),
@@ -32213,23 +32332,65 @@ document.addEventListener("click", (ev) => {
 function plxAmountModal(o) {
   let modal = document.getElementById("bsEditModal");
   if (!modal) { modal = document.createElement("div"); modal.id = "bsEditModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
-  modal.innerHTML = `<div class="modal-box" style="max-width:300px; text-align:center;">
+  // Chief Gear / Chief Charm: the typing box + Save on top, then Needed / You have and where it comes from (o.extra).
+  // Phones: a sheet from the bottom with a grab handle (swipe down closes it); PC: a centred window.
+  // Minutes: typed as a plain number of minutes (number pad; "5d 18h" still read), the
+  // days / hours / minutes shown under the name as they type.
+  const raw = "rawValue" in o ? o.rawValue : Number(o.value) || 0;
+  const init = o.minutes ? Math.round(Number(raw) || 0) : raw;
+  const durTxt = (v) => (Number.isNaN(v) ? "" : formatTimeDHM((Number(v) || 0) / 60));
+  const dur = o.minutes ? `<small class="bsm-dur" data-bsmdur>${esc(durTxt(init))}</small>` : "";
+  // "Use Backpack": shown once the box holds a typed amount (or as soon as the person types).
+  const canUse = o.linked != null && !!o.onUse;
+  const mode = o.minutes ? "numeric" : "decimal";
+  modal.classList.toggle("bsm-ov", !!o.top);
+  modal.innerHTML = o.top ? `<div class="modal-box bsm-top">
+      <div class="bsm-grab" data-cgwgrab aria-hidden="true"></div>
+      <div class="bsm-h">${o.icon ? `<img src="${esc(o.icon)}" alt="" />` : ""}<div><b>${esc(o.label)}</b>${o.linked != null ? `<small>${o.linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</small>` : ""}${dur}</div>${closeXHtml("data-bsmclose")}</div>
+      <div class="bsm-in"><input id="bsEditQty" type="text" inputmode="${mode}" autocomplete="off" aria-label="${esc(o.label)}" value="${esc(String(init))}" /><button class="btn" type="button" id="bsEditSave">${esc(t("save"))}</button></div>
+      ${canUse ? `<div class="bsm-ln"${o.linked ? " hidden" : ""}><button class="linklike" type="button" id="bsEditUse">&#127890; ${esc(t("bp_link_use"))}</button></div>` : ""}
+      ${o.needBox ? bsNeedBoxesHtml(o.needBox) : ""}
+      ${o.extra ? `<div class="bsx" data-bsexplain>${o.extra()}</div>` : ""}
+    </div>` : `<div class="modal-box" style="max-width:300px; text-align:center;">
       ${o.icon ? `<img src="${esc(o.icon)}" alt="" style="width:56px; height:56px; object-fit:contain;" />` : ""}
       <h2 style="margin:6px 0 4px; font-size:16px;">${esc(o.label)}</h2>
       ${o.linked != null ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${o.linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</div>` : ""}
       ${o.needBox ? bsNeedBoxesHtml(o.needBox) : ""}
-      <input id="bsEditQty" type="text" inputmode="${o.minutes ? "text" : "decimal"}" autocomplete="off" value="${"rawValue" in o ? o.rawValue : Number(o.value) || 0}" style="width:100%; text-align:center; font-size:18px;" />
+      <input id="bsEditQty" type="text" inputmode="${mode}" autocomplete="off" value="${esc(String(init))}" style="width:100%; text-align:center; font-size:18px;" />
+      ${o.minutes ? `<div class="meta" style="font-size:12px; margin-top:4px;">${dur}</div>` : ""}
       <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t(o.minutes ? "bs_edit_hint_min" : "bs_edit_hint"))}</div>
       <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
-        ${o.linked === false && o.onUse ? `<button class="btn ghost" type="button" id="bsEditUse">&#127890; ${esc(t("bp_link_use"))}</button>` : ""}
+        ${canUse ? `<button class="btn ghost" type="button" id="bsEditUse"${o.linked ? " hidden" : ""}>&#127890; ${esc(t("bp_link_use"))}</button>` : ""}
         <button class="btn ghost" type="button" id="bsEditCancel">${esc(t("cancel"))}</button>
         <button class="btn" type="button" id="bsEditSave">${esc(t("save"))}</button>
       </div></div>`;
   modal.style.display = "flex";
-  const close = () => { modal.style.display = "none"; };
-  modal.onclick = (ev) => { if (ev.target === modal) close(); };
+  modal._extra = o.extra || null;
+  const close = () => { modal.style.display = "none"; modal._extra = null; };
+  const sw = o.top ? wireSheetSwipe(modal, { box: ".bsm-top", close }) : null;
+  if (!o.top) modal.onpointerdown = modal.onpointermove = modal.onpointerup = modal.onpointercancel = null;
+  modal.onclick = (ev) => {
+    if (sw && sw.dragged) { sw.dragged = false; return; }
+    // "N goes to Alloy ›": open that item's box on the same page.
+    const go = ev.target.closest("[data-bsxgo]");
+    if (go) {
+      const n = go.dataset.bsxgo, tile = [...content.querySelectorAll("[data-bsedit], [data-expedit]")].find((b) => (b.dataset.bsedit || b.dataset.expedit) === n);
+      close();
+      if (tile) tile.click();
+      return;
+    }
+    if (ev.target === modal || ev.target.closest("[data-bsmclose]")) close();
+  };
   const input = modal.querySelector("#bsEditQty");
-  input.focus(); input.select();
+  const durEl = modal.querySelector("[data-bsmdur]");
+  const use = modal.querySelector("#bsEditUse");
+  const useBox = use && (use.closest(".bsm-ln") || use);
+  input.oninput = () => {
+    if (durEl) durEl.textContent = durTxt(parseMinutes(input.value));
+    if (useBox && o.linked) useBox.hidden = input.value.trim() === String(init);
+  };
+  // Phones never open the keyboard by themselves: the person taps the box to type.
+  if (!window.matchMedia("(pointer: coarse)").matches) { input.focus(); input.select(); }
   const save = () => {
     let val = o.minutes ? parseMinutes(input.value) : parseAmount(input.value);
     if (Number.isNaN(val)) { input.style.borderColor = "var(--danger)"; return; }
@@ -32238,17 +32399,101 @@ function plxAmountModal(o) {
     o.onSave(val);
   };
   modal.querySelector("#bsEditSave").onclick = save;
-  modal.querySelector("#bsEditCancel").onclick = close;
+  const cancel = modal.querySelector("#bsEditCancel");
+  if (cancel) cancel.onclick = close;
   input.onkeydown = (ev) => { if (ev.key === "Enter") save(); else if (ev.key === "Escape") close(); };
-  const use = modal.querySelector("#bsEditUse");
-  if (use) use.onclick = () => { close(); o.onUse(); };
+  // Already the Backpack's amount: just put the box back. Typed before: back to the Backpack link.
+  if (use) use.onclick = () => {
+    if (o.linked) { input.value = String(init); input.oninput(); return; }
+    close(); o.onUse();
+  };
 }
+// Planner pages' Backpack box pop-up: the trades the Backpack itself allows into this item
+// ("Where the rest comes from": this week up to each trade's weekly limit, next weeks up to
+// the page's target date, the Research Lab's next weeks on T12) and one status line (covered
+// with trades / still N short after trades), both only when such trades exist; on a source
+// item, "Spare N goes to <item> ›". Never packs (owner: packs are Budgets' / Pack cost's job): worked
+// out from the Backpack amounts and the trade rules only, so nothing here moves with Pack cost.
+// Pages whose Backpack box pop-ups use it.
+const BOX_EXPLAIN_KEYS = new Set(["chief_gear", "charm", "hero_gear", "pets", "pets_refine", "t12_research", "t11_helios", "research_center", "experts"]);
 // A free trade (with its weekly limit `max`) split by when it happens: lots up to the weekly
-// limit "this week", the rest "next weeks" (no limit = all this week). Used by the Pack cost card.
+// limit "this week", the rest "next weeks" (no limit = all this week). Shared by the Backpack
+// box pop-up and the Pack cost card, so both agree.
 function packTradeWhenSplit(x) {
   if (!(x.lots > 0)) return [];
   const per = x.giveQty / x.lots, gp = x.getQty / x.lots, a = x.max > 0 ? Math.min(x.lots, x.max) : x.lots, b = x.lots - a;
   return [a > 0 && { when: "week", from: x.from, to: x.to, give: a * per, get: a * gp, lots: a, lab: x.lab }, b > 0 && { when: "later", from: x.from, to: x.to, give: b * per, get: b * gp, lots: b, lab: x.lab }].filter(Boolean);
+}
+// Redraw the open box pop-up's trades part (after the page's target date has loaded).
+function boxExplainRefresh() {
+  ["bsEditModal", "bsGrpModal"].forEach((id) => {
+    const md = document.getElementById(id), ex = md && md.style.display !== "none" && md._extra && md.querySelector("[data-bsexplain]");
+    if (!ex) return;
+    ex.innerHTML = md._extra();
+    if (id === "bsGrpModal") ex.hidden = !ex.innerHTML;
+  });
+}
+// c: { calcKey, need, have (the box's "You have"), needAll, calcOwned, given ({ item: what the box's own rules already spent }) }
+function cgBoxExplainHtml(name, c) {
+  const calcKey = c.calcKey || "chief_gear";
+  // The page's target date (the date box on its Pack cost card): weekly trades count up to it.
+  if (PACK_TARGET_CACHE[calcKey] === undefined) {
+    loadCalcState(`pack_target_${calcKey}`).then((s) => {
+      if (PACK_TARGET_CACHE[calcKey] === undefined) { PACK_TARGET_CACHE[calcKey] = s && typeof s.date === "string" ? s.date : ""; boxExplainRefresh(); }
+    }).catch(() => {});
+  }
+  let targetDays = null;
+  const tDay = PACK_TARGET_CACHE[calcKey] ? packParseDay(PACK_TARGET_CACHE[calcKey]) : null;
+  if (tDay) targetDays = Math.round((tDay - packStartOfToday()) / 86400000);
+  const weeks = tradeWeeksFor(targetDays);
+  const rates = tradeRatesFor(calcKey);
+  // The Backpack's trades (the Research Lab apart: below).
+  const tr = tradeAdjustedStill(calcKey, c.needAll || {}, c.calcOwned || {}, targetDays, true);
+  const trades = tr ? tr.trades.map((x) => { const r = rates.find((q) => q.from === x.from && q.to === x.to) || {}; return { ...x, max: Number(r.max) || 0, hidden: !!r.hidden }; }) : [];
+  // Rules the Backpack box already counts in "You have" (hidden ones, unlimited ones).
+  const inHave = (x) => x.hidden || ((!(x.max > 0) || x.from === "Fire Crystal") && TRADE_APPLY[calcKey] !== false);
+  const free = trades.flatMap((x) => (inHave(x) ? [] : packTradeWhenSplit(x)));
+  const sum = (a, k) => a.reduce((s, x) => s + (Number(x[k]) || 0), 0);
+  const ins = free.filter((x) => x.to === name), outs = free.filter((x) => x.from === name);
+  // Research Lab (T12): this week's refinements still left are in "You have"; the next weeks
+  // up to the target date are listed, paid with the Fire Crystal the Backpack has spare.
+  const labR = rates.find((r) => r.rfcLab && r.to === name);
+  if (labR && weeks > 1) {
+    const fc = labR.from, given = (c.given || {})[fc] || 0;
+    const fcSpare = Math.max(0, (Number((c.calcOwned || {})[fc]) || 0) - (Number((c.needAll || {})[fc]) || 0) - given - sum(free.filter((x) => x.from === fc), "give"));
+    const short = (Number(c.need) || 0) - (Number(c.have) || 0) - sum(ins, "get");
+    const lots = short > 0 ? Math.min(weeks - 1, Math.floor(fcSpare / labR.give), Math.ceil(short / labR.get)) : 0;
+    if (lots > 0) ins.push({ when: "later", from: fc, to: name, give: lots * labR.give, get: lots * labR.get, lots, lab: true });
+  }
+  const ic = (n) => { const src = materialIconSrc(n); return src ? `<img src="${esc(src)}" alt="" />` : ""; };
+  const nm = (n) => esc(materialDisplayName(itemShortName(n)).replace(/\s*\((minutes|min)\)$/, ""));
+  const fmtOf = (n) => (/\(minutes\)$/.test(n) ? bsTime : (v) => (Math.abs(v) < 1e5 ? Math.round(v).toLocaleString() : shortAmount(v)));
+  const num = (v, n = name) => bidiNum(fmtOf(n)(v));
+  const line = (w, mid, v) => `<div class="bsx-l"><span class="bsx-w">${esc(t(w === "week" ? "bsx_week" : "bsx_later"))}</span><span class="bsx-m">${mid}</span><b class="g">${v}</b></div>`;
+  const labMid = (x) => `<img src="icons/quick/microscope.png" alt="" title="${esc(t("bsx_trade").replace("{n}", num(x.give, x.from)))} ${nm(x.from)}" /><span>${esc(t("bsx_lab"))}</span>`;
+  const inQ = sum(ins, "get"), outQ = sum(outs, "give");
+  // Each trade is listed once, in the box of the item it makes. The list and the status line
+  // only show when trades into this item change the answer (owner, 18 Nov 2026): otherwise the
+  // Needed / You have / Short boxes above already say it all. What this item gives away is one
+  // green bar, "✓ Spare N → goes to Alloy ›", each target tappable.
+  const short = c.need - (c.have + inQ - outQ);
+  const ownOk = c.have >= c.need - 0.5, ok = ownOk || short <= 0.5;
+  const tos = [...new Set(outs.map((x) => x.to))];
+  const tileOf = (n) => [...content.querySelectorAll("[data-bsedit], [data-expedit]")].some((b) => (b.dataset.bsedit || b.dataset.expedit) === n);
+  // A green bar like the status bars: "✓ Spare 195 → goes to [Alloy] ›". One target: the whole
+  // bar is the button; several: each target is its own button inside the bar.
+  const goTo = (n, own) => (tileOf(n) ? `<${own ? "span" : `button type="button" data-bsxgo="${esc(n)}"`} class="bsx-go">${ic(n)}<span>${nm(n)}</span></${own ? "span" : "button"}>` : `<span class="bsx-go off">${ic(n)}<span>${nm(n)}</span></span>`);
+  const one = tos.length === 1 && tileOf(tos[0]);
+  const goesIn = `<b>&#10003; ${esc(t("bsx_spare").replace("{n}", num(outQ)))}</b><span class="bsx-gt"><span>&#8594; ${esc(t("bsx_goes_to"))}</span>${tos.map((n) => goTo(n, one)).join('<span class="bsx-gs">,</span>')}${tos.some(tileOf) ? '<span class="bsx-ga">&#8250;</span>' : ""}</span>`;
+  const goes = !tos.length ? "" : one
+    ? `<button type="button" class="bsx-tot ok bsx-goes" data-bsxgo="${esc(tos[0])}">${goesIn}</button>`
+    : `<div class="bsx-tot ok bsx-goes">${goesIn}</div>`;
+  if (!ins.length) return goes;
+  const body = `<div class="bsx-h">${esc(t("bsx_rest"))}</div><div class="bsx-list">${ins.map((x) => line(x.when, x.lab ? labMid(x) : `${ic(x.from)}<span>${esc(t("bsx_trade").replace("{n}", num(x.give, x.from)))} ${nm(x.from)}</span>`, `+${num(x.get)}`)).join("")}</div>`;
+  const stat = ok
+    ? `<div class="bsx-tot ok"><b>&#10003; ${esc(t(ownOk ? "bsx_covered" : "bsx_cov_trades"))}</b></div>`
+    : `<div class="bsx-tot bad"><b>${esc(t("bsx_still_short").replace("{n}", num(short)))}</b></div>`;
+  return `${body}${stat}${goes}`;
 }
 // Third line of a Backpack tile: red "N short", green ✓, or grey — when
 // this page doesn't use it (need 0). { html, off }.
@@ -32280,8 +32525,117 @@ function bsNeedBoxesHtml(o) {
         : `<div class="bs-nbx ok"><small>${esc(t("bs_nb_spare"))}</small><b>&#10003;${spare > 0 ? ` ${bidiNum(fmt(spare))}` : ""}</b></div>`}
     </div>
     ${short > 0 ? `<div class="t12x-prog bs-nb-bar"><i style="width:${pct}%;"></i></div>` : ""}
-    ${o.from ? `<div class="bs-nb-from">${o.from}</div>` : ""}
+    ${o.from || ""}
     ${parts.length > 1 ? `<div class="bs-nb-parts">${parts.map(([l, v]) => `${esc(l)} <b>${bidiNum(fmt(v))}</b>`).join(" &middot; ")}</div>` : ""}`;
+}
+// One Backpack box for items that pay the same need (Expert + General Speedups, Research +
+// General Speedups, the three Affinity items): each item's picture and amount, one line
+// "Speedups 45d 13h · 11h short" / ✓ / —. Tapping an item opens bsGroupModal.
+// o: { cls, off, bag (a Backpack link mark), attr (the data attribute each item button carries),
+//      items: [{ key, icon, qty (shown amount), title }], label, have, need, short, fmt, host (an attribute on the box) }
+function bsGroupTileHtml(o) {
+  const line = !(o.need > 0) ? `<span style="color:var(--muted);">—</span>` : o.short > 0
+    ? `<span style="color:var(--danger);">${esc(o.label)} ${bidiNum(o.fmt(o.have))} · ${bidiNum(o.fmt(o.short))} ${esc(t("bs_short_word"))}</span>`
+    : `<span style="color:var(--good);">${esc(o.label)} ${bidiNum(o.fmt(o.have))} ✓</span>`;
+  return `<div class="bp-tile bs-tile bs-aff${o.cls ? ` ${o.cls}` : ""}${o.off ? " off" : ""}"${o.host ? ` ${o.host}` : ""}>${o.bag ? `<span class="bs-mark">&#127890;</span>` : ""}<div class="bs-aff-items">${o.items.map((it) => `<button type="button" class="bs-aff-it" ${o.attr}="${esc(it.key)}" title="${esc(it.title)}">
+          <img src="${esc(it.icon)}" alt="" loading="lazy" />
+          <span class="bp-qty">${it.qty}</span></button>`).join("")}</div><span class="bs-st">${line}</span></div>`;
+}
+// One pop-up for a shared box: the group's Needed / You have / Short and bar, then one row per
+// item (picture, name, what it counts as, its own box, Use Backpack), one Save. Minutes are typed
+// as plain minutes (number pad, a "min" label in the box), days / hours / minutes under the name.
+// o: { label, icon, need, nbFmt, minutes, worth(key, v), worthTxt(key, v), extra (() => html: the
+//      Backpack's trades, like the single box pop-up),
+//      items: [{ key, name, icon, value, linkable, linked, bpValue }],
+//      onSave([{ key, value, use }]) — only the items that changed; use = back to the Backpack link }
+function bsGroupModal(o) {
+  let modal = document.getElementById("bsGrpModal");
+  if (!modal) { modal = document.createElement("div"); modal.id = "bsGrpModal"; modal.className = "modal-overlay bsm-ov"; document.body.appendChild(modal); }
+  const useBp = {}, dirty = {};
+  const byKey = {};
+  o.items.forEach((it) => { byKey[it.key] = it; });
+  const valTxt = (v) => String(o.minutes ? Math.round(Number(v) || 0) : Number(v) || 0);
+  const lkTxt = (linked) => (linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`);
+  const rowHtml = (it) => {
+    const v = Number(it.value) || 0;
+    const inp = `<input type="text" inputmode="${o.minutes ? "numeric" : "decimal"}" autocomplete="off" value="${esc(valTxt(v))}" aria-label="${esc(it.name)}" />`;
+    return `<div class="bsg-row" data-bsgrow="${esc(it.key)}" data-bsglinked="${it.linked ? 1 : 0}" data-bsginit="${esc(valTxt(v))}">
+          <div class="bsg-top"><img src="${esc(it.icon)}" alt="" />
+          <div class="bsg-t"><b>${esc(it.name)}</b><small class="bsg-w" data-bsgworth>${esc(o.worthTxt(it.key, v))}</small>${it.linkable ? `<small class="bsg-lk" data-bsglk>${lkTxt(it.linked)}</small>` : ""}</div>
+          ${it.linkable ? `<button type="button" class="linklike bsg-use" data-bsguse${it.linked ? " hidden" : ""}>&#127890; ${esc(t("bp_link_use"))}</button>` : ""}</div>
+          <div class="bsm-in">${o.minutes ? `<span class="bsm-f">${inp}<span class="bsm-u" aria-hidden="true">${esc(t("bs_min_unit"))}</span></span>` : inp}</div>
+        </div>`;
+  };
+  const parse = (inp) => { const x = o.minutes ? parseMinutes(inp.value) : parseAmount(inp.value); return Number.isNaN(x) ? NaN : Math.max(0, x); };
+  // Same look as the single box pop-up: a sheet from the bottom on phones (grab handle,
+  // swipe down / ✕ / outside closes), title row, Needed / You have / Short, then a row
+  // per item with its own box, one Save.
+  modal.innerHTML = `<div class="modal-box bsm-top bsg">
+          <div class="bsm-grab" data-cgwgrab aria-hidden="true"></div>
+          <div class="bsm-h"><img src="${esc(o.icon)}" alt="" /><div><b>${esc(o.label)}</b></div>${closeXHtml("data-bsgclose")}</div>
+          <div data-bsgnb></div>
+          ${o.extra ? (() => { const ex = o.extra(); return `<div class="bsx" data-bsexplain${ex ? "" : " hidden"}>${ex}</div>`; })() : ""}
+          <div class="bsg-rows">${o.items.map(rowHtml).join("")}</div>
+          <button class="btn bsg-save" type="button" data-bsgsave>${esc(t("save"))}</button>
+        </div>`;
+  modal._extra = o.extra || null;
+  const nbEl = modal.querySelector("[data-bsgnb]");
+  const refresh = () => {
+    let have = 0;
+    modal.querySelectorAll("[data-bsgrow]").forEach((r) => {
+      const k = r.dataset.bsgrow, inp = r.querySelector("input"), v = parse(inp), ok = !Number.isNaN(v);
+      inp.style.borderColor = ok ? "" : "var(--danger)";
+      const w = ok ? v : Number(byKey[k].value) || 0;
+      have += o.worth(k, w);
+      r.querySelector("[data-bsgworth]").textContent = o.worthTxt(k, w);
+      // "Use Backpack": once the box holds a typed amount, or as soon as the person types.
+      const use = r.querySelector("[data-bsguse]");
+      if (use) use.hidden = r.dataset.bsglinked === "1" ? (useBp[k] || inp.value.trim() === r.dataset.bsginit) : !!useBp[k];
+    });
+    nbEl.innerHTML = o.need > 0 ? bsNeedBoxesHtml({ need: o.need, have, fmt: o.nbFmt }) : "";
+  };
+  refresh();
+  modal.style.display = "flex";
+  const close = () => { modal.style.display = "none"; modal._extra = null; };
+  const sw = wireSheetSwipe(modal, { box: ".bsm-top", close });
+  modal.onclick = (ev) => {
+    if (sw.dragged) { sw.dragged = false; return; }
+    if (ev.target === modal || ev.target.closest("[data-bsgclose]")) { close(); return; }
+    // "N goes to Alloy ›": open that item's box on the same page.
+    const go = ev.target.closest("[data-bsxgo]");
+    if (go) {
+      const n = go.dataset.bsxgo, tile = [...content.querySelectorAll("[data-bsedit], [data-expedit]")].find((b) => (b.dataset.bsedit || b.dataset.expedit) === n);
+      close();
+      if (tile) tile.click();
+      return;
+    }
+    const b = ev.target.closest("[data-bsguse]");
+    if (!b) return;
+    const r = b.closest("[data-bsgrow]"), k = r.dataset.bsgrow;
+    r.querySelector("input").value = valTxt(byKey[k].bpValue);
+    delete dirty[k];
+    // Typed before: back to the Backpack link on Save. Linked: just the Backpack's amount again.
+    if (r.dataset.bsglinked !== "1") useBp[k] = true;
+    const lk = r.querySelector("[data-bsglk]");
+    if (lk) lk.innerHTML = lkTxt(true);
+    refresh();
+  };
+  modal.oninput = (ev) => { const r = ev.target.closest && ev.target.closest("[data-bsgrow]"); if (r) { dirty[r.dataset.bsgrow] = true; delete useBp[r.dataset.bsgrow]; const lk = r.querySelector("[data-bsglk]"); if (lk) lk.innerHTML = lkTxt(r.dataset.bsglinked === "1"); } refresh(); };
+  const save = () => {
+    const vals = {};
+    let bad = false;
+    modal.querySelectorAll("[data-bsgrow]").forEach((r) => { const v = parse(r.querySelector("input")); if (Number.isNaN(v)) bad = true; else vals[r.dataset.bsgrow] = v; });
+    if (bad) return;
+    const changes = [];
+    o.items.forEach((it) => {
+      if (useBp[it.key]) changes.push({ key: it.key, value: Number(it.bpValue) || 0, use: true });
+      else if (dirty[it.key] && vals[it.key] !== (Number(it.value) || 0)) changes.push({ key: it.key, value: vals[it.key], use: false });
+    });
+    close();
+    if (changes.length) o.onSave(changes);
+  };
+  modal.querySelector("[data-bsgsave]").onclick = save;
+  modal.querySelectorAll("input").forEach((i) => { i.onkeydown = (ev) => { if (ev.key === "Enter") save(); else if (ev.key === "Escape") close(); }; });
 }
 // "Hide boxes": the card then holds only its title (and time line), so drop
 // the bottom gaps and it sits centred.
