@@ -3306,6 +3306,11 @@ input,select,textarea{
   .trd-dnone{ font-size:13px; color:var(--muted); padding:2px 0; }
   .trd-rules{ margin-top:10px; border:1px solid var(--line); background:rgba(255,255,255,.025); border-radius:14px; padding:8px 10px 4px; }
   .trd-rules .trd-bt{ color:var(--muted); }
+  .trd-rh{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .trd-rh .g1-fold{ text-transform:none; letter-spacing:0; }
+  .trd-rules.g1-folded{ padding-bottom:8px; }
+  .trd-rules.g1-folded .trd-rh{ margin-bottom:0; }
+  .trd-rules.g1-folded .trd-gc{ display:none; }
   .trd-gc{ padding:3px 0 5px; border-top:1px solid var(--line); }
   .trd-rules .trd-bt + .trd-gc{ border-top:0; padding-top:0; }
   .trd-gc .trd-gh{ font-size:13px; }

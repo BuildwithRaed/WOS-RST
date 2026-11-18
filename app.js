@@ -18897,7 +18897,7 @@ function plxTopBox(root) {
 // keys "top:<tab>").
 function g1FoldSync(root) {
   (root || document).querySelectorAll("[data-g1fold]").forEach((b) => {
-    const folded = BAR_SHOW_ALL[b.dataset.g1fold] === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc");
+    const folded = BAR_SHOW_ALL[b.dataset.g1fold] === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc, .trd-rules");
     if (box) box.classList.toggle("g1-folded", folded);
     // Compared as text: innerHTML gives back the real arrow, not "&#9662;", so an
     // HTML compare rewrote the button every time and the #content observer looped.
@@ -20943,7 +20943,12 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   const cardHtml = (n) => {
     return `<div class="trd-gc"><div class="trd-gh">${img(n, "s")}<b>${esc(nm(n))}</b></div>${rates.filter((r) => r.to === n).map(ruleHtml).join("")}</div>`;
   };
-  const rulesHtml = `<div class="trd-rules"><div class="trd-bt">${esc(t("trd_rules_title"))}</div>${order.map(cardHtml).join("")}</div>`;
+  // Starts folded; Hide / Show kept on the account (calc_state bar_hidden "trd:rules", all pages).
+  await ensureBarHidden();
+  barFoldDefault("trd:rules");
+  const rHid = BAR_SHOW_ALL["trd:rules"] === false;
+  const nRules = order.reduce((a, n) => a + rates.filter((r) => r.to === n).length, 0);
+  const rulesHtml = `<div class="trd-rules${rHid ? " g1-folded" : ""}"><div class="trd-bt trd-rh"><span>${esc(t("trd_rules_title"))} (${nRules})</span><button type="button" class="g1-fold" data-g1fold="trd:rules" aria-expanded="${!rHid}">${esc(t(rHid ? "g1_show" : "g1_hide"))} ${rHid ? "&#9662;" : "&#9652;"}</button></div>${order.map(cardHtml).join("")}</div>`;
   const calcFroms = [...new Set(rates.map((r) => r.from))];
   const calcHtml = `<div class="trd-calc"><input type="number" min="0" inputmode="decimal" data-tradeqty value="" placeholder="0" aria-label="${esc(t("trd_calc"))}" />
       <span class="trd-dd"><span data-tradefromimg>${img(calcFroms[0], "s")}</span><select data-tradefrom aria-label="${esc(t("trd_calc"))}">${calcFroms.map((n) => `<option value="${esc(n)}">${esc(cnm(n))}</option>`).join("")}</select></span>
@@ -25277,15 +25282,24 @@ function ensureBarHidden() {
   if (!BAR_HIDDEN_LOAD) BAR_HIDDEN_LOAD = loadCalcState("bar_hidden").then((v) => {
     // Only folds with a ":" key (top cards, lists): the planner pages' own Backpack boxes
     // (keys without one) always show now, so an old "Hide boxes" no longer hides them.
-    Object.entries(v || {}).forEach(([k, h]) => { if (h && String(k).includes(":") && !(k in BAR_SHOW_ALL)) BAR_SHOW_ALL[k] = false; });
+    Object.entries(v || {}).forEach(([k, h]) => {
+      if (k in BAR_SHOW_ALL || !String(k).includes(":")) return;
+      if (BAR_DEFAULT_HIDDEN.has(k)) BAR_SHOW_ALL[k] = !h; else if (h) BAR_SHOW_ALL[k] = false;
+    });
   }).catch(() => {});
   return BAR_HIDDEN_LOAD;
 }
 function saveBarHidden() {
   const out = {};
-  Object.keys(BAR_SHOW_ALL).forEach((k) => { if (BAR_SHOW_ALL[k] === false) out[k] = true; });
+  Object.keys(BAR_SHOW_ALL).forEach((k) => {
+    if (BAR_DEFAULT_HIDDEN.has(k)) out[k] = BAR_SHOW_ALL[k] === false;
+    else if (BAR_SHOW_ALL[k] === false) out[k] = true;
+  });
   saveCalcState("bar_hidden", out);
 }
+// Folds that start hidden: saved as true (hidden) / false (shown); nothing saved = hidden.
+const BAR_DEFAULT_HIDDEN = new Set(["trd:rules"]);
+function barFoldDefault(k) { if (BAR_DEFAULT_HIDDEN.has(k) && !(k in BAR_SHOW_ALL)) BAR_SHOW_ALL[k] = false; }
 // Where a page wants its summary drawn instead of above its boxes (element id).
 const BAR_SUMMARY_HOST = { t12_research: "t12Need", t11_helios: "t11Need", research_center: "rcNeed", chief_gear: "gearNeed", charm: "charmNeed", hero_gear: "heroGearNeed", pets: "petsNeed", pets_refine: "refineNeed" };
 const BAR_AFTER_CHANGE = {}; // { calcKey: fn } called after an owned amount changes
