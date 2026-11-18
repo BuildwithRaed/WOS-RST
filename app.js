@@ -32444,7 +32444,7 @@ function cgBoxExplainHtml(name, c) {
       + planOut.map((x) => line("plan", `${ic(name)}<span>${num(x.giveQty)} &rarr;</span>${ic(x.to)}<span>${nm(x.to)}</span>`, `&minus;${num(x.giveQty)}`, "r")).join("");
     const ok = total >= c.need - 0.5;
     const tot = ok
-      ? `<div class="bsx-tot ok"><b>= ${num(total)}</b><span>&#10003; ${esc(t("bsx_by").replace("{d}", dayTxt(snap.days)))}</span></div>`
+      ? `<div class="bsx-tot ok"><b>= ${num(total)}</b><span>&#10003;${snap.days > 0 ? " " + esc(t("bsx_by").replace("{d}", dayTxt(snap.days))) : ""}</span></div>`
       : `<div class="bsx-tot bad"><b>= ${num(total)}</b><span>${esc(t("bsx_still").replace("{n}", num(c.need - total)))}${snap.cant && !snap.noPacks ? ` &middot; ${esc(t("bsx_cant"))}` : ""}</span></div>`;
     // What the Backpack already lets the page do (the page marks), when they are worked out.
     let can = "";
