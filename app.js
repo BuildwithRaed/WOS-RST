@@ -30844,7 +30844,11 @@ async function renderExpertsPage() {
         booksLeft = Math.max(0, booksLeft - book);
         const xp = skillExpHave(st);
         line = `<div class="exk-m"><img src="${esc(EXPERT_INVENTORY_ICONS["Books of Knowledge"])}" alt="${esc(t("resource_books"))}" title="${esc(t("resource_books"))}" /><b>${num(book)}</b> · ${left > 0 ? `<span class="bad">${esc(t("exp_n_left").replace("{n}", shortAmount(Math.round(left))))}</span>` : `<span class="ok">&#10003;</span>`} · <img src="icons/exp-learn.png" alt="${esc(t("exp_learn_xp"))}" title="${esc(t("exp_learn_xp"))}" /><button type="button" class="exk-ex${xp > 0 ? "" : " e"}" data-expskillexp="${esc(hero)}|${esc(sk)}" aria-label="${esc(t("exp_learn_xp"))}">${num(xp)}</button> / ${num(exp)}</div>`;
-      } else line = `<div class="exk-m">${esc(t("exp_no_target"))}</div>`;
+      } else {
+        // No target yet: still show the Learning XP you have for the next level (tap to change).
+        const xp = skillExpHave(st), nextExp = cur < max ? skillCost(hero, sk, cur, cur + 1).exp : 0;
+        line = `<div class="exk-m">${esc(t("exp_no_target"))}${cur < max ? ` · <img src="icons/exp-learn.png" alt="${esc(t("exp_learn_xp"))}" title="${esc(t("exp_learn_xp"))}" /><button type="button" class="exk-ex${xp > 0 ? "" : " e"}" data-expskillexp="${esc(hero)}|${esc(sk)}" aria-label="${esc(t("exp_learn_xp"))}">${num(xp)}</button>${nextExp > 0 ? ` / ${num(nextExp)}` : ""}` : ""}</div>`;
+      }
       return `<div class="exk-r">
           <div class="exk-l1"><div class="exk-nm"><b>${esc(dataName(sk))}</b>${stat}</div>${vals(String(cur), curSel, String(des), `<select data-expskilldes="${esc(hero)}|${esc(sk)}" aria-label="${esc(t("target_label"))}">${levelOpts(pick, Math.min(des, pick), max)}</select>`)}</div>
           ${line}
@@ -31023,23 +31027,110 @@ async function renderExpertsPage() {
       <div class="t12x-prog bs-time-bar"><i style="width:${Math.min(100, ((tn.need - tn.short) / tn.need) * 100)}%;${tn.short > 0 ? "" : " background:var(--good);"}"></i></div>` : "";
     // Outside the boxes, so it stays when "Hide boxes" folds them (like the research pages).
     document.getElementById("expertsTime").innerHTML = timeLine;
-    // The three Affinity items share one box and one short line.
+    // Boxes that give the same thing share one box and one short line: the three
+    // Affinity items, and Expert + General Speedups (both pay the skills' time).
     const affItems = fields.filter((f) => f in AFFINITY_ITEM_VALUE);
-    const affHtml = () => {
-      const nd = tileNeed && tileNeed[affItems[0]], have = affinityOwnedFrom(invSaved);
+    const spdItems = ["Expert Speedups (minutes)", GENERAL_SPEEDUP_KEY].filter((f) => fields.includes(f));
+    const GROUPS = {
+      aff: { items: affItems, label: t("resource_affinity"), icon: EXPERT_INVENTORY_ICONS.Affinity, fmt: shortAmount, nbFmt: bsNbNum, have: () => affinityOwnedFrom(invSaved), worth: (f, v) => v * AFFINITY_ITEM_VALUE[f], worthTxt: (f, v) => `= ${bsNbNum(v * AFFINITY_ITEM_VALUE[f])} ${t("resource_affinity")}`, minutes: false },
+      spd: { items: spdItems, label: t("backpack_speedups"), icon: "icons/speedup-expert.png", fmt: bsTime, nbFmt: bsTime, have: () => expertSpeedupOwnedFrom(invSaved), worth: (f, v) => v, worthTxt: (f, v) => `${Math.round(v).toLocaleString()} min`, minutes: true },
+    };
+    const grpOf = (f) => (affItems.includes(f) ? "aff" : spdItems.length > 1 && spdItems.includes(f) ? "spd" : null);
+    const grpHtml = (k) => {
+      const G = GROUPS[k], nd = tileNeed && tileNeed[G.items[0]], have = G.have();
       const line = !nd || !(nd.need > 0) ? `<span style="color:var(--muted);">\u2014</span>` : nd.short > 0
-        ? `<span style="color:var(--danger);">${esc(t("resource_affinity"))} ${bidiNum(shortAmount(have))} \u00b7 ${bidiNum(shortAmount(nd.short))} ${esc(t("bs_short_word"))}</span>`
-        : `<span style="color:var(--good);">${esc(t("resource_affinity"))} ${bidiNum(shortAmount(have))} \u2713</span>`;
-      const affBag = affItems.some((f) => hasBp && backpackLinks("experts", f) && backpackLinked("experts", f, bpLink));
-      return `<div class="bp-tile bs-tile bs-aff${nd && !(nd.need > 0) ? " off" : ""}">${affBag ? `<span class="bs-mark">&#127890;</span>` : ""}<div class="bs-aff-items">${affItems.map((f) => {
-        const linkable = hasBp && backpackLinks("experts", f), linked = linkable && backpackLinked("experts", f, bpLink);
-        return `<button type="button" class="bs-aff-it" data-expedit="${esc(f)}" title="${esc(materialDisplayName(f))} (= ${AFFINITY_ITEM_VALUE[f]} ${esc(t("resource_affinity"))})">
-          <span class="bs-mark">${linkable ? (linked ? "&#127890;" : "&#9998;") : ""}</span>
-          <img src="${esc(itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f] || "icons/item_icon_570201.png")}" alt="" loading="lazy" />
-          <span class="bp-qty">${shortAmount(Number(invSaved[f]) || 0)}</span></button>`;
+        ? `<span style="color:var(--danger);">${esc(G.label)} ${bidiNum(G.fmt(have))} \u00b7 ${bidiNum(G.fmt(nd.short))} ${esc(t("bs_short_word"))}</span>`
+        : `<span style="color:var(--good);">${esc(G.label)} ${bidiNum(G.fmt(have))} \u2713</span>`;
+      const bag = G.items.some((f) => hasBp && backpackLinks("experts", f) && backpackLinked("experts", f, bpLink));
+      return `<div class="bp-tile bs-tile bs-aff${k === "spd" ? " bs-spd" : ""}${nd && !(nd.need > 0) ? " off" : ""}">${bag ? `<span class="bs-mark">&#127890;</span>` : ""}<div class="bs-aff-items">${G.items.map((f) => {
+        const v = Number(invSaved[f]) || 0;
+        return `<button type="button" class="bs-aff-it" data-expedit="${esc(f)}" title="${esc(materialDisplayName(f))}${k === "aff" ? ` (= ${AFFINITY_ITEM_VALUE[f]} ${esc(t("resource_affinity"))})` : ""}">
+          <img src="${esc(itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f] || (k === "spd" ? (f === GENERAL_SPEEDUP_KEY ? "icons/speedup-general.png" : "icons/speedup-expert.png") : "icons/item_icon_570201.png"))}" alt="" loading="lazy" />
+          <span class="bp-qty">${G.minutes ? bsTime(v) : shortAmount(v)}</span></button>`;
       }).join("")}</div><span class="bs-st">${line}</span></div>`;
     };
-    const tilesHtml = fields.map((f) => (f === affItems[0] ? affHtml() : affItems.includes(f) ? "" : tile(f))).join("");
+    // One pop-up for a shared box: the group's Needed / You have / Short, then
+    // one row per item (picture, name, what it counts as, its own box, Use Backpack), one Save.
+    const openGroup = (k) => {
+      const G = GROUPS[k], nd = tileNeed && tileNeed[G.items[0]];
+      let modal = document.getElementById("bsGrpModal");
+      if (!modal) { modal = document.createElement("div"); modal.id = "bsGrpModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
+      const useBp = {}, dirty = {};
+      // Exact time to type over ("39d 1h 12m"), so an untouched box saves the same minutes.
+      const minTxt = (v) => { v = Math.round(Number(v) || 0); if (!v) return "0"; const d = Math.floor(v / 1440), h = Math.floor((v % 1440) / 60), m = v % 60; return [d ? `${d}d` : "", h ? `${h}h` : "", m ? `${m}m` : ""].filter(Boolean).join(" "); };
+      const iconOf = (f) => itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f] || (k === "spd" ? (f === GENERAL_SPEEDUP_KEY ? "icons/speedup-general.png" : "icons/speedup-expert.png") : "icons/item_icon_570201.png");
+      const rowHtml = (f) => {
+        const v = Number(invSaved[f]) || 0, linkable = hasBp && backpackLinks("experts", f), linked = linkable && backpackLinked("experts", f, bpLink);
+        return `<div class="bsg-row" data-bsgrow="${esc(f)}">
+          <img src="${esc(iconOf(f))}" alt="" />
+          <div class="bsg-t"><b>${esc(materialDisplayName(f).replace(/\s*\((minutes|min)\)$/, ""))}</b><small data-bsgworth>${esc(G.worthTxt(f, v))}</small>${linkable ? `<small class="bsg-lk">${linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}${linked ? "" : ` · <button type="button" class="linklike" data-bsguse>${esc(t("bp_link_use"))}</button>`}</small>` : ""}</div>
+          <input type="text" inputmode="${G.minutes ? "text" : "decimal"}" autocomplete="off" value="${G.minutes ? esc(minTxt(v)) : v}" aria-label="${esc(materialDisplayName(f))}" />
+        </div>`;
+      };
+      const parse = (inp) => { const x = G.minutes ? parseMinutes(inp.value) : parseAmount(inp.value); return Number.isNaN(x) ? NaN : Math.max(0, x); };
+      modal.innerHTML = `<div class="modal-box bsg" style="max-width:360px;">
+          <div class="bsg-h"><img src="${esc(G.icon)}" alt="" /><h2>${esc(G.label)}</h2></div>
+          <div data-bsgnb></div>
+          <div class="bsg-rows">${G.items.map(rowHtml).join("")}</div>
+          <div class="meta bsg-hint">${esc(t(G.minutes ? "bs_edit_hint_min" : "bs_edit_hint"))}</div>
+          <div class="bsg-btns"><button class="btn ghost" type="button" data-bsgcancel>${esc(t("cancel"))}</button><button class="btn" type="button" data-bsgsave>${esc(t("save"))}</button></div>
+        </div>`;
+      const nbEl = modal.querySelector("[data-bsgnb]");
+      const refresh = () => {
+        let have = 0;
+        modal.querySelectorAll("[data-bsgrow]").forEach((r) => {
+          const f = r.dataset.bsgrow, v = parse(r.querySelector("input")), ok = !Number.isNaN(v);
+          r.querySelector("input").style.borderColor = ok ? "" : "var(--danger)";
+          const w = ok ? v : Number(invSaved[f]) || 0;
+          have += G.worth(f, w);
+          r.querySelector("[data-bsgworth]").textContent = G.worthTxt(f, w);
+        });
+        nbEl.innerHTML = nd && nd.need > 0 ? bsNeedBoxesHtml({ need: nd.need, have, fmt: G.nbFmt }) : "";
+      };
+      refresh();
+      modal.style.display = "flex";
+      const close = () => { modal.style.display = "none"; };
+      modal.onclick = (ev) => { if (ev.target === modal) close(); };
+      modal.oninput = (ev) => { const r = ev.target.closest && ev.target.closest("[data-bsgrow]"); if (r) { dirty[r.dataset.bsgrow] = true; delete useBp[r.dataset.bsgrow]; } refresh(); };
+      modal.querySelectorAll("[data-bsguse]").forEach((b) => b.addEventListener("click", () => {
+        const r = b.closest("[data-bsgrow]"), f = r.dataset.bsgrow, v = backpackAmountFor(f, bpLink.bp);
+        useBp[f] = true;
+        r.querySelector("input").value = G.minutes ? minTxt(v) : v;
+        delete dirty[f];
+        b.parentNode.innerHTML = `&#127890; ${esc(t("bp_link_from"))}`;
+        refresh();
+      }));
+      const save = () => {
+        const vals = {};
+        let bad = false;
+        modal.querySelectorAll("[data-bsgrow]").forEach((r) => { const v = parse(r.querySelector("input")); if (Number.isNaN(v)) bad = true; else vals[r.dataset.bsgrow] = v; });
+        if (bad) return;
+        let changed = false;
+        G.items.forEach((f) => {
+          const old = Number(invSaved[f]) || 0, typed = !!dirty[f] && vals[f] !== old;
+          if (useBp[f]) {
+            setBackpackManual("experts", f, false, bpLink);
+            invSaved[f] = backpackAmountFor(f, bpLink.bp);
+          } else if (typed) {
+            invSaved[f] = vals[f];
+            if (hasBp) setBackpackManual("experts", f, true, bpLink);
+          } else return;
+          if (f === GENERAL_SPEEDUP_KEY) RESEARCH_SPEEDUP_MINUTES = invSaved[f];
+          changed = true;
+        });
+        close();
+        if (!changed) return;
+        budgetInvalidate();
+        saveCalcState("experts_inventory", invSaved);
+        renderTotals();
+        renderInventory();
+        renderGrid();
+      };
+      modal.querySelector("[data-bsgsave]").onclick = save;
+      modal.querySelector("[data-bsgcancel]").onclick = close;
+      modal.querySelectorAll("input").forEach((i) => { i.onkeydown = (ev) => { if (ev.key === "Enter") save(); }; });
+    };
+    const tilesHtml = fields.map((f) => { const k = grpOf(f); return k ? (f === GROUPS[k].items[0] ? grpHtml(k) : "") : tile(f); }).join("");
     invEl.innerHTML = `${bsHelpHtml(!!tileNeed && fields.some((f) => tileNeed[f] && !(tileNeed[f].need > 0)), false)}<div class="bs-tiles">${tilesHtml}</div>
       ${(() => { // folded (less on the page); the line says how many are short
         const sg = (tileNeed && tileNeed.sigils) || {}, sh = Object.values(sg).filter((x) => x && x.short > 0).length;
@@ -31049,6 +31140,7 @@ async function renderExpertsPage() {
       <div class="bs-help bs-note">${esc(t("experts_sigils_summary_note"))}</div>`;
     invEl.querySelectorAll("[data-expedit]").forEach((btn) => btn.addEventListener("click", () => {
       const f = btn.dataset.expedit;
+      if (grpOf(f)) { openGroup(grpOf(f)); return; }
       const linkable = hasBp && backpackLinks("experts", f);
       plxAmountModal({
         label: materialDisplayName(f), icon: itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f], value: invSaved[f] || 0, minutes: /\(minutes\)$/.test(f),

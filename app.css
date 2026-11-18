@@ -3221,6 +3221,22 @@ input,select,textarea{
   .bs-aff-it{ position:relative; flex:1; display:flex; flex-direction:column; align-items:center; gap:1px; background:none; border:0; color:inherit; font:inherit; cursor:pointer; padding:2px 0; }
   .bs-aff-it .bs-mark{ top:0; inset-inline-start:4px; }
   .bs-aff .bs-st{ -webkit-line-clamp:1; }
+  .bs-aff.bs-spd{ grid-column:span 2; }
+  .bs-tiles.bs-slide > .bs-aff.bs-spd{ flex-basis:calc(((100% - (var(--bscols, 4) - 1) * 6px) / (var(--bscols, 4) + .35)) * 2 + 6px) !important; }
+  .bsg{ text-align:start; }
+  .bsg-h{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .bsg-h img{ width:40px; height:40px; object-fit:contain; }
+  .bsg-h h2{ margin:0; font-size:16px; }
+  .bsg-rows{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .bsg-row{ display:flex; align-items:center; gap:8px; padding:8px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.03); }
+  .bsg-row img{ width:36px; height:36px; object-fit:contain; flex:none; }
+  .bsg-t{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:1px; }
+  .bsg-t b{ color:var(--frost); font-size:13px; }
+  .bsg-t small{ color:var(--muted); font-size:11.5px; }
+  .bsg-t .linklike{ font-size:11.5px; }
+  .bsg-row input{ flex:0 0 118px; width:118px; min-width:0; padding-inline:6px; text-align:center; font-size:15px; }
+  .bsg-hint{ font-size:10.5px; margin-top:6px; text-align:center; }
+  .bsg-btns{ display:flex; gap:8px; justify-content:center; margin-top:12px; }
   .bs-help{ font-size:12px; line-height:1.4; color:var(--muted); margin:0 0 10px; }
   .bs-help b{ color:var(--danger); }
   .bs-help .ok{ color:var(--good); font-weight:700; }
