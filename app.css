@@ -3366,6 +3366,9 @@ input,select,textarea{
   .bsg-use{ flex:none; min-height:32px; padding:0 4px; border:0; background:none; color:var(--ice); font:inherit; font-size:12.5px; cursor:pointer; }
   .bsg-use[hidden]{ display:none !important; }
   .bsg .bsm-in input{ flex:1; min-width:0; text-align:center; font-size:18px; }
+  .bsm-f{ position:relative; flex:1 1 auto; min-width:0; display:flex; }
+  .bsm-f input{ flex:1; min-width:0; width:100%; padding-inline-end:46px !important; }
+  .bsm-u{ position:absolute; inset-inline-end:12px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:13px; font-weight:700; pointer-events:none; }
   .bsg-save{ display:block; width:100%; margin-top:12px; }
   .bs-help{ font-size:12px; line-height:1.4; color:var(--muted); margin:0 0 10px; }
   .bs-help b{ color:var(--danger); }
