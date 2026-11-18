@@ -1710,24 +1710,11 @@ const T = {
   gx_tip: { en: "Tip: Gear Reforge in the game gives this XP back as XP items." },
   gx_worn: { en: "Gear that a hero is wearing still counts — take it off in the game before using it." },
   gx_tile: { en: "+ {n} XP" },
-  go_title: { en: "Orange (Mythic) · reset" },
-  go_desc: { en: "Spare mythic pieces in your Backpack (Mastery under Lv.10, no Mithril). Each stays 1 Mythic Gear; a reset gives back all its Enhance XP and half the Essence Stones its Mastery used." },
-  go_sum: { en: "{n} pieces · {xp} XP · {es} Essence Stones" },
-  go_each: { en: "{xp} XP + {es} ES each" },
-  go_es: { en: "{n} ES" },
-  go_enh_ph: { en: "Enhance + (0–{max})" },
-  go_ms_ph: { en: "Mastery Lv (0–{max}, e.g. 4.2)" },
-  go_note: { en: "Mastery counts every level and stage the piece went through (Lv.4.2 = up to stage 2 of Lv.4). Red pieces (Mastery 10+ or Mithril) give nothing back." },
-  go_es_total: { en: "Essence Stones back from resets: {n}" },
-  go_tile_es: { en: "+ {n} from gear resets" },
-  bs_hv_gear_reset: { en: "Hero gear (reset)" },
-  bs_hv_gear_reset_sub: { en: "from {p} orange pieces" },
-  scan_go_title: { en: "Orange gear · reset" },
-  scan_go_hint: { en: "Mythic pieces read by their \"+\" and \"Lv.\". The tile shows no stage: pick it if you know it (else the start of that level). Saving replaces your orange gear for reset." },
-  scan_go_unread: { en: "{n} orange pieces whose \"+\" or \"Lv.\" couldn't be read — add them in XP 10." },
-  scan_go_stage: { en: "Stage" },
-  scan_gx_unread: { en: "{n} purple pieces whose \"+\" couldn't be read — add them in XP 10." },
-  scan_gx_hint: { en: "Purple gear, read by its \"+\" number. Saving replaces your hero gear for XP." },
+  gx_Orange: { en: "Orange" },
+  go_enh_ph: { en: "+ (0–{max})" },
+  go_ms_ph: { en: "Lv. (0–{max})" },
+  scan_gx_unread: { en: "{n} pieces whose \"+\" or \"Lv.\" couldn't be read — add them in XP 10." },
+  scan_gx_hint: { en: "Purple gear read by its \"+\", orange by its \"+\" and \"Lv.\". Saving replaces your hero gear for XP." },
   chest_open_tag: { en: "Open in game" },
   bp_chest_fixed_note: { en: "Counted, assuming 1 chest = 400 Alloy, 4 Polish, 1 Design" },
   bp_link_use: { en: "Use Backpack" },
@@ -6612,7 +6599,7 @@ function gearXpOf(bp) {
 // level and stage it went through). Saved in the Backpack as
 // "Gear Orange +<enhance> Lv.<mastery>" (mastery "3" or "4.2" with its stage) = pieces.
 const GEAR_ORANGE_RE = /^Gear Orange \+(\d+) Lv\.(\d+)(?:\.(\d+))?$/;
-const GEAR_ORANGE_ENH_MAX = 100, GEAR_ORANGE_MASTERY_MAX = 9;
+const GEAR_ORANGE_ENH_MAX = 100, GEAR_ORANGE_MASTERY_MAX = 9, GEAR_ORANGE_DOT = "#f08a2c";
 const gearOrangeKey = (enh, lv, st) => `Gear Orange +${enh} Lv.${lv}${st ? `.${st}` : ""}`;
 // Essence Stones of each Mastery row in order (the "Hero Gear Mastery Forging"
 // table: Lv 1–3, then 4.0, 4.1 … 4.4, 5.0 …; its rows replace these once Heroes
@@ -6622,11 +6609,6 @@ let GEAR_MASTERY_ES = (() => {
   for (let L = 4; L < 20; L++) { for (let s = 1; s <= 4; s++) out.push({ lv: L, st: s, es: 2 * L + 2 }); out.push({ lv: L + 1, st: 0, es: 2 * L + 2 }); }
   return out;
 })();
-// Stages a Mastery level has in the table ([0] when it has none).
-function gearMasteryStages(lv) {
-  const st = [...new Set(GEAR_MASTERY_ES.filter((r) => r.lv === lv).map((r) => r.st))].sort((a, b) => a - b);
-  return st.length ? st : [0];
-}
 // Essence Stones a piece used to reach Mastery lv.st (every row from the start up to it).
 function gearMasteryUsed(lv, st) {
   return GEAR_MASTERY_ES.reduce((sum, r) => sum + (r.lv < lv || (r.lv === lv && r.st <= (st || 0)) ? r.es : 0), 0);
@@ -14766,7 +14748,6 @@ async function renderInventory() {
       ${sp ? (kind ? `<span class="bp-name">${esc(kind)}</span>` : "") : `<span class="bp-name">${esc(tileName)}</span>`}
       ${CHANCE_CHESTS.includes(it.name) && v > 0 ? `<span class="bp-avg" title="${esc(chanceAvgParts(it.name, v).join(" · "))}">${esc(chanceTileAvg(it.name, v))}</span>` : ""}
       ${it.name === "XP 10" && gearXpOf(bp).xp + gearOrangeOf(bp).xp > 0 ? `<span class="bp-gx">${esc(t("gx_tile").replace("{n}", fmtShort(gearXpOf(bp).xp + gearOrangeOf(bp).xp)))}</span>` : ""}
-      ${it.name === "Essence Stones" && gearOrangeOf(bp).es > 0 ? `<span class="bp-gx og">${esc(t("go_tile_es").replace("{n}", fmtShort(gearOrangeOf(bp).es)))}</span>` : ""}
     </button>`;
   };
   const drawGroups = () => {
@@ -15032,45 +15013,30 @@ async function renderInventory() {
     gearXpOf(bp).rows.forEach((r) => { gx[r.key] = r.n; });
     gearOrangeOf(bp).rows.forEach((r) => { gx[r.key] = r.n; });
     let gxAdd = null, focusAdd = false; // colour whose "+ level" box is open
-    // Orange (Mythic) pieces to reset: Enhance XP back in full, half the Mastery Essence Stones.
-    const orangeHtml = (og) => {
-      const rows = og.rows.slice().sort((a, b) => b.enh - a.enh || b.lv - a.lv || b.st - a.st);
-      const addBtn = (key) => `<button type="button" class="gx-addbtn" data-gxadd="Orange">${esc(t(key))}</button>`;
-      return `<div class="gx-col gx-og">
-        <div class="gx-head"><i style="background:#f08a2c;"></i><b>${esc(t("go_title"))}</b>${rows.length ? `<span class="meta">${esc(t("go_sum").replace("{n}", og.pieces.toLocaleString()).replace("{xp}", og.xp.toLocaleString()).replace("{es}", og.es.toLocaleString()))}</span>` : gxAdd === "Orange" ? "" : `<span style="margin-inline-start:auto;">${addBtn("gx_add")}</span>`}</div>
-        <div class="meta gx-og-d">${esc(t("go_desc"))}</div>
-        ${rows.map((r) => `<div class="gx-line"><span class="gx-lv gx-og-lv">+${r.enh} Lv.${r.lv}${r.st ? `.${r.st}` : ""}</span>
-          <button type="button" data-gxstep="${esc(r.key)}|-1" aria-label="−">&minus;</button>
-          <input type="number" min="0" inputmode="numeric" data-gxn="${esc(r.key)}" value="${r.n}" />
-          <button type="button" data-gxstep="${esc(r.key)}|1" aria-label="+">+</button>
-          <span class="gx-tot">${esc(t("go_each").replace("{xp}", r.xp.toLocaleString()).replace("{es}", r.es.toLocaleString()))}<b>${esc(t("gx_xp").replace("{n}", (r.n * r.xp).toLocaleString()))} · ${esc(t("go_es").replace("{n}", (r.n * r.es).toLocaleString()))}</b></span></div>`).join("")}
-        ${gxAdd === "Orange" ? `<div class="gx-addrow"><input type="number" min="0" max="${GEAR_ORANGE_ENH_MAX}" inputmode="numeric" id="gxAddLv" placeholder="${esc(t("go_enh_ph").replace("{max}", GEAR_ORANGE_ENH_MAX))}" /><input type="text" inputmode="decimal" id="gxAddMs" placeholder="${esc(t("go_ms_ph").replace("{max}", GEAR_ORANGE_MASTERY_MAX))}" /><button type="button" class="btn small" data-gxaddgo="Orange">${esc(t("gx_add").replace(/^\+\s*/, ""))}</button></div>`
-          : rows.length ? `<div class="gx-addrow">${addBtn("gx_add_level")}</div>` : ""}
-        <div class="gx-note">${esc(t("go_note"))}</div>
-      </div>`;
-    };
     const drawGx = () => {
       if (!gxBox) return;
       const box = modal.querySelector(".modal-box"), top = box ? box.scrollTop : 0;
       const all = gearXpOf(gx), og = gearOrangeOf(gx), q = Math.max(0, Math.round(Number(input.value) || 0));
       gxBox.innerHTML = `<h3>${esc(t("gx_title"))}</h3><div class="meta" style="font-size:12px;">${esc(t("gx_desc"))}</div>
-        ${GEAR_XP_COLOURS.map((c) => {
-          const rows = all.rows.filter((r) => r.colour === c.key).sort((a, b) => b.lvl - a.lvl);
+        ${[{ key: "Orange", dot: GEAR_ORANGE_DOT, base: null, max: GEAR_ORANGE_ENH_MAX }, ...GEAR_XP_COLOURS].map((c) => {
+          // Orange (Mythic) is one more colour: its lines are "+Enhance Lv.Mastery" (reset gives the Enhance XP back).
+          const rows = c.key === "Orange"
+            ? og.rows.slice().sort((a, b) => b.enh - a.enh || b.lv - a.lv || b.st - a.st).map((r) => ({ key: r.key, lab: `+${r.enh} Lv.${r.lv}${r.st ? `.${r.st}` : ""}`, n: r.n, each: r.xp }))
+            : all.rows.filter((r) => r.colour === c.key).sort((a, b) => b.lvl - a.lvl).map((r) => ({ key: r.key, lab: `+${r.lvl}`, n: r.n, each: r.each }));
           const n = rows.reduce((x, r) => x + r.n, 0), xp = rows.reduce((x, r) => x + r.n * r.each, 0);
           const addBtn = (cls, key) => `<button type="button" class="gx-addbtn${cls}" data-gxadd="${c.key}">${esc(t(key))}</button>`;
           return `<div class="gx-col">
-            <div class="gx-head"><i style="background:${c.dot};"></i><b>${esc(t("gx_" + c.key))}</b>${rows.length ? `<span class="meta">${esc(t("gx_sum").replace("{n}", n.toLocaleString()).replace("{xp}", xp.toLocaleString()))}</span>` : `<span class="meta" style="margin-inline-start:4px;">${esc(t("gx_base").replace("{n}", c.base))}</span>${gxAdd === c.key ? "" : `<span style="margin-inline-start:auto;">${addBtn("", "gx_add")}</span>`}`}</div>
-            ${rows.map((r) => `<div class="gx-line"><span class="gx-lv">+${r.lvl}</span>
+            <div class="gx-head"><i style="background:${c.dot};"></i><b>${esc(t("gx_" + c.key))}</b>${rows.length ? `<span class="meta">${esc(t("gx_sum").replace("{n}", n.toLocaleString()).replace("{xp}", xp.toLocaleString()))}</span>` : `${c.base == null ? "" : `<span class="meta" style="margin-inline-start:4px;">${esc(t("gx_base").replace("{n}", c.base))}</span>`}${gxAdd === c.key ? "" : `<span style="margin-inline-start:auto;">${addBtn("", "gx_add")}</span>`}`}</div>
+            ${rows.map((r) => `<div class="gx-line"><span class="gx-lv">${esc(r.lab)}</span>
               <button type="button" data-gxstep="${esc(r.key)}|-1" aria-label="−">&minus;</button>
               <input type="number" min="0" inputmode="numeric" data-gxn="${esc(r.key)}" value="${r.n}" />
               <button type="button" data-gxstep="${esc(r.key)}|1" aria-label="+">+</button>
               <span class="gx-tot">${esc(t("gx_each").replace("{n}", r.each.toLocaleString()))}<b>${esc(t("gx_xp").replace("{n}", (r.n * r.each).toLocaleString()))}</b></span></div>`).join("")}
-            ${gxAdd === c.key ? `<div class="gx-addrow"><input type="number" min="0" max="${c.max}" inputmode="numeric" id="gxAddLv" placeholder="${esc(t("gx_level_ph").replace("{max}", c.max))}" /><button type="button" class="btn small" data-gxaddgo="${c.key}">${esc(t("gx_add").replace(/^\+\s*/, ""))}</button></div>`
+            ${gxAdd === c.key ? `<div class="gx-addrow"><input type="number" min="0" max="${c.max}" inputmode="numeric" id="gxAddLv" placeholder="${esc(t(c.key === "Orange" ? "go_enh_ph" : "gx_level_ph").replace("{max}", c.max))}" />${c.key === "Orange" ? `<input type="number" min="0" max="${GEAR_ORANGE_MASTERY_MAX}" inputmode="numeric" id="gxAddMs" placeholder="${esc(t("go_ms_ph").replace("{max}", GEAR_ORANGE_MASTERY_MAX))}" />` : ""}<button type="button" class="btn small" data-gxaddgo="${c.key}">${esc(t("gx_add").replace(/^\+\s*/, ""))}</button></div>`
               : rows.length ? `<div class="gx-addrow">${addBtn("", "gx_add_level")}</div>` : ""}
           </div>`;
         }).join("")}
-        ${orangeHtml(og)}
-        <div class="gx-sum">${esc(t("gx_total")).replace("{q}", q.toLocaleString()).replace("{a}", `<b>${(q * 10).toLocaleString()}</b>`).replace("{g}", `<b>${(all.xp + og.xp).toLocaleString()}</b>`)}${og.es > 0 ? `<br>${esc(t("go_es_total")).replace("{n}", `<b>${og.es.toLocaleString()}</b>`)}` : ""}</div>
+        <div class="gx-sum">${esc(t("gx_total")).replace("{q}", q.toLocaleString()).replace("{a}", `<b>${(q * 10).toLocaleString()}</b>`).replace("{g}", `<b>${(all.xp + og.xp).toLocaleString()}</b>`)}</div>
         <div class="gx-note">${esc(t("gx_tip"))}<br>${esc(t("gx_worn"))}</div>`;
       if (box) box.scrollTop = top;
       const lv = focusAdd && gxBox.querySelector("#gxAddLv");
@@ -15089,11 +15055,10 @@ async function renderInventory() {
           const raw = el ? el.value.trim() : "", rawM = ms ? ms.value.trim() : "";
           if (raw === "" && rawM === "") { gxAdd = null; drawGx(); return; }
           const enh = Math.max(0, Math.min(GEAR_ORANGE_ENH_MAX, Math.round(Number(raw) || 0)));
-          const mm = /^(\d+)(?:[.,](\d+))?$/.exec(rawM);
-          const lv = Math.max(0, Math.min(GEAR_ORANGE_MASTERY_MAX, mm ? Number(mm[1]) : 0));
-          const stages = gearMasteryStages(lv), st0 = mm && mm[2] ? Number(mm[2]) : 0, st = stages.includes(st0) ? st0 : 0;
-          const k = gearOrangeKey(enh, lv, st);
-          gx[k] = (gx[k] || 0) + 1; gxAdd = null; drawGx();
+          const lv = Math.max(0, Math.min(GEAR_ORANGE_MASTERY_MAX, Math.round(Number(rawM) || 0)));
+          // +0 Lv.0 gives nothing back.
+          if (enh || lv) { const k = gearOrangeKey(enh, lv, 0); gx[k] = (gx[k] || 0) + 1; }
+          gxAdd = null; drawGx();
           return;
         }
         if (go) {
@@ -15263,7 +15228,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=ff4dcc46e9";
+      s.src = "scan.min.js?v=3605bddba5";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }
@@ -25603,8 +25568,9 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const nm = (n) => materialDisplayName(itemShortName(n));
     const gxV = gear && gear.xp > 0 ? gear.xp : 0;
     const rows = [row(bpIc, t("bs_hv_backpack"), gxV || ogV ? (name === "XP Component" ? t("bs_hv_xp_items") : "") : "", Math.max(0, (Number(owned[name]) || 0) - gxV - ogV))];
-    if (gxV) rows.push(row(pic(QUICK_ICONS.herogearcalc || "icons/quick/hero-gear.png"), t("bs_hv_gear"), t("bs_hv_gear_sub").replace("{p}", bsNbNum(gear.pieces)), gxV, true));
-    if (ogV > 0) rows.push(row(pic(QUICK_ICONS.herogearcalc || "icons/quick/hero-gear.png"), t("bs_hv_gear_reset"), t("bs_hv_gear_reset_sub").replace("{p}", bsNbNum(ogAll.pieces)), ogV, true));
+    // One Hero gear row: purple and lower pieces' XP plus the orange pieces' reset (XP or Essence Stones).
+    const gearP = (gxV ? gear.pieces : 0) + (ogV > 0 ? ogAll.pieces : 0);
+    if (gxV + ogV > 0) rows.push(row(pic(QUICK_ICONS.herogearcalc || "icons/quick/hero-gear.png"), t("bs_hv_gear"), t("bs_hv_gear_sub").replace("{p}", bsNbNum(gearP)), gxV + ogV, true));
     Object.entries(byFrom).forEach(([from, q]) => {
       const rule = hiddenRates.find((r) => r.from === from && r.to === name);
       const g = bsNbNum(gave[from] || 0);

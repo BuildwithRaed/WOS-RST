@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "ff4dcc46e9";
+window.SCAN_BUILD = "3605bddba5";
 
 
 // ---- Backpack: read game screenshots ----
@@ -1036,9 +1036,6 @@ function openBackpackScanMain(groups, bp, done, more) {
   const lab = { seen: false, count: null, saved: null };
   // Purple hero gear for XP from the Gear tab: { "Gear XP Purple +80": n }, null until read.
   let gearLow = null, gearLowUnread = 0;
-  // Orange gear to reset: { "Gear Orange +20 Lv.3": n }, null until a Gear tab is read; stage picks per row.
-  let gearOr = null, gearOrUnread = 0;
-  const gearOrStage = {};
   const gearSeqs = []; // the Gear screenshots read so far
   const shotSpans = []; // per item screenshot: { tab: { min, max } } in game order
   const shotSeqs = []; // per item screenshot: item names tile by tile (null = not read)
@@ -1184,8 +1181,8 @@ function openBackpackScanMain(groups, bp, done, more) {
             const addLow = (lo, d) => { if (lo.lvl === null) gearLowUnread += d; else { const k = gearXpKey(lo.colour, lo.lvl); gearLow[k] = (gearLow[k] || 0) + d; if (!gearLow[k]) delete gearLow[k]; } };
             (it.low || []).forEach((lo) => addLow(lo, 1));
             dup.forEach((x) => { if (x.lo) addLow(x.lo, -1); });
-            gearOr = gearOr || {};
-            const addOr = (o, d) => { if (o.lv === null || o.enh === null) gearOrUnread += d; else { const k = gearOrangeKey(o.enh, o.lv, 0); gearOr[k] = (gearOr[k] || 0) + d; if (!gearOr[k]) delete gearOr[k]; } };
+            // Orange pieces join the same list ("Gear Orange +20 Lv.3", start of that level); +0 Lv.0 gives nothing back.
+            const addOr = (o, d) => { if (o.lv === null || o.enh === null) gearLowUnread += d; else if (o.enh || o.lv) { const k = gearOrangeKey(o.enh, o.lv, 0); gearLow[k] = (gearLow[k] || 0) + d; if (!gearLow[k]) delete gearLow[k]; } };
             (it.og || []).forEach((o) => addOr(o, 1));
             dup.forEach((x) => { if (x.go) addOr(x.go, -1); });
           }
@@ -1331,29 +1328,18 @@ function openBackpackScanMain(groups, bp, done, more) {
           : `<button type="button" class="btn ghost small" data-lopen="${i}">${u.pick ? "&#9998;" : esc(t("scan_learn_choose"))}</button>${u.pick ? "" : `<button type="button" class="btn ghost small" data-lskip="${i}" title="${esc(t("scan_learn_skip"))}">${esc(t("scan_learn_skip_short"))}</button>`}`}
       </div>${u.open && !u.skip ? learnPicker(u, i) : ""}`).join("")}</details>`;
     // Purple hero gear for XP read from the Gear tab.
-    const gxRows = gearLow ? gearXpOf(gearLow).rows.sort((a, b) => b.lvl - a.lvl) : [];
+    const gxRows = gearLow ? [
+      ...gearOrangeOf(gearLow).rows.sort((a, b) => b.enh - a.enh || b.lv - a.lv).map((r) => ({ key: r.key, lab: `+${r.enh} Lv.${r.lv}`, colour: "Orange", n: r.n, each: r.xp })),
+      ...gearXpOf(gearLow).rows.sort((a, b) => b.lvl - a.lvl).map((r) => ({ key: r.key, lab: `+${r.lvl}`, colour: r.colour, n: r.n, each: r.each })),
+    ] : [];
+    const gxSum = gxRows.reduce((a, r) => ({ n: a.n + r.n, xp: a.xp + r.n * r.each }), { n: 0, xp: 0 });
     const gearHtml = gearLow === null ? "" : `<div class="scan-row unsure" style="display:block;">
       <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" data-scangxtick checked /><b>${esc(t("gx_title"))}</b><em class="meta" style="font-size:11.5px;">${esc(t("scan_please_check"))}</em></label>
       <div class="meta" style="font-size:11.5px; margin:2px 0 4px;">${esc(t("scan_gx_hint"))}</div>
-      ${gxRows.map((r) => `<div class="gx-line"><span class="gx-lv">+${r.lvl}</span><span class="meta" style="font-size:12px;">${esc(t("gx_" + r.colour))} · ${esc(t("gx_each").replace("{n}", r.each.toLocaleString()))}</span>
+      ${gxRows.map((r) => `<div class="gx-line"><span class="gx-lv">${esc(r.lab)}</span><span class="meta" style="font-size:12px;">${esc(t("gx_" + r.colour))} · ${esc(t("gx_each").replace("{n}", r.each.toLocaleString()))}</span>
         <input type="text" inputmode="numeric" data-scangx="${esc(r.key)}" value="${r.n}" style="margin-inline-start:auto;" /></div>`).join("") || `<div class="meta" style="font-size:12px;">0</div>`}
       ${gearLowUnread ? `<div class="meta" style="font-size:11.5px; margin-top:4px;">&#9888; ${esc(t("scan_gx_unread").replace("{n}", gearLowUnread))}</div>` : ""}
-      <div class="gx-sum" style="margin-top:6px;">&rarr; <b>${esc(t("gx_xp").replace("{n}", gearXpOf(gearLow).xp.toLocaleString()))}</b> (${esc(t("gx_pieces").replace("{n}", gearXpOf(gearLow).pieces.toLocaleString()))})</div>
-    </div>`;
-    // Orange (Mythic) gear to reset, read by "+" and "Lv." (no stage on the tile: pick it here).
-    const goRows = gearOr ? gearOrangeOf(gearOr).rows.sort((a, b) => b.enh - a.enh || b.lv - a.lv) : [];
-    const stOf = (k) => gearOrStage[k] || 0;
-    const goEach = (r) => ({ xp: r.xp, es: Math.floor(gearMasteryUsed(r.lv, stOf(r.key)) / 2) });
-    const goSum = goRows.reduce((a, r) => { const e = goEach(r); return { n: a.n + r.n, xp: a.xp + r.n * e.xp, es: a.es + r.n * e.es }; }, { n: 0, xp: 0, es: 0 });
-    const gearOrHtml = gearOr === null || (!goRows.length && !gearOrUnread) ? "" : `<div class="scan-row unsure" style="display:block;">
-      <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" data-scangotick checked /><b>${esc(t("scan_go_title"))}</b><em class="meta" style="font-size:11.5px;">${esc(t("scan_please_check"))}</em></label>
-      <div class="meta" style="font-size:11.5px; margin:2px 0 4px;">${esc(t("scan_go_hint"))}</div>
-      ${goRows.map((r) => { const st = gearMasteryStages(r.lv), e = goEach(r); return `<div class="gx-line gx-og"><span class="gx-lv gx-og-lv">+${r.enh} Lv.${r.lv}</span>
-        ${st.length > 1 ? `<select data-scangost="${esc(r.key)}" aria-label="${esc(t("scan_go_stage"))}" style="width:auto; height:32px;">${st.map((x) => `<option value="${x}"${x === stOf(r.key) ? " selected" : ""}>${r.lv}.${x}</option>`).join("")}</select>` : ""}
-        <span class="meta" style="font-size:12px;">${esc(t("go_each").replace("{xp}", e.xp.toLocaleString()).replace("{es}", e.es.toLocaleString()))}</span>
-        <input type="text" inputmode="numeric" data-scango="${esc(r.key)}" value="${r.n}" style="margin-inline-start:auto;" /></div>`; }).join("") || `<div class="meta" style="font-size:12px;">0</div>`}
-      ${gearOrUnread ? `<div class="meta" style="font-size:11.5px; margin-top:4px;">&#9888; ${esc(t("scan_go_unread").replace("{n}", gearOrUnread))}</div>` : ""}
-      <div class="gx-sum" style="margin-top:6px;">&rarr; <b>${esc(t("gx_xp").replace("{n}", goSum.xp.toLocaleString()))}</b> · <b>${esc(t("go_es").replace("{n}", goSum.es.toLocaleString()))}</b> (${esc(t("gx_pieces").replace("{n}", goSum.n.toLocaleString()))})</div>
+      <div class="gx-sum" style="margin-top:6px;">&rarr; <b>${esc(t("gx_xp").replace("{n}", gxSum.xp.toLocaleString()))}</b> (${esc(t("gx_pieces").replace("{n}", gxSum.n.toLocaleString()))})</div>
     </div>`;
     const info = [unsure ? t("scan_flagged").replace("{n}", unsure) : "", ...notes, unknownTiles > unknownList.length ? t("scan_unknown_tiles").replace("{n}", unknownTiles - unknownList.length) : "", skipped.size ? t("scan_skipped").replace("{list}", [...skipped].join(", ")) : ""].filter(Boolean);
     modal.innerHTML = `<div class="modal-box" style="max-width:520px; max-height:86vh; overflow-y:auto;">
@@ -1367,7 +1353,6 @@ function openBackpackScanMain(groups, bp, done, more) {
       ${islHtml}
       ${lightHtml}
       ${gearHtml}
-      ${gearOrHtml}
       ${tabsRead.length ? `<div class="meta scan-tabs">${esc(t("scan_tabs_read").replace("{list}", tabsRead.join(" · ")))}</div>` : ""}
       ${zeroRows ? `<div class="scan-zero-head"><b>${esc(t("scan_zero_title"))}</b><div class="meta">${esc(t("scan_zero_hint"))}</div></div>${zeroRows}` : ""}
       <div id="scanLearn">${learnHtml(false)}</div>
@@ -1403,21 +1388,6 @@ function openBackpackScanMain(groups, bp, done, more) {
       const a = ev.target.closest("[data-lamt]");
       if (a) { const v = a.value.replace(/\D/g, ""); unknownList[Number(a.dataset.lamt)].amount = v ? Number(v) : null; }
     });
-    // A picked stage changes that row's Essence Stones and the total.
-    const goSync = () => {
-      let xp = 0, es = 0, n = 0;
-      modal.querySelectorAll("[data-scango]").forEach((el) => {
-        const r = goRows.find((x) => x.key === el.dataset.scango), c = Number(el.value.replace(/\D/g, "")) || 0;
-        if (!r) return;
-        const e = goEach(r), line = el.closest(".gx-line"), meta = line && line.querySelector(".meta");
-        if (meta) meta.textContent = t("go_each").replace("{xp}", e.xp.toLocaleString()).replace("{es}", e.es.toLocaleString());
-        n += c; xp += c * e.xp; es += c * e.es;
-      });
-      const sum = modal.querySelector("[data-scangotick]") && modal.querySelector("[data-scangotick]").closest(".scan-row").querySelector(".gx-sum");
-      if (sum) sum.innerHTML = `&rarr; <b>${esc(t("gx_xp").replace("{n}", xp.toLocaleString()))}</b> · <b>${esc(t("go_es").replace("{n}", es.toLocaleString()))}</b> (${esc(t("gx_pieces").replace("{n}", n.toLocaleString()))})`;
-    };
-    modal.querySelectorAll("[data-scangost]").forEach((el) => el.addEventListener("change", () => { gearOrStage[el.dataset.scangost] = Number(el.value) || 0; goSync(); }));
-    modal.querySelectorAll("[data-scango]").forEach((el) => el.addEventListener("change", goSync));
     const labIn = modal.querySelector("[data-scanlab]");
     if (labIn) labIn.addEventListener("change", () => { const v = labIn.value.replace(/\D/g, ""); if (v) lab.count = Number(v); });
     // Keep typed fixes if more screenshots are added.
@@ -1442,19 +1412,8 @@ function openBackpackScanMain(groups, bp, done, more) {
       // Hero gear for XP read from the Gear tab replaces what was saved.
       const gxTick = modal.querySelector("[data-scangxtick]");
       if (gxTick && gxTick.checked) {
-        Object.keys(bp).forEach((k) => { if (GEAR_XP_RE.test(k)) delete bp[k]; });
+        Object.keys(bp).forEach((k) => { if (GEAR_XP_RE.test(k) || GEAR_ORANGE_RE.test(k)) delete bp[k]; });
         modal.querySelectorAll("[data-scangx]").forEach((el) => { const v = Number(el.value.replace(/\D/g, "")) || 0; if (v > 0) bp[el.dataset.scangx] = v; });
-      }
-      // Orange gear to reset read from the Gear tab replaces what was saved (with the stage picked).
-      const goTick = modal.querySelector("[data-scangotick]");
-      if (goTick && goTick.checked) {
-        Object.keys(bp).forEach((k) => { if (GEAR_ORANGE_RE.test(k)) delete bp[k]; });
-        modal.querySelectorAll("[data-scango]").forEach((el) => {
-          const v = Number(el.value.replace(/\D/g, "")) || 0, m = GEAR_ORANGE_RE.exec(el.dataset.scango);
-          if (!(v > 0) || !m) return;
-          const k = gearOrangeKey(Number(m[1]), Number(m[2]), stOf(el.dataset.scango));
-          bp[k] = (bp[k] || 0) + v;
-        });
       }
       // Not seen in the screenshots and left ticked: opened or used, now 0.
       modal.querySelectorAll("[data-scanzero]").forEach((tick) => { if (tick.checked) delete bp[tick.dataset.scanzero]; });
