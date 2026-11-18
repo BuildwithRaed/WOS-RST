@@ -25505,7 +25505,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const nm = (n) => materialDisplayName(itemShortName(n));
     const rows = gear && gear.xp > 0
       ? [row(bpIc, t("bs_hv_backpack"), t("bs_hv_xp_items"), Math.max(0, (Number(owned[name]) || 0) - gear.xp)),
-        row(pic("icons/hero-gear-goggles.webp"), t("bs_hv_gear"), t("bs_hv_gear_sub").replace("{p}", bsNbNum(gear.pieces)), gear.xp, true)]
+        row(pic(QUICK_ICONS.herogearcalc || "icons/quick/hero-gear.png"), t("bs_hv_gear"), t("bs_hv_gear_sub").replace("{p}", bsNbNum(gear.pieces)), gear.xp, true)]
       : [row(bpIc, t("bs_hv_backpack"), "", Number(owned[name]) || 0)];
     Object.entries(byFrom).forEach(([from, q]) => {
       const rule = hiddenRates.find((r) => r.from === from && r.to === name);
