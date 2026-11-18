@@ -1645,6 +1645,7 @@ const T = {
   bs_nb_from_trade: { en: "{n} from {item} (trade)" },
   bs_nb_from_chest: { en: "{n} from chests" },
   bs_nb_from: { en: "{n} from {item}" },
+  bs_nb_lab: { en: "{n} from the Research Lab ({left} refinements left this week)" },
   bs_nb_bought: { en: "{n} bought with {g} {item}" },
   bs_nb_counted: { en: "{g} {item} (counted as {n})" },
   bs_title_t12: { en: "Total research resources needed · all 3 troops" },
@@ -3430,34 +3431,18 @@ const T = {
   chw_nothing: { en: "nothing needed" },
   chw_enough: { en: "enough" },
   bsx_rest: { en: "Where the rest comes from" },
-  bsx_goes: { en: "{n} goes to" },
   bsx_goes_spare: { en: "Spare {n} goes to" },
-  bsx_goes_pk: { en: "{p} of it from the plan's packs" },
   bsx_week: { en: "This week" },
   bsx_later: { en: "Next weeks" },
-  bsx_plan: { en: "Pack plan" },
   bsx_lab: { en: "Research Lab" },
-  bsx_lab_week: { en: "Lab · {n} refinements left" },
-  bsx_buy: { en: "Buy" },
-  bsx_cards: { en: "Coming" },
-  bsx_cards_l: { en: "Packs in My Purchases and running cards" },
   bsx_trade: { en: "Trade {n}" },
-  bsx_packs_give: { en: "From packs" },
-  bsx_by: { en: "by {d}" },
-  bsx_still: { en: "still {n} short" },
-  bsx_cant: { en: "Packs can't cover it" },
-  bsx_left: { en: "Left after the plan" },
   bsx_covered: { en: "Covered by your Backpack" },
-  bsx_nothing_traded: { en: "nothing traded" },
   bsx_cando: { en: "Can do now:" },
   bsx_cando_none: { en: "Nothing yet" },
   bsx_no_trades: { en: "No trades for this item" },
   bsx_cov_trades: { en: "Covered with trades" },
-  bsx_still_short: { en: "Still {n} short" },
-  bsx_cov_after_packs: { en: "Covered after buying packs · see Pack cost" },
+  bsx_still_short: { en: "Still {n} short after trades" },
   mkc_at_target: { en: "At target" },
-  bsx_wait: { en: "Working out where the rest comes from…" },
-  bsx_shared: { en: "Shared with your other pages: this page's part of the price." },
   cdp_pages_up: { en: "Pages that can go up" },
   cdp_of: { en: "{n} of {m}" },
   cdp_runs_out: { en: "runs out first:" },
@@ -18785,15 +18770,6 @@ let PACK_COST_MODE = "still"; // "still" = after what you own, "full" = whole am
 const PACK_COST_OPEN = {};
 const PACK_COST_SHOWN = {}; // calcKey -> the price the Pack cost card shows (null while folded)
 const PACK_COST_HOOKS = {}; // calcKey -> called when that price changes
-// calcKey -> the plan the Pack cost card shows (null = folded / not worked out, { pending } while
-// working out, { none } = no packs for the page): { trades (free trades first, with their weekly
-// limit), weeks, cards (running cards' items), rows, planTrades, days, cant, uncovered, shared }.
-const PACK_COST_PLAN = {};
-const PACK_PLAN_HOOKS = {}; // calcKey -> called when PACK_COST_PLAN changes
-function packCostPlanSet(calcKey, v) {
-  PACK_COST_PLAN[calcKey] = v;
-  if (PACK_PLAN_HOOKS[calcKey]) { try { PACK_PLAN_HOOKS[calcKey](); } catch (e) { console.warn("plan hook", e); } }
-}
 const PACK_TARGET_HOOKS = {}; // calcKey -> called when the Pack cost window's target date changes (pages whose needs follow it)
 // Pages whose needs depend on the date (Islands: free income up to then): calcKey -> (days) =>
 // { totals, ok }. Pack cost's Cheapest then tries later dates with their own (smaller) needs.
@@ -19071,7 +19047,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (!visitorCan("packcost")) { containerEl.innerHTML = ""; return; }
   await ensurePackLinks();
   const tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey));
-  if (!tables.length) { containerEl.innerHTML = ""; packCostPlanSet(calcKey, { none: true }); return; }
+  if (!tables.length) { containerEl.innerHTML = ""; return; }
   const ownedOrig = owned;
   const activeCards = packActiveCardSupply(calcKey, tables);
   if (activeCards.used.length) owned = packMergeOwned(owned, activeCards.supply);
@@ -19094,7 +19070,6 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
 
   if (!open) {
     packCostShown(calcKey, null);
-    packCostPlanSet(calcKey, null);
     containerEl.style.minHeight = "";
     containerEl.innerHTML = `${wrapOpen}${head}</div>`;
     containerEl.querySelector("[data-packtoggle]").addEventListener("click", () => { PACK_COST_OPEN[calcKey] = true; rerender(); });
@@ -19107,7 +19082,6 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   // "Working out…" would pull the page up).
   if (containerEl.offsetHeight) containerEl.style.minHeight = containerEl.offsetHeight + "px";
   containerEl.innerHTML = `${wrapOpen}${head}<div class="meta" style="font-size:11px; margin-top:8px; padding:8px 10px; border:1px dashed var(--line); border-radius:8px;"><b style="color:var(--ice);">${esc(t("budgets_loading"))}</b><br>${esc(t("pack_calc_wait"))}</div></div>`;
-  packCostPlanSet(calcKey, { pending: true });
   await new Promise((r) => setTimeout(r, 450));
   if (stale()) return;
   // What this page needs in total, across every group (e.g. all 3 Hero Gear sets).
@@ -19132,7 +19106,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   // (weekly trade limits scale with the weeks left until the target).
   await ensureTradeRates();
   const traded = PACK_COST_MODE === "still" ? tradeAdjustedStill(calcKey, needFull, owned, targetDays, true) : null;
-  // The free trades with their weekly limit: the same snapshot the Backpack box pop-ups read (PACK_COST_PLAN).
+  // The free trades with their weekly limit (split this week / next weeks like the Backpack box pop-ups).
   const tradeRates = tradeRatesFor(calcKey);
   const freeTrades = traded ? traded.trades.map((x) => { const r = tradeRates.find((q) => q.from === x.from && q.to === x.to) || {}; return { ...x, max: Number(r.max) || 0, hidden: !!r.hidden }; }) : [];
   const base = PACK_COST_MODE === "full" ? needFull : (traded ? traded.still : needStill);
@@ -19168,7 +19142,6 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     </div>`;
 
   let sections;
-  let snapShared = null, snapPage = null, snapCant = false;
   // Items no pack setup can cover (listed, not planned).
   const uncoveredHtml = Object.keys(viaTrades.uncovered).length ? `<div class="meta" style="font-size:10.5px; margin:6px 0; padding:6px 8px; border:1px solid var(--danger); border-radius:8px; color:var(--danger);">${esc(t("pack_cant_cover"))}: ${Object.keys(viaTrades.uncovered).map((n) => `<b>${esc(materialDisplayName(n))} ${qty(viaTrades.uncovered[n])}</b>${viaTrades.maxWithin && viaTrades.maxWithin[n] != null ? ` <span class="meta">(${esc(t("pack_max_3y"))} ${qty(viaTrades.maxWithin[n])})</span>` : ""}`).join(" &middot; ")}<br><span class="meta" style="color:var(--muted);">${esc(t("pack_uncovered_hint"))}</span></div>` : "";
   // Shared packs: show this page's share of the combined Budgets plan.
@@ -19334,7 +19307,6 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       }).join("");
       if (got > 0) inPlanHtml = `<div class="pca-h">${esc(t("pca_in_plan"))}</div>${lines}<div class="pca-note ok">&#10003; ${esc(t("pca_free_shards").replace("{n}", qty(got)).replace("{c}", qty(Math.floor(got / islPc))))}</div>`;
     }
-    snapShared = { rows: mineShare.rows, planTrades: trades, days: p.days, shared: true };
     const sharedFree = tradesCard(trades);
     sharedSections = `<div class="pc-plans">
         <div class="pc-plan on" style="cursor:default;"><div class="pc-k">${esc(t("combined_share"))}</div><b>${big(packSharesLocal(mineShare))}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(whenTxt)}</small></div>
@@ -19347,7 +19319,6 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (!packGroups.length) {
     sections = `<div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("pack_no_columns"))}</div>`;
   } else if (!Object.keys(need).length) {
-    snapPage = { rows: [], planTrades: [], days: 0 };
     sections = Object.keys(viaTrades.uncovered).length ? "" : `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--good);">${esc(t("pack_nothing_needed"))}</div>
       ${freeParts.length ? `<div class="pc-list">${tradesCard([])}</div>` : ""}`;
   } else if (skipPagePlan) {
@@ -19381,7 +19352,6 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     }
     const plans = [];
     if (earliest == null) {
-      snapCant = true;
       // Explain what's short and how much the packs could give at most,
       // plus which tables limit it (once-only / per-row max).
       const sup = packMaxSupply(packGroups, PACK_HORIZON_DAYS);
@@ -19422,7 +19392,6 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(when)}</small>${c === pick && byPack.length ? `<span class="pc-npk">${esc(byPack.length === 1 ? t("pca_pack1") : t("pca_packs").replace("{n}", byPack.length))}</span>` : ""}</button>`;
         };
         const p = pick && pick.plan;
-        if (p) snapPage = { rows: p.rows, planTrades: p.trades || [], days: p.days };
         if (p) pickedTotalText = packFmtLocal(Math.ceil(packPlanLocal(p)), currency, true, p.rows[0]?.price);
         if (PACK_PICK_HOOKS[calcKey]) { const hk = PACK_PICK_HOOKS[calcKey], dd = pick && pick.key === "cheapest" && cheapAt && p === cheapAt.plan ? cheapAt.d : null; setTimeout(() => hk(dd), 0); }
         const byPack = [];
@@ -19457,15 +19426,6 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (stale()) return;
   packCostShown(calcKey, (usingShared ? sharedTotalText : (pickedTotalText || pageTotalText)) || null);
   if (usingShared) sections = sharedSections;
-  {
-    const sp = usingShared ? snapShared : snapPage;
-    packCostPlanSet(calcKey, {
-      trades: freeTrades, weeks: traded ? traded.weeks : 1,
-      cards: activeCards.used.length ? { ...activeCards.supply } : {},
-      rows: sp ? sp.rows : [], planTrades: sp ? sp.planTrades : [], days: sp ? sp.days : null,
-      cant: snapCant || !sp, uncovered: { ...viaTrades.uncovered }, shared: !!(sp && sp.shared), targetDays,
-    });
-  }
   let fallbackNote = "";
   if (shared && !canShare && !shared.lazyShare && PACK_COST_MODE === "still") {
     if (shared.notIncluded) fallbackNote = sharedNote(t("combined_not_included"));
@@ -25395,17 +25355,27 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   const hiddenRates = tradeRatesFor(calcKey || "chief_gear").filter((r) => r.hidden || ((!(r.max > 0) || r.from === "Fire Crystal") && TRADE_APPLY[calcKey || "chief_gear"] !== false));
   hiddenRates.__calcKey = calcKey || "chief_gear";
   let effOwned = { ...owned };
-  let hiddenTrades = []; // what owned chests/convertibles were turned into
+  let hiddenTrades = []; // what owned chests/convertibles were turned into (the Research Lab: only this week's refinements left)
+  let hiddenTradesRaw = []; // the same with the Lab's whole weekly lot (reachHaveConv scales it itself)
   // What the page calculates with: the boxes plus chests with fixed contents.
   let calcOwned = owned;
   function recomputeEffOwned() {
     calcOwned = ownedWithChests(calcKey || "chief_gear", owned, link);
     effOwned = { ...calcOwned };
     hiddenTrades = [];
+    hiddenTradesRaw = [];
     if (!hiddenRates.length) return;
     const totalNeed = {};
     groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { totalNeed[n] = (totalNeed[n] || 0) + (Number(q) || 0); }));
-    hiddenTrades = applyTrades(hiddenRates, totalNeed, calcOwned, 1).trades;
+    hiddenTradesRaw = applyTrades(hiddenRates, totalNeed, calcOwned, 1).trades;
+    // The Research Lab's weekly lot counts only for the refinements still left this week
+    // (the game's count / the plan's days so far are already in the Backpack).
+    let lab = null;
+    hiddenTrades = hiddenTradesRaw.map((tr) => {
+      if (!tr.lab) return tr;
+      if (!lab) { try { lab = rfcLabWeekLeft(); } catch (e) { lab = { share: 0, left: 0 }; } }
+      return { ...tr, getQty: tr.getQty * lab.share, giveQty: tr.giveQty * lab.share, labLeft: lab.left };
+    }).filter((tr) => !tr.lab || tr.getQty > 0);
     hiddenTrades.forEach((tr) => { effOwned[tr.to] = (effOwned[tr.to] || 0) + tr.getQty; });
   }
   const noteEff = () => { BAR_EFF_OWNED[calcKey || "chief_gear"] = effOwned; };
@@ -25414,7 +25384,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   // What the page's "can reach" marks spend; redrawn
   // when a box amount changes too.
   const reachRefresh = () => {
-    const r = reachHaveConv(calcKey || "chief_gear", calcOwned, hiddenRates, hiddenTrades);
+    const r = reachHaveConv(calcKey || "chief_gear", calcOwned, hiddenRates, hiddenTradesRaw);
     BAR_HAVE[calcKey || "chief_gear"] = r.have;
     BAR_LAB[calcKey || "chief_gear"] = r.lab;
     BAR_CONV[calcKey || "chief_gear"] = r.conv;
@@ -25491,12 +25461,12 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   // Where "You have" comes from when trades or chests add to the box: "2,115 in your Backpack + 1,703 from Fire Crystal (trade)".
   function haveFromHtml(name) {
     const fmt = /\(minutes\)$/.test(name) ? bsTime : bsNbNum;
-    const byFrom = {}, gave = {};
-    hiddenTrades.filter((tr) => tr.to === name && tr.getQty > 0).forEach((tr) => { byFrom[tr.from] = (byFrom[tr.from] || 0) + tr.getQty; gave[tr.from] = (gave[tr.from] || 0) + (tr.giveQty || 0); });
+    const byFrom = {}, gave = {}, lab = hiddenTrades.find((tr) => tr.lab && tr.to === name && tr.getQty > 0);
+    hiddenTrades.filter((tr) => !tr.lab && tr.to === name && tr.getQty > 0).forEach((tr) => { byFrom[tr.from] = (byFrom[tr.from] || 0) + tr.getQty; gave[tr.from] = (gave[tr.from] || 0) + (tr.giveQty || 0); });
     const chest = Math.max(0, (Number(calcOwned[name]) || 0) - (Number(owned[name]) || 0));
     // XP Component from the Backpack: XP items + hero gear below Mythic.
     const gear = name === "XP Component" && backpackLinked(calcKey || "chief_gear", name, link) ? gearXpOf(link.bp) : null;
-    if (!Object.keys(byFrom).length && !(chest > 0) && !(gear && gear.xp > 0)) return "";
+    if (!Object.keys(byFrom).length && !lab && !(chest > 0) && !(gear && gear.xp > 0)) return "";
     const b = (v) => `<b>${bidiNum(fmt(v))}</b>`;
     const parts = gear && gear.xp > 0
       ? [esc(t("bs_nb_xp_items")).replace("{n}", b(Math.max(0, (Number(owned[name]) || 0) - gear.xp))), esc(t("bs_nb_gear")).replace("{n}", b(gear.xp)).replace("{p}", b(gear.pieces))]
@@ -25510,6 +25480,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       const key = from === "Gems" ? "bs_nb_bought" : from === "Advanced Marks" ? "bs_nb_counted" : rule && rule.hidden ? "bs_nb_from" : "bs_nb_from_trade";
       parts.push(esc(t(key)).replace("{n}", b(q)).replace("{g}", b(gave[from] || 0)).replace("{item}", item));
     });
+    // This week's Research Lab refinements still left (counted here once).
+    if (lab) parts.push(esc(t("bs_nb_lab")).replace("{n}", b(lab.getQty)).replace("{left}", Math.round(lab.labLeft || 0).toLocaleString()));
     if (chest > 0) parts.push(esc(t("bs_nb_from_chest")).replace("{n}", b(chest)));
     return parts.join(" + ");
   }
@@ -25573,23 +25545,14 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   function editTileModal(name) {
     const canLink = Object.keys(link.bp).length && backpackLinks(calcKey || "chief_gear", name);
     const linked = canLink && backpackLinked(calcKey || "chief_gear", name, link);
-    // Planner pages: the box on top, the trades into / out of the item and the Can do bar
+    // Planner pages: the box on top and the Backpack's trades into / out of the item
     // (only for items the page needs: chests and trade-only boxes keep the plain pop-up).
     const ck = calcKey || "chief_gear", cg = BOX_EXPLAIN_KEYS.has(ck) && needSum(name) > 0;
     const needAll = {};
     names.forEach((n) => { const v = needSum(n); if (v > 0) needAll[n] = v; });
-    const extra = cg ? () => cgBoxExplainHtml(name, { calcKey: ck, need: needSum(name), have: effOwned[name] || 0, labHave: hiddenTrades.filter((x) => x.lab && x.to === name).reduce((a, x) => a + (Number(x.getQty) || 0), 0), needAll, calcOwned }) : null;
-    if (cg) {
-      PACK_PLAN_HOOKS[ck] = () => {
-        const md = document.getElementById("bsEditModal"), ex = md && md.style.display !== "none" && md._extra && md.querySelector("[data-bsexplain]");
-        if (ex) ex.innerHTML = md._extra();
-      };
-      // The Pack cost card works its plan out only once opened (same as its button).
-      if (visitorCan("packcost") && PACK_COST_OPEN[ck] !== true) {
-        const tg = document.querySelector(`[id="${rowsId}_packs"] [data-packtoggle]`);
-        if (tg) tg.click();
-      }
-    }
+    const given = {};
+    hiddenTrades.forEach((x) => { given[x.from] = (given[x.from] || 0) + (Number(x.giveQty) || 0); });
+    const extra = cg ? () => cgBoxExplainHtml(name, { calcKey: ck, need: needSum(name), have: effOwned[name] || 0, given, needAll, calcOwned }) : null;
     plxAmountModal({
       top: true, extra,
       label: materialDisplayName(itemShortName(name)),
@@ -31332,17 +31295,10 @@ async function renderExpertsPage() {
     invEl.querySelectorAll("[data-expedit]").forEach((btn) => btn.addEventListener("click", () => {
       const f = btn.dataset.expedit;
       const linkable = hasBp && backpackLinks("experts", f);
-      // Books and the speedups (one pool, the plan's "Speedups (minutes)"): trades and the Can do bar.
+      // Books and the speedups (one pool, the plan's "Speedups (minutes)"): the Backpack's trades.
       const item = f === "Books of Knowledge" ? f : tileNeed && tileNeed[f] && tileNeed[f].time ? "Speedups (minutes)" : null;
       const exNeed = item && packIn ? Number(packIn.needAll[item]) || 0 : 0;
       const extra = exNeed > 0 ? () => cgBoxExplainHtml(item, { calcKey: "experts", need: exNeed, have: Number(packIn.owned[item]) || 0, needAll: packIn.needAll, calcOwned: packIn.owned }) : null;
-      if (extra) {
-        PACK_PLAN_HOOKS.experts = () => {
-          const md = document.getElementById("bsEditModal"), ex = md && md.style.display !== "none" && md._extra && md.querySelector("[data-bsexplain]");
-          if (ex) ex.innerHTML = md._extra();
-        };
-        if (visitorCan("packcost") && PACK_COST_OPEN.experts !== true) { const tg = document.querySelector("#expertsPacks [data-packtoggle]"); if (tg) tg.click(); }
-      }
       plxAmountModal({
         top: true, extra,
         label: materialDisplayName(f), icon: itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f], value: invSaved[f] || 0, minutes: /\(minutes\)$/.test(f),
@@ -32550,93 +32506,80 @@ function plxAmountModal(o) {
     close(); o.onUse();
   };
 }
-// Planner pages' Backpack box pop-up: the trades into this item ("Where the rest comes from":
-// this week / next weeks / after the pack plan; each trade only in the box of the item it
-// makes), a status line (covered / still N short, counting the plan's packs that give it;
-// a source item adds "N goes to <item> ›") and the "Can do now" bar (how far the Backpack
-// alone takes the page). No pack lines, prices or links. Read only from what the page already has: the Pack cost card's picked plan
-// (PACK_COST_PLAN), the trade rules and the page marks (MK). The free trades have no
-// dates: each trade's lots up to its weekly limit are "this week", the rest "next weeks".
-// Pages whose Backpack box pop-ups use it (calcKey -> the page's tab, for the Can do bar).
-const BOX_EXPLAIN_TABS = { chief_gear: "chiefgear", charm: "charmscalc", hero_gear: "herogearcalc", pets: "petsdata", pets_refine: "refinepage", t12_research: "t12research", t11_helios: "t11helios", research_center: "researchcenter", experts: "expertspage" };
-const BOX_EXPLAIN_KEYS = new Set(Object.keys(BOX_EXPLAIN_TABS));
-// A free trade (Pack cost's trade snapshot, with its weekly limit `max`) split by when it
-// happens: lots up to the weekly limit "this week", the rest "next weeks" (no limit = all
-// this week). Shared by the Backpack box pop-up and the Pack cost card, so both agree.
+// Planner pages' Backpack box pop-up: the trades the Backpack itself allows into this item
+// ("Where the rest comes from": this week up to each trade's weekly limit, next weeks up to
+// the page's target date, the Research Lab's next weeks on T12), one status line (covered by
+// the Backpack / covered with trades / still N short after trades) and, on a source item,
+// "Spare N goes to <item> ›". Never packs (owner: packs are Budgets' / Pack cost's job): worked
+// out from the Backpack amounts and the trade rules only, so nothing here moves with Pack cost.
+// Pages whose Backpack box pop-ups use it.
+const BOX_EXPLAIN_KEYS = new Set(["chief_gear", "charm", "hero_gear", "pets", "pets_refine", "t12_research", "t11_helios", "research_center", "experts"]);
+// A free trade (with its weekly limit `max`) split by when it happens: lots up to the weekly
+// limit "this week", the rest "next weeks" (no limit = all this week). Shared by the Backpack
+// box pop-up and the Pack cost card, so both agree.
 function packTradeWhenSplit(x) {
   if (!(x.lots > 0)) return [];
   const per = x.giveQty / x.lots, gp = x.getQty / x.lots, a = x.max > 0 ? Math.min(x.lots, x.max) : x.lots, b = x.lots - a;
   return [a > 0 && { when: "week", from: x.from, to: x.to, give: a * per, get: a * gp, lots: a, lab: x.lab }, b > 0 && { when: "later", from: x.from, to: x.to, give: b * per, get: b * gp, lots: b, lab: x.lab }].filter(Boolean);
 }
-// c: { calcKey, need, have, needAll, calcOwned, fmt }
+// Redraw the open box pop-up's trades part (after the page's target date has loaded).
+function boxExplainRefresh() {
+  const md = document.getElementById("bsEditModal"), ex = md && md.style.display !== "none" && md._extra && md.querySelector("[data-bsexplain]");
+  if (ex) ex.innerHTML = md._extra();
+}
+// c: { calcKey, need, have (the box's "You have"), needAll, calcOwned, given ({ item: what the box's own rules already spent }) }
 function cgBoxExplainHtml(name, c) {
   const calcKey = c.calcKey || "chief_gear";
-  let snap = PACK_COST_PLAN[calcKey];
-  const canPacks = visitorCan("packcost");
-  if (canPacks && (!snap || snap.pending)) return `<div class="bsx-wait">${esc(t("bsx_wait"))}</div>`;
-  const rates = tradeRatesFor(calcKey);
-  if (!snap || snap.none) {
-    // No packs for this page (or no Pack cost): only this week's trades.
-    const tr = tradeAdjustedStill(calcKey, c.needAll, c.calcOwned, null);
-    snap = { trades: tr ? tr.trades.map((x) => { const r = rates.find((q) => q.from === x.from && q.to === x.to) || {}; return { ...x, max: Number(r.max) || 0, hidden: !!r.hidden }; }) : [], weeks: 1, cards: {}, rows: [], planTrades: [], days: null, cant: false, uncovered: {}, noPacks: true };
+  // The page's target date (the date box on its Pack cost card): weekly trades count up to it.
+  if (PACK_TARGET_CACHE[calcKey] === undefined) {
+    loadCalcState(`pack_target_${calcKey}`).then((s) => {
+      if (PACK_TARGET_CACHE[calcKey] === undefined) { PACK_TARGET_CACHE[calcKey] = s && typeof s.date === "string" ? s.date : ""; boxExplainRefresh(); }
+    }).catch(() => {});
   }
+  let targetDays = null;
+  const tDay = PACK_TARGET_CACHE[calcKey] ? packParseDay(PACK_TARGET_CACHE[calcKey]) : null;
+  if (tDay) targetDays = Math.round((tDay - packStartOfToday()) / 86400000);
+  const weeks = tradeWeeksFor(targetDays);
+  const rates = tradeRatesFor(calcKey);
+  // The Backpack's trades (the Research Lab apart: below).
+  const tr = tradeAdjustedStill(calcKey, c.needAll || {}, c.calcOwned || {}, targetDays, true);
+  const trades = tr ? tr.trades.map((x) => { const r = rates.find((q) => q.from === x.from && q.to === x.to) || {}; return { ...x, max: Number(r.max) || 0, hidden: !!r.hidden }; }) : [];
   // Rules the Backpack box already counts in "You have" (hidden ones, unlimited ones).
   const inHave = (x) => x.hidden || ((!(x.max > 0) || x.from === "Fire Crystal") && TRADE_APPLY[calcKey] !== false);
-  const free = (snap.trades || []).flatMap((x) => (inHave(x) ? [] : packTradeWhenSplit(x)));
+  const free = trades.flatMap((x) => (inHave(x) ? [] : packTradeWhenSplit(x)));
+  const sum = (a, k) => a.reduce((s, x) => s + (Number(x[k]) || 0), 0);
+  const ins = free.filter((x) => x.to === name), outs = free.filter((x) => x.from === name);
+  // Research Lab (T12): this week's refinements still left are in "You have"; the next weeks
+  // up to the target date are listed, paid with the Fire Crystal the Backpack has spare.
+  const labR = rates.find((r) => r.rfcLab && r.to === name);
+  if (labR && weeks > 1) {
+    const fc = labR.from, given = (c.given || {})[fc] || 0;
+    const fcSpare = Math.max(0, (Number((c.calcOwned || {})[fc]) || 0) - (Number((c.needAll || {})[fc]) || 0) - given - sum(free.filter((x) => x.from === fc), "give"));
+    const short = (Number(c.need) || 0) - (Number(c.have) || 0) - sum(ins, "get");
+    const lots = short > 0 ? Math.min(weeks - 1, Math.floor(fcSpare / labR.give), Math.ceil(short / labR.get)) : 0;
+    if (lots > 0) ins.push({ when: "later", from: fc, to: name, give: lots * labR.give, get: lots * labR.get, lots, lab: true });
+  }
   const ic = (n) => { const src = materialIconSrc(n); return src ? `<img src="${esc(src)}" alt="" />` : ""; };
   const nm = (n) => esc(materialDisplayName(itemShortName(n)).replace(/\s*\((minutes|min)\)$/, ""));
   const fmtOf = (n) => (/\(minutes\)$/.test(n) ? bsTime : (v) => (Math.abs(v) < 1e5 ? Math.round(v).toLocaleString() : shortAmount(v)));
   const num = (v, n = name) => bidiNum(fmtOf(n)(v));
-  const when = (w) => esc(t(w === "week" ? "bsx_week" : w === "later" ? "bsx_later" : w === "plan" ? "bsx_plan" : "bsx_cards"));
-  const line = (w, mid, v) => `<div class="bsx-l"><span class="bsx-w">${when(w)}</span><span class="bsx-m">${mid}</span><b class="g">${v}</b></div>`;
-  // The plan's packs that give this item (not listed: only decide the Pack cost button).
-  const packQ = (snap.rows || []).reduce((a, r) => a + (Number((r.gives || {})[name]) || 0) * (r.count || 1), 0);
-  const outAll = [...free.filter((x) => x.from === name), ...(snap.planTrades || []).filter((x) => x.from === name)].reduce((a, x) => a + (Number(x.give != null ? x.give : x.giveQty) || 0), 0);
-  // Coming packs (My Purchases, running cards) only count when the Backpack alone isn't enough.
-  const bpOk = c.have - outAll >= c.need - 0.5;
-  const cards = bpOk ? 0 : Number((snap.cards || {})[name]) || 0;
-  // The Research Lab (T12): the plan's refining weeks, this week's lot first, then the next weeks'.
-  const planIn = (snap.planTrades || []).filter((x) => x.to === name && x.getQty > 0).flatMap((x) => (x.lab ? packTradeWhenSplit({ ...x, max: 1 }) : [{ when: "plan", from: x.from, to: x.to, give: x.giveQty, get: x.getQty }]));
-  const planOut = (snap.planTrades || []).filter((x) => x.from === name && x.giveQty > 0).map((x) => ({ when: "plan", from: x.from, to: x.to, give: x.giveQty, get: x.getQty }));
-  const ins = [...free.filter((x) => x.to === name), ...planIn], outs = [...free.filter((x) => x.from === name), ...planOut];
-  const sum = (a, k) => a.reduce((s, x) => s + (Number(x[k]) || 0), 0);
-  // "You have" (the box) already holds this week's Research Lab lot; the plan's lab weeks list it
-  // again ("This week"), so the totals take it once.
-  const labDup = snap.noPacks ? 0 : Math.min(Number(c.labHave) || 0, sum(planIn.filter((x) => x.lab && x.when === "week"), "get"));
-  const inQ = sum(ins, "get") - labDup, outQ = sum(outs, "give");
-  // Each trade is listed once, in the box of the item it makes ("Where the rest comes from").
-  // What this item gives away is one short line in the status box: "N goes to Alloy ›",
-  // each target tappable (opens that item's box on the page).
+  const line = (w, mid, v) => `<div class="bsx-l"><span class="bsx-w">${esc(t(w === "week" ? "bsx_week" : "bsx_later"))}</span><span class="bsx-m">${mid}</span><b class="g">${v}</b></div>`;
+  const labMid = (x) => `<img src="icons/quick/microscope.png" alt="" title="${esc(t("bsx_trade").replace("{n}", num(x.give, x.from)))} ${nm(x.from)}" /><span>${esc(t("bsx_lab"))}</span>`;
+  const inQ = sum(ins, "get"), outQ = sum(outs, "give");
+  // Each trade is listed once, in the box of the item it makes. What this item gives away is
+  // one short line in the status box: "Spare N goes to Alloy ›", each target tappable.
   let body = "";
-  const labLeft = typeof rfcLabWeekLeft === "function" ? rfcLabWeekLeft().left : 0;
-  const labMid = (x) => `<img src="icons/quick/microscope.png" alt="" title="${esc(t("bsx_trade").replace("{n}", num(x.give, x.from)))} ${nm(x.from)}" /><span>${esc(x.when === "week" && labLeft > 0 ? t("bsx_lab_week").replace("{n}", Math.round(labLeft).toLocaleString()) : t("bsx_lab"))}</span>`;
-  if (ins.length || cards > 0) body += `<div class="bsx-h">${esc(t("bsx_rest"))}</div><div class="bsx-list">${ins.map((x) => line(x.when, x.lab ? labMid(x) : `${ic(x.from)}<span>${esc(t("bsx_trade").replace("{n}", num(x.give, x.from)))} ${nm(x.from)}</span>`, `+${num(x.get)}`)).join("")}${cards > 0 ? line("cards", `${ic(name)}<span>${esc(t("bsx_cards_l"))}</span>`, `+${num(cards)}`) : ""}</div>`;
+  if (ins.length) body += `<div class="bsx-h">${esc(t("bsx_rest"))}</div><div class="bsx-list">${ins.map((x) => line(x.when, x.lab ? labMid(x) : `${ic(x.from)}<span>${esc(t("bsx_trade").replace("{n}", num(x.give, x.from)))} ${nm(x.from)}</span>`, `+${num(x.get)}`)).join("")}</div>`;
   else if (!outs.length) body += `<div class="bsx-none">${esc(t("bsx_no_trades"))}</div>`;
-  // Backpack + trades in + coming packs + the plan's packs that give it, minus what is traded out.
-  const noPk = c.have + cards + inQ - outQ, after = noPk + packQ, short = c.need - after;
-  // Its own need covered by the Backpack: ✓, also when the item is traded away too.
-  const ownOk = c.have >= c.need - 0.5;
-  const ok = ownOk || short <= 0.5;
-  const viaPacks = ok && !ownOk && noPk < c.need - 0.5;
+  const short = c.need - (c.have + inQ - outQ);
+  const ownOk = c.have >= c.need - 0.5, ok = ownOk || short <= 0.5;
   const tos = [...new Set(outs.map((x) => x.to))];
   const tileOf = (n) => [...content.querySelectorAll("[data-bsedit], [data-expedit]")].some((b) => (b.dataset.bsedit || b.dataset.expedit) === n);
-  const goes = tos.length ? (() => {
-    const pkPart = Math.max(0, outQ - Math.max(0, c.have + cards + inQ - c.need));
-    const toHtml = tos.map((n) => (tileOf(n) ? `<button type="button" class="bsx-go" data-bsxgo="${esc(n)}">${ic(n)}<span>${nm(n)}</span></button>` : `<span class="bsx-go off">${ic(n)}<span>${nm(n)}</span></span>`)).join('<span class="bsx-gs">,</span>');
-    return `<div class="bsx-goes">${ic(name)}<span>${esc(t(pkPart > 0.5 ? "bsx_goes" : "bsx_goes_spare").replace("{n}", num(outQ)))}</span>${toHtml}${tos.some(tileOf) ? '<span class="bsx-ga">&#8250;</span>' : ""}</div>${packQ > 0 && pkPart > 0.5 ? `<div class="bsx-gpk">${esc(t("bsx_goes_pk").replace("{p}", num(Math.min(pkPart, packQ))))}</div>` : ""}`;
-  })() : "";
+  const goes = tos.length ? `<div class="bsx-goes">${ic(name)}<span>${esc(t("bsx_goes_spare").replace("{n}", num(outQ)))}</span>${tos.map((n) => (tileOf(n) ? `<button type="button" class="bsx-go" data-bsxgo="${esc(n)}">${ic(n)}<span>${nm(n)}</span></button>` : `<span class="bsx-go off">${ic(n)}<span>${nm(n)}</span></span>`)).join('<span class="bsx-gs">,</span>')}${tos.some(tileOf) ? '<span class="bsx-ga">&#8250;</span>' : ""}</div>` : "";
   const stat = ok
-    ? `<div class="bsx-tot ok${goes ? " gl" : ""}"><b>&#10003; ${esc(t(ownOk ? "bsx_covered" : viaPacks ? "bsx_cov_after_packs" : "bsx_cov_trades"))}</b>${goes}</div>`
-    : `<div class="bsx-tot bad${goes ? " gl" : ""}"><b>${esc(t("bsx_still_short").replace("{n}", num(short)))}</b>${snap.cant && !snap.noPacks ? `<span>${esc(t("bsx_cant"))}</span>` : ""}${goes}</div>`;
-  // What the Backpack already lets the page do (the page marks), when they are worked out.
-  let canTxt = null;
-  if (typeof MK !== "undefined" && MK && MK.tab === BOX_EXPLAIN_TABS[calcKey] && MK.plan) {
-    const x = MK.list.find((y) => (MK.plan.lv[y.tr.id] || 0) > y.tr.from);
-    canTxt = x ? `${esc(t("bsx_cando"))} <b>${esc(calcKey === "chief_gear" ? pieceDisplayName(x.tr.name || "") : (x.tr.name || ""))} &rarr; ${esc(mkLab(x.tr, MK.plan.lv[x.tr.id]))}</b>` : `${esc(t("bsx_cando"))} <b>${esc(t("bsx_cando_none"))}</b>`;
-  }
-  // Only how far the Backpack takes the page: no pack price or link here (Pack cost has its own button).
-  const can = canTxt != null ? `<div class="bsx-can"><span>&#9889; ${canTxt}</span></div>` : "";
-  return `${body}${stat}${can}`;
+    ? `<div class="bsx-tot ok${goes ? " gl" : ""}"><b>&#10003; ${esc(t(ownOk ? "bsx_covered" : "bsx_cov_trades"))}</b>${goes}</div>`
+    : `<div class="bsx-tot bad${goes ? " gl" : ""}"><b>${esc(t("bsx_still_short").replace("{n}", num(short)))}</b>${goes}</div>`;
+  return `${body}${stat}`;
 }
 // Third line of a Backpack tile: red "N short", green ✓, or grey — when
 // this page doesn't use it (need 0). { html, off }.

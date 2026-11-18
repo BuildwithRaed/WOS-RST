@@ -2289,14 +2289,10 @@ input,select,textarea{
   .bsx-w{ flex:0 0 68px; color:var(--muted); font-size:11.5px; }
   .bsx-m{ flex:1; min-width:0; display:flex; align-items:center; gap:5px; }
   .bsx-m > span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .bsx-m > span.bsx-pr{ flex:none; overflow:visible; }
   .bsx-m img{ flex:none; }
   .bsx-m img{ width:18px; height:18px; object-fit:contain; }
   .bsx-l b{ flex:none; color:var(--frost); }
-  .bsx-l.lft .bsx-w{ flex:1; }
   .bsx-l b.g{ color:var(--good); }
-  .bsx-l b.r{ color:var(--danger); }
-  .bsx-pr{ padding:0 6px; border-radius:6px; background:rgba(232,162,60,.85); color:#1a1206; font-size:11px; font-weight:800; white-space:nowrap; }
   .bsx-tot{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px; padding:9px 12px; border-radius:11px; font-size:13px; }
   .bsx-tot b{ font-size:15px; }
   .bsx-tot.ok{ border:1px solid rgba(91,201,138,.5); background:rgba(91,201,138,.1); color:var(--good); }
@@ -2307,7 +2303,6 @@ input,select,textarea{
   .mk-canslot:empty{ display:none; }
   .mk-canslot .bsx-can{ margin-top:12px; }
   .bsx-none{ margin-top:4px; padding:8px 0 2px; color:var(--muted); font-size:12.5px; }
-  .bsx-tot.bad > span{ font-size:12px; }
   .bsx-tot.gl{ flex-direction:column; align-items:stretch; gap:4px; }
   .bsx-goes{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; color:var(--muted); font-size:12.5px; }
   .bsx-goes img{ width:18px; height:18px; object-fit:contain; flex:none; }
@@ -2315,7 +2310,6 @@ input,select,textarea{
   .bsx-go.off{ min-height:0; padding:0; border:0; background:none; color:var(--frost); cursor:default; }
   .bsx-gs{ margin-inline-start:-4px; }
   .bsx-ga{ color:var(--ice); font-weight:700; }
-  .bsx-gpk{ color:var(--muted); font-size:11.5px; }
   .bsm-grab{ display:none; }
   @media (max-width:900px){
     #bsEditModal.bsm-ov{ align-items:flex-end; justify-content:center; padding:0; }
@@ -2323,8 +2317,6 @@ input,select,textarea{
     #bsEditModal .bsm-grab{ display:block; width:44px; height:5px; border-radius:3px; background:#56637a; margin:2px auto 10px; touch-action:none; cursor:grab; }
   }
   @keyframes bsmUp{ from{ transform:translateY(100%); } to{ transform:none; } }
-  .bsx-note{ margin-top:6px; color:var(--muted); font-size:11.5px; }
-  .bsx-wait{ padding:10px 0; color:var(--muted); font-size:12.5px; }
   /* Chief Gear pieces (pictures with tier edge, now badge, target chip) */
   .cg-pic{ position:relative; display:block; width:min(78px, 100%); aspect-ratio:1; }
   .cg-pic img{ width:100%; height:100%; object-fit:contain; display:block; }
