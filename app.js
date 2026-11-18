@@ -3426,7 +3426,9 @@ const T = {
   chw_nothing: { en: "nothing needed" },
   chw_enough: { en: "enough" },
   bsx_rest: { en: "Where the rest comes from" },
-  bsx_used: { en: "Used in trades" },
+  bsx_goes: { en: "{n} goes to" },
+  bsx_goes_spare: { en: "Spare {n} goes to" },
+  bsx_goes_pk: { en: "{p} of it from the plan's packs" },
   bsx_week: { en: "This week" },
   bsx_later: { en: "Next weeks" },
   bsx_plan: { en: "Pack plan" },
@@ -3445,7 +3447,8 @@ const T = {
   bsx_cando_none: { en: "Nothing yet" },
   bsx_no_trades: { en: "No trades for this item" },
   bsx_cov_trades: { en: "Covered with trades" },
-  bsx_still_after: { en: "Still {n} short after trades" },
+  bsx_still_short: { en: "Still {n} short" },
+  bsx_cov_packs: { en: "Covered with the plan's packs" },
   bsx_packs_btn: { en: "Packs {p}" },
   bsx_rest_packs: { en: "The rest comes from packs" },
   bsx_wait: { en: "Working out where the rest comes from…" },
@@ -32482,6 +32485,14 @@ function plxAmountModal(o) {
   modal.onclick = (ev) => {
     if (sw && sw.dragged) { sw.dragged = false; return; }
     if (ev.target.closest("[data-bsxpacks]")) { close(); boxOpenPackCost(); return; }
+    // "N goes to Alloy ›": open that item's box on the same page.
+    const go = ev.target.closest("[data-bsxgo]");
+    if (go) {
+      const n = go.dataset.bsxgo, tile = [...content.querySelectorAll("[data-bsedit], [data-expedit]")].find((b) => (b.dataset.bsedit || b.dataset.expedit) === n);
+      close();
+      if (tile) tile.click();
+      return;
+    }
     if (ev.target === modal || ev.target.closest("[data-bsmclose]")) close();
   };
   const input = modal.querySelector("#bsEditQty");
@@ -32557,17 +32568,30 @@ function cgBoxExplainHtml(name, c) {
   const ins = [...free.filter((x) => x.to === name), ...planIn], outs = [...free.filter((x) => x.from === name), ...planOut];
   const sum = (a, k) => a.reduce((s, x) => s + (Number(x[k]) || 0), 0);
   const inQ = sum(ins, "get"), outQ = sum(outs, "give");
+  // Each trade is listed once, in the box of the item it makes ("Where the rest comes from").
+  // What this item gives away is one short line in the status box: "N goes to Alloy ›",
+  // each target tappable (opens that item's box on the page).
   let body = "";
   if (ins.length || cards > 0) body += `<div class="bsx-h">${esc(t("bsx_rest"))}</div><div class="bsx-list">${ins.map((x) => line(x.when, `${ic(x.from)}<span>${esc(t("bsx_trade").replace("{n}", num(x.give, x.from)))} ${nm(x.from)}</span>`, `+${num(x.get)}`)).join("")}${cards > 0 ? line("cards", `${ic(name)}<span>${esc(t("bsx_cards_l"))}</span>`, `+${num(cards)}`) : ""}</div>`;
-  if (outs.length) body += `<div class="bsx-h">${esc(t("bsx_used"))}</div><div class="bsx-list">${outs.map((x) => line(x.when, `${ic(name)}<span>${num(x.give)} &rarr;</span>${ic(x.to)}<span>${nm(x.to)}</span>`, `+${num(x.get, x.to)}`)).join("")}</div>`;
-  if (!ins.length && !outs.length && !(cards > 0)) body += `<div class="bsx-none">${esc(t("bsx_no_trades"))}</div>`;
-  // Backpack + trades (+ coming packs already in My Purchases) against the need.
-  const after = c.have + cards + inQ - outQ, short = c.need - after;
-  const stat = short <= 0.5
-    ? `<div class="bsx-tot ok"><b>&#10003; ${esc(t(bpOk ? "bsx_covered" : "bsx_cov_trades"))}</b></div>`
-    : `<div class="bsx-tot bad"><b>${esc(t("bsx_still_after").replace("{n}", num(short)))}</b>${snap.cant && !snap.noPacks ? `<span>${esc(t("bsx_cant"))}</span>` : ""}</div>`;
-  // The plan still buys packs that give it: a button to the page's Pack cost.
-  const packsNeeded = short > 0.5 && canPacks && !snap.noPacks && (packQ > 0 || planIn.length > 0);
+  else if (!outs.length) body += `<div class="bsx-none">${esc(t("bsx_no_trades"))}</div>`;
+  // Backpack + trades in + coming packs + the plan's packs that give it, minus what is traded out.
+  const noPk = c.have + cards + inQ - outQ, after = noPk + packQ, short = c.need - after;
+  // Its own need covered by the Backpack: ✓, also when the item is traded away too.
+  const ownOk = c.have >= c.need - 0.5;
+  const ok = ownOk || short <= 0.5;
+  const viaPacks = ok && !ownOk && noPk < c.need - 0.5;
+  const tos = [...new Set(outs.map((x) => x.to))];
+  const tileOf = (n) => [...content.querySelectorAll("[data-bsedit], [data-expedit]")].some((b) => (b.dataset.bsedit || b.dataset.expedit) === n);
+  const goes = tos.length ? (() => {
+    const pkPart = Math.max(0, outQ - Math.max(0, c.have + cards + inQ - c.need));
+    const toHtml = tos.map((n) => (tileOf(n) ? `<button type="button" class="bsx-go" data-bsxgo="${esc(n)}">${ic(n)}<span>${nm(n)}</span></button>` : `<span class="bsx-go off">${ic(n)}<span>${nm(n)}</span></span>`)).join('<span class="bsx-gs">,</span>');
+    return `<div class="bsx-goes">${ic(name)}<span>${esc(t(pkPart > 0.5 ? "bsx_goes" : "bsx_goes_spare").replace("{n}", num(outQ)))}</span>${toHtml}${tos.some(tileOf) ? '<span class="bsx-ga">&#8250;</span>' : ""}</div>${packQ > 0 && pkPart > 0.5 ? `<div class="bsx-gpk">${esc(t("bsx_goes_pk").replace("{p}", num(Math.min(pkPart, packQ))))}</div>` : ""}`;
+  })() : "";
+  const stat = ok
+    ? `<div class="bsx-tot ok${goes ? " gl" : ""}"><b>&#10003; ${esc(t(ownOk ? "bsx_covered" : viaPacks ? "bsx_cov_packs" : "bsx_cov_trades"))}</b>${goes}</div>`
+    : `<div class="bsx-tot bad${goes ? " gl" : ""}"><b>${esc(t("bsx_still_short").replace("{n}", num(short)))}</b>${snap.cant && !snap.noPacks ? `<span>${esc(t("bsx_cant"))}</span>` : ""}${goes}</div>`;
+  // The plan buys packs that give it (still short, or covered only with them): a button to the page's Pack cost.
+  const packsNeeded = (!ok || viaPacks) && canPacks && !snap.noPacks && (packQ > 0 || planIn.length > 0);
   const btn = packsNeeded ? `<button type="button" class="bsx-pk" data-bsxpacks>${esc(t("bsx_packs_btn").replace("{p}", PACK_COST_SHOWN[calcKey] || t("pack_cost_title")))} &#8250;</button>` : "";
   // What the Backpack already lets the page do (the page marks), when they are worked out.
   let canTxt = null;
