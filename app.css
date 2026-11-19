@@ -4895,6 +4895,8 @@ input,select,textarea{
   .sh-bud .shr .p{ width:44px; }
   /* Shining City sheet (design C): In the shop | My targets */
   .sht-seg{ flex:none; margin:0 0 10px; }
+  .sht-g.isl-shg{ max-height:none; overflow:visible; }
+  .sht-box{ overscroll-behavior:contain; }
   .sht-g .isl-sht{ opacity:1; color:var(--frost); }
   .sht-g .isl-sht.on{ border-color:var(--ice); background:rgba(124,196,255,.08); }
   .sht-g .isl-sht.ow{ opacity:.55; cursor:default; }
@@ -4904,7 +4906,6 @@ input,select,textarea{
   .sht-none{ padding:14px 4px; font-size:12.5px; text-align:center; }
   .sht-edit{ display:inline-flex; align-items:center; margin-top:10px; height:32px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:none; color:var(--ice); font:inherit; font-size:12.5px; font-weight:700; cursor:pointer; }
   .sht-arr{ margin:0 0 6px; }
-  .sht-list{ max-height:44vh; overflow-y:auto; overscroll-behavior:contain; }
   .sht-r{ display:flex; align-items:center; gap:8px; min-height:52px; padding:4px 0; border-top:1px solid var(--line); background:var(--panel); }
   .sht-r:first-child{ border-top:0; }
   .sht-n{ flex:none; width:22px; height:22px; border-radius:50%; background:var(--ice-dim); color:var(--frost); font-size:12px; line-height:22px; text-align:center; }
@@ -4923,6 +4924,7 @@ input,select,textarea{
   .sht-tot .k{ flex:1; text-align:start; font-weight:700; font-size:13.5px; }
   .sht-tot b{ color:#e0b25a; font-size:13px; }
   .sht-nt{ margin-top:8px; font-size:12px; }
+  .isl-mkc.sh-shop{ opacity:.5; filter:saturate(.4); }
   .sht-seg button{ padding:0 2px; font-size:12.5px; }
   .sht-ev{ display:flex; align-items:center; gap:8px; margin:0 0 10px; }
   .sht-evb{ flex:none; width:36px; height:36px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:20px; line-height:1; cursor:pointer; }
@@ -4932,15 +4934,8 @@ input,select,textarea{
   .sht-evt small{ font-size:12px; color:var(--muted); }
   .sht-evt small.on{ color:var(--good); font-weight:700; }
   .sht-seen{ position:absolute; top:3px; inset-inline-end:3px; padding:0 5px; height:17px; line-height:17px; border-radius:8px; background:rgba(10,14,20,.78); border:1px solid rgba(224,178,90,.55); color:#e0b25a; font-size:10.5px; font-weight:800; }
-  .sht-sub{ font-size:10.5px; line-height:12px; color:var(--muted); text-align:center; }
   .sht-g .isl-sht{ -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
-  .sht-cp{ display:flex; align-items:center; gap:6px; margin-top:4px; }
-  .sht-cp button{ width:30px; height:30px; border:1px solid var(--line); border-radius:8px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:16px; font-weight:700; cursor:pointer; }
-  .sht-cp button:disabled{ opacity:.35; cursor:default; }
-  .sht-cp b{ min-width:18px; text-align:center; font-size:14px; }
-  .sht-cp small{ font-size:11.5px; color:var(--muted); }
   .sht-wait{ margin:0 0 8px; padding:8px 10px; border:1px dashed rgba(224,178,90,.55); border-radius:10px; color:var(--amber); font-size:12.5px; }
-  .sht-hl{ max-height:52vh; overflow-y:auto; overscroll-behavior:contain; }
   .sht-h{ border:1px solid var(--line); border-radius:12px; background:var(--panel-2); margin-top:6px; }
   .sht-h > summary{ display:flex; align-items:center; gap:10px; min-height:48px; padding:5px 10px; cursor:pointer; list-style:none; }
   .sht-h > summary::-webkit-details-marker{ display:none; }
@@ -4963,7 +4958,6 @@ input,select,textarea{
   .sht-pop{ position:absolute; z-index:5; display:flex; flex-direction:column; gap:2px; max-width:240px; padding:8px 10px; border:1px solid rgba(224,178,90,.55); border-radius:10px; background:var(--panel); box-shadow:0 6px 18px rgba(0,0,0,.5); font-size:12.5px; color:var(--muted); line-height:1.35; }
   .sht-pop b{ color:var(--frost); font-size:13.5px; }
   .s1 .tx > em.w{ color:var(--amber); font-weight:600; font-size:12px; white-space:normal; }
-  .isl-shx{ margin-top:2px; }
   .sh-bud-none{ margin-top:10px; font-size:12px; }
 
   .adm-odds{ display:block; }
