@@ -2048,25 +2048,7 @@ const T = {
   sh_tg_n: { en: "{n} targets" },
   sh_tg_n1: { en: "1 target" },
   sh_pick_tg: { en: "+ pick targets" },
-  sh_tab_shop: { en: "In the shop ({n})" },
-  sh_tab_mine: { en: "My targets ({n})" },
-  sh_shop_desc: { en: "Set by the owner for each event. Tap a skin to add it to My targets; only targets count." },
-  sh_shop_none: { en: "This event's shop list isn't set yet." },
   sh_edit_shop: { en: "\u270e Edit shop list" },
-  sh_tg_add: { en: "+ Target" },
-  sh_tg_num: { en: "\ud83c\udfaf #{n}" },
-  sh_owned: { en: "\u2713 owned" },
-  sh_mine_btn: { en: "My targets ({n}) \u203a" },
-  sh_mine_desc: { en: "Bought in this order: the first ones use your Backpack and the free Tomes first, so they're cheaper." },
-  sh_mine_none: { en: "No targets yet \u00b7 tap one in \u201cIn the shop\u201d" },
-  sh_drag_hint: { en: "Drag \u22ee\u22ee to set which first" },
-  sh_tg_bp: { en: "{n} from your Backpack" },
-  sh_tg_drop: { en: "Remove target" },
-  sh_have_short: { en: "\u2713 Backpack" },
-  sh_total: { en: "Total" },
-  sh_not_tg: { en: "{n} shop skins not targeted, not counted" },
-  sh_not_tg1: { en: "1 shop skin not targeted, not counted" },
-  sh_close: { en: "Close" },
   sh_edit_title: { en: "Edit shop list" },
   sh_edit_desc: { en: "Owner only. Tick the City Skins this event's shop sells ({n} Glorious Tomes each); everyone sees this list and picks targets from it." },
   sh_save_shop: { en: "Save shop list" },
@@ -2075,24 +2057,30 @@ const T = {
   sh_ev_next: { en: "next \u00b7 in {n} days" },
   sh_ev_later: { en: "in {n} days" },
   sh_ev_past: { en: "past event" },
-  sh_ev_title: { en: "Event {d}" },
   sh_ev_prev: { en: "Earlier event" },
   sh_ev_nextb: { en: "Later event" },
   sh_tab_hist: { en: "History" },
-  sh_wait_msg: { en: "This event's shop list isn't set: your targets wait for an event with them." },
   sh_h_n: { en: "{n} skins" },
   sh_h_n1: { en: "1 skin" },
-  sh_h_tg: { en: "{n} in your targets" },
   sh_hist_desc: { en: "Past events, newest first. Tap one to see its whole shop." },
   sh_hist_none: { en: "No past events with a shop list yet." },
-  sh_seen_last: { en: "Last in Shining City: {d}" },
-  sh_seen_none: { en: "Not in a past Shining City event yet" },
-  sh_seen_n: { en: "Seen {n} times" },
-  sh_seen_n1: { en: "Seen once" },
   sh_mk_target: { en: "Shining City \u00b7 your target" },
   sh_mk_shop: { en: "In this Shining City event's shop" },
   sh_shop_unset: { en: "shop for this event isn't set" },
   sh_wait_row: { en: "Waiting for an event with them" },
+  sh_win_none: { en: "No Shining City targets yet \u00b7 tap a City Skin and switch Shining City on." },
+  sh_edit_n: { en: "{n} skins" },
+  sh_have_n: { en: "have {n}" },
+  sh_h_own: { en: "you own {n}" },
+  skp_owned: { en: "Owned" },
+  skp_owned_on: { en: "You have it" },
+  skp_owned_off: { en: "Tap when you have it" },
+  skp_sh_owned: { en: "Owned \u2014 nothing to buy" },
+  skp_sh_on: { en: "+{n} Tomes \u00b7 \u2248 {p} more" },
+  skp_sh_off: { en: "Buy it in the event \u00b7 {n} Tomes" },
+  skp_sh_have: { en: "Your Backpack covers it" },
+  sh_key_target: { en: "Shining City target" },
+  sh_key_shop: { en: "In this event's shop" },
   sh_none: { en: "No skins picked \u00b7 tap \u201c+ pick skins\u201d on the Skin Gallery page" },
   isl_wb_title: { en: "Where to buy copies" },
   isl_wb_mark: { en: "Mark of Revival shop" },
@@ -26606,18 +26594,6 @@ function shiningEvState(e, cur) {
   if (e.start.getTime() > today) { const n = Math.round((e.start.getTime() - today) / DAY); return { txt: (e.key === cur ? t("sh_ev_next") : t("sh_ev_later")).replace("{n}", n) }; }
   return { past: true, txt: t("sh_ev_past") };
 }
-// How often an item was in the shop (events up to now, and the current one): name → { n, last: Date | null }.
-function shiningSeen(kind) {
-  const out = new Map(), cur = shiningCurKey(), today = packStartOfToday();
-  const keys = new Set(Object.keys(shiningEvCfg()));
-  if (cur) keys.add(cur);
-  keys.forEach((k) => {
-    const d = packParseDay(k);
-    if (!d || (d > today && k !== cur)) return;
-    new Set(shiningShopFor(k, kind)).forEach((n) => { const o = out.get(n) || { n: 0, last: null }; o.n++; if (d <= today && (!o.last || d > o.last)) o.last = d; out.set(n, o); });
-  });
-  return out;
-}
 function shiningSaveShop(key, kind, names, after) {
   if (!SITE_CONFIG) SITE_CONFIG = {};
   const fail = (undo) => () => { undo(); budgetInvalidate(); toast("Couldn't save", true); if (after) after(); };
@@ -26664,151 +26640,6 @@ function shiningEditSheet(o) {
   };
   m.onkeydown = (ev) => { if (ev.key === "Escape") { ev.stopPropagation(); close(); } };
   m.style.display = "flex";
-}
-// The Shining City sheet (design C + events): ‹ event › header, then In the shop / My targets /
-// History (Skin Gallery's City Skins, kind "skins"). o: {
-//   kind, shop(key) → [{ name, img, state: "owned" | null }],
-//   editRows() → [{ name, img }] (owner's Edit shop list), targets() → [{ name, img, tomes, sub? }],
-//   toggle(name), drop(name), reorder(names), have() (Tomes), priceKey, onTotal(), changed() }
-const SH_ST = { skins: { tab: "shop", ev: null } };
-let SH_PRICE_GEN = 0;
-function shiningSheet(o, tab) {
-  const st = SH_ST[o.kind];
-  if (tab) st.tab = tab;
-  let m = document.getElementById("shSheet");
-  if (!m) { m = document.createElement("div"); m.id = "shSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap isl-ov"; document.body.appendChild(m); }
-  const box0 = m.querySelector(".sht-box"), gScroll = box0 && box0.dataset.tab === st.tab && m.style.display !== "none" ? box0.scrollTop : 0;
-  const E = shiningEvents(), list = E.list;
-  if (!st.ev || !list.some((e) => e.key === st.ev)) st.ev = E.cur || (list.length ? list[list.length - 1].key : null);
-  const ei = list.findIndex((e) => e.key === st.ev), cev = ei >= 0 ? list[ei] : null;
-  const rows = o.targets(), tgIdx = new Map(rows.map((r, i) => [r.name, i]));
-  const img = (s) => (s.img ? `<img src="${esc(s.img)}" alt="" loading="lazy" />` : "");
-  const evHead = cev ? (() => { const s = shiningEvState(cev, E.cur); return `<div class="sht-ev"><button type="button" class="sht-evb" data-shev="-1"${ei > 0 ? "" : " disabled"} aria-label="${esc(t("sh_ev_prev"))}">&#8249;</button><div class="sht-evt"><b>${esc(t("sh_ev_title").replace("{d}", shiningEvLabel(cev)))}</b><small class="${s.on ? "on" : ""}">${s.on ? "● " : ""}${esc(s.txt)}</small></div><button type="button" class="sht-evb" data-shev="1"${ei < list.length - 1 ? "" : " disabled"} aria-label="${esc(t("sh_ev_nextb"))}">&#8250;</button></div>`; })() : `<div class="meta sht-none">${esc(t("sh_no_date"))}</div>`;
-  const tabs = `<div class="sg-seg sht-seg">${[["shop", t("sh_tab_shop").replace("{n}", o.shop(st.ev).length)], ["mine", t("sh_tab_mine").replace("{n}", rows.length)], ["hist", t("sh_tab_hist")]].map(([k, l]) => `<button type="button" data-shtab="${k}" class="${st.tab === k ? "on" : ""}" aria-pressed="${st.tab === k}">${esc(l)}</button>`).join("")}</div>`;
-  const seen = shiningSeen(o.kind);
-  let body, foot = `<button type="button" class="btn ghost" data-shx>${esc(t("sh_close"))}</button>`;
-  if (st.tab === "shop") {
-    const shop = o.shop(st.ev);
-    const tile = (s) => {
-      const i = tgIdx.get(s.name), sn = seen.get(s.name);
-      const lab = s.state === "owned" ? `<span class="sht-l ow">${esc(t("sh_owned"))}</span>` : i != null ? `<span class="sht-l on">${esc(t("sh_tg_num").replace("{n}", i + 1))}</span>` : `<span class="sht-l">${esc(t("sh_tg_add"))}</span>`;
-      const free = !s.state;
-      return `<button type="button" class="isl-sht sht-t${i != null ? " on" : ""}${s.state ? " ow" : ""}" data-shtile="${esc(s.name)}"${free ? ` data-shtg="${esc(s.name)}"` : ""} aria-pressed="${i != null}" title="${esc(s.name)}">${img(s)}${sn && sn.n ? `<span class="sht-seen">✦${sn.n}</span>` : ""}<span class="nm">${esc(s.name)}</span>${lab}</button>`;
-    };
-    const canEdit = IS_OWNER;
-    body = `<div class="meta sh-pick-d">${esc(t("sh_shop_desc"))}</div>
-      ${shop.length ? `<div class="isl-shg sht-g">${shop.map(tile).join("")}</div>` : `<div class="meta sht-none">${esc(t("sh_shop_none"))}</div>`}
-      ${canEdit ? `<button type="button" class="sht-edit" data-shedit>${esc(t("sh_edit_shop"))}</button>` : ""}`;
-    foot += `<button type="button" class="btn" data-shtab="mine">${esc(t("sh_mine_btn").replace("{n}", rows.length))}</button>`;
-  } else if (st.tab === "mine") {
-    const have = o.have(), need = rows.reduce((a, r) => a + r.tomes, 0);
-    let left = have;
-    const row = (r, i) => {
-      const bp = Math.min(r.tomes, Math.max(0, left)); left -= r.tomes;
-      return `<div class="sht-r" data-shtr="${esc(r.name)}">${dsHandleHtml("data-shtdrag")}<b class="sht-n">${i + 1}</b><span class="sht-p">${img(r)}</span><span class="sht-tx"><b>${esc(r.name)}</b>${r.sub ? `<em>${esc(r.sub)}</em>` : ""}${bp > 0 ? `<em>${esc(t("sh_tg_bp").replace("{n}", Math.round(bp).toLocaleString()))}</em>` : ""}</span><span class="sht-v"><span class="sht-tm">${esc(r.tomes.toLocaleString())}</span><span class="sht-pr" data-shtgp="${i}">${r.tomes ? "…" : ""}</span></span><button type="button" class="sht-x" data-shtdrop="${esc(r.name)}" aria-label="${esc(t("sh_tg_drop"))}" title="${esc(t("sh_tg_drop"))}">&times;</button></div>`;
-    };
-    const cur = shiningShopFor(E.cur, o.kind), names = new Set(rows.map((r) => r.name));
-    const notTg = o.shop(E.cur).filter((s) => !s.state && !names.has(s.name)).length;
-    const wait = rows.length && !cur.length;
-    body = `<div class="meta sh-pick-d">${esc(t("sh_mine_desc"))}</div>
-      ${wait ? `<div class="meta sht-wait">${esc(t("sh_wait_msg"))}</div>` : ""}
-      ${rows.length ? `${arrangeBarHtml("shining_tg:" + o.kind, t("sh_drag_hint"), "sht-arr")}<div class="sht-list"${arrangeHostAttr("shining_tg:" + o.kind)}>${rows.map(row).join("")}</div>
-      <button type="button" class="sht-tot" data-shtot><span class="k">${esc(t("sh_total"))}</span><b>${esc(t("sh_tomes").replace("{n}", need.toLocaleString()))}</b><span class="sht-pr" data-shtgp="tot">${need ? "…" : ""}</span></button>` : `<div class="meta sht-none">${esc(t("sh_mine_none"))}</div>`}
-      ${notTg ? `<div class="meta sht-nt">${esc(t(notTg === 1 ? "sh_not_tg1" : "sh_not_tg").replace("{n}", notTg))}</div>` : ""}`;
-  } else {
-    // History: past events with a shop list for this page, newest first.
-    const today = packStartOfToday();
-    const past = list.filter((e) => e.end < today).reverse().map((e) => ({ e, items: o.shop(e.key) })).filter((x) => x.items.length);
-    const hrow = (x) => {
-      const stack = `<span class="sht-stk">${x.items.slice(0, 3).map((s) => `<span>${img(s)}</span>`).join("")}${x.items.length > 3 ? `<span class="more">+${x.items.length - 3}</span>` : ""}</span>`;
-      const tg = x.items.filter((s) => tgIdx.has(s.name)).length;
-      return `<details class="sht-h"><summary>${stack}<span class="sht-htx"><b>${esc(shiningEvLabel(x.e))}</b><em>${esc(t(x.items.length === 1 ? "sh_h_n1" : "sh_h_n").replace("{n}", x.items.length))}${tg ? ` · ${esc(t("sh_h_tg").replace("{n}", tg))}` : ""}</em></span><span class="ch" aria-hidden="true">&#8250;</span></summary>
-        <div class="sht-hg">${x.items.map((s) => `<div class="sht-hi${s.state ? " ow" : ""}${tgIdx.has(s.name) ? " on" : ""}" title="${esc(s.name)}">${img(s)}<span>${esc(s.name)}</span></div>`).join("")}</div></details>`;
-    };
-    body = `<div class="meta sh-pick-d">${esc(t("sh_hist_desc"))}</div>${past.length ? `<div class="sht-hl">${past.map(hrow).join("")}</div>` : `<div class="meta sht-none">${esc(t("sh_hist_none"))}</div>`}`;
-  }
-  m.innerHTML = `<div class="modal-box adm-sheet gs-box sh-pick sht-box" data-tab="${st.tab}" role="dialog" aria-modal="true" aria-label="${esc(t("isl_sc_name"))}"><div class="gs-head"><b style="flex:1;">${esc(t("isl_sc_name"))}</b>${closeXHtml("data-shx")}</div>
-    ${st.tab === "shop" ? evHead : ""}${tabs}${body}<div class="isl-shb">${foot}</div></div>`;
-  const g = m.querySelector(".sht-box"); if (g && gScroll) g.scrollTop = gScroll;
-  let pop = null, held = false, timer = 0;
-  const popClose = () => { if (pop) { popForget(pop); pop.remove(); pop = null; } };
-  const close = () => { SH_PRICE_GEN++; popClose(); m.style.display = "none"; };
-  const redraw = (tb) => { popClose(); shiningSheet(o, tb); };
-  m.querySelectorAll("[data-shtdrag]").forEach((h) => dragSort(h, {
-    row: "[data-shtr]", arrange: "shining_tg:" + o.kind,
-    done: () => { o.reorder([...m.querySelectorAll("[data-shtr]")].map((x) => x.dataset.shtr)); redraw(); },
-    refocus: (r) => { const r2 = [...m.querySelectorAll("[data-shtr]")].find((x) => x.dataset.shtr === r.dataset.shtr), hh = r2 && r2.querySelector("[data-shtdrag]"); if (hh) hh.focus(); },
-  }));
-  // Hold a shop tile: when it was last in Shining City and how often.
-  const showSeen = (tile) => {
-    popClose();
-    const n = tile.dataset.shtile, sn = seen.get(n), mon = (d) => { try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "short", year: "numeric", timeZone: "UTC" }); } catch { return packDayKey(d); } };
-    pop = document.createElement("div");
-    pop.className = "sht-pop"; pop.setAttribute("role", "status");
-    pop.innerHTML = `<b>${esc(n)}</b><span>${sn && sn.last ? esc(t("sh_seen_last").replace("{d}", mon(sn.last))) : esc(t("sh_seen_none"))}</span>${sn && sn.n ? `<span>${esc(t(sn.n === 1 ? "sh_seen_n1" : "sh_seen_n").replace("{n}", sn.n))}</span>` : ""}`;
-    m.querySelector(".modal-box").appendChild(pop);
-    placePop(pop, tile, { align: "center", away: popClose });
-  };
-  m.onpointerdown = (ev) => {
-    if (pop && !ev.target.closest(".sht-pop")) { popClose(); held = true; }
-    const tile = ev.target.closest("[data-shtile]");
-    if (!tile) return;
-    clearTimeout(timer);
-    const x0 = ev.clientX, y0 = ev.clientY;
-    timer = setTimeout(() => { held = true; showSeen(tile); }, 450);
-    const off = () => { clearTimeout(timer); m.removeEventListener("pointerup", off); m.removeEventListener("pointercancel", off); m.removeEventListener("pointermove", mv); };
-    const mv = (e2) => { if (Math.hypot(e2.clientX - x0, e2.clientY - y0) > 8) off(); };
-    m.addEventListener("pointerup", off); m.addEventListener("pointercancel", off); m.addEventListener("pointermove", mv);
-  };
-  m.oncontextmenu = (ev) => { const tile = ev.target.closest("[data-shtile]"); if (tile) { ev.preventDefault(); if (!pop) { held = true; showSeen(tile); } } };
-  m.onclick = (ev) => {
-    if (held) { held = false; return; }
-    if (ev.target === m || ev.target.closest("[data-shx]")) { close(); return; }
-    const evb = ev.target.closest("[data-shev]");
-    if (evb) { const j = ei + Number(evb.dataset.shev); if (list[j]) st.ev = list[j].key; redraw(); return; }
-    const tb = ev.target.closest("[data-shtab]");
-    if (tb) { redraw(tb.dataset.shtab); return; }
-    const tg = ev.target.closest("[data-shtg]");
-    if (tg) { o.toggle(tg.dataset.shtg); redraw(); return; }
-    const dr = ev.target.closest("[data-shtdrop]");
-    if (dr) { o.drop(dr.dataset.shtdrop); redraw(); return; }
-    if (ev.target.closest("[data-shedit]")) {
-      close();
-      const key = st.ev, sel = shiningShopFor(key, o.kind);
-      shiningEditSheet({ title: cev ? `${t("sh_edit_title")} · ${shiningEvLabel(cev)}` : t("sh_edit_title"), desc: t("sh_edit_desc").replace("{n}", shiningTomesPer().toLocaleString()), rows: o.editRows(), sel,
-        onSave: (out) => { shiningSaveShop(key, o.kind, out, () => o.changed()); o.changed(); }, back: () => shiningSheet(o) });
-      return;
-    }
-    if (ev.target.closest("[data-shtot]")) { close(); o.onTotal(); }
-  };
-  m.onkeydown = (ev) => { if (ev.key === "Escape") { ev.stopPropagation(); if (pop) popClose(); else close(); } };
-  m.style.display = "flex";
-  if (st.tab === "mine") shiningTgPrices(m, rows, o);
-}
-// Each target's price = the plan for targets 1..k minus the plan for 1..k-1 (the Backpack
-// and the free Tomes go to the first ones), so the prices add up to the total.
-async function shiningTgPrices(m, rows, o) {
-  const gen = ++SH_PRICE_GEN, have = o.have();
-  const set = (k, html) => { const el = m.querySelector(`[data-shtgp="${k}"]`); if (el) el.innerHTML = html; };
-  const ok = `<span class="ok">${esc(t("sh_have_short"))}</span>`;
-  const cum = []; rows.reduce((a, r) => { cum.push(a + r.tomes); return a + r.tomes; }, 0);
-  const need = cum.length ? cum[cum.length - 1] : 0;
-  if (!need) return;
-  if (have >= need) { rows.forEach((r, i) => { if (r.tomes) set(i, ok); }); set("tot", ok); return; }
-  const price = (n) => packPagePlanPrice(o.priceKey, { "Glorious Tome": n }, { "Glorious Tome": have }).catch(() => null);
-  const tot = await price(need);
-  if (gen !== SH_PRICE_GEN || !m.isConnected) return;
-  set("tot", tot ? (tot.n ? `≈ ${esc(tot.text)} &#8250;` : ok) : "—");
-  let prev = { n: 0 };
-  for (let k = 0; k < rows.length; k++) {
-    if (!rows[k].tomes) continue;
-    const r = cum[k] === need ? tot : await price(cum[k]);
-    if (gen !== SH_PRICE_GEN || !m.isConnected) return;
-    if (!r || !prev) set(k, "—");
-    else if (!r.n) set(k, ok);
-    else set(k, esc(packFmtLocal(r.n - prev.n, r.currency, true, r.sample)));
-    prev = r;
-  }
 }
 // The gold row (Skin Gallery and Islands): picture stack of the targets, "N targets · date",
 // Tomes, price; the current event's shop list empty → the targets wait.
@@ -26872,6 +26703,7 @@ function shiningSkinsSheetHtml(sh) {
 const GALLERY_BIG_THUMB = new Set(["City Skin", "Teleport Skin", "Private Chat", "Rally"]);
 async function renderSkinGallery() {
   const seq = RENDER_SEQ;
+  SK_POP = null;
   const [ISLAND_CATEGORIES, , allSkinsRaw, galleryCats, shSt, shBp] = await Promise.all([
     ensureIslandCategories(),
     ensureGalleryUncounted(),
@@ -26914,7 +26746,7 @@ async function renderSkinGallery() {
         <div class="shx" id="shSkins"></div>
       </div>
     </div>
-    <div class="g1 isl-g1 sh-g1" id="shMkWrap" hidden><div class="t12x-card t12x-buy" id="shMkBuy"><div class="cg-sh-h"><b>${esc(t("pack_cost_title"))}</b>${closeXHtml("data-cgclose")}</div><div data-buybody id="shMkPacks"></div></div><div class="cg-bd" data-shbd hidden></div></div>
+    <div class="g1 isl-g1 sh-g1" id="shMkWrap" hidden><div class="t12x-card t12x-buy sh-win" id="shMkBuy"><div class="cg-sh-h"><b>${esc(t("sh_title"))}</b>${closeXHtml("data-cgclose")}</div><div id="shWinEv"></div><div class="sg-seg sht-seg" id="shWinTabs"></div><div data-buybody><div id="shWinSum"></div><div id="shMkPacks"></div></div><div id="shHist" hidden></div></div><div class="cg-bd" data-shbd hidden></div></div>
     ${galToolsHtml("skin", SKIN_FILTER, t("search_skins_placeholder"))}
     <div id="skinCatSwitcher" class="sg-cats"></div>
     <div id="skinSections"></div>
@@ -26932,63 +26764,104 @@ async function renderSkinGallery() {
   // Shining City part; remembered in calc_state bar_hidden ("top:skingallery").
   g1FoldSync(content);
 
-  // ---- Shining City skins: the shop list (owner), your targets not owned yet, their Tomes and price ----
+  // ---- Shining City skins: the shop list (owner, per event), your targets not owned yet, their Tomes and price ----
   const shTomeHave = () => shiningTomesIn(shBp);
   const shRows = () => shiningTargetRows(shSt, skins);
-  const shPriceLabel = () => (PACK_COST_SHOWN.shining_skins ? `\u2248 ${esc(PACK_COST_SHOWN.shining_skins)} &#8250;` : `${esc(t("pack_cost_title"))} &#8250;`);
+  const shPriceLabel = () => (PACK_COST_SHOWN.shining_skins ? `≈ ${esc(PACK_COST_SHOWN.shining_skins)} &#8250;` : `${esc(t("pack_cost_title"))} &#8250;`);
   PACK_COST_HOOKS.shining_skins = () => document.querySelectorAll("[data-shprice]").forEach((el) => { el.innerHTML = shPriceLabel(); });
   let shSig = null;
-  // The Pack cost card (design A) for the Tomes: worked out in the background so the
-  // price shows on the total line; on phones it opens as a window from that button.
+  // The window (design A, owner 19 Nov 2026): event line, then two tabs, Pack cost (the
+  // targets only) | History (past events and their skins, no prices). On phones it opens
+  // over the page from the gold row; on PC it sits under the stats card.
+  let shTab = "packs", shEvKey = null;
+  const shOpen = () => { const b = document.getElementById("shMkBuy"); return !!(b && b.classList.contains("cg-open")); };
   function shPackCard() {
     const host = document.getElementById("shMkPacks"), wrap = document.getElementById("shMkWrap");
     if (!host) return;
     const need = shRows().length * shiningTomesPer(), have = shTomeHave(), sig = `${need}|${have}`;
-    if (!need) { shSig = sig; host.innerHTML = ""; if (wrap) wrap.hidden = true; shPacksTo(false); packCostShown("shining_skins", null); return; }
+    shWinDraw();
+    if (!need) { shSig = sig; host.innerHTML = `<div class="meta sht-none">${esc(t("sh_win_none"))}</div>`; if (wrap && !shOpen()) wrap.hidden = true; packCostShown("shining_skins", null); return; }
     if (wrap) wrap.hidden = false;
-    if (sig === shSig && host.innerHTML) return;
+    if (sig === shSig && host.querySelector(".pc-card")) return;
     shSig = sig;
     PACK_COST_OPEN.shining_skins = true;
     renderPackCostBlock(host, "shining_skins", [{ label: null, totals: { "Glorious Tome": need } }], { "Glorious Tome": have });
   }
   function shPacksTo(open) {
-    const buy = document.getElementById("shMkBuy"), bd = document.querySelector("[data-shbd]");
+    const buy = document.getElementById("shMkBuy"), bd = document.querySelector("[data-shbd]"), wrap = document.getElementById("shMkWrap");
     if (!buy) return;
+    if (open && wrap) wrap.hidden = false;
     buy.classList.toggle("cg-open", !!open);
-    buy.dataset.cgshow = open ? "packs" : "";
+    buy.dataset.cgshow = open ? (shTab === "hist" ? "hist" : "packs") : "";
     if (bd) bd.hidden = !open;
     if (open) buy.scrollTop = 0;
+    if (!open && wrap && !shRows().length) wrap.hidden = true;
+  }
+  // Event line ("Shining City · on now · Nov 19 – 23"; the owner steps ‹ › through events and
+  // edits the shown event's shop list), the tabs, the targets' summary and History.
+  function shWinDraw() {
+    const evEl = document.getElementById("shWinEv"), tabs = document.getElementById("shWinTabs"), sum = document.getElementById("shWinSum"), hist = document.getElementById("shHist"), body = document.querySelector("#shMkBuy [data-buybody]");
+    if (!evEl) return;
+    const E = shiningEvents(), list = E.list;
+    if (!IS_OWNER || !shEvKey || !list.some((e) => e.key === shEvKey)) shEvKey = E.cur;
+    const ei = list.findIndex((e) => e.key === shEvKey), ev = ei >= 0 ? list[ei] : null;
+    const st = ev ? shiningEvState(ev, E.cur) : null;
+    const line = `<span class="shw-l"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" />${esc(t("isl_sc_name"))}${ev ? ` · <b class="${st.on ? "on" : ""}">${esc(st.txt)}</b> · ${esc(shiningEvLabel(ev))}` : ` · ${esc(t("sh_no_date"))}`}</span>`;
+    const step = (d, ok, lab) => `<button type="button" class="sht-evb" data-shev="${d}"${ok ? "" : " disabled"} aria-label="${esc(t(lab))}">${d < 0 ? "&#8249;" : "&#8250;"}</button>`;
+    evEl.innerHTML = IS_OWNER && ev ? `<div class="shw-ev">${step(-1, ei > 0, "sh_ev_prev")}${line}${step(1, ei < list.length - 1, "sh_ev_nextb")}</div><button type="button" class="sht-edit shw-edit" data-shedit>${esc(t("sh_edit_shop"))} <small>${esc(t("sh_edit_n").replace("{n}", shiningShopFor(shEvKey, "skins").length))}</small></button>` : `<div class="shw-ev">${line}</div>`;
+    tabs.innerHTML = [["packs", t("pack_cost_title")], ["hist", t("sh_tab_hist")]].map(([k, l]) => `<button type="button" data-shtab="${k}" class="${shTab === k ? "on" : ""}" aria-pressed="${shTab === k}">${esc(l)}</button>`).join("");
+    const rows = shRows(), per = shiningTomesPer();
+    sum.innerHTML = rows.length ? `<div class="shw-sum"><span class="stk">${rows.slice(0, 3).map((s) => `<span>${s.image_url ? `<img class="sk" src="${esc(s.image_url)}" alt="" />` : ""}</span>`).join("")}${rows.length > 3 ? `<span class="more">+${rows.length - 3}</span>` : ""}</span><span class="tx"><b>${esc(t(rows.length === 1 ? "sh_n1" : "sh_n").replace("{n}", rows.length))}</b> · ${esc(t("sh_tomes").replace("{n}", (rows.length * per).toLocaleString()))} · ${esc(t("sh_have_n").replace("{n}", Math.round(shTomeHave()).toLocaleString()))}</span></div>` : "";
+    // History: past events with a skins list, newest first; ✓ on the skins you own now. No prices.
+    const today = packStartOfToday();
+    const past = list.filter((e) => e.end < today).reverse().map((e) => ({ e, items: shiningPicked(shiningShopFor(e.key, "skins"), skins) })).filter((x) => x.items.length);
+    const img = (s) => (s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" />` : "");
+    hist.innerHTML = `<div class="meta sh-pick-d">${esc(t("sh_hist_desc"))}</div>${past.length ? past.map((x) => {
+      const own = x.items.filter((s) => s.owned).length;
+      return `<details class="sht-h"><summary><span class="sht-stk">${x.items.slice(0, 3).map((s) => `<span>${img(s)}</span>`).join("")}${x.items.length > 3 ? `<span class="more">+${x.items.length - 3}</span>` : ""}</span><span class="sht-htx"><b>${esc(shiningEvLabel(x.e))}</b><em>${esc(t(x.items.length === 1 ? "sh_h_n1" : "sh_h_n").replace("{n}", x.items.length))}${own ? ` · ${esc(t("sh_h_own").replace("{n}", own))}` : ""}</em></span><span class="ch" aria-hidden="true">&#8250;</span></summary>
+        <div class="sht-hg">${x.items.map((s) => `<div class="sht-hi${s.owned ? " own" : ""}" title="${esc(s.name)}">${img(s)}<span>${s.owned ? "✓ " : ""}${esc(s.name)}</span></div>`).join("")}</div></details>`;
+    }).join("") : `<div class="meta sht-none">${esc(t("sh_hist_none"))}</div>`}`;
+    hist.hidden = shTab !== "hist";
+    if (body) body.hidden = shTab === "hist";
+    const buy = document.getElementById("shMkBuy");
+    if (buy && buy.classList.contains("cg-open")) buy.dataset.cgshow = shTab === "hist" ? "hist" : "packs";
   }
   {
     const w = document.getElementById("shMkWrap");
-    if (w) w.onclick = (e) => { if (e.target.closest("[data-cgclose]") || e.target.closest("[data-shbd]")) shPacksTo(false); };
+    if (w) w.onclick = (e) => {
+      if (e.target.closest("[data-cgclose]") || e.target.closest("[data-shbd]")) { shPacksTo(false); return; }
+      const tb = e.target.closest("[data-shtab]");
+      if (tb) { shTab = tb.dataset.shtab; shWinDraw(); return; }
+      const sv = e.target.closest("[data-shev]");
+      if (sv) { const E = shiningEvents(), i = E.list.findIndex((x) => x.key === shEvKey), n = E.list[i + Number(sv.dataset.shev)]; if (n) shEvKey = n.key; shWinDraw(); return; }
+      if (e.target.closest("[data-shedit]")) {
+        const key = shEvKey, ev = shiningEvents().list.find((x) => x.key === key);
+        shiningEditSheet({ title: ev ? `${t("sh_edit_title")} · ${shiningEvLabel(ev)}` : t("sh_edit_title"), desc: t("sh_edit_desc").replace("{n}", shiningTomesPer().toLocaleString()),
+          rows: skins.filter((s) => s.category === SHINING_SKIN_CAT && shiningPickable(s.name)).map((s) => ({ name: s.name, img: s.image_url || "" })), sel: shiningShopFor(key, "skins"),
+          onSave: (out) => { shiningSaveShop(key, "skins", out, () => { if (document.getElementById("shSkins")) computeAndRender(); }); computeAndRender(); } });
+      }
+    };
+  }
+  function shOpenWin() {
+    if (window.matchMedia("(max-width: 900px)").matches) { shPackCard(); shPacksTo(true); }
+    else { const w = document.getElementById("shMkWrap"); if (w) w.hidden = false; shWinDraw(); const c = document.getElementById("shMkBuy"); if (c) c.scrollIntoView({ behavior: "smooth", block: "start" }); }
   }
   function drawShining() {
     const box = document.getElementById("shSkins");
     if (!box) return;
     const rows = shRows(), per = shiningTomesPer(), need = rows.length * per;
-    // One gold-edged row; tap = the sheet, price = Pack cost. No targets: a slim row.
+    // One gold-edged row; tap = the window (Pack cost | History). No targets: a slim row.
     const have = shTomeHave();
     const price = !rows.length ? "" : have >= need ? `<span class="shb ok">${esc(t("sh_have"))}</span>` : `<button type="button" class="shb" data-shpc data-shprice>${shPriceLabel()}</button>`;
     box.innerHTML = shiningRowHtml2({ kind: "skins", rows: rows.map((s) => ({ name: s.name, img: s.image_url || "", tomes: per })), price });
     shPackCard();
   }
-  document.getElementById("shSkins").onclick = (e) => {
-    if (e.target.closest("[data-shpc]")) {
-      if (window.matchMedia("(max-width: 900px)").matches) shPacksTo(true);
-      else { const c = document.getElementById("shMkBuy"); if (c) c.scrollIntoView({ behavior: "smooth", block: "start" }); }
-      return;
-    }
-    if (e.target.closest("[data-shpick]")) shSheet();
-  };
+  document.getElementById("shSkins").onclick = (e) => { if (e.target.closest("[data-shpc]") || e.target.closest("[data-shpick]")) shOpenWin(); };
   document.getElementById("shSkins").onkeydown = (e) => {
-    if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-shpick]")) { e.preventDefault(); shSheet(); }
+    if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-shpick]")) { e.preventDefault(); shOpenWin(); }
   };
   // The Shining City Pack's dates come with the pack list (loaded once, then redrawn).
   if (!ISL_PACKS) islLoadPacks().then(() => { if (seq === RENDER_SEQ) drawShining(); });
-  // Row tap: the Shining City sheet (design C + events): In the shop (each event's list,
-  // set by the owner; tap to target), My targets (buying order, each target's Tomes and
-  // price), History (past events).
   function shTargetsSave(names) {
     const list = [...new Set(names.map(String))];
     shSt.tg = { ...(shSt.tg || {}), list };
@@ -26996,23 +26869,58 @@ async function renderSkinGallery() {
     saveCalcState("shining_targets", shSt.tg);
     computeAndRender();
   }
-  function shOpenPackCost() {
-    if (window.matchMedia("(max-width: 900px)").matches) shPacksTo(true);
-    else { const c = document.getElementById("shMkBuy"); if (c) c.scrollIntoView({ behavior: "smooth", block: "start" }); }
+  // City Skins (owner, 19 Nov 2026): a tap opens a small pop-up next to the skin with an
+  // "Owned" switch (the same save and Undo note as one tap) and a "Shining City" switch
+  // (this skin is your Shining City target). Other categories keep one tap = owned.
+  function skinPopOpen(id) {
+    if (SK_POP) { const same = SK_POP.id === String(id); SK_POP.close(); if (same) return; }
+    const sections = document.getElementById("skinSections"), tileOf = () => sections && sections.querySelector(`[data-skin="${window.CSS.escape(String(id))}"]`);
+    const s = skins.find((x) => String(x.id) === String(id));
+    if (!tileOf() || !s) return;
+    const pop = document.createElement("div");
+    pop.className = "sg-pop sk-pop";
+    pop.setAttribute("role", "dialog");
+    pop.setAttribute("aria-label", s.name);
+    let gen = 0;
+    const isTg = () => !s.owned && shRows().some((x) => String(x.id) === String(s.id));
+    const draw = () => {
+      const per = shiningTomesPer(), tg = isTg(), bonus = skinBonusText(s);
+      pop.innerHTML = `<span class="sg-pop-ar"></span><div class="skp-h">${s.image_url ? `<img src="${esc(s.image_url)}" alt="" />` : ""}<span class="skp-t"><b>${esc(s.name)}</b><small>${esc(s.category)}</small>${bonus ? `<em>${esc(bonus)}</em>` : ""}</span>${closeXHtml("data-skpx")}</div>
+        <label class="skp-r"><span class="skp-i ok" aria-hidden="true">&#10003;</span><span class="skp-tx"><b>${esc(t("skp_owned"))}</b><small>${esc(t(s.owned ? "skp_owned_on" : "skp_owned_off"))}</small></span><input type="checkbox" class="bset-sw" data-skpown${s.owned ? " checked" : ""} /></label>
+        <label class="skp-r${s.owned ? " off" : ""}"><span class="skp-i" aria-hidden="true"><img src="icons/glorious-tome.png" alt="" /></span><span class="skp-tx"><b>${esc(t("isl_sc_name"))}</b><small data-skpsub>${esc(s.owned ? t("skp_sh_owned") : tg ? t("skp_sh_on").replace("{n}", per.toLocaleString()).replace("{p}", "…") : t("skp_sh_off").replace("{n}", per.toLocaleString()))}</small></span><input type="checkbox" class="bset-sw" data-skpsh${tg ? " checked" : ""}${s.owned ? " disabled" : ""} /></label>`;
+      if (tg) {
+        const g = ++gen, n = shRows().length, have = { "Glorious Tome": shTomeHave() };
+        Promise.all([packPagePlanPrice("shining_skins", { "Glorious Tome": n * per }, have), packPagePlanPrice("shining_skins", { "Glorious Tome": (n - 1) * per }, have)]).catch(() => [null, null]).then(([a, b]) => {
+          if (g !== gen || !pop.isConnected) return;
+          const el = pop.querySelector("[data-skpsub]");
+          if (!el) return;
+          const more = a && b ? (a.n || 0) - (b.n || 0) : null;
+          el.textContent = more == null ? t("skp_sh_on").replace("{n}", per.toLocaleString()).replace("{p}", "—") : !a.n ? t("skp_sh_have") : t("skp_sh_on").replace("{n}", per.toLocaleString()).replace("{p}", packFmtLocal(more, a.currency, true, a.sample));
+        });
+      }
+    };
+    const place = () => {
+      const tileEl = tileOf();
+      if (!pop.isConnected || !tileEl) return;
+      pop.style.width = `${Math.min(330, sections.getBoundingClientRect().width)}px`;
+      tileEl.classList.add("sel");
+      placePop(pop, tileEl, { align: "center", gap: 8, away: () => { if (SK_POP && SK_POP.id === String(s.id)) SK_POP.close(); }, onPlace: ({ up, left, width }) => {
+        pop.classList.toggle("up", up);
+        const tr = tileEl.getBoundingClientRect();
+        pop.querySelector(".sg-pop-ar").style.left = `${Math.max(10, Math.min(width - 24, tr.left + tr.width / 2 - left - 7))}px`;
+      } });
+    };
+    pop.onclick = (e) => { if (e.target.closest("[data-skpx]")) SK_POP.close(); };
+    pop.onchange = (e) => {
+      if (e.target.matches("[data-skpown]")) toggleSkin(s.id);
+      else if (e.target.matches("[data-skpsh]")) { const names = shRows().map((x) => x.name); shTargetsSave(e.target.checked ? [...names, s.name] : names.filter((x) => x !== s.name)); }
+      else return;
+    };
+    content.appendChild(pop);
+    SK_POP = { id: String(s.id), place, refresh: () => { draw(); place(); }, close: () => { gen++; popForget(pop); pop.remove(); const te = tileOf(); if (te) te.classList.remove("sel"); if (SK_POP && SK_POP.id === String(s.id)) SK_POP = null; } };
+    draw();
+    place();
   }
-  const shCfg = {
-    kind: "skins", priceKey: "shining_skins",
-    shop: (key) => shiningPicked(shiningShopFor(key, "skins"), skins).map((s) => ({ name: s.name, img: s.image_url || "", state: s.owned ? "owned" : null })),
-    editRows: () => skins.filter((s) => s.category === SHINING_SKIN_CAT && shiningPickable(s.name)).map((s) => ({ name: s.name, img: s.image_url || "" })),
-    targets: () => shRows().map((s) => ({ name: s.name, img: s.image_url || "", tomes: shiningTomesPer() })),
-    toggle: (n) => { const names = shRows().map((s) => s.name); shTargetsSave(names.includes(n) ? names.filter((x) => x !== n) : [...names, n]); },
-    drop: (n) => shTargetsSave(shRows().map((s) => s.name).filter((x) => x !== n)),
-    reorder: (names) => shTargetsSave(names),
-    have: () => shTomeHave(),
-    onTotal: () => shOpenPackCost(),
-    changed: () => { if (document.getElementById("shSkins")) computeAndRender(); },
-  };
-  function shSheet(tab) { shiningSheet(shCfg, tab); }
 
   if (SKIN_FILTER.category === "all" || !categories.includes(SKIN_FILTER.category)) {
     SKIN_FILTER.category = categories[0] || "all";
@@ -27134,6 +27042,11 @@ async function renderSkinGallery() {
       toast("Couldn't update skin", true);
     });
   }
+  // City Skins open the pop-up (Owned + Shining City); every other category: one tap = owned.
+  function skinTap(id) {
+    const s = skins.find((x) => String(x.id) === String(id));
+    if (s && s.category === SHINING_SKIN_CAT) skinPopOpen(id); else toggleSkin(id);
+  }
   function toggleSkin(id) {
     const skin = skins.find((s) => String(s.id) === String(id));
     if (!skin) return;
@@ -27245,7 +27158,8 @@ async function renderSkinGallery() {
       pwExtra: shPickedIds.has(String(s.id)) ? `<span class="isl-mkc" title="${esc(t("sh_mk_target"))}"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span>`
         : shShopIds.has(String(s.id)) ? `<span class="isl-mkc sh-shop" title="${esc(t("sh_mk_shop"))}"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span>` : "",
     });
-    sections.innerHTML = galGridHtml({
+    const shKey = SKIN_FILTER.category === SHINING_SKIN_CAT ? `<div class="sh-key"><span><span class="isl-mkc"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span>${esc(t("sh_key_target"))}</span><span><span class="isl-mkc sh-shop"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span>${esc(t("sh_key_shop"))}</span></div>` : "";
+    sections.innerHTML = shKey + galGridHtml({
       counted: filtered.filter((s) => !GALLERY_UNCOUNTED.has(String(s.id))),
       uncounted: filtered.filter((s) => GALLERY_UNCOUNTED.has(String(s.id))),
       all: GAL_MORE.has(moreKey) || !!SKIN_FILTER.search, tile, cat: SKIN_FILTER.category, ncDesc: t("sg_nc_desc"),
@@ -27257,17 +27171,24 @@ async function renderSkinGallery() {
     sections.onclick = (e) => {
       if (e.target.closest("[data-galmore]")) { GAL_MORE.add(moreKey); computeAndRender(); return; }
       const el = e.target.closest("[data-skin]");
-      if (el && !e.target.closest("[data-move]")) toggleSkin(el.dataset.skin);
+      if (el && !e.target.closest("[data-move]")) skinTap(el.dataset.skin);
     };
     sections.onkeydown = (e) => {
-      if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-skin]")) { e.preventDefault(); toggleSkin(e.target.dataset.skin); }
+      if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-skin]")) { e.preventDefault(); skinTap(e.target.dataset.skin); }
     };
+    if (SK_POP) SK_POP.refresh();
   }
 
   wireGalTools("skin", SKIN_FILTER, computeAndRender);
   computeAndRender();
 }
 
+// The open City Skin pop-up on Skin Gallery: { id, close(), place() } or null.
+let SK_POP = null;
+document.addEventListener("pointerdown", (e) => {
+  if (SK_POP && e.target.closest && !e.target.closest(".sk-pop, [data-skin]")) SK_POP.close();
+}, true);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && SK_POP) { e.stopImmediatePropagation(); SK_POP.close(); } }, true);
 let ISLAND_FILTER = { search: "", bonusType: "all", ownedFilter: "all" };
 // The open island level pop-up: { id, close(noRedraw), place() } or null.
 let ISL_POP = null;
