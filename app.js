@@ -2194,6 +2194,9 @@ const T = {
   rl_auto_sub: { en: "auto · from Upcoming" },
   vup_see: { en: "Visitors see upcoming" },
   vup_new: { en: "NEW" },
+  vup_in_game: { en: "in game" },
+  vis_experts_up_desc: { en: "Experts you switch Upcoming carry the Upcoming badge and aren't counted until people tick them; while \"Visitors see upcoming\" is off, visitors don't see them at all." },
+  vis_pets_up_desc: { en: "Pets you switch Upcoming carry the Upcoming badge and aren't counted until people tick them; while \"Visitors see upcoming\" is off, visitors don't see them at all." },
   vup_new_levels: { en: "{n} levels · new" },
   vup_phase: { en: "Phase {n}" },
   vup_sheet_sub: { en: "{n} levels · tap a level to split after it" },
@@ -2221,8 +2224,8 @@ const T = {
   vup_ch_desc: { en: "Each level is one group ending at the level itself (Lv 17 = 16.1 … 17). Upcoming groups stay pickable for you, tagged Upcoming; Max stops before them. Switching one on makes a State Timeline stop." },
   vup_hg_desc: { en: "Mastery 1 – 20, Enhancement 0 – 100 and red gear (Mithril) 101 – 200 are one group each; later levels come in groups of 10. Switching one on makes a State Timeline stop." },
   rl_set_day: { en: "set day" },
-  up_auto_note: { en: "Hidden from visitors until you show it (Admin → Visibility). A State Timeline stop was made: set its day in Rules → Unlocks by state age." },
-  up_auto_saved: { en: "Saved · hidden from visitors · State Timeline stop made (day not set)" },
+  up_auto_note: { en: "Upcoming ones are hidden from visitors while \"Visitors see upcoming\" is off (Admin → Visibility). Turning one on makes a State Timeline stop: set its day in Rules → Unlocks by state age." },
+  up_auto_saved: { en: "Saved · upcoming · State Timeline stop made (day not set)" },
   admpl_reorder: { en: "Reorder" },
   admpl_list: { en: "List" },
   admpl_was: { en: "was {v}" },
@@ -30033,7 +30036,7 @@ let PETS_UNLOCKED = null; // { "Cave Hyena": true/false, ... } - shared between 
 // Visitors never see a hidden card and it never counts in their totals.
 let UI_HIDDEN = null; // { "experts:Justus": true, ... }
 let UI_HIDDEN_FAILED = false; // the last load failed: the next call loads again
-const UI_HIDDEN_DEFAULTS = { "page:statetimeline": true, "upcoming:chief_gear": true, "upcoming:charm": true, "upcoming:hero_gear": true };
+const UI_HIDDEN_DEFAULTS = { "page:statetimeline": true, "upcoming:chief_gear": true, "upcoming:charm": true, "upcoming:hero_gear": true, "upcoming:experts": true, "upcoming:pets": true };
 let UI_HIDDEN_LOADING = null; // callers at the same time share one load
 function ensureUiVisibility() {
   if (UI_HIDDEN && !UI_HIDDEN_FAILED) return Promise.resolve(UI_HIDDEN);
@@ -30361,7 +30364,14 @@ function packCustomResource(name) {
   const lower = String(name || "").toLowerCase();
   return packResourceConfig().custom.find((x) => String(x.name).toLowerCase() === lower) || null;
 }
-function isHiddenFromVisitors(kind, name) { const k = `${kind}:${name}`; return !!(UI_HIDDEN ? UI_HIDDEN[k] : UI_HIDDEN_DEFAULTS[k]); }
+function isHiddenFromVisitors(kind, name) {
+  const k = `${kind}:${name}`;
+  if (UI_HIDDEN ? UI_HIDDEN[k] : UI_HIDDEN_DEFAULTS[k]) return true;
+  // An upcoming expert / pet is hidden while its section's "Visitors see
+  // upcoming" (Admin → Visibility, "upcoming:experts" / "upcoming:pets") is off.
+  if ((kind === "experts" && EXPERT_UPCOMING_GLOBAL[name]) || (kind === "pets" && petIsUpcoming(name))) return isHiddenFromVisitors("upcoming", kind);
+  return false;
+}
 function hiddenForVisitor(kind, name) { return !IS_OWNER && isHiddenFromVisitors(kind, name); }
 async function setHiddenFromVisitors(kind, name, hidden) {
   await sb(`ui_visibility`, { method: "POST", prefer: "resolution=merge-duplicates,return=representation", body: JSON.stringify({ key: `${kind}:${name}`, hidden: !!hidden, label: name, updated_at: new Date().toISOString() }) });
@@ -33655,7 +33665,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=f355028958";
+      s.src = "admin.min.js?v=ef7f21f0c5";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }

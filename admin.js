@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "f355028958";
+window.ADMIN_BUILD = "ef7f21f0c5";
 
 // ============================================================
 // ADMIN PAGE
@@ -1980,7 +1980,7 @@ async function vupSavePhaseEnds(ends) {
   if (Object.keys(clean).length) cur.ends = clean; else delete cur.ends;
   await saveSiteConfig("upcoming_phases", cur);
 }
-const VUP_PIC = { chief_gear: "icons/quick/chief-gear.png", charm: "icons/charms/charm-infantry-16.webp", hero_gear: "icons/quick/hero-gear.png" };
+const VUP_PIC = { chief_gear: "icons/quick/chief-gear.png", charm: "icons/charms/charm-infantry-16.webp", hero_gear: "icons/quick/hero-gear.png", experts: "icons/quick/experts.png", pets: "icons/quick/pets.png" };
 // The level groups of the three parts. A group always ENDS at the level itself;
 // the stages after a level belong to the next group (owner, 19 Nov 2026):
 // Chief Gear "Red T7" = T6 ★3.1 … T7 ★3; Charm "Lv 17" = 16.1 … 17; Heroes
@@ -2083,21 +2083,22 @@ function vupFoldHtml(pt, row) {
       ${rowsHtml}
     </details>`;
 }
-// Experts / Pets fold: an Upcoming switch next to each one's visitor switch.
+// Experts / Pets fold: the same design as the level parts — "Visitors see
+// upcoming" ("upcoming:experts" / "upcoming:pets") on top, one Upcoming switch
+// per expert / pet (an own saved hide row still hides it, without a switch here).
 function vupWholeFold(kind, title, desc, list, isUp, pic, row) {
-  const nUp = list.filter(isUp).length, nHid = list.filter((n) => isHiddenFromVisitors(kind, n)).length;
+  const nUp = list.filter(isUp).length;
   const rowsHtml = list.map((n) => {
-    const up = isUp(n), p = pic(n), d = stateUnlockDay(kind, n);
-    return `<div class="vup-w${up ? " on" : ""}">${row(kind, n, dataName(n), "", {
-      pic: p ? `<img class="vup-pic" src="${esc(p)}" alt="" loading="lazy" />` : `<span class="vup-pic vup-l">${esc(String(n)[0])}</span>`,
-      label: `<b class="vup-wn">${esc(dataName(n))}</b>${up ? ` <em class="vup-tag">${esc(t("upcoming_col"))}</em>` : ""}<small class="vup-ws">${esc(d != null ? t("vup_day").replace("{d}", d.toLocaleString()) : up ? t("vup_day_unset") : "")}</small>`,
-      sw: `<input type="checkbox" class="bset-sw vup-sw" data-vupw="${esc(kind)}|${esc(n)}" ${up ? "checked" : ""} aria-label="${esc(t("upcoming_col"))}" />`,
-    })}</div>`;
+    const up = isUp(n), p = pic(n), d = stateUnlockDay(kind, n), u = admAutoUnlock(`${kind}:${n}`);
+    const day = up && (u || d == null) ? `<button type="button" class="vup-day" data-vupday>📅 ${esc(d != null ? t("vup_day").replace("{d}", d.toLocaleString()) : t("vup_day_unset"))} &#8250;</button>` : "";
+    const sub = d != null ? t("vup_day").replace("{d}", d.toLocaleString()) : up ? "" : t("vup_in_game");
+    return `<div class="vup-r${up ? " on" : ""}">${p ? `<img class="vup-pic" src="${esc(p)}" alt="" loading="lazy" />` : `<span class="vup-pic vup-l">${esc(String(n)[0])}</span>`}<span class="vup-t"><b>${esc(dataName(n))}${up ? ` <em class="vup-tag">${esc(t("upcoming_col"))}</em>` : ""}</b>${sub && !day ? `<small>${esc(sub)}</small>` : ""}${day}</span><input type="checkbox" class="bset-sw vup-sw" data-vupw="${esc(kind)}|${esc(n)}" ${up ? "checked" : ""} aria-label="${esc(t("upcoming_col"))}" /></div>`;
   }).join("");
   return `<details class="panel adm-visfold" data-visfold="w:${kind}" style="margin-bottom:12px;">
-      <summary><h2 style="margin:0;">${esc(title)}</h2><span class="meta adm-viscount">${nUp ? `<b class="vup-n">${esc(t("vup_n").replace("{n}", nUp))}</b> · ` : ""}${esc(t("admh_n_hidden").replace("{n}", nHid))} · ${list.length}</span><i aria-hidden="true">&#9662;</i></summary>
+      <summary><img class="vup-hpic" src="${esc(VUP_PIC[kind])}" alt="" /><h2 style="margin:0;">${esc(title)}</h2><span class="meta adm-viscount">${nUp ? `<b class="vup-n">${esc(t("vup_n").replace("{n}", nUp))}</b>` : esc(t("vup_n").replace("{n}", 0))} · ${list.length}</span><i aria-hidden="true">&#9662;</i></summary>
       <p class="desc" style="margin:0 0 8px;">${esc(desc)}</p>
-      <div class="vup-h"><span></span><span>${esc(t("vup_cols"))}</span></div>
+      <div class="vup-see">${row("upcoming", kind, t("vup_see"), t("vup_see_sub"))}</div>
+      <div class="vup-h"><span>${esc(title)}</span><span>${esc(t("upcoming_col"))}</span></div>
       ${rowsHtml || `<div class="meta">—</div>`}
     </details>`;
 }
@@ -2212,8 +2213,8 @@ async function renderAdminVisibility(body) {
     ].join(""))}
     ${parts.map((pt) => vupFoldHtml(pt, row)).join("")}
     ${section(t("vis_pages"), t("vis_pages_desc"), pages.map((p) => row("page", p.tab, p.label, p.group)).join(""), pages.map((p) => ["page", p.tab]))}
-    ${vupWholeFold("experts", t("vis_experts"), t("vis_experts_desc"), experts, (e) => !!EXPERT_UPCOMING_GLOBAL[e], (e) => (EXPERTS_LIST || []).find((x) => x.key === e)?.img || "", row)}
-    ${vupWholeFold("pets", t("vis_pets"), t("vis_pets_desc"), pets, (p) => petIsUpcoming(p), (p) => petImage(p) || "", row)}`;
+    ${vupWholeFold("experts", t("vis_experts"), t("vis_experts_up_desc"), experts, (e) => !!EXPERT_UPCOMING_GLOBAL[e], (e) => (EXPERTS_LIST || []).find((x) => x.key === e)?.img || "", row)}
+    ${vupWholeFold("pets", t("vis_pets"), t("vis_pets_up_desc"), pets, (p) => petIsUpcoming(p), (p) => petImage(p) || "", row)}`;
   // Folds stay open across redraws (switching something redraws the screen).
   body.querySelectorAll("details.adm-visfold").forEach((d, i) => {
     const k = d.dataset.visfold || "f" + i;
@@ -3245,7 +3246,6 @@ async function admWholeUpcoming(kind, name, on) {
   const rows = admUnlockRows(), before = JSON.stringify(rows), id = `${kind}:${name}`;
   if (on) {
     if (!rows.some((u) => u.auto === id || (u.kind === kind && stateKeyNorm(u.name) === stateKeyNorm(name)))) rows.push({ label: name, kind, name, tab: "", table: "", level: "", day: "", auto: id });
-    await setHiddenFromVisitors(kind, name, true);
   } else {
     const i = rows.findIndex((u) => u.auto === id && (u.day === "" || u.day == null));
     if (i >= 0) rows.splice(i, 1);
