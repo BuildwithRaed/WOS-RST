@@ -25017,7 +25017,8 @@ function updateCharmCurrentStats() {
 // ============================================================
 // CHIEF GEAR CALCULATOR
 // 6 gear pieces (2 per troop type), each progressing through the
-// 150-row Tier/Star/Stage table (Common -> Legendary T6). Each
+// Tier/Star/Stage table (Common -> Legendary T6, then T7 / T8 as Upcoming
+// rows until the game releases them). Each
 // piece boosts both Attack and Defense together for its troop type.
 // ============================================================
 const CHIEF_GEAR_PIECES = [
@@ -25032,7 +25033,7 @@ const CHIEF_GEAR_STATE = {};
 CHIEF_GEAR_PIECES.forEach((p) => (CHIEF_GEAR_STATE[p.key] = { from: 0, to: null }));
 let CHIEF_GEAR_ROWS = null;
 
-// Lazily fetches and caches the 150-row Chief Gear progression.
+// Lazily fetches and caches the Chief Gear progression rows.
 async function loadChiefGearRows() {
   const setBonusPromise = ensureChiefGearSetBonusData();
   if (CHIEF_GEAR_ROWS) { await setBonusPromise; return CHIEF_GEAR_ROWS; }
@@ -25071,7 +25072,7 @@ const CHIEF_GEAR_ICONS = {
   cane: "icons/chief-gear-cane-gold.webp",
 };
 // Each piece shows the game's picture for its tier: the look changes at Uncommon (green), Rare, Epic, Mythic,
-// Legendary (red, also T1 – T3), Legendary T4, T5 and T6.
+// Legendary (red, also T1 – T3), Legendary T4, T5, T6, T7 and T8.
 function chiefGearLook(tier) {
   const t = String(tier || ""), m = /^legendary(?:\s*t(\d+))?/i.exec(t);
   if (m) { const n = Number(m[1] || 0); return n >= 8 ? "t8" : n === 7 ? "t7" : n >= 6 ? "t6" : n === 5 ? "t5" : n === 4 ? "t4" : "legendary"; }
