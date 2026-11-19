@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "bbd167b783";
+window.ADMIN_BUILD = "1b4623792a";
 
 // ============================================================
 // ADMIN PAGE
@@ -3425,7 +3425,10 @@ function openAdmSheet(o) {
   });
   const del = m.querySelector("[data-admsdel]");
   if (del) del.addEventListener("click", async () => { if (!confirm(o.deleteText || "Delete this item?")) return; try { await o.onDelete(); close(); } catch (err) { toast(err.message || "Couldn't delete", true); } });
-  const first = m.querySelector("input[type=text], input[type=number]"); if (first && !o.noFocus) setTimeout(() => first.focus(), 50);
+  // The first box gets the cursor on PC only: on phones / touch screens that would open the
+  // keyboard over the sheet (owner, 19 Nov 2026), so they open with no box focused.
+  const touchy = window.matchMedia("(max-width: 900px), (pointer: coarse)").matches;
+  const first = m.querySelector("input[type=text], input[type=number]"); if (first && !o.noFocus && !touchy) setTimeout(() => first.focus(), 50);
 }
 
 // Bonus stat words (owner, 7 Nov 2026): the plain "Attack" / "Defense" /
