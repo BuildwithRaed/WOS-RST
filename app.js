@@ -2068,6 +2068,7 @@ const T = {
   sh_h_unset: { en: "shop list not set yet" },
   sh_hist_none: { en: "No past events with a shop list yet." },
   sh_mk_target: { en: "Shining City \u00b7 your target" },
+  sh_mk_shop: { en: "In this Shining City event's shop" },
   sh_shop_unset: { en: "shop for this event isn't set" },
   sh_wait_row: { en: "Waiting for an event with them" },
   sh_win_none: { en: "No Shining City targets yet \u00b7 tap a City Skin and switch Shining City on." },
@@ -27142,11 +27143,14 @@ async function renderSkinGallery() {
     }
     const moreKey = `skin|${SKIN_FILTER.category}`;
     const shPickedIds = new Set(shRows().map((x) => String(x.id)));
+    const shShopIds = new Set(shiningPicked(shiningShopFor(shiningCurKey(), "skins"), skins).map((x) => String(x.id)));
     const tile = (s, down) => galTileHtml({
       id: s.id, attr: "data-skin", cls: s.owned ? "yes" : "no", img: s.image_url, name: s.name,
       big: GALLERY_BIG_THUMB.has(s.category), down, tick: false, pressed: !!s.owned,
-      // Shining City: a tome on the picture of your targets.
-      pwExtra: shPickedIds.has(String(s.id)) ? `<span class="isl-mkc" title="${esc(t("sh_mk_target"))}"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span>` : "",
+      // Shining City: a tome on every skin in this event's shop (and on your targets);
+      // your targets also get a small 🎯 beside it.
+      pwExtra: shPickedIds.has(String(s.id)) ? `<span class="isl-mkc sh-tg" title="${esc(t("sh_mk_target"))}"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span><span class="sh-tgi" aria-hidden="true">\ud83c\udfaf</span>`
+        : shShopIds.has(String(s.id)) ? `<span class="isl-mkc" title="${esc(t("sh_mk_shop"))}"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span>` : "",
     });
     sections.innerHTML = galGridHtml({
       counted: filtered.filter((s) => !GALLERY_UNCOUNTED.has(String(s.id))),
