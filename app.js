@@ -2062,10 +2062,11 @@ const T = {
   sh_tab_hist: { en: "History" },
   sh_h_n: { en: "{n} skins" },
   sh_h_n1: { en: "1 skin" },
-  sh_hist_desc: { en: "Past events, newest first. Tap one to see its whole shop." },
+  sh_hist_desc: { en: "This event, then past events, newest first. Tap one to see its whole shop." },
+  sh_h_next: { en: "next" },
+  sh_h_unset: { en: "shop list not set yet" },
   sh_hist_none: { en: "No past events with a shop list yet." },
   sh_mk_target: { en: "Shining City \u00b7 your target" },
-  sh_mk_shop: { en: "In this Shining City event's shop" },
   sh_shop_unset: { en: "shop for this event isn't set" },
   sh_wait_row: { en: "Waiting for an event with them" },
   sh_win_none: { en: "No Shining City targets yet \u00b7 tap a City Skin and switch Shining City on." },
@@ -2079,8 +2080,6 @@ const T = {
   skp_sh_on: { en: "+{n} Tomes \u00b7 \u2248 {p} more" },
   skp_sh_off: { en: "Buy it in the event \u00b7 {n} Tomes" },
   skp_sh_have: { en: "Your Backpack covers it" },
-  sh_key_target: { en: "Shining City target" },
-  sh_key_shop: { en: "In this event's shop" },
   sh_none: { en: "No skins picked \u00b7 tap \u201c+ pick skins\u201d on the Skin Gallery page" },
   isl_wb_title: { en: "Where to buy copies" },
   isl_wb_mark: { en: "Mark of Revival shop" },
@@ -26814,11 +26813,14 @@ async function renderSkinGallery() {
     sum.innerHTML = rows.length ? `<div class="shw-sum"><span class="stk">${rows.slice(0, 3).map((s) => `<span>${s.image_url ? `<img class="sk" src="${esc(s.image_url)}" alt="" />` : ""}</span>`).join("")}${rows.length > 3 ? `<span class="more">+${rows.length - 3}</span>` : ""}</span><span class="tx"><b>${esc(t(rows.length === 1 ? "sh_n1" : "sh_n").replace("{n}", rows.length))}</b> · ${esc(t("sh_tomes").replace("{n}", (rows.length * per).toLocaleString()))} · ${esc(t("sh_have_n").replace("{n}", Math.round(shTomeHave()).toLocaleString()))}</span></div>` : "";
     // History: past events with a skins list, newest first; ✓ on the skins you own now. No prices.
     const today = packStartOfToday();
-    const past = list.filter((e) => e.end < today).reverse().map((e) => ({ e, items: shiningPicked(shiningShopFor(e.key, "skins"), skins) })).filter((x) => x.items.length);
+    const cur = list.find((e) => e.key === E.cur);
+    const past = [...(cur ? [{ e: cur, cur: true, items: shiningPicked(shiningShopFor(cur.key, "skins"), skins) }] : []),
+      ...list.filter((e) => e.end < today).reverse().map((e) => ({ e, items: shiningPicked(shiningShopFor(e.key, "skins"), skins) })).filter((x) => x.items.length)];
     const img = (s) => (s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" />` : "");
     hist.innerHTML = `<div class="meta sh-pick-d">${esc(t("sh_hist_desc"))}</div>${past.length ? past.map((x) => {
       const own = x.items.filter((s) => s.owned).length;
-      return `<details class="sht-h"><summary><span class="sht-stk">${x.items.slice(0, 3).map((s) => `<span>${img(s)}</span>`).join("")}${x.items.length > 3 ? `<span class="more">+${x.items.length - 3}</span>` : ""}</span><span class="sht-htx"><b>${esc(shiningEvLabel(x.e))}</b><em>${esc(t(x.items.length === 1 ? "sh_h_n1" : "sh_h_n").replace("{n}", x.items.length))}${own ? ` · ${esc(t("sh_h_own").replace("{n}", own))}` : ""}</em></span><span class="ch" aria-hidden="true">&#8250;</span></summary>
+      const tag = x.cur ? ` <span class="sht-now${shiningEvState(x.e, E.cur).on ? " on" : ""}">${esc(t(shiningEvState(x.e, E.cur).on ? "sh_on_now" : "sh_h_next"))}</span>` : "";
+      return `<details class="sht-h${x.cur ? " cur" : ""}"${x.cur ? " open" : ""}><summary><span class="sht-stk">${x.items.slice(0, 3).map((s) => `<span>${img(s)}</span>`).join("")}${x.items.length > 3 ? `<span class="more">+${x.items.length - 3}</span>` : ""}</span><span class="sht-htx"><b>${esc(shiningEvLabel(x.e))}${tag}</b><em>${!x.items.length ? esc(t("sh_h_unset")) : esc(t(x.items.length === 1 ? "sh_h_n1" : "sh_h_n").replace("{n}", x.items.length))}${own ? ` · ${esc(t("sh_h_own").replace("{n}", own))}` : ""}</em></span><span class="ch" aria-hidden="true">&#8250;</span></summary>
         <div class="sht-hg">${x.items.map((s) => `<div class="sht-hi${s.owned ? " own" : ""}" title="${esc(s.name)}">${img(s)}<span>${s.owned ? "✓ " : ""}${esc(s.name)}</span></div>`).join("")}</div></details>`;
     }).join("") : `<div class="meta sht-none">${esc(t("sh_hist_none"))}</div>`}`;
     hist.hidden = shTab !== "hist";
@@ -27149,17 +27151,13 @@ async function renderSkinGallery() {
     }
     const moreKey = `skin|${SKIN_FILTER.category}`;
     const shPickedIds = new Set(shRows().map((x) => String(x.id)));
-    const shShopIds = new Set(shiningPicked(shiningShopFor(shiningCurKey(), "skins"), skins).map((x) => String(x.id)));
     const tile = (s, down) => galTileHtml({
       id: s.id, attr: "data-skin", cls: s.owned ? "yes" : "no", img: s.image_url, name: s.name,
       big: GALLERY_BIG_THUMB.has(s.category), down, tick: false, pressed: !!s.owned,
-      // Shining City: a tome on the picture of your targets, a dimmer one on the
-      // other skins in this event's shop.
-      pwExtra: shPickedIds.has(String(s.id)) ? `<span class="isl-mkc" title="${esc(t("sh_mk_target"))}"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span>`
-        : shShopIds.has(String(s.id)) ? `<span class="isl-mkc sh-shop" title="${esc(t("sh_mk_shop"))}"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span>` : "",
+      // Shining City: a tome on the picture of your targets.
+      pwExtra: shPickedIds.has(String(s.id)) ? `<span class="isl-mkc" title="${esc(t("sh_mk_target"))}"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span>` : "",
     });
-    const shKey = SKIN_FILTER.category === SHINING_SKIN_CAT ? `<div class="sh-key"><span><span class="isl-mkc"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span>${esc(t("sh_key_target"))}</span><span><span class="isl-mkc sh-shop"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span>${esc(t("sh_key_shop"))}</span></div>` : "";
-    sections.innerHTML = shKey + galGridHtml({
+    sections.innerHTML = galGridHtml({
       counted: filtered.filter((s) => !GALLERY_UNCOUNTED.has(String(s.id))),
       uncounted: filtered.filter((s) => GALLERY_UNCOUNTED.has(String(s.id))),
       all: GAL_MORE.has(moreKey) || !!SKIN_FILTER.search, tile, cat: SKIN_FILTER.category, ncDesc: t("sg_nc_desc"),
