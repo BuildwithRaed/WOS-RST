@@ -3836,7 +3836,12 @@ input,select,textarea{
   .isl-shb{ display:flex; gap:8px; margin-top:10px; }
   .isl-shb .btn{ flex:1 1 0; }
   /* Admin → Islands: which buildings each shop may offer */
-  .adm-islshops .isl-shg{ max-height:none; grid-template-columns:repeat(auto-fill, minmax(78px, 1fr)); }
+  .adm-islshops .isl-shg{ max-height:none; overflow:visible; overscroll-behavior:auto; grid-template-columns:repeat(auto-fill, minmax(78px, 1fr)); }
+  .adm-islshops .isl-sht{ touch-action:manipulation; }
+  .adm-shg-h{ margin:12px 0 6px; font-size:13px; font-weight:700; color:var(--frost); }
+  .adm-shg-h:first-child{ margin-top:0; }
+  .adm-shg-h.no{ color:var(--muted); }
+  .adm-shg-e{ grid-column:1 / -1; font-size:12.5px; padding:4px 0; }
   .isl-mkx{ margin-top:6px; padding-top:6px; border-top:1px dashed var(--line); font-size:12.5px; color:var(--frost); line-height:1.35; }
   .isl-mkx small{ color:var(--muted); font-size:11.5px; }
   .isl-mkrow.opt .tx small{ color:var(--muted); }
