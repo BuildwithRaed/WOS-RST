@@ -4904,8 +4904,6 @@ input,select,textarea{
   .shw-l b.on{ color:var(--good); }
   .sht-evb{ flex:none; width:34px; height:34px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:20px; line-height:1; cursor:pointer; }
   .sht-evb:disabled{ opacity:.35; cursor:default; }
-  .sht-edit{ display:inline-flex; align-items:center; gap:6px; margin-top:8px; height:32px; padding:0 10px; border:1px dashed var(--line); border-radius:10px; background:none; color:var(--ice); font:inherit; font-size:12.5px; font-weight:700; cursor:pointer; }
-  .sht-edit small{ color:var(--muted); font-weight:600; }
   .shw-sum{ display:flex; align-items:center; gap:8px; margin-bottom:8px; padding:6px 10px; border:1px solid rgba(224,178,90,.45); border-radius:12px; background:var(--panel-2); font-size:12.5px; color:var(--muted); }
   .shw-sum .tx{ flex:1; min-width:0; line-height:1.3; }
   .shw-sum .tx b{ color:var(--frost); }
@@ -4915,6 +4913,12 @@ input,select,textarea{
   .shw-sum .stk img{ max-width:30px; max-height:28px; object-fit:contain; filter:drop-shadow(0 0 2px rgba(0,0,0,.8)); }
   .shw-sum .stk > span.more{ width:26px; height:26px; border-radius:8px; background:#2a3446; border:1px solid rgba(224,178,90,.6); color:#e0b25a; font-size:11px; font-weight:800; box-sizing:border-box; }
   .sht-none{ padding:14px 4px; font-size:12.5px; text-align:center; }
+  .sht-dot{ display:inline-block; width:7px; height:7px; margin-inline-start:4px; border-radius:50%; background:#e0b25a; vertical-align:middle; }
+  .shw-own{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; margin:0 0 8px; font-size:12.5px; color:var(--muted); }
+  .shw-own b{ color:var(--frost); }
+  .shw-tag{ padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1408; font-size:11px; font-weight:800; }
+  .sht-g.isl-shg{ max-height:none; overflow:visible; }
+  .sht-sb{ position:sticky; bottom:-12px; z-index:2; margin:10px -12px -12px; padding:10px 12px 12px; background:var(--panel); border-top:1px solid var(--line); }
   .sht-h{ border:1px solid var(--line); border-radius:12px; background:var(--panel-2); margin-top:6px; }
   .sht-h > summary{ display:flex; align-items:center; gap:10px; min-height:48px; padding:5px 10px; cursor:pointer; list-style:none; }
   .sht-h > summary::-webkit-details-marker{ display:none; }

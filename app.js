@@ -2048,9 +2048,6 @@ const T = {
   sh_tg_n: { en: "{n} targets" },
   sh_tg_n1: { en: "1 target" },
   sh_pick_tg: { en: "+ pick targets" },
-  sh_edit_shop: { en: "\u270e Edit shop list" },
-  sh_edit_title: { en: "Edit shop list" },
-  sh_edit_desc: { en: "Owner only. Tick the City Skins this event's shop sells ({n} Glorious Tomes each); everyone sees this list and picks targets from it." },
   sh_save_shop: { en: "Save shop list" },
   sh_ev_on: { en: "on now \u00b7 ends in {n} days" },
   sh_ev_on_last: { en: "on now \u00b7 last day" },
@@ -2060,6 +2057,10 @@ const T = {
   sh_ev_prev: { en: "Earlier event" },
   sh_ev_nextb: { en: "Later event" },
   sh_tab_hist: { en: "History" },
+  sh_tab_shoplist: { en: "Shop list" },
+  sh_owner_tag: { en: "Owner" },
+  sh_shop_tick: { en: "Tick the City Skins this event sells" },
+  sh_shop_ticked: { en: "{n} ticked" },
   sh_h_n: { en: "{n} skins" },
   sh_h_n1: { en: "1 skin" },
   sh_hist_desc: { en: "This event, then past events, newest first. Tap one to see its whole shop." },
@@ -2070,7 +2071,6 @@ const T = {
   sh_shop_unset: { en: "shop for this event isn't set" },
   sh_wait_row: { en: "Waiting for an event with them" },
   sh_win_none: { en: "No Shining City targets yet \u00b7 tap a City Skin and switch Shining City on." },
-  sh_edit_n: { en: "{n} skins" },
   sh_have_n: { en: "have {n}" },
   sh_h_own: { en: "you own {n}" },
   skp_owned: { en: "Owned" },
@@ -26608,38 +26608,6 @@ function shiningSaveShop(key, kind, names, after) {
   SITE_CONFIG.shining_events = cfg; budgetInvalidate();
   saveSiteConfig("shining_events", cfg).catch(fail(() => { SITE_CONFIG.shining_events = prev; }));
 }
-// Owner: Edit shop list = every pickable item as a tick tile. o: { title, desc, rows: [{ name, img }],
-// sel: [names], onSave(names), back() }. Order kept: the old list first, then new ticks in grid order.
-function shiningEditSheet(o) {
-  let m = document.getElementById("shPickSheet");
-  if (!m) { m = document.createElement("div"); m.id = "shPickSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap isl-ov"; document.body.appendChild(m); }
-  const draft = new Set(o.sel);
-  const tile = (s) => `<button type="button" class="isl-sht${draft.has(s.name) ? " on" : ""}" data-shtick="${esc(s.name)}" aria-pressed="${draft.has(s.name)}" title="${esc(s.name)}">${s.img ? `<img src="${esc(s.img)}" alt="" loading="lazy" />` : ""}<span class="nm">${esc(s.name)}</span><span class="ck" aria-hidden="true">${draft.has(s.name) ? "&#10003;" : ""}</span></button>`;
-  m.innerHTML = `<div class="modal-box adm-sheet gs-box sh-pick" role="dialog" aria-modal="true" aria-label="${esc(o.title)}"><div class="gs-head"><b style="flex:1;">${esc(o.title)}</b>${closeXHtml("data-shx")}</div>
-    <div class="meta sh-pick-d">${esc(o.desc)}</div>
-    <div class="isl-shg">${o.rows.map(tile).join("")}</div>
-    <div class="isl-shb"><button type="button" class="btn ghost" data-shx>${esc(t("sh_cancel"))}</button><button type="button" class="btn" data-shsave>${esc(t("sh_save_shop"))}</button></div></div>`;
-  const close = () => { m.style.display = "none"; if (o.back) o.back(); };
-  m.onclick = (ev) => {
-    if (ev.target === m || ev.target.closest("[data-shx]")) { close(); return; }
-    const tk = ev.target.closest("[data-shtick]");
-    if (tk) {
-      const n = tk.dataset.shtick, on = !draft.has(n);
-      if (on) draft.add(n); else draft.delete(n);
-      tk.classList.toggle("on", on); tk.setAttribute("aria-pressed", String(on));
-      tk.querySelector(".ck").innerHTML = on ? "&#10003;" : "";
-      return;
-    }
-    if (ev.target.closest("[data-shsave]")) {
-      const out = [...o.sel.filter((n) => draft.has(n)), ...o.rows.map((s) => s.name).filter((n) => draft.has(n) && !o.sel.includes(n))];
-      m.style.display = "none";
-      if (JSON.stringify(out) !== JSON.stringify(o.sel)) o.onSave(out);
-      if (o.back) o.back();
-    }
-  };
-  m.onkeydown = (ev) => { if (ev.key === "Escape") { ev.stopPropagation(); close(); } };
-  m.style.display = "flex";
-}
 // The gold row (Skin Gallery and Islands): picture stack of the targets, "N targets · date",
 // Tomes, price; the current event's shop list empty → the targets wait.
 function shiningRowHtml2(o) {
@@ -26745,7 +26713,7 @@ async function renderSkinGallery() {
         <div class="shx" id="shSkins"></div>
       </div>
     </div>
-    <div class="g1 isl-g1 sh-g1" id="shMkWrap" hidden><div class="t12x-card t12x-buy sh-win" id="shMkBuy"><div class="cg-sh-h"><b>${esc(t("sh_title"))}</b>${closeXHtml("data-cgclose")}</div><div id="shWinEv"></div><div class="sg-seg sht-seg" id="shWinTabs"></div><div data-buybody><div id="shWinSum"></div><div id="shMkPacks"></div></div><div id="shHist" hidden></div></div><div class="cg-bd" data-shbd hidden></div></div>
+    <div class="g1 isl-g1 sh-g1" id="shMkWrap" hidden><div class="t12x-card t12x-buy sh-win" id="shMkBuy"><div class="cg-sh-h"><b>${esc(t("sh_title"))}</b>${closeXHtml("data-cgclose")}</div><div id="shWinEv"></div><div class="sg-seg sht-seg" id="shWinTabs"></div><div data-buybody><div id="shWinSum"></div><div id="shMkPacks"></div></div><div id="shHist" hidden></div><div id="shShop" hidden></div></div><div class="cg-bd" data-shbd hidden></div></div>
     ${galToolsHtml("skin", SKIN_FILTER, t("search_skins_placeholder"))}
     <div id="skinCatSwitcher" class="sg-cats"></div>
     <div id="skinSections"></div>
@@ -26772,7 +26740,7 @@ async function renderSkinGallery() {
   // The window (design A, owner 19 Nov 2026): event line, then two tabs, Pack cost (the
   // targets only) | History (past events and their skins, no prices). On phones it opens
   // over the page from the gold row; on PC it sits under the stats card.
-  let shTab = "packs", shEvKey = null;
+  let shTab = "packs", shEvKey = null, shDraft = null;
   const shOpen = () => { const b = document.getElementById("shMkBuy"); return !!(b && b.classList.contains("cg-open")); };
   function shPackCard() {
     const host = document.getElementById("shMkPacks"), wrap = document.getElementById("shMkWrap");
@@ -26791,7 +26759,7 @@ async function renderSkinGallery() {
     if (!buy) return;
     if (open && wrap) wrap.hidden = false;
     buy.classList.toggle("cg-open", !!open);
-    buy.dataset.cgshow = open ? (shTab === "hist" ? "hist" : "packs") : "";
+    buy.dataset.cgshow = open ? (shTab === "packs" ? "packs" : "hist") : "";
     if (bd) bd.hidden = !open;
     if (open) buy.scrollTop = 0;
     if (!open && wrap && !shRows().length) wrap.hidden = true;
@@ -26807,8 +26775,13 @@ async function renderSkinGallery() {
     const st = ev ? shiningEvState(ev, E.cur) : null;
     const line = `<span class="shw-l"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" />${esc(t("isl_sc_name"))}${ev ? ` · <b class="${st.on ? "on" : ""}">${esc(st.txt)}</b> · ${esc(shiningEvLabel(ev))}` : ` · ${esc(t("sh_no_date"))}`}</span>`;
     const step = (d, ok, lab) => `<button type="button" class="sht-evb" data-shev="${d}"${ok ? "" : " disabled"} aria-label="${esc(t(lab))}">${d < 0 ? "&#8249;" : "&#8250;"}</button>`;
-    evEl.innerHTML = IS_OWNER && ev ? `<div class="shw-ev">${step(-1, ei > 0, "sh_ev_prev")}${line}${step(1, ei < list.length - 1, "sh_ev_nextb")}</div><button type="button" class="sht-edit shw-edit" data-shedit>${esc(t("sh_edit_shop"))} <small>${esc(t("sh_edit_n").replace("{n}", shiningShopFor(shEvKey, "skins").length))}</small></button>` : `<div class="shw-ev">${line}</div>`;
-    tabs.innerHTML = [["packs", t("pack_cost_title")], ["hist", t("sh_tab_hist")]].map(([k, l]) => `<button type="button" data-shtab="${k}" class="${shTab === k ? "on" : ""}" aria-pressed="${shTab === k}">${esc(l)}</button>`).join("");
+    evEl.innerHTML = IS_OWNER && ev ? `<div class="shw-ev">${step(-1, ei > 0, "sh_ev_prev")}${line}${step(1, ei < list.length - 1, "sh_ev_nextb")}</div>` : `<div class="shw-ev">${line}</div>`;
+    if (!IS_OWNER && shTab === "shop") shTab = "packs";
+    // Owner: the shown event's shop list as a tick grid (a draft until Save).
+    const saved = shiningShopFor(shEvKey, "skins");
+    if (!shDraft || shDraft.key !== shEvKey) shDraft = { key: shEvKey, set: new Set(saved) };
+    const dirty = shDraft.set.size !== saved.length || saved.some((n) => !shDraft.set.has(n));
+    tabs.innerHTML = [["packs", t("pack_cost_title")], ["hist", t("sh_tab_hist")], ...(IS_OWNER ? [["shop", t("sh_tab_shoplist")]] : [])].map(([k, l]) => `<button type="button" data-shtab="${k}" class="${shTab === k ? "on" : ""}" aria-pressed="${shTab === k}">${esc(l)}${k === "shop" && dirty ? ' <i class="sht-dot" aria-hidden="true"></i>' : ""}</button>`).join("");
     const rows = shRows(), per = shiningTomesPer();
     sum.innerHTML = rows.length ? `<div class="shw-sum"><span class="stk">${rows.slice(0, 3).map((s) => `<span>${s.image_url ? `<img class="sk" src="${esc(s.image_url)}" alt="" />` : ""}</span>`).join("")}${rows.length > 3 ? `<span class="more">+${rows.length - 3}</span>` : ""}</span><span class="tx"><b>${esc(t(rows.length === 1 ? "sh_n1" : "sh_n").replace("{n}", rows.length))}</b> · ${esc(t("sh_tomes").replace("{n}", (rows.length * per).toLocaleString()))} · ${esc(t("sh_have_n").replace("{n}", Math.round(shTomeHave()).toLocaleString()))}</span></div>` : "";
     // History: past events with a skins list, newest first; ✓ on the skins you own now. No prices.
@@ -26823,10 +26796,23 @@ async function renderSkinGallery() {
       return `<details class="sht-h${x.cur ? " cur" : ""}"${x.cur ? " open" : ""}><summary><span class="sht-stk">${x.items.slice(0, 3).map((s) => `<span>${img(s)}</span>`).join("")}${x.items.length > 3 ? `<span class="more">+${x.items.length - 3}</span>` : ""}</span><span class="sht-htx"><b>${esc(shiningEvLabel(x.e))}${tag}</b><em>${!x.items.length ? esc(t("sh_h_unset")) : esc(t(x.items.length === 1 ? "sh_h_n1" : "sh_h_n").replace("{n}", x.items.length))}${own ? ` · ${esc(t("sh_h_own").replace("{n}", own))}` : ""}</em></span><span class="ch" aria-hidden="true">&#8250;</span></summary>
         <div class="sht-hg">${x.items.map((s) => `<div class="sht-hi${s.owned ? " own" : ""}" title="${esc(s.name)}">${img(s)}<span>${s.owned ? "✓ " : ""}${esc(s.name)}</span></div>`).join("")}</div></details>`;
     }).join("") : `<div class="meta sht-none">${esc(t("sh_hist_none"))}</div>`}`;
+    const shop = document.getElementById("shShop");
+    if (shop) {
+      if (IS_OWNER) {
+        const city = skins.filter((s) => s.category === SHINING_SKIN_CAT && shiningPickable(s.name));
+        const tile = (s) => { const on = shDraft.set.has(s.name); return `<button type="button" class="isl-sht${on ? " on" : ""}" data-shtick="${esc(s.name)}" aria-pressed="${on}" title="${esc(s.name)}">${img(s)}<span class="nm">${esc(s.name)}</span><span class="ck" aria-hidden="true">${on ? "&#10003;" : ""}</span></button>`; };
+        const gs = (shop.querySelector(".isl-shg") || {}).scrollTop || 0;
+        shop.innerHTML = `<div class="shw-own"><span class="shw-tag">${esc(t("sh_owner_tag"))}</span>${esc(t("sh_shop_tick"))} \u00b7 <b>${esc(t("sh_shop_ticked").replace("{n}", shDraft.set.size))}</b></div>
+          <div class="isl-shg sht-g">${city.map(tile).join("")}</div>
+          <div class="isl-shb sht-sb"><button type="button" class="btn ghost" data-shcancel${dirty ? "" : " disabled"}>${esc(t("sh_cancel"))}</button><button type="button" class="btn" data-shsave${dirty ? "" : " disabled"}>${esc(t("sh_save_shop"))}</button></div>`;
+        const g = shop.querySelector(".isl-shg"); if (g && gs) g.scrollTop = gs;
+      }
+      shop.hidden = shTab !== "shop";
+    }
     hist.hidden = shTab !== "hist";
-    if (body) body.hidden = shTab === "hist";
+    if (body) body.hidden = shTab !== "packs";
     const buy = document.getElementById("shMkBuy");
-    if (buy && buy.classList.contains("cg-open")) buy.dataset.cgshow = shTab === "hist" ? "hist" : "packs";
+    if (buy && buy.classList.contains("cg-open")) buy.dataset.cgshow = shTab === "packs" ? "packs" : "hist";
   }
   {
     const w = document.getElementById("shMkWrap");
@@ -26836,11 +26822,16 @@ async function renderSkinGallery() {
       if (tb) { shTab = tb.dataset.shtab; shWinDraw(); return; }
       const sv = e.target.closest("[data-shev]");
       if (sv) { const E = shiningEvents(), i = E.list.findIndex((x) => x.key === shEvKey), n = E.list[i + Number(sv.dataset.shev)]; if (n) shEvKey = n.key; shWinDraw(); return; }
-      if (e.target.closest("[data-shedit]")) {
-        const key = shEvKey, ev = shiningEvents().list.find((x) => x.key === key);
-        shiningEditSheet({ title: ev ? `${t("sh_edit_title")} · ${shiningEvLabel(ev)}` : t("sh_edit_title"), desc: t("sh_edit_desc").replace("{n}", shiningTomesPer().toLocaleString()),
-          rows: skins.filter((s) => s.category === SHINING_SKIN_CAT && shiningPickable(s.name)).map((s) => ({ name: s.name, img: s.image_url || "" })), sel: shiningShopFor(key, "skins"),
-          onSave: (out) => { shiningSaveShop(key, "skins", out, () => { if (document.getElementById("shSkins")) computeAndRender(); }); computeAndRender(); } });
+      const tk = e.target.closest("[data-shtick]");
+      if (tk) { const n = tk.dataset.shtick; if (shDraft.set.has(n)) shDraft.set.delete(n); else shDraft.set.add(n); shWinDraw(); return; }
+      if (e.target.closest("[data-shcancel]")) { shDraft = null; shWinDraw(); return; }
+      if (e.target.closest("[data-shsave]")) {
+        // Kept in list order: the saved list first, then new ticks in grid order (as the edit sheet did).
+        const key = shEvKey, sel = shiningShopFor(key, "skins"), city = skins.filter((s) => s.category === SHINING_SKIN_CAT && shiningPickable(s.name)).map((s) => s.name);
+        const out = [...sel.filter((n) => shDraft.set.has(n)), ...city.filter((n) => shDraft.set.has(n) && !sel.includes(n))];
+        shDraft = null;
+        if (JSON.stringify(out) !== JSON.stringify(sel)) { shiningSaveShop(key, "skins", out, () => { if (document.getElementById("shSkins")) computeAndRender(); }); computeAndRender(); }
+        shWinDraw();
       }
     };
   }
