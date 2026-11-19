@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "b0be9b10a3";
+window.ADMIN_BUILD = "41897eb63e";
 
 // ============================================================
 // ADMIN PAGE
@@ -4429,21 +4429,40 @@ function renderAdminShiningAllow(body, rows) {
   const pick = rows.filter((r) => !shiningGlobeSkin(r.name));
   body.insertAdjacentHTML("afterbegin", `<details class="panel adm-islshops" id="admShAllow"${ADMIN_SH_ALLOW_OPEN ? " open" : ""}><summary><b>Shining City: which skins can be picked</b></summary><div id="admShAllowBody"></div></details>`);
   const el = body.querySelector("#admShAllow"), host = body.querySelector("#admShAllowBody");
+  // Two groups (owner, 19 Nov 2026): "Can be in Shining City" first, then "Never in Shining
+  // City", each A to Z; a tap moves the tile to the other group (saved with Save).
+  let draft = null;
+  const tileHtml = (r) => `<button type="button" class="isl-sht${draft.has(r.name) ? " on" : ""}" data-ashpick="${esc(r.name)}" aria-pressed="${draft.has(r.name)}" title="${esc(r.name)}">${r.image_url ? `<img src="${esc(r.image_url)}" alt="" loading="lazy" />` : ""}<span class="nm">${esc(r.name)}</span><span class="ck" aria-hidden="true">${draft.has(r.name) ? "&#10003;" : ""}</span></button>`;
+  const az = (a, b) => a.name.localeCompare(b.name);
+  const groupsHtml = () => {
+    const yes = pick.filter((r) => draft.has(r.name)).sort(az), no = pick.filter((r) => !draft.has(r.name)).sort(az);
+    return `<div class="adm-shg-h">Can be in Shining City (${yes.length})</div><div class="isl-shg">${yes.map(tileHtml).join("") || `<div class="muted adm-shg-e">None</div>`}</div>
+      <div class="adm-shg-h no">Never in Shining City (${no.length})</div><div class="isl-shg">${no.map(tileHtml).join("") || `<div class="muted adm-shg-e">None</div>`}</div>`;
+  };
   const draw = () => {
-    const al = shiningSkinsAllow(), on = new Set(al || pick.map((r) => r.name));
+    const al = shiningSkinsAllow();
+    draft = new Set(al || pick.map((r) => r.name));
     host.innerHTML = `<p class="muted" style="font-size:12.5px;margin:6px 0 10px;">Tick the City Skins the Shining City picker on the Skin Gallery page offers (for everyone). Globe Level skins are never offered.</p>
-      <div class="isl-shg">${pick.map((r) => `<button type="button" class="isl-sht${on.has(r.name) ? " on" : ""}" data-ashpick="${esc(r.name)}" aria-pressed="${on.has(r.name)}" title="${esc(r.name)}">${r.image_url ? `<img src="${esc(r.image_url)}" alt="" loading="lazy" />` : ""}<span class="nm">${esc(r.name)}</span><span class="ck" aria-hidden="true">${on.has(r.name) ? "&#10003;" : ""}</span></button>`).join("")}</div>
-      <div class="isl-shn"><span data-ashn>${pick.filter((r) => on.has(r.name)).length}</span> of ${pick.length} can be picked${al ? "" : " · all (default)"}</div>
+      <div data-ashgroups>${groupsHtml()}</div>
+      <div class="isl-shn"><span data-ashn>${pick.filter((r) => draft.has(r.name)).length}</span> of ${pick.length} can be picked${al ? "" : " · all (default)"}</div>
       <div class="isl-shb"><button type="button" class="btn" data-ashall>Allow all</button><button type="button" class="btn primary" data-ashsave>Save</button></div>`;
   };
   el.addEventListener("toggle", () => { ADMIN_SH_ALLOW_OPEN = el.open; if (el.open) draw(); });
   if (ADMIN_SH_ALLOW_OPEN) draw();
   host.onclick = async (e) => {
     const pb = e.target.closest("[data-ashpick]");
-    if (pb) { const v = !pb.classList.contains("on"); pb.classList.toggle("on", v); pb.setAttribute("aria-pressed", String(v)); pb.querySelector(".ck").innerHTML = v ? "&#10003;" : ""; host.querySelector("[data-ashn]").textContent = host.querySelectorAll(".isl-sht.on").length; return; }
+    if (pb) {
+      const n = pb.dataset.ashpick;
+      if (draft.has(n)) draft.delete(n); else draft.add(n);
+      const y = window.scrollY;
+      host.querySelector("[data-ashgroups]").innerHTML = groupsHtml();
+      window.scrollTo(0, y);
+      host.querySelector("[data-ashn]").textContent = pick.filter((r) => draft.has(r.name)).length;
+      return;
+    }
     const all = e.target.closest("[data-ashall]"), sv = e.target.closest("[data-ashsave]");
     if (!all && !sv) return;
-    const val = all ? null : [...host.querySelectorAll(".isl-sht.on")].map((b) => b.dataset.ashpick);
+    const val = all ? null : pick.filter((r) => draft.has(r.name)).map((r) => r.name);
     try {
       if (all) { await sb(`site_config?key=eq.shining_skins_allow`, { method: "DELETE" }); if (SITE_CONFIG) delete SITE_CONFIG.shining_skins_allow; }
       else await saveSiteConfig("shining_skins_allow", val);
