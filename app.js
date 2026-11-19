@@ -26784,10 +26784,11 @@ async function renderSkinGallery() {
       toast("Couldn't update skin", true);
     });
   }
-  // City Skins open the pop-up (Owned + Shining City); every other category: one tap = owned.
+  // City Skins that can be picked for Shining City open the pop-up (Owned + Shining City); Globe
+  // Level skins, skins outside the Admin allow list and every other category: one tap = owned.
   function skinTap(id) {
     const s = skins.find((x) => String(x.id) === String(id));
-    if (s && s.category === SHINING_SKIN_CAT) skinPopOpen(id); else toggleSkin(id);
+    if (s && s.category === SHINING_SKIN_CAT && shiningPickable(s.name)) skinPopOpen(id); else toggleSkin(id);
   }
   function toggleSkin(id) {
     const skin = skins.find((s) => String(s.id) === String(id));
