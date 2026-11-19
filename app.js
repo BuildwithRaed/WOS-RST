@@ -2191,6 +2191,15 @@ const T = {
   admpl_released: { en: "Released to" },
   admpl_unsaved: { en: "Unsaved" },
   admpl_rows: { en: "{n} rows" },
+  admpl_upcoming: { en: "Upcoming" },
+  admpl_n_of: { en: "{n} of {m}" },
+  admpl_whole: { en: "whole {what}" },
+  admpl_pet: { en: "pet" },
+  admpl_expert: { en: "expert" },
+  rl_auto_sub: { en: "auto · from Upcoming" },
+  rl_set_day: { en: "set day" },
+  up_auto_note: { en: "Hidden from visitors until you show it (Admin → Visibility). A State Timeline stop was made: set its day in Rules → Unlocks by state age." },
+  up_auto_saved: { en: "Saved · hidden from visitors · State Timeline stop made (day not set)" },
   admpl_reorder: { en: "Reorder" },
   admpl_list: { en: "List" },
   admpl_was: { en: "was {v}" },
@@ -2325,6 +2334,10 @@ const T = {
   tl_cd_days: { en: "{n} days" },
   tl_gen_day: { en: "Gen {g} · day {d}" },
   tl_kind_unlock: { en: "Unlock" },
+  tl_later: { en: "Coming later" },
+  tl_later_sub: { en: "day not known yet" },
+  tl_new_pet: { en: "New pet" },
+  tl_new_expert: { en: "New expert" },
   tl_kind_pet: { en: "Pet" },
   tl_kind_expert: { en: "Expert" },
   chest_not_needed: { en: "nothing to cover" },
@@ -11538,7 +11551,7 @@ function packCalModel(tablesLoaded) {
     const sd0 = stateAgeDay();
     if (sd0 != null) {
       const byDay = new Map();
-      STATE_UNLOCKS.filter((u) => u.day > sd0).forEach((u) => { if (!byDay.has(u.day)) byDay.set(u.day, []); byDay.get(u.day).push(dataName(u.label)); });
+      STATE_UNLOCKS.filter((u) => u.day > sd0 && unlockShown(u)).forEach((u) => { if (!byDay.has(u.day)) byDay.set(u.day, []); byDay.get(u.day).push(dataName(u.label)); });
       byDay.forEach((names, day) => { const d = stateDateOfDay(day); if (d >= firstDay && d <= lastDay) { const a = offOf(d); items.push({ kind: "unlocks", milestone: true, a, b: a, days: 1, title: `🔓 ${names.join(", ")}`, tip: t("pack_cal_state_day").replace("{n}", day.toLocaleString()) }); } });
     }
     return items;
@@ -16309,6 +16322,20 @@ const STATE_UNLOCKS = [
   ...[["Holger", 121], ["Agnes", 121], ["Cyrille", 121], ["Romulus", 160], ["Valeria", 200], ["Baldur", 200], ["Fabian", 200], ["Kathy", 230], ["Ronne", 230], ["Gareth", 270]]
     .map(([n, d]) => ({ kind: "experts", name: n, tabs: ["expertspage", "expertsresearchpage"], day: d, label: n })),
 ];
+// Rows made by themselves from "Upcoming" (Admin level tables' group switches,
+// a whole expert / pet turned Upcoming) carry `auto`. While their day is empty
+// they sit here instead of STATE_UNLOCKS: shown on the State Timeline under
+// "Coming later" and in Admin, never locking or changing anything.
+const STATE_UNLOCKS_WAIT = [];
+// Auto stops for visitors: level ones follow the page's "Upcoming levels"
+// switch (Admin → Visibility), a whole expert / pet its own hide switch.
+const UNLOCK_UP_PAGE = { chief_gear: "chief_gear", charms: "charm", hero_mastery: "hero_gear", hero_enhance: "hero_gear" };
+function unlockShown(u) {
+  if (!u || !u.auto || IS_OWNER) return true;
+  if (u.kind === "experts" || u.kind === "pets") return !isHiddenFromVisitors(u.kind, u.name);
+  const pg = u.kind === "level" ? UNLOCK_UP_PAGE[u.table] : null;
+  return !pg || !isHiddenFromVisitors("upcoming", pg);
+}
 const stateKeyNorm = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9]/g, "").replace(/tiger$/, "");
 // The built-in rows the code reads by key (kind + key).
 const STATE_UNLOCK_KEYS = STATE_UNLOCKS.filter((u) => u.key).map((u) => ({ kind: u.kind, key: u.key, label: u.label }));
@@ -16334,7 +16361,7 @@ function stateNotYet(kind, name) {
 function stateLockNotesHtml(tab) {
   const d = stateAgeDay();
   if (d == null) return "";
-  const list = STATE_UNLOCKS.filter((u) => u.tabs.includes(tab) && d < u.day);
+  const list = STATE_UNLOCKS.filter((u) => u.tabs.includes(tab) && d < u.day && unlockShown(u));
   if (!list.length) return "";
   const fmt = (x) => { try { return x.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); } catch (e) { return packDayKey(x); } };
   const byDay = new Map();
@@ -16392,6 +16419,20 @@ function heroSource(name, gen) {
 }
 function heroSourceLabel(src) { return src ? t(`tl_src_${src}`) : ""; }
 const HERO_SOURCE_ICON = { hall: "🏛", wheel: "🎡", event: "⚔", packs: "💳", signin: "🎁", recruit: "🎲" };
+// Picture of a stop made by "Upcoming" (level rows: the page's own picture).
+function tlAutoIcon(u, expImg) {
+  if (u.kind !== "level") return "";
+  const lv = String(u.level || "");
+  if (u.table === "chief_gear") { const m = lv.match(/T(\d)/); return m && +m[1] >= 4 ? `icons/chief-gear/helmet-t${Math.min(8, +m[1])}.webp` : "icons/quick/chief-gear.png"; }
+  if (u.table === "charms") { const n = Math.max(1, Math.min(18, Math.floor(parseFloat(lv)) || 1)); return `icons/charms/charm-infantry-${n}.webp`; }
+  if (u.table === "hero_mastery" || u.table === "hero_enhance") return "icons/quick/hero-gear.png";
+  if (u.table === "t11" || u.table === "t12") return TL_ICONS[u.table];
+  if (u.table === "research_center") return "icons/quick/research.png";
+  if (u.table === "vip") return "icons/quick/vip.png";
+  if (u.table === "pets") return (u.who && petImage(u.who)) || "icons/quick/pets.png";
+  if (/^expert_/.test(u.table)) return (u.who && expImg[u.who]) || "icons/quick/experts.png";
+  return "";
+}
 async function renderStateTimelinePage() {
   const seq = RENDER_SEQ;
   const [heroes] = await Promise.all([
@@ -16402,12 +16443,17 @@ async function renderStateTimelinePage() {
   const now = stateAgeDay();
   const expImg = {}; (EXPERTS_LIST || []).forEach((e) => { expImg[e.key] = e.img; });
   const items = [];
-  STATE_UNLOCKS.forEach((u) => {
-    if (u.day == null || !(u.day >= 0)) return;
+  const imgOf = (u) => {
     const k = String(u.key || u.name || "").toLowerCase();
-    const img = u.kind === "pets" ? (petImage(u.name) || petImage(String(u.name).replace(/-/g, ""))) : u.kind === "experts" ? (expImg[u.name] || "") : TL_ICONS[k] || "";
-    items.push({ day: Number(u.day), name: u.kind === "pets" || u.kind === "experts" ? dataName(u.name) : (u.label || u.name), img, kind: u.kind });
+    return u.kind === "pets" ? (petImage(u.name) || petImage(String(u.name).replace(/-/g, ""))) : u.kind === "experts" ? (expImg[u.name] || "") : TL_ICONS[k] || (u.auto ? tlAutoIcon(u, expImg) : "");
+  };
+  const itemOf = (u, day) => ({ day, name: u.kind === "pets" || u.kind === "experts" ? dataName(u.name) : (u.label || u.name), img: imgOf(u), kind: u.kind, auto: !!u.auto });
+  STATE_UNLOCKS.forEach((u) => {
+    if (u.day == null || !(u.day >= 0) || !unlockShown(u)) return;
+    items.push(itemOf(u, Number(u.day)));
   });
+  // Made by "Upcoming" with no day yet: one dashed "Coming later" card.
+  const later = STATE_UNLOCKS_WAIT.filter(unlockShown).map((u) => itemOf(u, null));
   // New heroes: the same day as the Dashboard / My Purchases (the owner's
   // new-heroes rule from the last new heroes), else the timeline's Gen day.
   const genDay = (g) => { const nx = now != null ? heroGenNotOut(g) : null; return nx && nx.day != null ? nx.day : STATE_GEN_DAYS[g - 1]; };
@@ -16436,7 +16482,7 @@ async function renderStateTimelinePage() {
   };
   // Picture chips, 2 a row: heroes with their
   // how-to-get tag, everything else tagged as what opens (pet / expert / unlock).
-  const unlockTag = (x) => `<span class="tl-src unl">🔓 ${esc(t(x.kind === "pets" ? "tl_kind_pet" : x.kind === "experts" ? "tl_kind_expert" : "tl_kind_unlock"))}</span>`;
+  const unlockTag = (x) => x.auto && (x.kind === "pets" || x.kind === "experts") ? `<span class="tl-src unl">${esc(t(x.kind === "pets" ? "tl_new_pet" : "tl_new_expert"))}</span>` : `<span class="tl-src unl">🔓 ${esc(t(x.kind === "pets" ? "tl_kind_pet" : x.kind === "experts" ? "tl_kind_expert" : "tl_kind_unlock"))}</span>`;
   // Troop badge on a hero's picture (owner's own symbols, design A, 17 Nov 2026)
   const troopKey = (x) => { const k = String(x.troop || "").toLowerCase(); return /^inf/.test(k) ? "infantry" : /^lan/.test(k) ? "lancer" : /^mark/.test(k) ? "marksman" : ""; };
   const troopBadge = (x) => { const k = x.kind === "hero" ? troopKey(x) : ""; return k ? `<img class="tl-tr" src="icons/troop-${k}.png" alt="${esc(t(k === "lancer" ? "troop_lancers" : "troop_" + k))}" title="${esc(t(k === "lancer" ? "troop_lancers" : "troop_" + k))}" />` : ""; };
@@ -16484,7 +16530,9 @@ async function renderStateTimelinePage() {
   keepFolds(content, () => { content.innerHTML = `
     <div class="page-head"><div><h2>${esc(t("tl_title"))}</h2><p class="desc">${esc(t("tl_desc"))}</p></div></div>
     ${top}
-    <div class="tl">${openHtml}${comingDays.map((d, i) => dayCard(d, i === 0 && now != null)).join("")}</div>
+    <div class="tl">${openHtml}${comingDays.map((d, i) => dayCard(d, i === 0 && now != null)).join("")}${later.length ? `<div class="tl-day tl-later"><span class="tl-dot"></span>
+      <div class="tl-dh"><b>${esc(t("tl_later"))}</b><span class="tl-in">${esc(t("tl_later_sub"))}</span></div>
+      <div class="tl-chips">${later.map(chip).join("")}</div></div>` : ""}</div>
     <div class="tl-leg"><span class="tl-src hall">★ ${HERO_SOURCE_ICON.hall} ${esc(heroSourceLabel("hall"))}</span><span class="tl-src wheel">${HERO_SOURCE_ICON.wheel} ${esc(heroSourceLabel("wheel"))}</span><span class="tl-src event">${HERO_SOURCE_ICON.event} ${esc(heroSourceLabel("event"))}</span><span class="tl-src unl">🔓 ${esc(t("tl_kind_unlock"))}</span></div>
     ${IS_OWNER ? `<p style="margin:12px 0 0;"><button type="button" class="btn small ghost" data-tladmin>${esc(t("tl_admin_edit"))} &rsaquo;</button></p>` : ""}`; });
   content.onclick = (e) => {
@@ -30205,12 +30253,24 @@ function levelLocksFor(table, rows) {
     if (!def || def.table !== table) return;
     if (rows && def.match && !def.match(rows)) return;
     if (!rows && !def.row) return;
+    // A stop made for one pet / expert ("who") only covers that one's rows.
+    if (u.who && rows && !lockRowsOf(u, rows)) return;
     const k = def.rankOf(u.level, rows);
     if (k == null || !Number.isFinite(k) || k < 0) return;
     try { if (def.inUse(k)) return; } catch (e) { /* state not loaded yet: the lock applies */ }
-    out.push({ def, k });
+    out.push({ def, k, who: u.who || "", u });
   });
   return out;
+}
+// (`part` = the skill / research path when the stop is for one of them only)
+function lockRowOf(u, r) {
+  if (!r || r.expert == null || r.expert !== u.who) return false;
+  return !u.part || String(r.skill != null ? r.skill : r.path_number) === u.part;
+}
+function lockRowsOf(u, rows) {
+  const r0 = rows && rows[0];
+  if (r0 && r0.expert != null) return lockRowOf(u, r0);
+  return !u.part && !!(typeof PETS_NODES_CACHE !== "undefined" && PETS_NODES_CACHE && PETS_NODES_CACHE[u.who] === rows);
 }
 // Index of the first row a waiting level unlock covers, or -1.
 function levelLockIdx(table, rows) {
@@ -30225,12 +30285,12 @@ function levelLockIdx(table, rows) {
 // Tables with plain level numbers: is this row behind a waiting lock?
 function levelLockedRow(table, row) {
   if (!LEVEL_LOCKS_ON || !row) return false;
-  return levelLocksFor(table).some(({ def, k }) => def.rank(row) >= k);
+  return levelLocksFor(table).some(({ def, k, u }) => (!u.who || lockRowOf(u, row)) && def.rank(row) >= k);
 }
 // The highest level number the waiting locks leave open (T12), or Infinity.
 function levelLockTop(table) {
   if (!LEVEL_LOCKS_ON) return Infinity;
-  return levelLocksFor(table).reduce((m, { k }) => Math.min(m, k - 1), Infinity);
+  return levelLocksFor(table).reduce((m, { k, who }) => (who ? m : Math.min(m, k - 1)), Infinity);
 }
 // Speed: row ids are only downloaded for tables that have "Upcoming" ticks
 // (they made every level table 30-100% bigger). Ticking clears the kept
@@ -30310,7 +30370,11 @@ function unlockedFor(kind, name, savedFlag) {
   if (savedFlag === true || savedFlag === false) return savedFlag;
   // A whole expert / pet marked "Upcoming" in Admin starts unticked (not
   // counted); ticking it plans it in.
-  if ((kind === "experts" && EXPERT_UPCOMING_GLOBAL[name]) || (kind === "pets" && petIsUpcoming(name))) return false;
+  // Once its day (Admin → Rules → Unlocks) has passed in the person's state it counts.
+  if ((kind === "experts" && EXPERT_UPCOMING_GLOBAL[name]) || (kind === "pets" && petIsUpcoming(name))) {
+    const ud = stateUnlockDay(kind, name), sd = ud != null ? stateAgeDay() : null;
+    if (!(sd != null && sd >= ud)) return false;
+  }
   // Never set: open in the person's state (state age) → ticked, not yet → unticked.
   return !stateNotYet(kind, name);
 }
@@ -33582,7 +33646,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=8b5de6a03c";
+      s.src = "admin.min.js?v=2eecc53863";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
@@ -33657,13 +33721,22 @@ function gameRules() {
         { key: "level", label: "First locked level", type: "select", options: (row) => LEVEL_LOCK_CHOICES[row.table] || null, when: (row) => row.kind === "level" },
         { key: "day", label: "State day", type: "num" }],
       // Shown by state day; same day keeps the built-in order.
-      get: () => STATE_UNLOCKS.map((u) => ({ ...(u.key ? { key: u.key } : {}), label: u.label, kind: u.kind, name: u.kind === "level" ? "" : u.name, tab: u.kind === "level" ? "" : (u.tabs || [])[0] || "", table: u.table || "", level: u.level != null ? String(u.level) : "", day: u.day })).sort((a, b) => (Number(a.day) || 0) - (Number(b.day) || 0)),
+      // Auto rows with no day (made by "Upcoming") come last, day empty.
+      get: () => STATE_UNLOCKS.concat(STATE_UNLOCKS_WAIT).map((u) => ({ ...(u.key ? { key: u.key } : {}), label: u.label, kind: u.kind, name: u.kind === "level" ? "" : u.name, tab: u.kind === "level" ? "" : (u.tabs || [])[0] || "", table: u.table || "", level: u.level != null ? String(u.level) : "", day: u.day == null ? "" : u.day, ...(u.auto ? { auto: u.auto } : {}), ...(u.who ? { who: u.who } : {}), ...(u.part ? { part: u.part } : {}) })).sort((a, b) => (a.day === "") - (b.day === "") || (Number(a.day) || 0) - (Number(b.day) || 0)),
       set: (rows) => {
+        const noDay = (r) => !!r.auto && (r.day === "" || r.day == null);
+        const keep = (r) => (r.kind === "level" ? !!LEVEL_LOCK_TARGETS[r.table] && r.level != null && r.level !== "" : !!r.name);
+        const extra = (r) => ({ ...(r.auto ? { auto: String(r.auto) } : {}), ...(r.who ? { who: String(r.who) } : {}), ...(r.part ? { part: String(r.part) } : {}) });
+        ruleSetArray(STATE_UNLOCKS_WAIT, rows.filter((r) => noDay(r) && keep(r)).map((r) => {
+          if (r.kind === "level") { const d = LEVEL_LOCK_TARGETS[r.table]; return { kind: "level", name: `${r.table}:${r.level}`, table: r.table, level: String(r.level), tabs: d.tabs, day: null, label: r.label || `${d.label} ${r.level}+`, ...extra(r) }; }
+          return { kind: r.kind, name: r.name, tabs: RULE_TAB_PAGES[r.kind] || (r.tab ? [r.tab] : []), day: null, label: r.label || r.name, ...extra(r) };
+        }));
+        rows = rows.filter((r) => !noDay(r));
         ruleSetArray(STATE_UNLOCKS, rows.filter((r) => (r.kind === "level" ? !!LEVEL_LOCK_TARGETS[r.table] && r.level != null && r.level !== "" : !!r.name) && Number(r.day) >= 0).map((r) => {
-          if (r.kind === "level") { const d = LEVEL_LOCK_TARGETS[r.table]; return { kind: "level", name: `${r.table}:${r.level}`, table: r.table, level: String(r.level), tabs: d.tabs, day: Number(r.day), label: r.label || `${d.label} ${r.level}+` }; }
+          if (r.kind === "level") { const d = LEVEL_LOCK_TARGETS[r.table]; return { kind: "level", name: `${r.table}:${r.level}`, table: r.table, level: String(r.level), tabs: d.tabs, day: Number(r.day), label: r.label || `${d.label} ${r.level}+`, ...extra(r) }; }
           // Built-in rows the code reads keep their key (also rows saved before keys existed).
           const key = r.key || stateUnlockBuiltinKey(r.kind, r.name);
-          return { ...(key ? { key } : {}), kind: r.kind, name: key || r.name, tabs: r.kind === "pets" || r.kind === "experts" ? RULE_TAB_PAGES[r.kind] : (r.tab ? [r.tab] : (RULE_TAB_PAGES[r.kind] || [])), day: Number(r.day), label: r.label || r.name };
+          return { ...(key ? { key } : {}), kind: r.kind, name: key || r.name, tabs: r.kind === "pets" || r.kind === "experts" ? RULE_TAB_PAGES[r.kind] : (r.tab ? [r.tab] : (RULE_TAB_PAGES[r.kind] || [])), day: Number(r.day), label: r.label || r.name, ...extra(r) };
         }));
         LEVEL_LOCKS_ON = STATE_UNLOCKS.some((u) => u.kind === "level");
       } },

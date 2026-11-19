@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "8b5de6a03c";
+window.ADMIN_BUILD = "2eecc53863";
 
 // ============================================================
 // ADMIN PAGE
@@ -788,12 +788,15 @@ function admRuleCard(host, key, back) {
       return `<span class="rl-pick"><select ${a} data-rpick><option value="" ${sv === "" ? "selected" : ""}>—</option>${opts.map((o) => { const [ov, ol] = pair(o); return `<option value="${esc(String(ov))}" ${!custom && String(ov) === sv ? "selected" : ""}>${esc(String(ol))}</option>`; }).join("")}<option value="${ADM_PICK_CUSTOM}" ${custom ? "selected" : ""}>Custom…</option></select><input type="text" data-rcellc="${ri}|${c.key}" value="${esc(custom ? sv : "")}" placeholder="Type the name" ${custom ? "" : "hidden"} /></span>`;
     }
     if (c.type === "page") return `<select ${a}>${pages.map((p) => `<option value="${esc(p.tab)}" ${p.tab === v ? "selected" : ""}>${esc(p.label)}</option>`).join("")}</select>`;
+    // Unlock rows made by "Upcoming": a small "auto" line, and an amber "set day" box while the day is empty.
+    if (row && row.auto && r.key === "unlocks" && c.key === "label") return `<input ${a} type="text" value="${esc(v == null ? "" : String(v))}" /><small class="rl-auto">${esc(t("rl_auto_sub"))}${row.level ? ` · ${esc(String(row.level))}` : ""}${row.day === "" || row.day == null ? ` <button type="button" class="rl-setday-go" data-rsetday="${ri}">${esc(t("rl_set_day"))} &#8250;</button>` : ""}</small>`;
+    if (row && row.auto && r.key === "unlocks" && c.key === "day" && (v === "" || v == null)) return `<input ${a} type="number" step="any" inputmode="decimal" class="rl-setday" placeholder="${esc(t("rl_set_day"))}" value="" />`;
     return `<input ${a} type="${c.type === "num" ? "number" : c.type === "date" ? "date" : "text"}" ${c.type === "num" ? 'step="any" inputmode="decimal"' : ""} value="${esc(v == null ? "" : String(v))}" />`;
   };
   const draw = () => {
     const saved = gameRulesSaved();
     let val = JSON.parse(JSON.stringify(saved[r.key] != null ? saved[r.key] : r.def));
-    if (r.key === "unlocks" && Array.isArray(val)) val.sort((a, b) => (Number(a.day) || 0) - (Number(b.day) || 0)); // by state day
+    if (r.key === "unlocks" && Array.isArray(val)) val.sort((a, b) => (a.day === "") - (b.day === "") || (Number(a.day) || 0) - (Number(b.day) || 0)); // by state day, no day last
     const drawEditor = () => {
       const ed = host.querySelector(".rl-ed");
       if (r.type === "fields" && ADM_RULE_SECTIONS[r.key]) {
@@ -831,6 +834,8 @@ function admRuleCard(host, key, back) {
       }));
       // Drag ⋮⋮ to change the order (saved with Save).
       ed.querySelectorAll("[data-rdrag]").forEach((h) => dragSort(h, { row: "tr[data-rrow]", arrange: "rule:" + r.key, refocus: (tr, to) => ed.querySelectorAll("[data-rdrag]")[to]?.focus(), done: (tr, from, to) => { const [x] = val.splice(from, 1); val.splice(to, 0, x); if (r.cols.some((c) => c.type === "auto")) val.forEach((row, i) => { r.cols.filter((c) => c.type === "auto").forEach((c) => { row[c.key] = i + 1; }); }); drawEditor(); } }));
+      // "set day ›" on an auto row: to its day box (the table scrolls sideways on phones).
+      ed.querySelectorAll("[data-rsetday]").forEach((b) => b.addEventListener("click", () => { const box = ed.querySelector(`[data-rcell="${b.dataset.rsetday}|day"]`); if (box) { box.scrollIntoView({ block: "nearest", inline: "center" }); box.focus({ preventScroll: true }); } }));
       ed.querySelectorAll("[data-rdel]").forEach((b) => b.addEventListener("click", () => { val.splice(+b.dataset.rdel, 1); r.cols.filter((c) => c.type === "auto").forEach((c) => val.forEach((row, i) => { row[c.key] = i + 1; })); drawEditor(); }));
       ed.querySelector("[data-radd]").addEventListener("click", () => {
         const row = {}; r.cols.forEach((c) => { const first = c.type === "select" ? ((typeof c.options === "function" ? c.options(row) : c.options) || [""])[0] : ""; row[c.key] = c.type === "auto" ? val.length + 1 : c.type === "check" ? false : c.type === "select" ? (Array.isArray(first) ? first[0] : first) : ""; });
@@ -1967,9 +1972,9 @@ async function renderAdminVisibility(body) {
   const pages = visitorPageList();
   const experts = EXPERTS_IN_ORDER_GLOBAL.slice();
   const pets = [...new Set([...Object.keys(PETS_NODES_CACHE || {}), ...Object.keys(PET_REFINE_CACHE || {})])];
-  const row = (kind, name, label, sub) => `
+  const row = (kind, name, label, sub, badge) => `
     <label style="display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px;">
-      <span style="flex:1 1 0; min-width:0;">${esc(label)}${sub ? ` <span class="meta" style="font-size:11px;">· ${esc(sub)}</span>` : ""}</span>
+      <span style="flex:1 1 0; min-width:0;">${esc(label)}${badge || ""}${sub ? ` <span class="meta" style="font-size:11px;">· ${esc(sub)}</span>` : ""}</span>
       <span class="meta" data-visstate style="font-size:11px; color:${isHiddenFromVisitors(kind, name) ? "var(--amber)" : "var(--good)"};">${esc(isHiddenFromVisitors(kind, name) ? t("vis_hidden") : t("vis_visible"))}</span>
       <input type="checkbox" class="bset-sw" data-visitem="${esc(kind)}|${esc(name)}" ${isHiddenFromVisitors(kind, name) ? "" : "checked"} />
     </label>`;
@@ -2015,8 +2020,8 @@ async function renderAdminVisibility(body) {
     ].join(""))}
     ${section(t("vis_upcoming"), t("vis_upcoming_desc"), upRows.map(([k, lbl, n]) => row("upcoming", k, t(lbl), t("vis_up_n").replace("{n}", n))).join(""))}
     ${section(t("vis_pages"), t("vis_pages_desc"), pages.map((p) => row("page", p.tab, p.label, p.group)).join(""), pages.map((p) => ["page", p.tab]))}
-    ${section(t("vis_experts"), t("vis_experts_desc"), experts.map((e) => row("experts", e, dataName(e))).join(""), experts.map((e) => ["experts", e]))}
-    ${section(t("vis_pets"), t("vis_pets_desc"), pets.map((p) => row("pets", p, dataName(p))).join(""), pets.map((p) => ["pets", p]))}`;
+    ${section(t("vis_experts"), t("vis_experts_desc"), experts.map((e) => row("experts", e, dataName(e), "", EXPERT_UPCOMING_GLOBAL[e] ? " " + upcomingBadgeHtml() : "")).join(""), experts.map((e) => ["experts", e]))}
+    ${section(t("vis_pets"), t("vis_pets_desc"), pets.map((p) => row("pets", p, dataName(p), "", petIsUpcoming(p) ? " " + upcomingBadgeHtml() : "")).join(""), pets.map((p) => ["pets", p]))}`;
   body.querySelectorAll("[data-visaccess]").forEach((cb) => cb.addEventListener("change", async () => {
     cb.disabled = true;
     try {
@@ -2067,6 +2072,7 @@ async function renderAdminRoster(body) {
     ...[1, 2, 3, 4].map((k) => ({ key: "skill" + k, label: `Skill ${k}`, value: r["skill" + k], half: true })),
     { key: "talent", label: "Talent", value: r.talent },
     { key: "upcoming", label: "Upcoming (badge on its cards; not counted until people tick it)", type: "check", value: r.upcoming },
+    { key: "upnote", label: t("up_auto_note"), type: "note" },
   ];
   wireAdmList(body, {
     onEdit: (id) => {
@@ -2084,6 +2090,8 @@ async function renderAdminRoster(body) {
             if (!confirm(`Rename ${renames.map((x) => `"${x.from}" → "${x.to}"`).join(", ")}?\n\nThe skill's level rows in Experts → Skills get the new name too, and everyone's saved levels for it move to the new name the next time they open the site.`)) throw new Error("Not saved");
           }
           await sb(`experts?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify({ ...v, upcoming: !!v.upcoming }) });
+          const upTurned = !!v.upcoming !== !!r.upcoming;
+          if (upTurned) await admWholeUpcoming("experts", r.key, !!v.upcoming);
           if (renames.length) {
             for (const x of renames) await sb(`expert_skill_nodes?expert=eq.${encodeURIComponent(r.key)}&skill=eq.${encodeURIComponent(x.from)}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ skill: x.to }) });
             const list = Array.isArray(siteConfig("expert_skill_renames", null)) ? siteConfig("expert_skill_renames", null).slice() : [];
@@ -2091,7 +2099,7 @@ async function renderAdminRoster(body) {
             await saveSiteConfig("expert_skill_renames", list);
             EXPERTS_STATE_GLOBAL = null; dropKeptGameData(); if (typeof budgetInvalidate === "function") budgetInvalidate();
           }
-          EXPERTS_ROSTER_LOADED = false; toast(renames.length ? "Saved · skill renamed" : "Saved"); renderAdminRoster(body);
+          EXPERTS_ROSTER_LOADED = false; toast(upTurned && v.upcoming ? t("up_auto_saved") : renames.length ? "Saved · skill renamed" : "Saved"); renderAdminRoster(body);
         },
         onDelete: async () => { await sb(`experts?id=eq.${r.id}`, { method: "DELETE" }); EXPERTS_ROSTER_LOADED = false; toast("Deleted"); renderAdminPage(); },
         deleteText: `Delete ${r.key} from the roster? Their affinity / skill / research rows stay but won't be used.` });
@@ -2102,7 +2110,8 @@ async function renderAdminRoster(body) {
         if (rows.some((r) => r.key === v.key)) throw new Error("That expert already exists");
         const maxOrder = rows.reduce((m, r) => Math.max(m, r.sort_order || 0), 0);
         await sb(`experts`, { method: "POST", body: JSON.stringify({ ...v, upcoming: !!v.upcoming, sort_order: maxOrder + 1 }) });
-        EXPERTS_ROSTER_LOADED = false; toast("Expert added"); renderAdminPage();
+        if (v.upcoming) await admWholeUpcoming("experts", v.key, true);
+        EXPERTS_ROSTER_LOADED = false; toast(v.upcoming ? t("up_auto_saved") : "Expert added"); renderAdminPage();
       } }),
   });
 }
@@ -2306,7 +2315,7 @@ async function renderAdminExpertTable(body, tableKey) {
       </table>
     `;
 
-    wireAdmEditBar(wrap, { rowAttr: "data-exprow", table: cfg.table, upTable: cfg.table, saveRow: (id) => saveExpRow(id), after: () => { EXPERTS_RESEARCH_NODES_GLOBAL = null; dropKeptGameData(); }, hide: ["#adminExpRowsSaveAll", "[data-exprowsave]"],
+    wireAdmEditBar(wrap, { rowAttr: "data-exprow", table: cfg.table, upTable: cfg.table, upWhole: () => (EXPERT_UPCOMING_GLOBAL[ADMIN_ACTIVE_EXPERT] ? t("admpl_expert") : ""), saveRow: (id) => saveExpRow(id), after: () => { EXPERTS_RESEARCH_NODES_GLOBAL = null; dropKeptGameData(); }, hide: ["#adminExpRowsSaveAll", "[data-exprowsave]"],
       addForm: "#adminAddRowForm", reload: () => loadRows(),
       create: async (tr) => { await sb(`${cfg.table}`, { method: "POST", body: JSON.stringify({ expert: ADMIN_ACTIVE_EXPERT, ...admNewRowPayload(tr, null) }) }); } });
     admWireRowSave(wrap, "data-exprowsave", saveExpRow);
@@ -2367,6 +2376,7 @@ async function renderAdminPets(body) {
           <div style="display:flex; gap:6px; align-items:center;"><input type="text" id="adminPetImg" value="${esc(((siteConfig("pet_images", {}) || {})[ADMIN_ACTIVE_PET]) || "")}" placeholder="${esc(petImage(ADMIN_ACTIVE_PET) || "no picture yet")}" style="flex:1; min-width:0;" />${uploadBtnHtml()}<button type="button" class="btn small" id="adminPetImgSave">Save picture</button></div>
           <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;"><button type="button" class="btn ghost small" id="adminPetRename">Rename pet</button><button type="button" class="btn ghost small" id="adminPetDelete" style="color:var(--danger);">Delete pet</button></div>
           <label class="t12x-check" style="margin-top:8px;"><span>Upcoming pet (not in the game yet: marked, and not counted until people tick it)</span><input type="checkbox" id="adminPetUpcoming" ${petIsUpcoming(ADMIN_ACTIVE_PET) ? "checked" : ""} /></label>
+          ${petIsUpcoming(ADMIN_ACTIVE_PET) ? `<div class="meta" style="font-size:11.5px; margin-top:4px;">${esc(t("up_auto_note"))}</div>` : ""}
         </div></div>` : ""}
     </div>
     <details class="panel" id="adminPetOrder" style="margin-bottom:16px;"${ADMIN_PET_ORDER_OPEN ? " open" : ""}>
@@ -2432,7 +2442,7 @@ async function renderAdminPets(body) {
   if (petUp) petUp.addEventListener("change", async () => {
     const list = new Set(siteConfig("upcoming_pets", []) || []);
     if (petUp.checked) list.add(ADMIN_ACTIVE_PET); else list.delete(ADMIN_ACTIVE_PET);
-    try { await saveSiteConfig("upcoming_pets", [...list]); afterUpcomingChange(); toast("Saved"); }
+    try { await saveSiteConfig("upcoming_pets", [...list]); afterUpcomingChange(); await admWholeUpcoming("pets", ADMIN_ACTIVE_PET, petUp.checked); toast(petUp.checked ? t("up_auto_saved") : "Saved"); }
     catch (err) { petUp.checked = !petUp.checked; toast(err.message || "Couldn't save", true); }
   });
   const petRename = document.getElementById("adminPetRename");
@@ -2569,7 +2579,7 @@ async function renderAdminPets(body) {
       try { await saveAdminRowOrderInPlace(wrap, "data-petrow", PET_LEVELS_TABLE, rows, orderedIds); PETS_NODES_CACHE = null; }
       catch (err) { toast("Couldn't reorder", true); loadPetRows(); }
     });
-    wireAdmEditBar(wrap, { rowAttr: "data-petrow", table: PET_LEVELS_TABLE, upTable: PET_LEVELS_TABLE, saveRow: (id) => savePetRow(id), after: () => { PETS_NODES_CACHE = null; }, hide: ["#adminPetRowsSaveAll", "[data-petrowsave]"],
+    wireAdmEditBar(wrap, { rowAttr: "data-petrow", table: PET_LEVELS_TABLE, upTable: PET_LEVELS_TABLE, upWhole: () => (petIsUpcoming(ADMIN_ACTIVE_PET) ? t("admpl_pet") : ""), saveRow: (id) => savePetRow(id), after: () => { PETS_NODES_CACHE = null; }, hide: ["#adminPetRowsSaveAll", "[data-petrowsave]"],
       addForm: "#adminAddPetRowForm", reload: () => loadPetRows(),
       create: async (tr) => {
         const payload = { pet: ADMIN_ACTIVE_PET, ...admNewRowPayload(tr, 0) };
@@ -2754,13 +2764,17 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
     const main = b.slice(1).filter((el) => el.type !== "checkbox" && el.dataset.f !== "sort_order").slice(0, 3);
     return { lab, main, all: b };
   };
+  // Row name shown (o.rowName: e.g. Chief Gear "Red T7 ★0.1" from its Tier / Stars / Stage).
+  const nameOf = (tr) => (o.rowName ? o.rowName(tr) : admPlLabel(parts(tr).lab));
+  const upOf = (tr) => tr.querySelector("[data-up]");
+  const upSaved = (tr) => { const u = upOf(tr); return !!u && u.dataset.orig === "true"; };
   // Groups: by major level ("4", "4.1" … "4.3"), else by name without its last
   // number ("Mythic T1 ★0" … "★3", "Weapons Prep I" × its levels); mostly single
   // rows → blocks of 10. A name that comes back after other names (stat rows like
   // Collection Gallery's Attack / Lethality / … Lethality) in a table of mostly
   // single rows isn't a level: such a table is never folded by name.
   const groupsOf = (list) => {
-    const labs = list.map((tr) => admPlLabel(parts(tr).lab).trim());
+    const labs = list.map((tr) => nameOf(tr).trim());
     const num = labs.every((l) => l === "" || /^(?:lv\.?\s*)?-?\d+(?:\.\d+)?$/i.test(l));
     const keyOf = (l, i) => (num ? (l === "" ? "new" + i : String(parseInt(l.replace(/^\D+/, ""), 10))) : (l.replace(/[\s.]*[★☆]?\s*\d+(?:\.\d+)?$/, "") || "row" + i));
     const keys = list.map((tr, i) => (tr.hasAttribute("data-newrow") ? "__new" : keyOf(labs[i], i)));
@@ -2772,12 +2786,20 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
     }
     const out = [];
     list.forEach((tr, i) => { const k = keys[i]; const g = out.at(-1); if (g && g.k === k) g.rows.push(tr); else out.push({ k, rows: [tr] }); });
-    if (out.length > 12 && list.length / out.length < 1.6) {
+    const res = out.length > 12 && list.length / out.length < 1.6 ? (() => {
       const blocks = [];
       list.forEach((tr, i) => { if (i % 10 === 0) blocks.push({ k: "b" + i, rows: [] }); blocks.at(-1).rows.push(tr); });
       return blocks;
-    }
-    return out;
+    })() : out;
+    // A fold is cut where its saved "Upcoming" ticks start, so the released and
+    // the upcoming part each get their own switch ("Red T6 ★0–3" / "★3.1–3.4").
+    if (!list.some(upOf)) return res;
+    const cut = [];
+    res.forEach((g) => {
+      let cur = null;
+      g.rows.forEach((tr) => { const u = upSaved(tr); if (!cur || cur.u !== u) { cur = { k: cur ? g.k + "~u" : g.k, rows: [], u, part: !!cur }; cut.push(cur); } cur.rows.push(tr); });
+    });
+    return cut;
   };
   const draw = () => {
     if (!pl.isConnected) return;
@@ -2791,26 +2813,49 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
     const hasUp = upEls.some(Boolean);
     const firstUp = upEls.findIndex((x) => x && x.checked);
     const relIdx = firstUp < 0 ? list.length - 1 : firstUp - 1;
-    const rel = relIdx >= 0 ? admPlLabel(parts(list[relIdx]).lab) : "—";
+    const rel = relIdx >= 0 ? nameOf(list[relIdx]) : "—";
     const nOld = list.filter((tr) => !tr.hasAttribute("data-newrow")).length;
+    const nUp = upEls.filter((x) => x && x.checked).length;
+    // Group "Upcoming" switch: all ticked = on (amber tag), some = "N of M" (half).
+    const whole = hasUp && o.upWhole ? o.upWhole() : false;
+    const gSw = (g, gi) => {
+      if (!hasUp || g.k === "__new") return "";
+      if (whole) return `<em class="admpl-gtag">${esc(t("admpl_whole").replace("{what}", whole))}</em>`;
+      const ups = g.rows.map(upOf).filter(Boolean);
+      if (!ups.length) return "";
+      const on = ups.filter((x) => x.checked).length, all = on === ups.length;
+      const tag = on ? `<em class="admpl-gtag">${esc(all ? t("upcoming_col") : t("admpl_n_of").replace("{n}", on).replace("{m}", ups.length))}</em>` : "";
+      return `${tag}<input type="checkbox" class="bset-sw admpl-gsw${on && !all ? " half" : ""}" data-plgup="${gi}" ${all ? "checked" : ""} aria-label="${esc(t("upcoming_col"))}" />`;
+    };
     const rowHtml = (tr) => {
       const p = parts(tr), i = list.indexOf(tr);
       const chg = tr.hasAttribute("data-newrow") || !!tr.querySelector(".chg");
       const up = !!(tr.querySelector("[data-up]") || {}).checked;
-      return `<button type="button" class="admpl-r${chg ? " chg" : ""}${up ? " up" : ""}" data-plrow="${i}" style="--n:${cols.length}"><b>${esc(admPlLabel(p.lab) || (tr.hasAttribute("data-newrow") ? t("admpl_new") : "—"))}</b>${p.main.map((el) => `<span class="${el.classList.contains("chg") ? "chg" : ""}">${esc(admPlFmt(el))}</span>`).join("")}<i aria-hidden="true">&#8250;</i></button>`;
+      return `<button type="button" class="admpl-r${chg ? " chg" : ""}${up ? " up" : ""}" data-plrow="${i}" style="--n:${cols.length}"><b>${esc(nameOf(tr) || (tr.hasAttribute("data-newrow") ? t("admpl_new") : "—"))}</b>${p.main.map((el) => `<span class="${el.classList.contains("chg") ? "chg" : ""}">${esc(admPlFmt(el))}</span>`).join("")}<i aria-hidden="true">&#8250;</i></button>`;
     };
-    const gLabel = (g) => { const a = admPlLabel(parts(g.rows[0]).lab), b = admPlLabel(parts(g.rows.at(-1)).lab); return g.k === "__new" ? t("admpl_new") : a === b ? a : bidiNum(`${a} – ${b}`); };
+    // A named fold (o.rowName: "Red T7 ★0" … "★3.4") reads "Red T7", or "Red T6 ★0–3" / "★3.1–3.4" when cut in two.
+    const gLabel = (g) => {
+      const a = nameOf(g.rows[0]), b = nameOf(g.rows.at(-1));
+      if (g.k === "__new") return t("admpl_new");
+      const key = g.k.replace(/~u$/, "");
+      if (o.rowName && a !== b && a.startsWith(key + " ") && b.startsWith(key + " ")) {
+        const cut = groups.some((x) => x !== g && x.k.replace(/~u$/, "") === key);
+        return cut ? bidiNum(`${key} ${a.slice(key.length + 1)}–${b.slice(key.length + 1).replace(/^[★☆]/, "")}`) : key;
+      }
+      return a === b ? a : bidiNum(`${a} – ${b}`);
+    };
     // Range chips: the folds split into up to 5 runs.
     const big = groups.length > 4;
     const per = Math.ceil(groups.length / 5);
-    const chips = big ? Array.from({ length: Math.ceil(groups.length / per) }, (_, c) => { const gs = groups.slice(c * per, c * per + per); const a = admPlLabel(parts(gs[0].rows[0]).lab), b = admPlLabel(parts(gs.at(-1).rows.at(-1)).lab); return `<button type="button" class="admpl-chip" data-plchip="${c * per}|${gs.length}">${esc(a === b ? a : `${a}–${b}`)}</button>`; }).join("") : "";
+    const chips = big ? Array.from({ length: Math.ceil(groups.length / per) }, (_, c) => { const gs = groups.slice(c * per, c * per + per); const a = nameOf(gs[0].rows[0]), b = nameOf(gs.at(-1).rows.at(-1)); return `<button type="button" class="admpl-chip" data-plchip="${c * per}|${gs.length}">${esc(a === b ? a : `${a}–${b}`)}</button>`; }).join("") : "";
     const drag = wrap.classList.contains("adm-hasdrag");
-    pl.innerHTML = `<div class="admpl-sum"><div><small>${esc(t("admpl_levels"))}</small><b>${nOld}</b></div><div><small>${esc(t("admpl_released"))}</small><b>${esc(hasUp ? rel : admPlLabel(parts(list[list.length - 1]).lab))}</b></div><div class="${count() ? "warn" : ""}"><small>${esc(t("admpl_unsaved"))}</small><b>${count()}</b></div></div>
+    pl.innerHTML = `<div class="admpl-sum${o.rowName ? " wide" : ""}"><div><small>${esc(t("admpl_levels"))}</small><b>${nOld}</b></div><div><small>${esc(t("admpl_released"))}</small><b>${esc(hasUp ? rel : nameOf(list[list.length - 1]))}</b></div>${hasUp && (nUp || upEls.some((x) => x && x.dataset.orig === "true")) ? `<div class="${nUp ? "warn" : ""}"><small>${esc(t("admpl_upcoming"))}</small><b>${nUp}</b></div>` : `<div class="${count() ? "warn" : ""}"><small>${esc(t("admpl_unsaved"))}</small><b>${count()}</b></div>`}</div>
       ${chips || drag ? `<div class="admpl-chips">${chips}${drag ? `<button type="button" class="admpl-chip admpl-ro" data-plreorder>${st.tbl ? esc(t("admpl_list")) : "&#8942;&#8942; " + esc(t("admpl_reorder"))}</button>` : ""}</div>` : ""}
-      <div class="admpl-list"><div class="admpl-h" style="--n:${cols.length}"><b>${esc(head(p0.lab))}</b>${cols.map((c) => `<span title="${esc(c)}">${esc(c.replace(/\s*\([^)]*\)/g, "") || c)}</span>`).join("")}<i></i></div>
-      ${groups.map((g, gi) => g.rows.length === 1 && g.k !== "__new" ? rowHtml(g.rows[0]) : `<details class="admpl-g" data-plg="${gi}" ${st.open.has(g.k) || g.k === "__new" ? "open" : ""}><summary><b>${esc(gLabel(g))}</b><span>${esc(t("admpl_rows").replace("{n}", g.rows.length))}</span><i aria-hidden="true">&#9662;</i></summary>${g.rows.map(rowHtml).join("")}</details>`).join("")}</div>`;
+      <div class="admpl-list${o.rowName ? " wide" : ""}"><div class="admpl-h" style="--n:${cols.length}"><b>${esc(head(p0.lab))}</b>${cols.map((c) => `<span title="${esc(c)}">${esc(c.replace(/\s*\([^)]*\)/g, "") || c)}</span>`).join("")}<i></i></div>
+      ${groups.map((g, gi) => g.rows.length === 1 && g.k !== "__new" ? rowHtml(g.rows[0]) : `<details class="admpl-g" data-plg="${gi}" ${st.open.has(g.k) || g.k === "__new" ? "open" : ""}><summary${g.rows.some((tr) => (upOf(tr) || {}).checked) ? ' class="up"' : ""}><b>${esc(gLabel(g))}</b><span>${esc(t("admpl_rows").replace("{n}", g.rows.length))}</span>${gSw(g, gi)}<i aria-hidden="true">&#9662;</i></summary>${g.rows.map(rowHtml).join("")}</details>`).join("")}</div>`;
     pl.querySelectorAll("details.admpl-g").forEach((d) => d.addEventListener("toggle", () => { const g = groups[+d.dataset.plg]; if (g) { if (d.open) st.open.add(g.k); else st.open.delete(g.k); } }));
     pl.__groups = groups;
+    pl.__gLabel = gLabel;
   };
   let q = 0;
   wrap.__plDraw = () => { if (q) return; q = requestAnimationFrame(() => { q = 0; draw(); }); };
@@ -2827,9 +2872,9 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
     const del = tr.hasAttribute("data-newrow") ? tr.querySelector("[data-ebdrop]") : [...tr.querySelectorAll("button")].find((b) => [...b.attributes].some((a) => /^data-[a-z]*del/.test(a.name)));
     const ov = document.createElement("div");
     ov.className = "modal-overlay admpl-ov";
-    const lab0 = admPlLabel(p.lab).trim(), lab = lab0 || t("admpl_new");
+    const lab0 = nameOf(tr).trim(), lab = lab0 || t("admpl_new");
     // "Level 4.1"; a name shared by several rows gets its next box ("Common · Stars 0").
-    const dup = lab0 && list.filter((r) => admPlLabel(parts(r).lab).trim() === lab0).length > 1;
+    const dup = lab0 && list.filter((r) => nameOf(r).trim() === lab0).length > 1;
     const title = /^(?:lv\.?\s*)?-?\d+(?:\.\d+)?$/i.test(lab0) ? t("admpl_level").replace("{l}", lab0) : dup && p.all[1] ? `${lab} · ${head(p.all[1]).replace(/\s*\([^)]*\)/g, "")} ${admPlFmt(p.all[1])}` : lab;
     const field = (el, k) => {
       const was = el.classList.contains("chg") ? `<em data-plwas="${k}">${esc(t("admpl_was").replace("{v}", el.dataset.orig === "" ? "—" : el.dataset.orig))}</em>` : `<em data-plwas="${k}"></em>`;
@@ -2842,7 +2887,7 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
       <div class="admpl-sh-h"><button type="button" class="admpl-nav" data-plgo="-1" ${prev ? "" : "disabled"} aria-label="previous">&#8249;</button><b>${esc(title)}</b><button type="button" class="admpl-nav" data-plgo="1" ${next ? "" : "disabled"} aria-label="next">&#8250;</button><button type="button" class="admpl-nav admpl-x" data-plclose aria-label="close">&#10005;</button></div>
       <div class="admpl-fs">${p.all.map(field).join("")}</div>
       ${up ? `<label class="admpl-op"><span><b>${esc(t("upcoming_col"))}</b><small>${esc(t("admpl_up_sub"))}</small></span><input type="checkbox" class="bset-sw" data-plup ${up.checked ? "checked" : ""} /></label>` : ""}
-      ${prev ? `<div class="admpl-op"><span>${esc(t("admpl_copy").replace("{l}", admPlLabel(parts(prev).lab) || "—"))}</span><button type="button" class="btn ghost small" data-plcopy>${esc(t("admpl_copy_btn"))}</button></div>` : ""}
+      ${prev ? `<div class="admpl-op"><span>${esc(t("admpl_copy").replace("{l}", nameOf(prev) || "—"))}</span><button type="button" class="btn ghost small" data-plcopy>${esc(t("admpl_copy_btn"))}</button></div>` : ""}
       <div class="admpl-ft">${del ? `<button type="button" class="btn ghost admpl-del" data-pldel>${esc(t("admpl_delete"))}</button>` : ""}<button type="button" class="btn" data-plclose>${esc(t("admpl_done"))}</button></div>
     </div>`;
     document.body.appendChild(ov);
@@ -2892,6 +2937,15 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
   if (!pl.__wired) {
     pl.__wired = true;
     pl.addEventListener("click", (e) => {
+      // Group switch: ticks / unticks every row of the fold (the Save bar counts them).
+      const gs = e.target.closest("[data-plgup]");
+      if (gs) {
+        e.preventDefault(); e.stopPropagation();
+        const g = (pl.__groups || [])[+gs.dataset.plgup]; if (!g) return;
+        const ups = g.rows.map(upOf).filter(Boolean), on = !ups.every((x) => x.checked);
+        ups.forEach((u) => { if (u.checked !== on) { u.checked = on; u.dispatchEvent(new Event("change", { bubbles: true })); } });
+        draw(); return;
+      }
       const r = e.target.closest("[data-plrow]");
       if (r) { openRow(rows()[+r.dataset.plrow]); return; }
       if (e.target.closest("[data-plreorder]")) { st.tbl = !st.tbl; wrap.querySelectorAll("[data-arrhost]").forEach((h) => arrangeSet(h.dataset.arrhost, st.tbl)); apply(); draw(); return; }
@@ -2969,6 +3023,81 @@ function admWireRowDelete(root, attr, table, after, reload) {
   });
 }
 
+// ---- "Upcoming" → a State Timeline stop (Rules → Unlocks by state age) ----
+// Each fold switched to Upcoming in a level table makes one "level" unlock row
+// by itself with the day left empty (auto: "lv:<table>:<first row id>"); until
+// a day is typed it changes nothing (app.js keeps it in STATE_UNLOCKS_WAIT).
+// Unticking the rows again removes a row that still has no day.
+const ADM_LOCK_BY_TABLE = { charm_levels: "charms", t11_helios_nodes: "t11", t12_nodes: "t12", research_center_nodes: "research_center", expert_affinity_nodes: "expert_level", expert_skill_nodes: "expert_skill", expert_research_nodes: "expert_research", [PET_LEVELS_TABLE]: "pets" };
+const ADM_LOCK_WHAT = { chief_gear: "Chief Gear", charms: "Chief Charm", hero_mastery: "Hero Mastery", hero_enhance: "Hero Enhance / Mithril", t11: "T11", t12: "T12", research_center: "Research Center", vip: "VIP" };
+function admLockOf(o) {
+  const target = o.lockTarget || (o.rowAttr === "data-viprow" ? "vip" : ADM_LOCK_BY_TABLE[o.upTable]);
+  if (!target || !LEVEL_LOCK_TARGETS[target]) return null;
+  const who = target === "pets" ? ADMIN_ACTIVE_PET : /^expert_/.test(target) ? ADMIN_ACTIVE_EXPERT : "";
+  const what = who ? (target === "expert_research" ? `${who} research` : who) : ADM_LOCK_WHAT[target] || LEVEL_LOCK_TARGETS[target].label;
+  const level = o.lockLevel || ((tr) => { const el = tr.querySelector('[data-f="level"], [data-f="level_label"], [data-vipname]'); return el ? String(el.value).trim() : ""; });
+  // One skill / research path only: its name / number goes with the stop.
+  const partEl = (tr) => tr.querySelector(target === "expert_skill" ? '[data-f="skill"]' : target === "expert_research" ? '[data-f="path_number"]' : "x-none");
+  const part = (tr) => { const el = partEl(tr); return el ? String(el.value).trim() : ""; };
+  return { target, who, what, level, part };
+}
+function admUnlockRows() {
+  const r = gameRules().find((x) => x.key === "unlocks");
+  const saved = gameRulesSaved().unlocks;
+  return JSON.parse(JSON.stringify(Array.isArray(saved) ? saved : r.def));
+}
+// Saves the unlock rows (same path as Rules' Save) when they changed.
+async function admSaveUnlockRows(rows, before) {
+  if (JSON.stringify(rows) === before) return false;
+  await saveGameRule("unlocks", rows);
+  return true;
+}
+// A whole expert / pet turned Upcoming (on) or back (off): its auto stop and
+// its visitor hide switch (hidden from visitors when it becomes Upcoming).
+async function admWholeUpcoming(kind, name, on) {
+  const rows = admUnlockRows(), before = JSON.stringify(rows), id = `${kind}:${name}`;
+  if (on) {
+    if (!rows.some((u) => u.auto === id || (u.kind === kind && stateKeyNorm(u.name) === stateKeyNorm(name)))) rows.push({ label: name, kind, name, tab: "", table: "", level: "", day: "", auto: id });
+    await setHiddenFromVisitors(kind, name, true);
+  } else {
+    const i = rows.findIndex((u) => u.auto === id && (u.day === "" || u.day == null));
+    if (i >= 0) rows.splice(i, 1);
+  }
+  return admSaveUnlockRows(rows, before);
+}
+async function admAutoStops(wrap, o, lock, autoNew) {
+  const rows = admUnlockRows(), before = JSON.stringify(rows), pre = `lv:${o.upTable}:`;
+  const upEl = (tr) => tr.querySelector("[data-up]");
+  const nameOf = (tr) => (o.rowName ? o.rowName(tr) : (() => { const el = [...tr.querySelectorAll(o.fields || "[data-f]")].find((x) => x.type !== "hidden" && x.dataset.up == null && x.closest("td")); return el ? admPlLabel(el).trim() : ""; })());
+  // Unticked again and still no day: the stop goes.
+  const ids = new Map([...wrap.querySelectorAll("[data-up]")].map((el) => [String(el.dataset.up), el.checked]));
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const u = rows[i];
+    if (!u.auto || !String(u.auto).startsWith(pre) || !(u.day === "" || u.day == null)) continue;
+    if (ids.get(String(u.auto).slice(pre.length)) === false) rows.splice(i, 1);
+  }
+  // A fold's tail cut at the old line (e.g. "Red T6 ★3.1–3.4") goes with the
+  // next new fold right after it: one stop, starting at its first row.
+  const list = autoNew.slice();
+  for (let i = 0; i < list.length; i++) {
+    const a = list[i], b = list[i + 1];
+    if (/~u$/.test(a.g.k) && b && b.gi === a.gi + 1) { b.lead = a.lead || a; list.splice(i, 1); i--; }
+  }
+  const num = (x) => /^(?:lv\.?\s*)?-?\d+(?:\.\d+)?$/i.test(x);
+  list.forEach((it) => {
+    const first = (it.lead || it).now[0], id = upEl(first).dataset.up, auto = pre + id;
+    if (rows.some((u) => u.auto === auto)) return;
+    const level = lock.level(first);
+    if (!level) return;
+    const a = nameOf(it.now[0]), b = nameOf(it.now.at(-1)), k = it.g.k;
+    const lvLast = lock.level(it.now.at(-1));
+    const lbl = it.all && !/~u$/.test(k) && !/^(b|row|new)\d/.test(k) && !num(k) ? k
+      : num(a) ? `Lv ${a}${a !== b ? `–${b}` : ""}` : a === b ? `${a} ${level}${lvLast && lvLast !== level ? `–${lvLast}` : ""}` : `${a} – ${b}`;
+    const part = lock.part(first);
+    rows.push({ label: `${lock.what} ${lbl}`, kind: "level", name: "", tab: "", table: lock.target, level, day: "", auto, ...(lock.who ? { who: lock.who } : {}), ...(part ? { part } : {}) });
+  });
+  return admSaveUnlockRows(rows, before);
+}
 function wireAdmEditBar(scope, o) {
   const first = scope && scope.querySelector(`[${o.rowAttr}]`);
   const wrap = (first && first.closest(".adm-scroll")) || scope;
@@ -3094,6 +3223,19 @@ function wireAdmEditBar(scope, o) {
     btn.disabled = true; btn.textContent = "Saving…";
     const changed = rows().filter((tr) => [...tr.querySelectorAll(".chg")].some((el) => el.dataset.up == null));
     const upChanged = !!wrap.querySelector("[data-up].chg");
+    // Folds that get their first "Upcoming" ticks (saved state → now), for the auto stops.
+    const lock = upChanged && o.upTable ? admLockOf(o) : null;
+    const autoNew = [];
+    if (lock) {
+      const groups = (wrap.__pl && wrap.__pl.__groups) || [];
+      const upEl = (tr) => tr.querySelector("[data-up]");
+      groups.forEach((g, gi) => {
+        if (g.k === "__new") return;
+        const ups = g.rows.filter(upEl);
+        const now = ups.filter((tr) => upEl(tr).checked);
+        if (!ups.some((tr) => upEl(tr).dataset.orig === "true") && now.length) autoNew.push({ g, gi, now, all: now.length === ups.length });
+      });
+    }
     try {
       for (const tr of changed) {
         const id = tr.getAttribute(o.rowAttr);
@@ -3116,6 +3258,7 @@ function wireAdmEditBar(scope, o) {
         await saveSiteConfig("upcoming_levels", all);
         wrap.querySelectorAll("[data-up]").forEach((el) => { el.dataset.orig = val(el); el.classList.remove("chg"); });
         afterUpcomingChange();
+        if (lock) await admAutoStops(wrap, o, lock, autoNew);
       }
       let added = 0;
       for (const tr of newRows()) {
@@ -3652,7 +3795,13 @@ async function renderAdminProgression(body, nameFilter) {
       try { await saveAdminRowOrderInPlace(wrap, "data-progrow", "progression_rows", rows, orderedIds); invalidateCaches(); }
       catch (err) { toast("Couldn't reorder", true); loadRows(); }
     });
-    wireAdmEditBar(wrap, { rowAttr: "data-progrow", table: "progression_rows", upTable: "progression_rows", saveRow: (id) => saveProgRow(id), after: () => invalidateCaches(), hide: ["#adminProgSaveAll", "[data-progsave]"],
+    // Chief Gear rows read "Red T7 ★0.1" (Tier / Stars / Stage) in the phone list.
+    const cgName = (tr) => { const v = (k) => { const el = tr.querySelector(`[data-f="${k}"]`); return el ? String(el.value).trim() : ""; }; return chiefGearRowLabel({ tier: v("tier"), stars: v("stars") === "" ? null : v("stars"), stage: v("stage") === "" ? null : v("stage"), display_label: v("display_label") || null }); };
+    // Hero Gear Mithril levels count on from Enhance 100 (Enhance Combined 101+).
+    const isMithril = activeTableName === "Hero Gear Mithril";
+    const lockTarget = isChiefGear ? "chief_gear" : activeTableName === "Hero Gear Mastery Forging" ? "hero_mastery" : activeTableName === "Hero Gear Enhancement" || isMithril ? "hero_enhance" : null;
+    const lvPlus = (tr) => { const el = tr.querySelector('[data-f="level"]'); const n = el && el.value !== "" ? Number(el.value) : NaN; return Number.isFinite(n) ? String(n + 100) : ""; };
+    wireAdmEditBar(wrap, { rowAttr: "data-progrow", table: "progression_rows", upTable: "progression_rows", ...(isChiefGear ? { rowName: cgName, lockLevel: cgName } : {}), ...(isMithril ? { lockLevel: lvPlus } : {}), ...(lockTarget ? { lockTarget } : {}), saveRow: (id) => saveProgRow(id), after: () => invalidateCaches(), hide: ["#adminProgSaveAll", "[data-progsave]"],
       addForm: "#adminProgAddForm", reload: () => loadRows(),
       create: async (tr) => {
         const payload = { table_id: ADMIN_ACTIVE_PROGRESSION, ...admNewRowPayload(tr, null) };
