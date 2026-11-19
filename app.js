@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 112; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 113; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2031,7 +2031,6 @@ const T = {
   isl_sc_name: { en: "Shining City" },
   sh_title: { en: "Shining City skins" },
   pca_day_bonus: { en: "+{q} Tomes a day from the first buy \u00b7 +{n} in this plan" },
-  sh_pick: { en: "+ pick skins" },
   sh_tomes: { en: "{n} Tomes" },
   sh_n: { en: "{n} skins" },
   sh_n1: { en: "1 skin" },
@@ -2040,12 +2039,15 @@ const T = {
   sh_on_now: { en: "on now" },
   sh_no_date: { en: "set the Shining City Pack's date on the Packs page" },
   sh_have: { en: "\u2713 in your Backpack" },
-  sh_pick_title: { en: "Shining City skins" },
-  sh_pick_desc: { en: "Tick the City Skins your state's Shining City event sells (10,000 Glorious Tomes each)." },
-  sh_save: { en: "Save" },
-  sh_cancel: { en: "Cancel" },
+  sh_pick_hint: { en: "Pick skins with the Shining City switch on a City Skin" },
+  skp_owned: { en: "Owned" },
+  skp_owned_on: { en: "You have it" },
+  skp_owned_off: { en: "Tap when you have it" },
+  skp_sh_owned: { en: "Owned \u2014 nothing to buy" },
+  skp_sh_on: { en: "Picked \u00b7 {n} Tomes" },
+  skp_sh_off: { en: "Sold in the event? \u00b7 {n} Tomes" },
   sh_skins_n: { en: "Skins ({n})" },
-  sh_none: { en: "No skins picked \u00b7 tap \u201c+ pick skins\u201d on the Skin Gallery page" },
+  sh_none: { en: "No skins picked \u00b7 switch Shining City on in a City Skin\u2019s pop-up on the Skin Gallery page" },
   isl_wb_title: { en: "Where to buy copies" },
   isl_wb_mark: { en: "Mark of Revival shop" },
   isl_wb_note: { en: "Your picks start as the site's picks \u00b7 change them to match your state" },
@@ -26739,72 +26741,80 @@ async function renderSkinGallery() {
     const box = document.getElementById("shSkins");
     if (!box) return;
     const rows = shRows(), per = shiningTomesPer(), need = rows.length * per;
-    // One gold-edged row; tap = pick sheet, price = Pack cost. Nothing picked: a slim row.
-    if (!rows.length) { box.innerHTML = `<div class="s1b slim" role="button" tabindex="0" data-shpick><span class="tx"><b>${esc(t("isl_sc_name"))} \u00b7 <em class="pk">${esc(t("sh_pick"))}</em></b></span><span class="ch" aria-hidden="true">&#8250;</span></div>`; shPackCard(); return; }
+    // One gold-edged row; price = Pack cost. Skins are picked in each City Skin's pop-up. Nothing picked: a slim hint.
+    if (!rows.length) { box.innerHTML = `<div class="s1b slim sh-hint"><span class="tx"><b>${esc(t("isl_sc_name"))}</b><em>${esc(t("sh_pick_hint"))}</em></span></div>`; shPackCard(); return; }
     const have = shTomeHave();
     const pic = (s) => `<span title="${esc(s.name)}">${s.image_url ? `<img class="sk" src="${esc(s.image_url)}" alt="" loading="lazy" />` : ""}<img class="tm" src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span>`;
     const stack = `<span class="stk">${rows.slice(0, 4).map(pic).join("")}${rows.length > 4 ? `<span class="more">+${rows.length - 4}</span>` : ""}</span>`;
     const price = have >= need ? `<span class="shb ok">${esc(t("sh_have"))}</span>` : `<button type="button" class="shb" data-shpc data-shprice>${shPriceLabel()}</button>`;
     const when = shiningNextText(true);
     // Layout S1 (owner, 10 Nov 2026): picture stack left, "N skins · date" / "X Tomes", price right.
-    box.innerHTML = `<div class="s1" role="button" tabindex="0" data-shpick aria-label="${esc(t("sh_title"))}">${stack}<span class="tx"><b><span>${esc(t(rows.length === 1 ? "sh_n1" : "sh_n").replace("{n}", rows.length))}</span>${when ? `<span class="d">\u00b7 ${esc(when)}</span>` : ""}</b><em>${esc(t("sh_tomes").replace("{n}", need.toLocaleString()))}</em></span>${price}</div>`;
+    box.innerHTML = `<div class="s1 sh-np" aria-label="${esc(t("sh_title"))}">${stack}<span class="tx"><b><span>${esc(t(rows.length === 1 ? "sh_n1" : "sh_n").replace("{n}", rows.length))}</span>${when ? `<span class="d">\u00b7 ${esc(when)}</span>` : ""}</b><em>${esc(t("sh_tomes").replace("{n}", need.toLocaleString()))}</em></span>${price}</div>`;
     shPackCard();
   }
   document.getElementById("shSkins").onclick = (e) => {
     if (e.target.closest("[data-shpc]")) {
       if (window.matchMedia("(max-width: 900px)").matches) shPacksTo(true);
       else { const c = document.getElementById("shMkBuy"); if (c) c.scrollIntoView({ behavior: "smooth", block: "start" }); }
-      return;
     }
-    if (e.target.closest("[data-shpick]")) shPickSheet();
-  };
-  document.getElementById("shSkins").onkeydown = (e) => {
-    if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-shpick]")) { e.preventDefault(); shPickSheet(); }
   };
   // The Shining City Pack's dates come with the pack list (loaded once, then redrawn).
   if (!ISL_PACKS) islLoadPacks().then(() => { if (seq === RENDER_SEQ) drawShining(); });
-  // Pick sheet: every City Skin as a tick tile; the owner's picks are everyone's first choice.
-  function shPickSheet() {
-    let m = document.getElementById("shPickSheet");
-    if (!m) { m = document.createElement("div"); m.id = "shPickSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap isl-ov"; document.body.appendChild(m); }
-    const draft = new Set(shList);
-    const city = skins.filter((s) => s.category === SHINING_SKIN_CAT && shiningPickable(s.name));
-    const tile = (s) => `<button type="button" class="isl-sht${draft.has(s.name) ? " on" : ""}" data-shtick="${esc(s.name)}" aria-pressed="${draft.has(s.name)}" title="${esc(s.name)}">${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" />` : ""}<span class="nm">${esc(s.name)}</span><span class="ck" aria-hidden="true">${draft.has(s.name) ? "&#10003;" : ""}</span></button>`;
-    m.innerHTML = `<div class="modal-box adm-sheet gs-box sh-pick" role="dialog" aria-modal="true" aria-label="${esc(t("sh_pick_title"))}"><div class="gs-head"><b style="flex:1;">${esc(t("sh_pick_title"))}</b>${closeXHtml("data-shx")}</div>
-      <div class="meta sh-pick-d">${esc(t("sh_pick_desc").replace("10,000", shiningTomesPer().toLocaleString()))}</div>
-      <div class="isl-shg">${city.map(tile).join("")}</div>
-      <div class="isl-shn">${esc(t(IS_OWNER ? "isl_wb_note_owner" : "isl_wb_note"))}</div>
-      <div class="isl-shb"><button type="button" class="btn ghost" data-shx>${esc(t("sh_cancel"))}</button><button type="button" class="btn" data-shsave>${esc(t("sh_save"))}</button></div></div>`;
-    const close = () => { m.style.display = "none"; };
-    m.onclick = (ev) => {
-      if (ev.target === m || ev.target.closest("[data-shx]")) { close(); return; }
-      const tk = ev.target.closest("[data-shtick]");
-      if (tk) {
-        const n = tk.dataset.shtick, on = !draft.has(n);
-        if (on) draft.add(n); else draft.delete(n);
-        tk.classList.toggle("on", on); tk.setAttribute("aria-pressed", String(on));
-        tk.querySelector(".ck").innerHTML = on ? "&#10003;" : "";
-        return;
-      }
-      if (ev.target.closest("[data-shsave]")) {
-        // Kept in pick order; names outside the City Skins (renamed / other states) stay.
-        const out = [...shList.filter((n) => draft.has(n) && shiningPickable(n)), ...city.map((s) => s.name).filter((n) => draft.has(n) && !shList.includes(n))];
-        close();
-        if (JSON.stringify(out) === JSON.stringify(shList)) return;
-        const prev = shList;
-        shList = out;
-        budgetInvalidate();
-        computeAndRender();
-        if (IS_OWNER) {
-          if (!SITE_CONFIG) SITE_CONFIG = {};
-          SITE_CONFIG.shining_skins = out; // shown at once (Budgets reads it too)
-          saveSiteConfig("shining_skins", out).catch(() => { shList = prev; SITE_CONFIG.shining_skins = prev; budgetInvalidate(); toast("Couldn't save", true); if (document.getElementById("shSkins")) computeAndRender(); });
-        }
-        else saveCalcState("shining_skins", { list: out });
-      }
+  // Shining City picks, one skin at a time (from the City Skin pop-up). Saves exactly what the
+  // old pick sheet saved: owner → site_config shining_skins (everyone's first choice), visitor →
+  // calc_state shining_skins { list } (starting from the owner's picks).
+  function shPickSet(name, on) {
+    const out = on ? [...shList.filter((n) => n !== name && shiningPickable(n)), name] : shList.filter((n) => n !== name && shiningPickable(n));
+    if (JSON.stringify(out) === JSON.stringify(shList)) return;
+    const prev = shList;
+    shList = out;
+    budgetInvalidate();
+    computeAndRender();
+    if (IS_OWNER) {
+      if (!SITE_CONFIG) SITE_CONFIG = {};
+      SITE_CONFIG.shining_skins = out; // shown at once (Budgets reads it too)
+      saveSiteConfig("shining_skins", out).catch(() => { shList = prev; SITE_CONFIG.shining_skins = prev; budgetInvalidate(); toast("Couldn't save", true); if (document.getElementById("shSkins")) computeAndRender(); });
+    }
+    else saveCalcState("shining_skins", { list: out });
+  }
+  // City Skins (owner, 19 Nov 2026): a tap opens a small pop-up next to the skin with an
+  // "Owned" switch (the same save and Undo note as one tap) and a "Shining City" switch
+  // (picked for the Shining City event). Other categories keep one tap = owned.
+  function skinPopOpen(id) {
+    if (SK_POP) { const same = SK_POP.id === String(id); SK_POP.close(); if (same) return; }
+    const sections = document.getElementById("skinSections"), tileOf = () => sections && sections.querySelector(`[data-skin="${window.CSS.escape(String(id))}"]`);
+    const s = skins.find((x) => String(x.id) === String(id));
+    if (!tileOf() || !s) return;
+    const pop = document.createElement("div");
+    pop.className = "sg-pop sk-pop";
+    pop.setAttribute("role", "dialog");
+    pop.setAttribute("aria-label", s.name);
+    const draw = () => {
+      const per = shiningTomesPer(), canSh = shiningPickable(s.name), on = shList.includes(s.name), bonus = skinBonusText(s);
+      const shRow = canSh ? `<label class="skp-r${s.owned ? " off" : ""}"><span class="skp-i" aria-hidden="true"><img src="icons/glorious-tome.png" alt="" /></span><span class="skp-tx"><b>${esc(t("isl_sc_name"))}</b><small>${esc(s.owned ? t("skp_sh_owned") : t(on ? "skp_sh_on" : "skp_sh_off").replace("{n}", per.toLocaleString()))}</small></span><input type="checkbox" class="bset-sw" data-skpsh${on && !s.owned ? " checked" : ""}${s.owned ? " disabled" : ""} /></label>` : "";
+      pop.innerHTML = `<span class="sg-pop-ar"></span><div class="skp-h">${s.image_url ? `<img src="${esc(s.image_url)}" alt="" />` : ""}<span class="skp-t"><b>${esc(s.name)}</b><small>${esc(s.category)}</small>${bonus ? `<em>${esc(bonus)}</em>` : ""}</span>${closeXHtml("data-skpx")}</div>
+        <label class="skp-r"><span class="skp-i ok" aria-hidden="true">&#10003;</span><span class="skp-tx"><b>${esc(t("skp_owned"))}</b><small>${esc(t(s.owned ? "skp_owned_on" : "skp_owned_off"))}</small></span><input type="checkbox" class="bset-sw" data-skpown${s.owned ? " checked" : ""} /></label>${shRow}`;
     };
-    m.onkeydown = (ev) => { if (ev.key === "Escape") { ev.stopPropagation(); close(); } };
-    m.style.display = "flex";
+    const place = () => {
+      const tileEl = tileOf();
+      if (!pop.isConnected || !tileEl) return;
+      pop.style.width = `${Math.min(330, sections.getBoundingClientRect().width)}px`;
+      tileEl.classList.add("sel");
+      placePop(pop, tileEl, { align: "center", gap: 8, away: () => { if (SK_POP && SK_POP.id === String(s.id)) SK_POP.close(); }, onPlace: ({ up, left, width }) => {
+        pop.classList.toggle("up", up);
+        const tr = tileEl.getBoundingClientRect();
+        pop.querySelector(".sg-pop-ar").style.left = `${Math.max(10, Math.min(width - 24, tr.left + tr.width / 2 - left - 7))}px`;
+      } });
+    };
+    pop.onclick = (e) => { if (e.target.closest("[data-skpx]")) SK_POP.close(); };
+    pop.onchange = (e) => {
+      if (e.target.matches("[data-skpown]")) toggleSkin(s.id);
+      else if (e.target.matches("[data-skpsh]")) shPickSet(s.name, e.target.checked);
+    };
+    content.appendChild(pop);
+    SK_POP = { id: String(s.id), place, refresh: () => { draw(); place(); }, close: () => { popForget(pop); pop.remove(); const te = tileOf(); if (te) te.classList.remove("sel"); if (SK_POP && SK_POP.id === String(s.id)) SK_POP = null; } };
+    draw();
+    place();
   }
 
   if (SKIN_FILTER.category === "all" || !categories.includes(SKIN_FILTER.category)) {
@@ -26927,6 +26937,12 @@ async function renderSkinGallery() {
       toast("Couldn't update skin", true);
     });
   }
+  // City Skins that can be picked for Shining City open the pop-up (Owned + Shining City); Globe
+  // Level skins, skins outside the Admin allow list and every other category: one tap = owned.
+  function skinTap(id) {
+    const s = skins.find((x) => String(x.id) === String(id));
+    if (s && s.category === SHINING_SKIN_CAT && shiningPickable(s.name)) skinPopOpen(id); else toggleSkin(id);
+  }
   function toggleSkin(id) {
     const skin = skins.find((s) => String(s.id) === String(id));
     if (!skin) return;
@@ -27047,17 +27063,24 @@ async function renderSkinGallery() {
     sections.onclick = (e) => {
       if (e.target.closest("[data-galmore]")) { GAL_MORE.add(moreKey); computeAndRender(); return; }
       const el = e.target.closest("[data-skin]");
-      if (el && !e.target.closest("[data-move]")) toggleSkin(el.dataset.skin);
+      if (el && !e.target.closest("[data-move]")) skinTap(el.dataset.skin);
     };
     sections.onkeydown = (e) => {
-      if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-skin]")) { e.preventDefault(); toggleSkin(e.target.dataset.skin); }
+      if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-skin]")) { e.preventDefault(); skinTap(e.target.dataset.skin); }
     };
+    if (SK_POP) { if (sections.querySelector(`[data-skin="${window.CSS.escape(SK_POP.id)}"]`)) SK_POP.refresh(); else SK_POP.close(); }
   }
 
   wireGalTools("skin", SKIN_FILTER, computeAndRender);
   computeAndRender();
 }
 
+// The open City Skin pop-up on Skin Gallery: { id, close(), place(), refresh() } or null.
+let SK_POP = null;
+document.addEventListener("pointerdown", (e) => {
+  if (SK_POP && e.target.closest && !e.target.closest(".sk-pop, [data-skin]")) SK_POP.close();
+}, true);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && SK_POP) { e.stopImmediatePropagation(); SK_POP.close(); } }, true);
 let ISLAND_FILTER = { search: "", bonusType: "all", ownedFilter: "all" };
 // The open island level pop-up: { id, close(noRedraw), place() } or null.
 let ISL_POP = null;
@@ -33717,7 +33740,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=461aa7e78d";
+      s.src = "admin.min.js?v=d1905292bc";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }

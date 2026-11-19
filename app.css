@@ -3880,7 +3880,12 @@ input,select,textarea{
   .isl-shb{ display:flex; gap:8px; margin-top:10px; }
   .isl-shb .btn{ flex:1 1 0; }
   /* Admin → Islands: which buildings each shop may offer */
-  .adm-islshops .isl-shg{ max-height:none; grid-template-columns:repeat(auto-fill, minmax(78px, 1fr)); }
+  .adm-islshops .isl-shg{ max-height:none; overflow:visible; overscroll-behavior:auto; grid-template-columns:repeat(auto-fill, minmax(78px, 1fr)); }
+  .adm-islshops .isl-sht{ touch-action:manipulation; }
+  .adm-shg-h{ margin:12px 0 6px; font-size:13px; font-weight:700; color:var(--frost); }
+  .adm-shg-h:first-child{ margin-top:0; }
+  .adm-shg-h.no{ color:var(--muted); }
+  .adm-shg-e{ grid-column:1 / -1; font-size:12.5px; padding:4px 0; }
   .isl-mkx{ margin-top:6px; padding-top:6px; border-top:1px dashed var(--line); font-size:12.5px; color:var(--frost); line-height:1.35; }
   .isl-mkx small{ color:var(--muted); font-size:11.5px; }
   .isl-mkrow.opt .tx small{ color:var(--muted); }
@@ -4931,7 +4936,24 @@ input,select,textarea{
   .s1 .stk img.tm{ position:absolute; left:-3px; bottom:-3px; width:14px; height:14px; object-fit:contain; }
   .s1 .stk > span.more{ display:flex; align-items:center; justify-content:center; width:30px; height:30px; margin-top:1px; background:#2a3446; border:1px solid rgba(224,178,90,.6); color:#e0b25a; font-size:12px; font-weight:800; box-sizing:border-box; }
   @media (max-width:380px){ .s1{ gap:6px; padding-inline-start:8px; } .s1 .stk > span{ width:30px; margin-inline-start:-20px; } .s1 .stk img.sk{ width:30px; height:28px; } .s1 .stk > span.more{ width:28px; height:28px; } }
-  .sh-pick-d{ margin:-4px 0 10px; font-size:12.5px; line-height:1.4; }
+  .s1.sh-np, .s1b.sh-hint{ cursor:default; }
+  .s1b.sh-hint .tx em{ display:block; font-style:normal; font-size:12px; color:var(--muted); white-space:normal; }
+  /* City Skin pop-up: Owned + Shining City switches */
+  .sk-pop{ padding:10px 12px; }
+  .skp-h{ display:flex; align-items:center; gap:10px; padding-bottom:8px; border-bottom:1px solid var(--line); }
+  .skp-h > img{ width:52px; height:48px; object-fit:contain; flex:none; }
+  .skp-t{ flex:1; min-width:0; line-height:1.3; }
+  .skp-t b{ display:block; font-size:14px; color:var(--frost); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .skp-t small{ display:block; font-size:12px; color:var(--muted); }
+  .skp-t em{ display:block; font-style:normal; font-size:12px; color:var(--ice); font-weight:700; }
+  .skp-r{ display:flex; align-items:center; gap:10px; min-height:48px; padding:6px 0; border-bottom:1px solid var(--line); cursor:pointer; }
+  .skp-r:last-child{ border-bottom:0; }
+  .skp-r.off{ opacity:.55; cursor:default; }
+  .skp-i{ flex:none; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--panel-2); color:var(--good); font-weight:800; }
+  .skp-i img{ width:18px; height:18px; object-fit:contain; }
+  .skp-tx{ flex:1; min-width:0; line-height:1.3; }
+  .skp-tx b{ display:block; font-size:13.5px; color:var(--frost); }
+  .skp-tx small{ display:block; font-size:12px; color:var(--muted); }
   /* Budgets: the Shining City page sheet's skins */
   .sh-bud{ margin-top:10px; }
   .sh-bud-h{ font-size:10.5px; font-weight:600; margin-bottom:4px; }
