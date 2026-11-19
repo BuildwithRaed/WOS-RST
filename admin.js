@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "1b4623792a";
+window.ADMIN_BUILD = "461aa7e78d";
 
 // ============================================================
 // ADMIN PAGE
@@ -104,7 +104,7 @@ function adminCardInfo(k) {
   if (k === "rules") { const n = admRulesChangedN(); if (n) line = t("admh_n_changed").replace("{n}", n); }
   if (k === "backup") { const d = adminBackupAge(); line = d == null ? t("admh_bk_never") : d === 0 ? t("admh_bk_today") : t("admh_bk_days").replace("{n}", d); warn = d == null || d > 7; }
   if (k === "languages") { const m = adminLangMissing(); const shown = languageList(true).filter((l) => !l.hidden).length; line = t("admh_n_langs").replace("{n}", shown); if (m && m.n > 0) { line = t("admh_n_missing").replace("{n}", m.n.toLocaleString()); warn = true; } }
-  if (k === "visibility" && typeof UI_HIDDEN === "object" && UI_HIDDEN) { const n = Object.keys(UI_HIDDEN).filter((x) => UI_HIDDEN[x]).length; if (n) line = t("admh_n_hidden").replace("{n}", n); }
+  if (k === "visibility" && typeof UI_HIDDEN === "object" && UI_HIDDEN) { const n = Object.keys(UI_HIDDEN).filter((x) => UI_HIDDEN[x] && !/^upcoming:/.test(x)).length; if (n) line = t("admh_n_hidden").replace("{n}", n); }
   if (ADMIN_UP_MATCH[k]) {
     let n = 0; Object.keys(up).forEach((tb) => { if (ADMIN_UP_MATCH[k].test(tb) && Array.isArray(up[tb])) n += up[tb].length; });
     if (k === "pets") { const p = siteConfig("upcoming_pets", []); if (Array.isArray(p) && p.length) { line = t("admh_n_up_pets").replace("{n}", p.length); warn = true; } }
@@ -788,12 +788,15 @@ function admRuleCard(host, key, back) {
       return `<span class="rl-pick"><select ${a} data-rpick><option value="" ${sv === "" ? "selected" : ""}>—</option>${opts.map((o) => { const [ov, ol] = pair(o); return `<option value="${esc(String(ov))}" ${!custom && String(ov) === sv ? "selected" : ""}>${esc(String(ol))}</option>`; }).join("")}<option value="${ADM_PICK_CUSTOM}" ${custom ? "selected" : ""}>Custom…</option></select><input type="text" data-rcellc="${ri}|${c.key}" value="${esc(custom ? sv : "")}" placeholder="Type the name" ${custom ? "" : "hidden"} /></span>`;
     }
     if (c.type === "page") return `<select ${a}>${pages.map((p) => `<option value="${esc(p.tab)}" ${p.tab === v ? "selected" : ""}>${esc(p.label)}</option>`).join("")}</select>`;
+    // Unlock rows made by "Upcoming": a small "auto" line, and an amber "set day" box while the day is empty.
+    if (row && row.auto && r.key === "unlocks" && c.key === "label") return `<input ${a} type="text" value="${esc(v == null ? "" : String(v))}" /><small class="rl-auto">${esc(t("rl_auto_sub"))}${row.level ? ` · ${esc(String(row.level))}` : ""}${row.day === "" || row.day == null ? ` <button type="button" class="rl-setday-go" data-rsetday="${ri}">${esc(t("rl_set_day"))} &#8250;</button>` : ""}</small>`;
+    if (row && row.auto && r.key === "unlocks" && c.key === "day" && (v === "" || v == null)) return `<input ${a} type="number" step="any" inputmode="decimal" class="rl-setday" placeholder="${esc(t("rl_set_day"))}" value="" />`;
     return `<input ${a} type="${c.type === "num" ? "number" : c.type === "date" ? "date" : "text"}" ${c.type === "num" ? 'step="any" inputmode="decimal"' : ""} value="${esc(v == null ? "" : String(v))}" />`;
   };
   const draw = () => {
     const saved = gameRulesSaved();
     let val = JSON.parse(JSON.stringify(saved[r.key] != null ? saved[r.key] : r.def));
-    if (r.key === "unlocks" && Array.isArray(val)) val.sort((a, b) => (Number(a.day) || 0) - (Number(b.day) || 0)); // by state day
+    if (r.key === "unlocks" && Array.isArray(val)) val.sort((a, b) => (a.day === "") - (b.day === "") || (Number(a.day) || 0) - (Number(b.day) || 0)); // by state day, no day last
     const drawEditor = () => {
       const ed = host.querySelector(".rl-ed");
       if (r.type === "fields" && ADM_RULE_SECTIONS[r.key]) {
@@ -831,6 +834,8 @@ function admRuleCard(host, key, back) {
       }));
       // Drag ⋮⋮ to change the order (saved with Save).
       ed.querySelectorAll("[data-rdrag]").forEach((h) => dragSort(h, { row: "tr[data-rrow]", arrange: "rule:" + r.key, refocus: (tr, to) => ed.querySelectorAll("[data-rdrag]")[to]?.focus(), done: (tr, from, to) => { const [x] = val.splice(from, 1); val.splice(to, 0, x); if (r.cols.some((c) => c.type === "auto")) val.forEach((row, i) => { r.cols.filter((c) => c.type === "auto").forEach((c) => { row[c.key] = i + 1; }); }); drawEditor(); } }));
+      // "set day ›" on an auto row: to its day box (the table scrolls sideways on phones).
+      ed.querySelectorAll("[data-rsetday]").forEach((b) => b.addEventListener("click", () => { const box = ed.querySelector(`[data-rcell="${b.dataset.rsetday}|day"]`); if (box) { box.scrollIntoView({ block: "nearest", inline: "center" }); box.focus({ preventScroll: true }); } }));
       ed.querySelectorAll("[data-rdel]").forEach((b) => b.addEventListener("click", () => { val.splice(+b.dataset.rdel, 1); r.cols.filter((c) => c.type === "auto").forEach((c) => val.forEach((row, i) => { row[c.key] = i + 1; })); drawEditor(); }));
       ed.querySelector("[data-radd]").addEventListener("click", () => {
         const row = {}; r.cols.forEach((c) => { const first = c.type === "select" ? ((typeof c.options === "function" ? c.options(row) : c.options) || [""])[0] : ""; row[c.key] = c.type === "auto" ? val.length + 1 : c.type === "check" ? false : c.type === "select" ? (Array.isArray(first) ? first[0] : first) : ""; });
@@ -1961,18 +1966,230 @@ function visitorPageList() {
   });
   return out;
 }
+// ---- Admin → Visibility: Upcoming per game part ----
+let ADM_VIS_OPEN = new Set(); // open folds, for the visit
+// Built-in phase ends of the Heroes Gears tracks (Enhance 101 – 200 = Mithril).
+const VUP_PHASE_ENDS = { mastery: [20], enhance: [100, 200] };
+function vupPhaseEnds() {
+  const e = ((siteConfig("upcoming_phases", null) || {}).ends) || {};
+  return { mastery: Array.isArray(e.mastery) ? e.mastery.map(Number) : [], enhance: Array.isArray(e.enhance) ? e.enhance.map(Number) : [] };
+}
+async function vupSavePhaseEnds(ends) {
+  const cur = { ...(siteConfig("upcoming_phases", null) || {}) };
+  const clean = Object.fromEntries(Object.entries(ends).filter(([, v]) => v.length).map(([k, v]) => [k, [...new Set(v)].sort((a, b) => a - b)]));
+  if (Object.keys(clean).length) cur.ends = clean; else delete cur.ends;
+  await saveSiteConfig("upcoming_phases", cur);
+}
+const VUP_PIC = { chief_gear: "icons/quick/chief-gear.png", charm: "icons/charms/charm-infantry-16.webp", hero_gear: "icons/quick/hero-gear.png", experts: "icons/quick/experts.png", pets: "icons/quick/pets.png" };
+// The level groups of the three parts. A group always ENDS at the level itself;
+// the stages after a level belong to the next group (owner, 19 Nov 2026):
+// Chief Gear "Red T7" = T6 ★3.1 … T7 ★3; Charm "Lv 17" = 16.1 … 17; Heroes
+// Gears: Mastery 1 – 20, Enhancement 0 – 100, Mithril (red gear) 101 – 200;
+// levels added later form one new group until the owner splits it.
+async function vupParts() {
+  const [tabs, charm] = await Promise.all([sb(`progression_tables?select=id,name`), sb(`charm_levels?select=id,level_label&order=sort_order.asc`)]);
+  const tid = (n) => ((tabs || []).find((x) => x.name === n) || {}).id;
+  const prog = (n) => (tid(n) ? sb(`progression_rows?table_id=eq.${tid(n)}&select=id,tier,stars,stage,level,stat,display_label&order=sort_order.asc`) : Promise.resolve([]));
+  const [cg, mf, en, mi] = await Promise.all(["Chief Gear", "Hero Gear Mastery Forging", "Hero Gear Enhancement", "Hero Gear Mithril"].map(prog));
+  const stage0 = (r) => r.stage == null || r.stage === "" || String(r.stage) === "0";
+  const cut = (rows, isEnd, make) => {
+    const out = []; let cur = [];
+    rows.forEach((r, i) => { cur.push(r); if (isEnd(r, i)) { out.push(make(cur, false)); cur = []; } });
+    if (cur.length) out.push(make(cur, true));
+    return out;
+  };
+  // Chief Gear: each tier's last whole-star row ends its group.
+  const cgEnd = new Set(); const lastOf = {};
+  (cg || []).forEach((r, i) => { if (stage0(r)) lastOf[r.tier] = i; });
+  Object.values(lastOf).forEach((i) => cgEnd.add(i));
+  const cgShort = (r) => chiefGearRowLabel(r).replace(/^(?:Green|Blue|Purple|Gold|Red) (T\d+)/, "$1");
+  const range = (a, b) => (a === b ? a : `${a} – ${b}`);
+  const cgGroups = cut(cg || [], (r, i) => cgEnd.has(i), (rows, tail) => {
+    const a = rows[0], b = rows.at(-1), name = (CHIEF_GEAR_TIER_SHORT[b.tier] || b.tier) + (tail && !stage0(b) ? " +" : "");
+    const lv = a.level != null && b.level != null ? ` · Lv ${range(String(a.level), String(b.level))}` : "";
+    return { name, range: range(cgShort(a), cgShort(b)) + lv, pic: `icons/chief-gear/helmet-${chiefGearLook(b.tier)}.webp`, table: "progression_rows", ids: rows.map((r) => String(r.id)), target: "chief_gear", level: chiefGearRowLabel(a), label: `Chief Gear ${name}` };
+  });
+  // Chief Charm: whole levels end a group.
+  const chGroups = cut((charm || []).filter((r) => String(r.level_label) !== "0"), (r) => /^\d+$/.test(String(r.level_label)), (rows) => {
+    const a = String(rows[0].level_label), b = String(rows.at(-1).level_label), n = Math.floor(parseFloat(b)) || 1;
+    return { name: `Lv ${b.replace(/\..*$/, "")}${/^\d+$/.test(b) ? "" : " +"}`, range: rows.length > 1 ? `${range(a, b)} · ${t("vup_stages").replace("{n}", rows.length)}` : `Lv ${a}`, pic: `icons/charms/charm-infantry-${Math.max(1, Math.min(18, n))}.webp`, table: "charm_levels", ids: rows.map((r) => String(r.id)), target: "charms", level: a, label: `Chief Charm Lv ${b}` };
+  });
+  // Heroes Gears: phase ends per track (built-in VUP_PHASE_ENDS + the owner's
+  // splits in site_config "upcoming_phases" = { ends: { mastery, enhance } });
+  // rows past the last phase end form one group ("NEW"). Enhance counts on into
+  // the Mithril table (101 – 200).
+  const ends = vupPhaseEnds();
+  const hgTrack = (key, items, target, sec) => {
+    const all = new Set([...VUP_PHASE_ENDS[key], ...ends[key]]), own = new Set(ends[key]);
+    const lvTxt = (x) => `${x.lv}${x.s0 ? "" : "." + x.stage}`;
+    const out = cut(items, (x) => x.s0 && all.has(x.lv), (gr, tail) => ({ gr, tail }));
+    return out.map(({ gr, tail }, k) => {
+      const a = gr[0], b = gr.at(-1), prevEnd = k ? out[k - 1].gr.at(-1).lv : null;
+      const rng = range(lvTxt(a), lvTxt(b)), red = key === "enhance" && (a.lv > 100 || (a.lv === 100 && !a.s0));
+      const name = key === "mastery" ? `Mastery ${rng}` : red ? `${t("vup_red_gear")} ${rng}` : `Enhancement ${rng}`;
+      const isNew = tail && !(b.s0 && all.has(b.lv)) && k > 0;
+      return { sec, track: key, name, isNew, items: gr, prevEnd, prevOwn: prevEnd != null && own.has(prevEnd), endLv: b.lv,
+        range: isNew ? t("vup_new_levels").replace("{n}", gr.length) : `${t("vup_phase").replace("{n}", k + 1)} · Lv ${rng}`,
+        pic: VUP_PIC.hero_gear, table: "progression_rows", ids: gr.map((x) => x.id), target, level: String(a.lv + (a.s0 ? 0 : 1)), label: `${key === "mastery" ? "Hero Mastery" : "Hero Enhance"} ${rng}` };
+    });
+  };
+  const item = (add) => (r) => ({ id: String(r.id), lv: Number(r.level) + add, stage: r.stage, s0: stage0(r), stat: r.stat || "" });
+  const hgGroups = [
+    ...hgTrack("mastery", (mf || []).map(item(0)), "hero_mastery", t("vup_mastery")),
+    ...hgTrack("enhance", [...(en || []).map(item(0)), ...(mi || []).map(item(100))], "hero_enhance", t("vup_enhance")),
+  ];
+  return [
+    { key: "chief_gear", title: "Chief Gear", desc: t("vup_cg_desc"), groups: cgGroups },
+    { key: "charm", title: "Chief Charm", desc: t("vup_ch_desc"), groups: chGroups },
+    { key: "hero_gear", title: "Heroes Gears", desc: t("vup_hg_desc"), groups: hgGroups },
+  ].filter((p) => p.groups.length);
+}
+// "Count upcoming" switch of a section (same look as the visitor switch row).
+function vupCountRow(key) {
+  const on = upcomingCountOn(key);
+  return `<label class="vis-row" style="display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px;">
+      <span style="flex:1 1 0; min-width:0;">${esc(t("vup_count"))}</span>
+      <span class="meta" style="font-size:11px; color:${on ? "var(--amber)" : "var(--muted)"};">${esc(t(on ? "vup_count_on" : "vup_count_off"))}</span>
+      <input type="checkbox" class="bset-sw" data-vupcount="${esc(key)}" ${on ? "checked" : ""} aria-label="${esc(t("vup_count"))}" />
+    </label>`;
+}
+function vupGroupState(g) { const up = upcomingIds(g.table), n = g.ids.filter((id) => up.has(id)).length; return { on: n === g.ids.length && n > 0, some: n > 0 }; }
+function vupAutoId(g) { return `lv:${g.table}:${g.ids[0]}`; }
+// A group's stop follows its new name after a split / join (its day stays).
+async function vupRelabel(g) {
+  const rows = admUnlockRows(), before = JSON.stringify(rows), u = g && rows.find((x) => x.auto === vupAutoId(g));
+  if (u) u.label = g.label;
+  await admSaveUnlockRows(rows, before);
+}
+// The group's stop (an empty-day unlock row), made when it has none yet.
+async function vupEnsureStop(g) {
+  const rows = admUnlockRows(), before = JSON.stringify(rows), id = vupAutoId(g);
+  if (!rows.some((u) => u.auto === id)) rows.push({ label: g.label, kind: "level", name: "", tab: "", table: g.target, level: g.level, day: "", auto: id });
+  await admSaveUnlockRows(rows, before);
+}
+async function vupSetGroup(g, on) {
+  const all = { ...(siteConfig("upcoming_levels", {}) || {}) };
+  const keep = new Set(upcomingIds(g.table));
+  g.ids.forEach((id) => { if (on) keep.add(id); else keep.delete(id); });
+  if (keep.size) all[g.table] = [...keep]; else delete all[g.table];
+  await saveSiteConfig("upcoming_levels", all);
+  afterUpcomingChange();
+  const rows = admUnlockRows(), before = JSON.stringify(rows), id = vupAutoId(g);
+  if (on) { if (!rows.some((u) => u.auto === id)) rows.push({ label: g.label, kind: "level", name: "", tab: "", table: g.target, level: g.level, day: "", auto: id }); }
+  else { const i = rows.findIndex((u) => u.auto === id && (u.day === "" || u.day == null)); if (i >= 0) rows.splice(i, 1); }
+  await admSaveUnlockRows(rows, before);
+}
+function vupFoldHtml(pt, row) {
+  const st = pt.groups.map(vupGroupState), nUp = st.filter((x) => x.some).length;
+  let sec = null;
+  const rowsHtml = pt.groups.map((g, gi) => {
+    const s0 = st[gi], u = admAutoUnlock(vupAutoId(g));
+    const head = g.sec && g.sec !== sec ? `<div class="vup-sec">${esc(g.sec)}</div>` : "";
+    sec = g.sec || sec;
+    // Upcoming from before stops were made: the chip makes its stop first.
+    const day = u || s0.some ? `<button type="button" class="vup-day" data-vupday="g|${esc(pt.key)}|${gi}">📅 ${esc(!u || u.day == null ? t("vup_day_unset") : t("vup_day").replace("{d}", Number(u.day).toLocaleString()))} &#8250;</button>` : "";
+    const tap = g.track ? ` data-vuptap="${esc(pt.key)}|${gi}" role="button" tabindex="0"` : "";
+    return `${head}<div class="vup-r${s0.some ? " on" : ""}${g.track ? " tap" : ""}"${tap}><img class="vup-pic" src="${esc(g.pic)}" alt="" loading="lazy" /><span class="vup-t"><b>${esc(g.name)}${g.isNew ? ` <em class="vup-new">${esc(t("vup_new"))}</em>` : ""}${s0.some ? ` <em class="vup-tag">${esc(t("upcoming_col"))}</em>` : ""}</b><small>${esc(g.range)}</small>${day}</span><input type="checkbox" class="bset-sw vup-sw${s0.some && !s0.on ? " half" : ""}" data-vupg="${esc(pt.key)}|${gi}" ${s0.on ? "checked" : ""} aria-label="${esc(t("upcoming_col"))}" /></div>`;
+  }).join("");
+  return `<details class="panel adm-visfold" data-visfold="up:${esc(pt.key)}" style="margin-bottom:12px;">
+      <summary><img class="vup-hpic" src="${esc(VUP_PIC[pt.key])}" alt="" /><h2 style="margin:0;">${esc(pt.title)}</h2><span class="meta adm-viscount">${nUp ? `<b class="vup-n">${esc(t("vup_n").replace("{n}", nUp))}</b>` : esc(t("vup_n").replace("{n}", 0))} · ${pt.groups.length}</span><i aria-hidden="true">&#9662;</i></summary>
+      <p class="desc" style="margin:0 0 8px;">${esc(pt.desc)}</p>
+      <div class="vup-see">${row("upcoming", pt.key, t("vup_see"), "")}${vupCountRow(pt.key)}</div>
+      <div class="vup-h"><span>${esc(t("vup_group"))}</span><span>${esc(t("upcoming_col"))}</span></div>
+      ${rowsHtml}
+    </details>`;
+}
+// Experts / Pets fold: the same design as the level parts — "Visitors see
+// upcoming" ("upcoming:experts" / "upcoming:pets") on top, one Upcoming switch
+// per expert / pet (an own saved hide row still hides it, without a switch here).
+function vupWholeFold(kind, title, desc, list, isUp, pic, row) {
+  const nUp = list.filter(isUp).length;
+  const rowsHtml = list.map((n) => {
+    const up = isUp(n), p = pic(n), d = stateUnlockDay(kind, n), u = admAutoUnlock(`${kind}:${n}`);
+    const day = up && (u || d == null) ? `<button type="button" class="vup-day" data-vupday="w|${esc(kind)}|${esc(n)}">📅 ${esc(d != null ? t("vup_day").replace("{d}", d.toLocaleString()) : t("vup_day_unset"))} &#8250;</button>` : "";
+    const sub = d != null ? t("vup_day").replace("{d}", d.toLocaleString()) : up ? "" : t("vup_in_game");
+    return `<div class="vup-r${up ? " on" : ""}">${p ? `<img class="vup-pic" src="${esc(p)}" alt="" loading="lazy" />` : `<span class="vup-pic vup-l">${esc(String(n)[0])}</span>`}<span class="vup-t"><b>${esc(dataName(n))}${up ? ` <em class="vup-tag">${esc(t("upcoming_col"))}</em>` : ""}</b>${sub && !day ? `<small>${esc(sub)}</small>` : ""}${day}</span><input type="checkbox" class="bset-sw vup-sw" data-vupw="${esc(kind)}|${esc(n)}" ${up ? "checked" : ""} aria-label="${esc(t("upcoming_col"))}" /></div>`;
+  }).join("");
+  return `<details class="panel adm-visfold" data-visfold="w:${kind}" style="margin-bottom:12px;">
+      <summary><img class="vup-hpic" src="${esc(VUP_PIC[kind])}" alt="" /><h2 style="margin:0;">${esc(title)}</h2><span class="meta adm-viscount">${nUp ? `<b class="vup-n">${esc(t("vup_n").replace("{n}", nUp))}</b>` : esc(t("vup_n").replace("{n}", 0))} · ${list.length}</span><i aria-hidden="true">&#9662;</i></summary>
+      <p class="desc" style="margin:0 0 8px;">${esc(desc)}</p>
+      <div class="vup-see">${row("upcoming", kind, t("vup_see"), "")}${vupCountRow(kind)}</div>
+      <div class="vup-h"><span>${esc(title)}</span><span>${esc(t("upcoming_col"))}</span></div>
+      ${rowsHtml || `<div class="meta">—</div>`}
+    </details>`;
+}
+// Sheet for one Heroes Gears group: its levels; pick one and "Split after Lv N"
+// makes it a phase end (two groups, each with its own switch and stop; the first
+// keeps its day). "Join with <previous>" removes the owner's phase end before it
+// (the joined group keeps the earlier stop and its day).
+function vupSplitSheet(pt, gi, redraw) {
+  const g = pt.groups[gi], prev = pt.groups[gi - 1];
+  document.querySelectorAll(".vup-ov").forEach((x) => x.remove());
+  const ov = document.createElement("div");
+  ov.className = "modal-overlay admpl-ov vup-ov";
+  let pick = null;
+  const lvRows = g.items.map((x, k) => ({ x, k, end: x.s0 && k < g.items.length - 1 }));
+  const draw = () => {
+    ov.innerHTML = `<div class="modal-box admpl-sh vup-sh" role="dialog" aria-label="${esc(g.name)}">
+      <div class="admpl-sh-h"><img class="vup-pic" src="${esc(g.pic)}" alt="" /><b>${esc(g.name)}<small>${esc(t("vup_sheet_sub").replace("{n}", g.items.length))}</small></b><button type="button" class="admpl-nav admpl-x" data-vupx aria-label="close">&#10005;</button></div>
+      <div class="vup-lvs">${lvRows.map(({ x, k, end }) => `<div class="vup-lv${pick === k ? " pick" : ""}"${end ? ` data-vuplv="${k}" role="button" tabindex="0"` : ""}><b>Lv ${esc(String(x.lv) + (x.s0 ? "" : "." + x.stage))}</b><span>${esc(x.stat)}</span>${pick === k ? `<em>&#9986; ${esc(t("vup_split_here"))}</em>` : ""}</div>${pick === k ? `<div class="vup-cutline">${esc(t("vup_new_starts").replace("{l}", String(g.items[k + 1].lv)))}</div>` : ""}`).join("")}</div>
+      ${pick != null ? `<p class="vup-note">${esc(t("vup_split_note").replace("{l}", g.items[pick].lv))}</p>` : g.prevOwn && prev ? `<p class="vup-note">${esc(t("vup_join_note").replace("{l}", g.prevEnd))}</p>` : ""}
+      <div class="admpl-ft">${pick != null ? `<button type="button" class="btn ghost" data-vupcancel>${esc(t("cancel") === "cancel" ? "Cancel" : t("cancel"))}</button><button type="button" class="btn" data-vupdosplit>${esc(t("vup_split_after").replace("{l}", g.items[pick].lv))}</button>`
+        : `${g.prevOwn && prev ? `<button type="button" class="btn ghost" data-vupjoin>&#8593; ${esc(t("vup_join").replace("{name}", prev.name.replace(/^\D+/, "")))}</button>` : ""}<button type="button" class="btn" data-vupx>${esc(t("admpl_done"))}</button>`}</div>
+    </div>`;
+  };
+  draw();
+  document.body.appendChild(ov);
+  const close = () => { ov.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", onKey);
+  ov.addEventListener("click", async (e) => {
+    if (e.target === ov || e.target.closest("[data-vupx]")) { close(); return; }
+    const lv = e.target.closest("[data-vuplv]");
+    if (lv) { pick = pick === +lv.dataset.vuplv ? null : +lv.dataset.vuplv; draw(); return; }
+    if (e.target.closest("[data-vupcancel]")) { pick = null; draw(); return; }
+    const sp = e.target.closest("[data-vupdosplit]"), jn = e.target.closest("[data-vupjoin]");
+    if (!sp && !jn) return;
+    (sp || jn).disabled = true;
+    try {
+      const ends = vupPhaseEnds(), key = g.track, wasUp = vupGroupState(g).some;
+      if (sp) {
+        ends[key] = [...ends[key], g.items[pick].lv];
+        await vupSavePhaseEnds(ends);
+        // The new second group gets its own switch state and stop.
+        const gs = (await vupParts()).find((x) => x.key === pt.key).groups;
+        await vupRelabel(gs.find((x) => x.ids[0] === g.ids[0]));
+        const after = gs.find((x) => x.ids[0] === g.items[pick + 1].id);
+        if (after && wasUp) await vupSetGroup(after, true);
+        toast(t("vup_split_done"));
+      } else {
+        const prevUp = vupGroupState(prev).some;
+        ends[key] = ends[key].filter((l) => l !== g.prevEnd);
+        await vupSavePhaseEnds(ends);
+        const rows = admUnlockRows(), before = JSON.stringify(rows), id = vupAutoId(g);
+        const k = rows.findIndex((u) => u.auto === id); if (k >= 0) rows.splice(k, 1);
+        await admSaveUnlockRows(rows, before);
+        const joined = (await vupParts()).find((x) => x.key === pt.key).groups.find((x) => x.ids[0] === prev.ids[0]);
+        if (joined && (wasUp || prevUp)) await vupSetGroup(joined, true);
+        await vupRelabel(joined);
+        toast(t("vup_join_done"));
+      }
+    } catch (err) { toast(err.message || "Couldn't save", true); }
+    close(); await redraw();
+  });
+}
 async function renderAdminVisibility(body) {
   await ensureUiVisibility();
   await Promise.all([ensureExpertsRosterGlobal(), ensurePetsData()]);
   const pages = visitorPageList();
   const experts = EXPERTS_IN_ORDER_GLOBAL.slice();
   const pets = [...new Set([...Object.keys(PETS_NODES_CACHE || {}), ...Object.keys(PET_REFINE_CACHE || {})])];
-  const row = (kind, name, label, sub) => `
-    <label style="display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px;">
-      <span style="flex:1 1 0; min-width:0;">${esc(label)}${sub ? ` <span class="meta" style="font-size:11px;">· ${esc(sub)}</span>` : ""}</span>
+  const row = (kind, name, label, sub, pre) => `
+    <${pre ? "div" : "label"} class="vis-row" style="display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px;">
+      ${pre ? pre.pic : ""}<span style="flex:1 1 0; min-width:0;">${pre ? pre.label : esc(label)}${sub ? ` <span class="meta" style="font-size:11px;">· ${esc(sub)}</span>` : ""}</span>${pre ? pre.sw : ""}
       <span class="meta" data-visstate style="font-size:11px; color:${isHiddenFromVisitors(kind, name) ? "var(--amber)" : "var(--good)"};">${esc(isHiddenFromVisitors(kind, name) ? t("vis_hidden") : t("vis_visible"))}</span>
-      <input type="checkbox" class="bset-sw" data-visitem="${esc(kind)}|${esc(name)}" ${isHiddenFromVisitors(kind, name) ? "" : "checked"} />
-    </label>`;
+      <input type="checkbox" class="bset-sw" data-visitem="${esc(kind)}|${esc(name)}" ${isHiddenFromVisitors(kind, name) ? "" : "checked"} aria-label="${esc(t("vis_visible"))}" />
+    </${pre ? "div" : "label"}>`;
   // Big lists fold away: the heading says how many are hidden.
   const section = (title, desc, rowsHtml, list) => list ? `
     <details class="panel adm-visfold" style="margin-bottom:12px;">
@@ -1986,6 +2203,11 @@ async function renderAdminVisibility(body) {
       ${rowsHtml || `<div class="meta">—</div>`}
     </div>`;
   await ensureSiteConfig();
+  // Upcoming per game part (owner, 19 Nov 2026): Chief Gear, Chief Charm and
+  // Heroes Gears each get a fold with "Visitors see upcoming" (ui_visibility
+  // "upcoming:<page>") and one Upcoming switch per level group (vupParts).
+  const parts = await vupParts().catch(() => []);
+  const expRows = await sb(`experts?select=id,key,upcoming`).catch(() => []);
   const va = siteConfig("visitor_access", {}) || {};
   const accessRow = (key, label, sub) => `
     <label style="display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px;">
@@ -2005,9 +2227,76 @@ async function renderAdminVisibility(body) {
       accessRow("islandscan", "Scan Storehouse (Islands)", "the 📷 Scan Storehouse button on the Islands page (My Island, Storehouse tabs, lighthouse levels); you teach the buildings first"),
       accessRow("goals", "Order of goals", "Order of goals with its By dates, the goal flags, the \"By your dates\" plan and hero targets on Budgets, and the goal tags on My Purchases; saved per visitor"),
     ].join(""))}
+    ${parts.map((pt) => vupFoldHtml(pt, row)).join("")}
     ${section(t("vis_pages"), t("vis_pages_desc"), pages.map((p) => row("page", p.tab, p.label, p.group)).join(""), pages.map((p) => ["page", p.tab]))}
-    ${section(t("vis_experts"), t("vis_experts_desc"), experts.map((e) => row("experts", e, dataName(e))).join(""), experts.map((e) => ["experts", e]))}
-    ${section(t("vis_pets"), t("vis_pets_desc"), pets.map((p) => row("pets", p, dataName(p))).join(""), pets.map((p) => ["pets", p]))}`;
+    ${vupWholeFold("experts", t("vis_experts"), t("vis_experts_up_desc"), experts, (e) => !!EXPERT_UPCOMING_GLOBAL[e], (e) => (EXPERTS_LIST || []).find((x) => x.key === e)?.img || "", row)}
+    ${vupWholeFold("pets", t("vis_pets"), t("vis_pets_up_desc"), pets, (p) => petIsUpcoming(p), (p) => petImage(p) || "", row)}`;
+  // Folds stay open across redraws (switching something redraws the screen).
+  body.querySelectorAll("details.adm-visfold").forEach((d, i) => {
+    const k = d.dataset.visfold || "f" + i;
+    if (ADM_VIS_OPEN.has(k)) d.open = true;
+    d.addEventListener("toggle", () => { if (d.open) ADM_VIS_OPEN.add(k); else ADM_VIS_OPEN.delete(k); });
+  });
+  const redraw = async () => { const y = window.scrollY; await renderAdminVisibility(body); window.scrollTo(0, y); };
+  // A level group switched Upcoming / back.
+  body.querySelectorAll("[data-vupg]").forEach((cb) => cb.addEventListener("change", async () => {
+    const [pk, gi] = cb.dataset.vupg.split("|"), pt = parts.find((x) => x.key === pk), g = pt && pt.groups[+gi];
+    if (!g) return;
+    cb.disabled = true;
+    try { await vupSetGroup(g, cb.checked); toast(cb.checked ? t("vup_saved_on") : t("vup_saved_off")); }
+    catch (err) { toast(err.message || "Couldn't save", true); }
+    await redraw();
+  }));
+  body.querySelectorAll("[data-vupcount]").forEach((cb) => cb.addEventListener("change", async () => {
+    cb.disabled = true;
+    try {
+      const cur = { ...(siteConfig("upcoming_count", null) || {}) };
+      if (cb.checked) cur[cb.dataset.vupcount] = true; else delete cur[cb.dataset.vupcount];
+      await saveSiteConfig("upcoming_count", cur);
+      afterUpcomingChange();
+      if (cb.dataset.vupcount === "experts") EXPERTS_ROSTER_LOADED = false;
+      toast(t(cb.checked ? "vup_count_on" : "vup_count_off"));
+    } catch (err) { toast(err.message || "Couldn't save", true); }
+    await redraw();
+  }));
+  body.querySelectorAll("[data-vupday]").forEach((b) => b.addEventListener("click", async (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const [w, a, c] = b.dataset.vupday.split("|");
+    b.disabled = true;
+    try {
+      if (w === "g") { const pt = parts.find((x) => x.key === a), g = pt && pt.groups[+c]; if (g) await vupEnsureStop(g); }
+      else if (w === "w") await admWholeUpcoming(a, c, true);
+    } catch (err) { toast(err.message || "Couldn't save", true); }
+    admRuleOpen("unlocks");
+  }));
+  // Heroes Gears group: its levels in a sheet, "Split here" / "Join with …".
+  body.querySelectorAll("[data-vuptap]").forEach((el) => el.addEventListener("click", (e) => {
+    if (e.target.closest("[data-vupg], [data-vupday]")) return;
+    const [pk, gi] = el.dataset.vuptap.split("|"), pt = parts.find((x) => x.key === pk);
+    if (pt && pt.groups[+gi]) vupSplitSheet(pt, +gi, redraw);
+  }));
+  // A whole expert / pet switched Upcoming / back (hidden from visitors + a timeline stop when turned on).
+  body.querySelectorAll("[data-vupw]").forEach((cb) => cb.addEventListener("change", async () => {
+    const [kind, name] = cb.dataset.vupw.split("|"), on = cb.checked;
+    cb.disabled = true;
+    try {
+      if (kind === "experts") {
+        const r = (expRows || []).find((x) => x.key === name);
+        if (!r) throw new Error("Expert not found");
+        await sb(`experts?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify({ upcoming: on }) });
+        if (on) EXPERT_UPCOMING_GLOBAL[name] = true; else delete EXPERT_UPCOMING_GLOBAL[name];
+        EXPERTS_ROSTER_LOADED = false;
+      } else {
+        const list = new Set(siteConfig("upcoming_pets", []) || []);
+        if (on) list.add(name); else list.delete(name);
+        await saveSiteConfig("upcoming_pets", [...list]);
+      }
+      afterUpcomingChange();
+      await admWholeUpcoming(kind, name, on);
+      toast(on ? t("up_auto_saved") : "Saved");
+    } catch (err) { toast(err.message || "Couldn't save", true); }
+    await redraw();
+  }));
   body.querySelectorAll("[data-visaccess]").forEach((cb) => cb.addEventListener("change", async () => {
     cb.disabled = true;
     try {
@@ -2023,11 +2312,11 @@ async function renderAdminVisibility(body) {
     cb.disabled = true;
     try {
       await setHiddenFromVisitors(kind, name, !cb.checked);
-      const st = cb.closest("label").querySelector("[data-visstate]");
+      const st = cb.closest(".vis-row").querySelector("[data-visstate]");
       const hidden = !cb.checked;
       st.textContent = hidden ? t("vis_hidden") : t("vis_visible");
       st.style.color = hidden ? "var(--amber)" : "var(--good)";
-      const fold = cb.closest(".adm-visfold"), cnt = fold && fold.querySelector(".adm-viscount");
+      const fold = cb.closest(".adm-visfold"), cnt = fold && !fold.dataset.visfold && fold.querySelector(".adm-viscount");
       if (cnt) { const all = [...fold.querySelectorAll("[data-visitem]")]; cnt.textContent = `${t("admh_n_hidden").replace("{n}", all.filter((x) => !x.checked).length)} · ${all.length}`; }
       toast(hidden ? t("vis_now_hidden") : t("vis_now_visible"));
       applyPageVisibility();
@@ -2058,6 +2347,7 @@ async function renderAdminRoster(body) {
     ...[1, 2, 3, 4].map((k) => ({ key: "skill" + k, label: `Skill ${k}`, value: r["skill" + k], half: true })),
     { key: "talent", label: "Talent", value: r.talent },
     { key: "upcoming", label: "Upcoming (badge on its cards; not counted until people tick it)", type: "check", value: r.upcoming },
+    { key: "upnote", label: t("up_auto_note"), type: "note" },
   ];
   wireAdmList(body, {
     onEdit: (id) => {
@@ -2075,6 +2365,8 @@ async function renderAdminRoster(body) {
             if (!confirm(`Rename ${renames.map((x) => `"${x.from}" → "${x.to}"`).join(", ")}?\n\nThe skill's level rows in Experts → Skills get the new name too, and everyone's saved levels for it move to the new name the next time they open the site.`)) throw new Error("Not saved");
           }
           await sb(`experts?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify({ ...v, upcoming: !!v.upcoming }) });
+          const upTurned = !!v.upcoming !== !!r.upcoming;
+          if (upTurned) await admWholeUpcoming("experts", r.key, !!v.upcoming);
           if (renames.length) {
             for (const x of renames) await sb(`expert_skill_nodes?expert=eq.${encodeURIComponent(r.key)}&skill=eq.${encodeURIComponent(x.from)}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ skill: x.to }) });
             const list = Array.isArray(siteConfig("expert_skill_renames", null)) ? siteConfig("expert_skill_renames", null).slice() : [];
@@ -2082,7 +2374,7 @@ async function renderAdminRoster(body) {
             await saveSiteConfig("expert_skill_renames", list);
             EXPERTS_STATE_GLOBAL = null; dropKeptGameData(); if (typeof budgetInvalidate === "function") budgetInvalidate();
           }
-          EXPERTS_ROSTER_LOADED = false; toast(renames.length ? "Saved · skill renamed" : "Saved"); renderAdminRoster(body);
+          EXPERTS_ROSTER_LOADED = false; toast(upTurned && v.upcoming ? t("up_auto_saved") : renames.length ? "Saved · skill renamed" : "Saved"); renderAdminRoster(body);
         },
         onDelete: async () => { await sb(`experts?id=eq.${r.id}`, { method: "DELETE" }); EXPERTS_ROSTER_LOADED = false; toast("Deleted"); renderAdminPage(); },
         deleteText: `Delete ${r.key} from the roster? Their affinity / skill / research rows stay but won't be used.` });
@@ -2093,7 +2385,8 @@ async function renderAdminRoster(body) {
         if (rows.some((r) => r.key === v.key)) throw new Error("That expert already exists");
         const maxOrder = rows.reduce((m, r) => Math.max(m, r.sort_order || 0), 0);
         await sb(`experts`, { method: "POST", body: JSON.stringify({ ...v, upcoming: !!v.upcoming, sort_order: maxOrder + 1 }) });
-        EXPERTS_ROSTER_LOADED = false; toast("Expert added"); renderAdminPage();
+        if (v.upcoming) await admWholeUpcoming("experts", v.key, true);
+        EXPERTS_ROSTER_LOADED = false; toast(v.upcoming ? t("up_auto_saved") : "Expert added"); renderAdminPage();
       } }),
   });
 }
@@ -2358,6 +2651,7 @@ async function renderAdminPets(body) {
           <div style="display:flex; gap:6px; align-items:center;"><input type="text" id="adminPetImg" value="${esc(((siteConfig("pet_images", {}) || {})[ADMIN_ACTIVE_PET]) || "")}" placeholder="${esc(petImage(ADMIN_ACTIVE_PET) || "no picture yet")}" style="flex:1; min-width:0;" />${uploadBtnHtml()}<button type="button" class="btn small" id="adminPetImgSave">Save picture</button></div>
           <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;"><button type="button" class="btn ghost small" id="adminPetRename">Rename pet</button><button type="button" class="btn ghost small" id="adminPetDelete" style="color:var(--danger);">Delete pet</button></div>
           <label class="t12x-check" style="margin-top:8px;"><span>Upcoming pet (not in the game yet: marked, and not counted until people tick it)</span><input type="checkbox" id="adminPetUpcoming" ${petIsUpcoming(ADMIN_ACTIVE_PET) ? "checked" : ""} /></label>
+          ${petIsUpcoming(ADMIN_ACTIVE_PET) ? `<div class="meta" style="font-size:11.5px; margin-top:4px;">${esc(t("up_auto_note"))}</div>` : ""}
         </div></div>` : ""}
     </div>
     <details class="panel" id="adminPetOrder" style="margin-bottom:16px;"${ADMIN_PET_ORDER_OPEN ? " open" : ""}>
@@ -2423,7 +2717,7 @@ async function renderAdminPets(body) {
   if (petUp) petUp.addEventListener("change", async () => {
     const list = new Set(siteConfig("upcoming_pets", []) || []);
     if (petUp.checked) list.add(ADMIN_ACTIVE_PET); else list.delete(ADMIN_ACTIVE_PET);
-    try { await saveSiteConfig("upcoming_pets", [...list]); afterUpcomingChange(); toast("Saved"); }
+    try { await saveSiteConfig("upcoming_pets", [...list]); afterUpcomingChange(); await admWholeUpcoming("pets", ADMIN_ACTIVE_PET, petUp.checked); toast(petUp.checked ? t("up_auto_saved") : "Saved"); }
     catch (err) { petUp.checked = !petUp.checked; toast(err.message || "Couldn't save", true); }
   });
   const petRename = document.getElementById("adminPetRename");
@@ -2745,13 +3039,15 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
     const main = b.slice(1).filter((el) => el.type !== "checkbox" && el.dataset.f !== "sort_order").slice(0, 3);
     return { lab, main, all: b };
   };
+  // Row name shown (o.rowName: e.g. Chief Gear "Red T7 ★0.1" from its Tier / Stars / Stage).
+  const nameOf = (tr) => (o.rowName ? o.rowName(tr) : admPlLabel(parts(tr).lab));
   // Groups: by major level ("4", "4.1" … "4.3"), else by name without its last
   // number ("Mythic T1 ★0" … "★3", "Weapons Prep I" × its levels); mostly single
   // rows → blocks of 10. A name that comes back after other names (stat rows like
   // Collection Gallery's Attack / Lethality / … Lethality) in a table of mostly
   // single rows isn't a level: such a table is never folded by name.
   const groupsOf = (list) => {
-    const labs = list.map((tr) => admPlLabel(parts(tr).lab).trim());
+    const labs = list.map((tr) => nameOf(tr).trim());
     const num = labs.every((l) => l === "" || /^(?:lv\.?\s*)?-?\d+(?:\.\d+)?$/i.test(l));
     const keyOf = (l, i) => (num ? (l === "" ? "new" + i : String(parseInt(l.replace(/^\D+/, ""), 10))) : (l.replace(/[\s.]*[★☆]?\s*\d+(?:\.\d+)?$/, "") || "row" + i));
     const keys = list.map((tr, i) => (tr.hasAttribute("data-newrow") ? "__new" : keyOf(labs[i], i)));
@@ -2782,23 +3078,29 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
     const hasUp = upEls.some(Boolean);
     const firstUp = upEls.findIndex((x) => x && x.checked);
     const relIdx = firstUp < 0 ? list.length - 1 : firstUp - 1;
-    const rel = relIdx >= 0 ? admPlLabel(parts(list[relIdx]).lab) : "—";
+    const rel = relIdx >= 0 ? nameOf(list[relIdx]) : "—";
     const nOld = list.filter((tr) => !tr.hasAttribute("data-newrow")).length;
     const rowHtml = (tr) => {
       const p = parts(tr), i = list.indexOf(tr);
       const chg = tr.hasAttribute("data-newrow") || !!tr.querySelector(".chg");
       const up = !!(tr.querySelector("[data-up]") || {}).checked;
-      return `<button type="button" class="admpl-r${chg ? " chg" : ""}${up ? " up" : ""}" data-plrow="${i}" style="--n:${cols.length}"><b>${esc(admPlLabel(p.lab) || (tr.hasAttribute("data-newrow") ? t("admpl_new") : "—"))}</b>${p.main.map((el) => `<span class="${el.classList.contains("chg") ? "chg" : ""}">${esc(admPlFmt(el))}</span>`).join("")}<i aria-hidden="true">&#8250;</i></button>`;
+      return `<button type="button" class="admpl-r${chg ? " chg" : ""}${up ? " up" : ""}" data-plrow="${i}" style="--n:${cols.length}"><b>${esc(nameOf(tr) || (tr.hasAttribute("data-newrow") ? t("admpl_new") : "—"))}</b>${p.main.map((el) => `<span class="${el.classList.contains("chg") ? "chg" : ""}">${esc(admPlFmt(el))}</span>`).join("")}<i aria-hidden="true">&#8250;</i></button>`;
     };
-    const gLabel = (g) => { const a = admPlLabel(parts(g.rows[0]).lab), b = admPlLabel(parts(g.rows.at(-1)).lab); return g.k === "__new" ? t("admpl_new") : a === b ? a : bidiNum(`${a} – ${b}`); };
+    // A named fold (o.rowName: "Red T7 ★0" … "★3.4") reads "Red T7".
+    const gLabel = (g) => {
+      const a = nameOf(g.rows[0]), b = nameOf(g.rows.at(-1));
+      if (g.k === "__new") return t("admpl_new");
+      if (o.rowName && a !== b && a.startsWith(g.k + " ") && b.startsWith(g.k + " ")) return g.k;
+      return a === b ? a : bidiNum(`${a} – ${b}`);
+    };
     // Range chips: the folds split into up to 5 runs.
     const big = groups.length > 4;
     const per = Math.ceil(groups.length / 5);
-    const chips = big ? Array.from({ length: Math.ceil(groups.length / per) }, (_, c) => { const gs = groups.slice(c * per, c * per + per); const a = admPlLabel(parts(gs[0].rows[0]).lab), b = admPlLabel(parts(gs.at(-1).rows.at(-1)).lab); return `<button type="button" class="admpl-chip" data-plchip="${c * per}|${gs.length}">${esc(a === b ? a : `${a}–${b}`)}</button>`; }).join("") : "";
+    const chips = big ? Array.from({ length: Math.ceil(groups.length / per) }, (_, c) => { const gs = groups.slice(c * per, c * per + per); const a = nameOf(gs[0].rows[0]), b = nameOf(gs.at(-1).rows.at(-1)); return `<button type="button" class="admpl-chip" data-plchip="${c * per}|${gs.length}">${esc(a === b ? a : `${a}–${b}`)}</button>`; }).join("") : "";
     const drag = wrap.classList.contains("adm-hasdrag");
-    pl.innerHTML = `<div class="admpl-sum"><div><small>${esc(t("admpl_levels"))}</small><b>${nOld}</b></div><div><small>${esc(t("admpl_released"))}</small><b>${esc(hasUp ? rel : admPlLabel(parts(list[list.length - 1]).lab))}</b></div><div class="${count() ? "warn" : ""}"><small>${esc(t("admpl_unsaved"))}</small><b>${count()}</b></div></div>
+    pl.innerHTML = `<div class="admpl-sum${o.rowName ? " wide" : ""}"><div><small>${esc(t("admpl_levels"))}</small><b>${nOld}</b></div><div><small>${esc(t("admpl_released"))}</small><b>${esc(hasUp ? rel : nameOf(list[list.length - 1]))}</b></div><div class="${count() ? "warn" : ""}"><small>${esc(t("admpl_unsaved"))}</small><b>${count()}</b></div></div>
       ${chips || drag ? `<div class="admpl-chips">${chips}${drag ? `<button type="button" class="admpl-chip admpl-ro" data-plreorder>${st.tbl ? esc(t("admpl_list")) : "&#8942;&#8942; " + esc(t("admpl_reorder"))}</button>` : ""}</div>` : ""}
-      <div class="admpl-list"><div class="admpl-h" style="--n:${cols.length}"><b>${esc(head(p0.lab))}</b>${cols.map((c) => `<span title="${esc(c)}">${esc(c.replace(/\s*\([^)]*\)/g, "") || c)}</span>`).join("")}<i></i></div>
+      <div class="admpl-list${o.rowName ? " wide" : ""}"><div class="admpl-h" style="--n:${cols.length}"><b>${esc(head(p0.lab))}</b>${cols.map((c) => `<span title="${esc(c)}">${esc(c.replace(/\s*\([^)]*\)/g, "") || c)}</span>`).join("")}<i></i></div>
       ${groups.map((g, gi) => g.rows.length === 1 && g.k !== "__new" ? rowHtml(g.rows[0]) : `<details class="admpl-g" data-plg="${gi}" ${st.open.has(g.k) || g.k === "__new" ? "open" : ""}><summary><b>${esc(gLabel(g))}</b><span>${esc(t("admpl_rows").replace("{n}", g.rows.length))}</span><i aria-hidden="true">&#9662;</i></summary>${g.rows.map(rowHtml).join("")}</details>`).join("")}</div>`;
     pl.querySelectorAll("details.admpl-g").forEach((d) => d.addEventListener("toggle", () => { const g = groups[+d.dataset.plg]; if (g) { if (d.open) st.open.add(g.k); else st.open.delete(g.k); } }));
     pl.__groups = groups;
@@ -2818,9 +3120,9 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
     const del = tr.hasAttribute("data-newrow") ? tr.querySelector("[data-ebdrop]") : [...tr.querySelectorAll("button")].find((b) => [...b.attributes].some((a) => /^data-[a-z]*del/.test(a.name)));
     const ov = document.createElement("div");
     ov.className = "modal-overlay admpl-ov";
-    const lab0 = admPlLabel(p.lab).trim(), lab = lab0 || t("admpl_new");
+    const lab0 = nameOf(tr).trim(), lab = lab0 || t("admpl_new");
     // "Level 4.1"; a name shared by several rows gets its next box ("Common · Stars 0").
-    const dup = lab0 && list.filter((r) => admPlLabel(parts(r).lab).trim() === lab0).length > 1;
+    const dup = lab0 && list.filter((r) => nameOf(r).trim() === lab0).length > 1;
     const title = /^(?:lv\.?\s*)?-?\d+(?:\.\d+)?$/i.test(lab0) ? t("admpl_level").replace("{l}", lab0) : dup && p.all[1] ? `${lab} · ${head(p.all[1]).replace(/\s*\([^)]*\)/g, "")} ${admPlFmt(p.all[1])}` : lab;
     const field = (el, k) => {
       const was = el.classList.contains("chg") ? `<em data-plwas="${k}">${esc(t("admpl_was").replace("{v}", el.dataset.orig === "" ? "—" : el.dataset.orig))}</em>` : `<em data-plwas="${k}"></em>`;
@@ -2833,7 +3135,7 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
       <div class="admpl-sh-h"><button type="button" class="admpl-nav" data-plgo="-1" ${prev ? "" : "disabled"} aria-label="previous">&#8249;</button><b>${esc(title)}</b><button type="button" class="admpl-nav" data-plgo="1" ${next ? "" : "disabled"} aria-label="next">&#8250;</button><button type="button" class="admpl-nav admpl-x" data-plclose aria-label="close">&#10005;</button></div>
       <div class="admpl-fs">${p.all.map(field).join("")}</div>
       ${up ? `<label class="admpl-op"><span><b>${esc(t("upcoming_col"))}</b><small>${esc(t("admpl_up_sub"))}</small></span><input type="checkbox" class="bset-sw" data-plup ${up.checked ? "checked" : ""} /></label>` : ""}
-      ${prev ? `<div class="admpl-op"><span>${esc(t("admpl_copy").replace("{l}", admPlLabel(parts(prev).lab) || "—"))}</span><button type="button" class="btn ghost small" data-plcopy>${esc(t("admpl_copy_btn"))}</button></div>` : ""}
+      ${prev ? `<div class="admpl-op"><span>${esc(t("admpl_copy").replace("{l}", nameOf(prev) || "—"))}</span><button type="button" class="btn ghost small" data-plcopy>${esc(t("admpl_copy_btn"))}</button></div>` : ""}
       <div class="admpl-ft">${del ? `<button type="button" class="btn ghost admpl-del" data-pldel>${esc(t("admpl_delete"))}</button>` : ""}<button type="button" class="btn" data-plclose>${esc(t("admpl_done"))}</button></div>
     </div>`;
     document.body.appendChild(ov);
@@ -2960,6 +3262,33 @@ function admWireRowDelete(root, attr, table, after, reload) {
   });
 }
 
+// ---- "Upcoming" → a State Timeline stop (Rules → Unlocks by state age) ----
+// A level group switched to Upcoming in Admin → Visibility, or a whole expert /
+// pet turned Upcoming, adds one unlock row by itself with the day left empty
+// (`auto`); until a day is typed it changes nothing (app.js keeps it in
+// STATE_UNLOCKS_WAIT). Switching it back removes a row that still has no day.
+function admUnlockRows() {
+  const r = gameRules().find((x) => x.key === "unlocks");
+  const saved = gameRulesSaved().unlocks;
+  return JSON.parse(JSON.stringify(Array.isArray(saved) ? saved : r.def));
+}
+async function admSaveUnlockRows(rows, before) {
+  if (JSON.stringify(rows) === before) return false;
+  await saveGameRule("unlocks", rows);
+  return true;
+}
+// The unlock row made for this auto id (dated or not), or null.
+function admAutoUnlock(id) { return STATE_UNLOCKS.find((u) => u.auto === id) || STATE_UNLOCKS_WAIT.find((u) => u.auto === id) || null; }
+async function admWholeUpcoming(kind, name, on) {
+  const rows = admUnlockRows(), before = JSON.stringify(rows), id = `${kind}:${name}`;
+  if (on) {
+    if (!rows.some((u) => u.auto === id || (u.kind === kind && stateKeyNorm(u.name) === stateKeyNorm(name)))) rows.push({ label: name, kind, name, tab: "", table: "", level: "", day: "", auto: id });
+  } else {
+    const i = rows.findIndex((u) => u.auto === id && (u.day === "" || u.day == null));
+    if (i >= 0) rows.splice(i, 1);
+  }
+  return admSaveUnlockRows(rows, before);
+}
 function wireAdmEditBar(scope, o) {
   const first = scope && scope.querySelector(`[${o.rowAttr}]`);
   const wrap = (first && first.closest(".adm-scroll")) || scope;
@@ -3646,7 +3975,9 @@ async function renderAdminProgression(body, nameFilter) {
       try { await saveAdminRowOrderInPlace(wrap, "data-progrow", "progression_rows", rows, orderedIds); invalidateCaches(); }
       catch (err) { toast("Couldn't reorder", true); loadRows(); }
     });
-    wireAdmEditBar(wrap, { rowAttr: "data-progrow", table: "progression_rows", upTable: "progression_rows", saveRow: (id) => saveProgRow(id), after: () => invalidateCaches(), hide: ["#adminProgSaveAll", "[data-progsave]"],
+    // Chief Gear rows read "Red T7 ★0.1" (Tier / Stars / Stage) in the phone list.
+    const cgName = (tr) => { const v = (k) => { const el = tr.querySelector(`[data-f="${k}"]`); return el ? String(el.value).trim() : ""; }; return chiefGearRowLabel({ tier: v("tier"), stars: v("stars") === "" ? null : v("stars"), stage: v("stage") === "" ? null : v("stage"), display_label: v("display_label") || null }); };
+    wireAdmEditBar(wrap, { rowAttr: "data-progrow", table: "progression_rows", upTable: "progression_rows", ...(isChiefGear ? { rowName: cgName } : {}), saveRow: (id) => saveProgRow(id), after: () => invalidateCaches(), hide: ["#adminProgSaveAll", "[data-progsave]"],
       addForm: "#adminProgAddForm", reload: () => loadRows(),
       create: async (tr) => {
         const payload = { table_id: ADMIN_ACTIVE_PROGRESSION, ...admNewRowPayload(tr, null) };
