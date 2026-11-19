@@ -6386,7 +6386,7 @@ async function renderGearLevelingGroup(target) {
     const { from, to } = cur(troop, piece, tb), last = lastIdx(tb);
     const done = from >= heroTrackCapIdx(tb) && to <= from;
     const w = (i) => (last > 0 ? Math.min(100, (i / last) * 100) : 0);
-    const up = to > heroTrackReleasedIdx(tb);
+    const up = to > heroTrackReleasedIdx(tb) || heroIdxUpcoming(tb, to);
     const val = done ? `&#10003; ${esc(lab(tb, from))}` : to > from ? `${esc(lab(tb, from))}<i>&rarr;</i><em${up ? ' class="up"' : ""}>${esc(lab(tb, to))}</em>` : esc(lab(tb, from));
     const dots = tb === EN ? msIdx.map((i) => `<b class="hg-dot ${i <= from ? "r" : i <= to ? "t" : "g"}" style="inset-inline-start:${w(i)}%;"></b>`).join("") : "";
     return `<button type="button" class="hg-cell${done ? " done" : ""}" data-hgpc="${esc(piece)}" aria-label="${esc(pieceDisplayName(piece))} · ${esc(trackDisplayName(tb))}"><span class="hg-v">${val}</span>${done ? "" : `<span class="hg-lb"><i class="n" style="width:${w(from)}%;"></i><i class="t" style="inset-inline-start:${w(from)}%; width:${Math.max(0, w(to) - w(from))}%;"></i>${dots}</span>`}</button>`;
@@ -6466,7 +6466,7 @@ async function renderGearLevelingGroup(target) {
       const { from, to } = cur(troop, piece, tb), v = role === "to" ? to : from, lo = role === "to" ? from : 0;
       return `<div class="gs-row hg-srow"><span class="gs-l">${esc(role === "to" ? tgtLbl : nowLbl)}</span><div class="gs-stp${role === "to" ? " tgt" : ""}">
         <button type="button" data-hgstep="${esc(tb)}|${role}|-1" aria-label="−" ${v <= lo ? "disabled" : ""}>&minus;</button>
-        <b class="${v > heroTrackReleasedIdx(tb) ? "up" : ""}"><span data-hgsv="${esc(tb)}|${role}">${esc(lab(tb, v))}</span>${chipHtml(troop, piece, tb, role)}</b>
+        <b class="${v > heroTrackReleasedIdx(tb) || heroIdxUpcoming(tb, v) ? "up" : ""}"><span data-hgsv="${esc(tb)}|${role}">${esc(lab(tb, v))}</span>${chipHtml(troop, piece, tb, role)}</b>
         <button type="button" data-hgstep="${esc(tb)}|${role}|1" aria-label="+" ${v >= lastIdx(tb) ? "disabled" : ""}>+</button></div></div>`;
     };
     const sec = (tb) => {
@@ -15811,6 +15811,8 @@ function heroTrackPickIdx(track) {
   return Math.max(0, rows.length - 1);
 }
 // "Max": the last level that's out and open in the person's state.
+// A Heroes Gears level ticked Upcoming in Admin (keeps its mark when counted).
+function heroIdxUpcoming(track, i) { const rows = HERO_GEAR_TABLES_CACHE && HERO_GEAR_TABLES_CACHE[track]; return !!rows && isUpcomingRow("progression_rows", rows[i]); }
 function heroTrackReleasedIdx(track) { return Math.max(0, releasedLastIdx("progression_rows", (HERO_GEAR_TABLES_CACHE && HERO_GEAR_TABLES_CACHE[track]) || [])); }
 function heroTrackCapIdx(track) { return Math.min(heroTrackPickIdx(track), heroTrackReleasedIdx(track)); }
 // Page name from the menu, in the chosen language.
