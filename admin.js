@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "f71075a900";
+window.ADMIN_BUILD = "19a913b731";
 
 // ============================================================
 // ADMIN PAGE
@@ -2048,7 +2048,7 @@ async function vupParts() {
 function vupCountRow(key) {
   const on = upcomingCountOn(key);
   return `<label class="vis-row" style="display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px;">
-      <span style="flex:1 1 0; min-width:0;">${esc(t("vup_count"))} <span class="meta" style="font-size:11px;">· ${esc(t("vup_count_sub"))}</span></span>
+      <span style="flex:1 1 0; min-width:0;">${esc(t("vup_count"))}</span>
       <span class="meta" style="font-size:11px; color:${on ? "var(--amber)" : "var(--muted)"};">${esc(t(on ? "vup_count_on" : "vup_count_off"))}</span>
       <input type="checkbox" class="bset-sw" data-vupcount="${esc(key)}" ${on ? "checked" : ""} aria-label="${esc(t("vup_count"))}" />
     </label>`;
@@ -2059,6 +2059,12 @@ function vupAutoId(g) { return `lv:${g.table}:${g.ids[0]}`; }
 async function vupRelabel(g) {
   const rows = admUnlockRows(), before = JSON.stringify(rows), u = g && rows.find((x) => x.auto === vupAutoId(g));
   if (u) u.label = g.label;
+  await admSaveUnlockRows(rows, before);
+}
+// The group's stop (an empty-day unlock row), made when it has none yet.
+async function vupEnsureStop(g) {
+  const rows = admUnlockRows(), before = JSON.stringify(rows), id = vupAutoId(g);
+  if (!rows.some((u) => u.auto === id)) rows.push({ label: g.label, kind: "level", name: "", tab: "", table: g.target, level: g.level, day: "", auto: id });
   await admSaveUnlockRows(rows, before);
 }
 async function vupSetGroup(g, on) {
@@ -2080,14 +2086,15 @@ function vupFoldHtml(pt, row) {
     const s0 = st[gi], u = admAutoUnlock(vupAutoId(g));
     const head = g.sec && g.sec !== sec ? `<div class="vup-sec">${esc(g.sec)}</div>` : "";
     sec = g.sec || sec;
-    const day = u ? `<button type="button" class="vup-day" data-vupday>📅 ${esc(u.day == null ? t("vup_day_unset") : t("vup_day").replace("{d}", Number(u.day).toLocaleString()))} &#8250;</button>` : "";
+    // Upcoming from before stops were made: the chip makes its stop first.
+    const day = u || s0.some ? `<button type="button" class="vup-day" data-vupday="g|${esc(pt.key)}|${gi}">📅 ${esc(!u || u.day == null ? t("vup_day_unset") : t("vup_day").replace("{d}", Number(u.day).toLocaleString()))} &#8250;</button>` : "";
     const tap = g.track ? ` data-vuptap="${esc(pt.key)}|${gi}" role="button" tabindex="0"` : "";
     return `${head}<div class="vup-r${s0.some ? " on" : ""}${g.track ? " tap" : ""}"${tap}><img class="vup-pic" src="${esc(g.pic)}" alt="" loading="lazy" /><span class="vup-t"><b>${esc(g.name)}${g.isNew ? ` <em class="vup-new">${esc(t("vup_new"))}</em>` : ""}${s0.some ? ` <em class="vup-tag">${esc(t("upcoming_col"))}</em>` : ""}</b><small>${esc(g.range)}</small>${day}</span><input type="checkbox" class="bset-sw vup-sw${s0.some && !s0.on ? " half" : ""}" data-vupg="${esc(pt.key)}|${gi}" ${s0.on ? "checked" : ""} aria-label="${esc(t("upcoming_col"))}" /></div>`;
   }).join("");
   return `<details class="panel adm-visfold" data-visfold="up:${esc(pt.key)}" style="margin-bottom:12px;">
       <summary><img class="vup-hpic" src="${esc(VUP_PIC[pt.key])}" alt="" /><h2 style="margin:0;">${esc(pt.title)}</h2><span class="meta adm-viscount">${nUp ? `<b class="vup-n">${esc(t("vup_n").replace("{n}", nUp))}</b>` : esc(t("vup_n").replace("{n}", 0))} · ${pt.groups.length}</span><i aria-hidden="true">&#9662;</i></summary>
       <p class="desc" style="margin:0 0 8px;">${esc(pt.desc)}</p>
-      <div class="vup-see">${row("upcoming", pt.key, t("vup_see"), t("vup_see_sub"))}${vupCountRow(pt.key)}</div>
+      <div class="vup-see">${row("upcoming", pt.key, t("vup_see"), "")}${vupCountRow(pt.key)}</div>
       <div class="vup-h"><span>${esc(t("vup_group"))}</span><span>${esc(t("upcoming_col"))}</span></div>
       ${rowsHtml}
     </details>`;
@@ -2099,14 +2106,14 @@ function vupWholeFold(kind, title, desc, list, isUp, pic, row) {
   const nUp = list.filter(isUp).length;
   const rowsHtml = list.map((n) => {
     const up = isUp(n), p = pic(n), d = stateUnlockDay(kind, n), u = admAutoUnlock(`${kind}:${n}`);
-    const day = up && (u || d == null) ? `<button type="button" class="vup-day" data-vupday>📅 ${esc(d != null ? t("vup_day").replace("{d}", d.toLocaleString()) : t("vup_day_unset"))} &#8250;</button>` : "";
+    const day = up && (u || d == null) ? `<button type="button" class="vup-day" data-vupday="w|${esc(kind)}|${esc(n)}">📅 ${esc(d != null ? t("vup_day").replace("{d}", d.toLocaleString()) : t("vup_day_unset"))} &#8250;</button>` : "";
     const sub = d != null ? t("vup_day").replace("{d}", d.toLocaleString()) : up ? "" : t("vup_in_game");
     return `<div class="vup-r${up ? " on" : ""}">${p ? `<img class="vup-pic" src="${esc(p)}" alt="" loading="lazy" />` : `<span class="vup-pic vup-l">${esc(String(n)[0])}</span>`}<span class="vup-t"><b>${esc(dataName(n))}${up ? ` <em class="vup-tag">${esc(t("upcoming_col"))}</em>` : ""}</b>${sub && !day ? `<small>${esc(sub)}</small>` : ""}${day}</span><input type="checkbox" class="bset-sw vup-sw" data-vupw="${esc(kind)}|${esc(n)}" ${up ? "checked" : ""} aria-label="${esc(t("upcoming_col"))}" /></div>`;
   }).join("");
   return `<details class="panel adm-visfold" data-visfold="w:${kind}" style="margin-bottom:12px;">
       <summary><img class="vup-hpic" src="${esc(VUP_PIC[kind])}" alt="" /><h2 style="margin:0;">${esc(title)}</h2><span class="meta adm-viscount">${nUp ? `<b class="vup-n">${esc(t("vup_n").replace("{n}", nUp))}</b>` : esc(t("vup_n").replace("{n}", 0))} · ${list.length}</span><i aria-hidden="true">&#9662;</i></summary>
       <p class="desc" style="margin:0 0 8px;">${esc(desc)}</p>
-      <div class="vup-see">${row("upcoming", kind, t("vup_see"), t("vup_see_sub"))}${vupCountRow(kind)}</div>
+      <div class="vup-see">${row("upcoming", kind, t("vup_see"), "")}${vupCountRow(kind)}</div>
       <div class="vup-h"><span>${esc(title)}</span><span>${esc(t("upcoming_col"))}</span></div>
       ${rowsHtml || `<div class="meta">—</div>`}
     </details>`;
@@ -2252,7 +2259,16 @@ async function renderAdminVisibility(body) {
     } catch (err) { toast(err.message || "Couldn't save", true); }
     await redraw();
   }));
-  body.querySelectorAll("[data-vupday]").forEach((b) => b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); admRuleOpen("unlocks"); }));
+  body.querySelectorAll("[data-vupday]").forEach((b) => b.addEventListener("click", async (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const [w, a, c] = b.dataset.vupday.split("|");
+    b.disabled = true;
+    try {
+      if (w === "g") { const pt = parts.find((x) => x.key === a), g = pt && pt.groups[+c]; if (g) await vupEnsureStop(g); }
+      else if (w === "w") await admWholeUpcoming(a, c, true);
+    } catch (err) { toast(err.message || "Couldn't save", true); }
+    admRuleOpen("unlocks");
+  }));
   // Heroes Gears group: its levels in a sheet, "Split here" / "Join with …".
   body.querySelectorAll("[data-vuptap]").forEach((el) => el.addEventListener("click", (e) => {
     if (e.target.closest("[data-vupg], [data-vupday]")) return;

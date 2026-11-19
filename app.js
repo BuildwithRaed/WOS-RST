@@ -16455,6 +16455,30 @@ function heroSource(name, gen) {
 }
 function heroSourceLabel(src) { return src ? t(`tl_src_${src}`) : ""; }
 const HERO_SOURCE_ICON = { hall: "🏛", wheel: "🎡", event: "⚔", packs: "💳", signin: "🎁", recruit: "🎲" };
+// Upcoming levels (Admin "Upcoming") that no unlock row covers yet, one per part
+// (Chief Gear, Chief Charm, Hero Mastery, Hero Enhance), as stop-like items.
+// Loads the parts' rows only when they have upcoming ids. Visitors: only while
+// that part's "Visitors see upcoming" is on.
+async function tlUpcomingLevels() {
+  const parts = [["chief_gear", "progression_rows", "chief_gear", "Chief Gear", () => loadChiefGearRows().then(() => CHIEF_GEAR_ROWS)],
+    ["charms", "charm_levels", "charm", "Chief Charm", () => ensureCharmLevelsData().then(() => (CHARM_LEVEL_ROWS.length === CHARM_LEVELS.length ? CHARM_LEVEL_ROWS : []))],
+    ["hero_mastery", "progression_rows", "hero_gear", "Hero Mastery", () => ensureHeroGearData().then(() => (HERO_GEAR_TABLES_CACHE || {})["Hero Gear Mastery Forging"])],
+    ["hero_enhance", "progression_rows", "hero_gear", "Hero Enhance", () => ensureHeroGearData().then(() => (HERO_GEAR_TABLES_CACHE || {})["Enhance Combined"])]];
+  const out = [];
+  for (const [target, table, page, what, load] of parts) {
+    if (!upcomingIds(table).size || (!IS_OWNER && isHiddenFromVisitors("upcoming", page))) continue;
+    let rows;
+    try { rows = (await load()) || []; } catch (e) { continue; }
+    const def = LEVEL_LOCK_TARGETS[target];
+    const ks = STATE_UNLOCKS.concat(STATE_UNLOCKS_WAIT).filter((u) => u.kind === "level" && u.table === target).map((u) => def.rankOf(u.level, rows)).filter((k) => Number.isFinite(k) && k >= 0);
+    const left = rows.map((r, i) => (isUpcomingRow(table, r) && !ks.some((k) => def.rank(r, i) >= k) ? i : -1)).filter((i) => i >= 0);
+    if (!left.length) continue;
+    const lab = (i) => (target === "chief_gear" ? chiefGearRowLabel(rows[i]) : target === "charms" ? `Lv ${CHARM_LEVELS[i]}` : `Lv ${rowLabel(rows[i]).replace(/^Lv\./, "")}`);
+    const a = lab(left[0]), b = lab(left.at(-1));
+    out.push({ kind: "level", table: target, level: target === "charms" ? CHARM_LEVELS[left[0]] : target === "chief_gear" ? a : String(rows[left[0]].level), label: `${what} ${a === b ? a : `${a} – ${b}`}`, auto: "x" });
+  }
+  return out;
+}
 // Picture of a stop made by "Upcoming" (level rows: the page's own picture).
 function tlAutoIcon(u, expImg) {
   if (u.kind !== "level") return "";
@@ -16482,12 +16506,25 @@ async function renderStateTimelinePage() {
     return u.kind === "pets" ? (petImage(u.name) || petImage(String(u.name).replace(/-/g, ""))) : u.kind === "experts" ? (expImg[u.name] || "") : TL_ICONS[k] || (u.auto ? tlAutoIcon(u, expImg) : "");
   };
   const itemOf = (u, day) => ({ day, name: u.kind === "pets" || u.kind === "experts" ? dataName(u.name) : (u.label || u.name), img: imgOf(u), kind: u.kind, auto: !!u.auto });
+  // Upcoming experts / pets are always on the timeline (owner; visitors only
+  // while that section's "Visitors see upcoming" is on): on their unlock day
+  // when it is still ahead, else under "Coming later" — never as already open.
+  const upWhole = (u) => (u.kind === "experts" && EXPERT_UPCOMING_GLOBAL[u.name]) || (u.kind === "pets" && petIsUpcoming(u.name));
+  const later = [];
   STATE_UNLOCKS.forEach((u) => {
     if (u.day == null || !(u.day >= 0) || !unlockShown(u)) return;
+    if (upWhole(u)) { if (hiddenForVisitor(u.kind, u.name)) return; if (now == null || Number(u.day) > now) items.push(itemOf(u, Number(u.day))); else later.push(itemOf(u, null)); return; }
     items.push(itemOf(u, Number(u.day)));
   });
   // Made by "Upcoming" with no day yet: one dashed "Coming later" card.
-  const later = STATE_UNLOCKS_WAIT.filter(unlockShown).map((u) => itemOf(u, null));
+  STATE_UNLOCKS_WAIT.filter(unlockShown).forEach((u) => later.push(itemOf(u, null)));
+  // Upcoming ones with no unlock row at all (switched Upcoming before stops were made).
+  const hasRow = (kind, n) => STATE_UNLOCKS.concat(STATE_UNLOCKS_WAIT).some((u) => u.kind === kind && stateKeyNorm(u.key || u.name) === stateKeyNorm(n));
+  Object.keys(EXPERT_UPCOMING_GLOBAL || {}).forEach((n) => { if (EXPERT_UPCOMING_GLOBAL[n] && !hasRow("experts", n) && !hiddenForVisitor("experts", n)) later.push(itemOf({ kind: "experts", name: n, auto: "x" }, null)); });
+  (siteConfig("upcoming_pets", []) || []).forEach((n) => { if (!hasRow("pets", n) && !hiddenForVisitor("pets", n)) later.push(itemOf({ kind: "pets", name: n, auto: "x" }, null)); });
+  // Upcoming level rows no stop covers yet: one "Coming later" item per part.
+  (await tlUpcomingLevels()).forEach((u) => later.push(itemOf(u, null)));
+  if (seq !== RENDER_SEQ) return;
   // New heroes: the same day as the Dashboard / My Purchases (the owner's
   // new-heroes rule from the last new heroes), else the timeline's Gen day.
   const genDay = (g) => { const nx = now != null ? heroGenNotOut(g) : null; return nx && nx.day != null ? nx.day : STATE_GEN_DAYS[g - 1]; };
@@ -33689,7 +33726,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=f71075a900";
+      s.src = "admin.min.js?v=19a913b731";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
