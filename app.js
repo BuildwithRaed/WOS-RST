@@ -2228,6 +2228,12 @@ const T = {
   vis_experts_desc: { en: "Hidden experts are left out of visitors' pages, totals and Dashboard." },
   vis_pets: { en: "Pets" },
   vis_pets_desc: { en: "Hidden pets are left out of visitors' pages, totals and Dashboard." },
+  vis_upcoming: { en: "Upcoming levels" },
+  vis_upcoming_desc: { en: "Levels you tick \"Upcoming\" in Admin (leaks, rumours). Hidden: visitors don't see them at all (lists, Set all, Budgets, Pack cost); a visitor's saved level past them counts as the last level shown. You always see them, tagged Upcoming." },
+  vis_up_chief_gear: { en: "Upcoming Chief Gear levels" },
+  vis_up_charm: { en: "Upcoming Chief Charm levels" },
+  vis_up_hero_gear: { en: "Upcoming Heroes Gears levels" },
+  vis_up_n: { en: "{n} ticked Upcoming" },
   vis_visible: { en: "Visible to visitors" },
   vis_hidden: { en: "Hidden from visitors" },
   vis_now_hidden: { en: "Hidden from visitors" },
@@ -6180,14 +6186,14 @@ async function ensureHeroGearData() {
   return HERO_GEAR_LOADING;
 }
 async function loadHeroGearData() {
-  const results = await Promise.all(
+  const [results] = await Promise.all([Promise.all(
     ["Hero Gear Mastery Forging", "Hero Gear Enhancement", "Hero Gear Mithril"].map(async (name) => {
       // The table and its rows in one request (they used to be two).
       const [table] = await sb(`progression_tables?name=eq.${encodeURIComponent(name)}&user_id=eq.${PROGRESSION_OWNER_ID}&select=id,progression_rows(id,level,stage,materials,stat,stat2,power,display_label,mithril,mythic_gear,xp_component,essence_stones)&progression_rows.order=sort_order.asc`);
       if (!table) return { name, rows: [] };
       return { name, rows: table.progression_rows || [] };
     })
-  );
+  ), ensureUiVisibility()]);
   const rawCache = Object.fromEntries(results.map((r) => [r.name, r.rows]));
   const enhanceRows = (rawCache["Hero Gear Enhancement"] || []).map((r) => ({ ...r, level: r.level }));
   const empowerRows = (rawCache["Hero Gear Mithril"] || []).map((r) => ({ ...r, level: r.level + 100 }));
@@ -6199,6 +6205,12 @@ async function loadHeroGearData() {
   // Orange gear resets give back half of these (every Mastery level and stage).
   const mEs = (rawCache["Hero Gear Mastery Forging"] || []).map((r) => ({ lv: Number(r.level), st: r.stage == null || r.stage === "" ? 0 : Number(r.stage), es: Number(r.essence_stones) || 0 })).filter((r) => r.lv >= 1 && Number.isFinite(r.st));
   if (mEs.length) GEAR_MASTERY_ES = mEs;
+  // Hidden upcoming levels (Admin → Visibility): not there for visitors.
+  let hgCut = false;
+  GEAR_LEVELING_TABLES.forEach((tn) => {
+    const cut = upcomingCut("hero_gear", "progression_rows", rawCache[tn]);
+    if (cut !== rawCache[tn]) { rawCache[tn] = cut; hgCut = true; }
+  });
   HERO_GEAR_TABLES_CACHE = rawCache;
 
   for (const setName of HERO_GEAR_SET_NAMES) {
@@ -6221,7 +6233,7 @@ async function loadHeroGearData() {
         HERO_GEAR_PIECE_NAMES.forEach((piece) => {
           GEAR_LEVELING_TABLES.forEach((t) => {
             const savedVal = saved?.[troop]?.[piece]?.[t]?.from;
-            if (typeof savedVal === "number") state[troop][piece][t].from = savedVal;
+            if (typeof savedVal === "number") state[troop][piece][t].from = hgCut ? Math.min(savedVal, heroTrackPickIdx(t)) : savedVal;
             // The saved target too (it was always put
             // back to Max when the page opened, and the next change saved
             // Max over the target you picked).
@@ -15636,6 +15648,7 @@ function parseStatPct(stat) {
 // hardcoded. Loaded once via ensureCharmLevelsData().
 let CHARM_LEVELS = [];
 let CHARM_LEVEL_ROWS = []; // the rows (with ids) for the "Upcoming" ticks
+let CHARM_LEVELS_ALL = []; // every level, also hidden upcoming ones (upcomingCut)
 let CHARM_STEP_COST = {};
 let CHARM_CUMULATIVE = {};
 let CHARM_CUMULATIVE_STAT = {};
@@ -15646,7 +15659,9 @@ async function ensureCharmLevelsData() {
   if (CHARM_LEVELS_LOADED) return CHARM_LEVELS_PROMISE;
   CHARM_LEVELS_LOADED = true;
   CHARM_LEVELS_PROMISE = (async () => {
-  const rows = await sb(`charm_levels?select=${upId("charm_levels")}level_label,sort_order,guides_cost,designs_cost,secrets_cost,cumulative_pct&order=sort_order.asc`);
+  const [allRows] = await Promise.all([sb(`charm_levels?select=${upId("charm_levels")}level_label,sort_order,guides_cost,designs_cost,secrets_cost,cumulative_pct&order=sort_order.asc`), ensureUiVisibility()]);
+  const rows = upcomingCut("charm", "charm_levels", allRows);
+  CHARM_LEVELS_ALL = allRows.map((r) => r.level_label);
   CHARM_LEVELS = rows.map((r) => r.level_label);
   CHARM_LEVEL_ROWS = rows;
   CHARM_STEP_COST = {};
@@ -15790,6 +15805,11 @@ async function ensureCharmData() {
   CHARM_STATE_PROMISE = loadCharmData().catch((e) => { CHARM_STATE_LOADED = false; throw e; });
   return CHARM_STATE_PROMISE;
 }
+// A saved level past hidden upcoming levels reads as the last level left.
+function charmShownLevel(l) {
+  if (CHARM_LEVELS_ALL.length === CHARM_LEVELS.length || CHARM_LEVELS.includes(String(l))) return l;
+  return CHARM_LEVELS_ALL.indexOf(String(l)) >= CHARM_LEVELS.length ? CHARM_LEVELS[CHARM_LEVELS.length - 1] : l;
+}
 async function loadCharmData() {
   await ensureCharmLevelsData();
   const saved = await loadCalcState("charm");
@@ -15799,8 +15819,8 @@ async function loadCharmData() {
       if (Array.isArray(saved[p.key])) {
         saved[p.key].forEach((slot, i) => {
           if (CHARM_CALC_STATE[p.key][i] && slot) {
-            if (slot.current) CHARM_CALC_STATE[p.key][i].current = slot.current;
-            if (slot.target) CHARM_CALC_STATE[p.key][i].target = slot.target;
+            if (slot.current) CHARM_CALC_STATE[p.key][i].current = charmShownLevel(slot.current);
+            if (slot.target) CHARM_CALC_STATE[p.key][i].target = charmShownLevel(slot.target);
           }
         });
       }
@@ -25043,12 +25063,14 @@ async function loadChiefGearRows() {
     sb(`progression_tables?name=eq.Chief Gear&user_id=eq.${PROGRESSION_OWNER_ID}&select=id,progression_rows(id,tier,stars,stage,materials,stat,power,display_label,hardened_alloy,polishing_solution,design_plan,amber)&progression_rows.order=sort_order.asc`),
     setBonusPromise,
     ensureStateAge(),
+    ensureUiVisibility(),
   ]);
   if (!table) {
     CHIEF_GEAR_ROWS = [];
     return CHIEF_GEAR_ROWS;
   }
-  CHIEF_GEAR_ROWS = table.progression_rows || [];
+  const allRows = table.progression_rows || [];
+  CHIEF_GEAR_ROWS = upcomingCut("chief_gear", "progression_rows", allRows);
   CHIEF_GEAR_PIECES.forEach((p) => {
     if (CHIEF_GEAR_STATE[p.key].to === null) CHIEF_GEAR_STATE[p.key].to = chiefGearReleasedIdx();
   });
@@ -25058,6 +25080,15 @@ async function loadChiefGearRows() {
     CHIEF_GEAR_PIECES.forEach((p) => {
       if (typeof saved[p.key]?.from === "number") CHIEF_GEAR_STATE[p.key].from = saved[p.key].from;
       if (typeof saved[p.key]?.to === "number") CHIEF_GEAR_STATE[p.key].to = saved[p.key].to;
+    });
+  }
+  // Hidden upcoming levels: a saved level past them reads as the last one left.
+  if (CHIEF_GEAR_ROWS !== allRows) {
+    const last = CHIEF_GEAR_ROWS.length - 1;
+    CHIEF_GEAR_PIECES.forEach((p) => {
+      const st = CHIEF_GEAR_STATE[p.key];
+      if (st.from > last) st.from = last;
+      if (st.to != null && st.to > last) st.to = last;
     });
   }
   return CHIEF_GEAR_ROWS;
@@ -26061,11 +26092,18 @@ async function ensureChiefGearSetBonusData() {
 // 3-piece bonus needs >=3 pieces at/above some tier; 6-piece needs all 6.
 function computeChiefGearSetBonus(stateObj) {
   if (!CHIEF_GEAR_ROWS) return { threeTier: null, threeBonus: 0, sixTier: null, sixBonus: 0 };
-  const pieceTierIdx = CHIEF_GEAR_PIECES.map((p) => {
-    const idx = Math.min(stateObj[p.key].from, chiefGearLastIdx());
-    const tier = CHIEF_GEAR_ROWS[idx]?.tier;
-    return tier ? CHIEF_GEAR_TIER_ORDER.indexOf(tier) : -1;
-  });
+  // A tier with no set bonus row yet (new levels) counts as the highest known
+  // tier at or below it, so a missing row never takes a bonus away.
+  const tierIdxAt = (idx) => {
+    for (let i = idx; i >= 0; i--) {
+      const tier = CHIEF_GEAR_ROWS[i]?.tier;
+      if (!tier) return -1;
+      const k = CHIEF_GEAR_TIER_ORDER.indexOf(tier);
+      if (k >= 0) return k;
+    }
+    return -1;
+  };
+  const pieceTierIdx = CHIEF_GEAR_PIECES.map((p) => tierIdxAt(Math.min(stateObj[p.key].from, chiefGearLastIdx())));
   let threeTier = null, sixTier = null;
   // walk tiers from highest to lowest; first (highest) tier that enough pieces qualify for wins
   for (let ti = CHIEF_GEAR_TIER_ORDER.length - 1; ti >= 0; ti--) {
@@ -29926,7 +29964,7 @@ let PETS_UNLOCKED = null; // { "Cave Hyena": true/false, ... } - shared between 
 // Visitors never see a hidden card and it never counts in their totals.
 let UI_HIDDEN = null; // { "experts:Justus": true, ... }
 let UI_HIDDEN_FAILED = false; // the last load failed: the next call loads again
-const UI_HIDDEN_DEFAULTS = { "page:statetimeline": true };
+const UI_HIDDEN_DEFAULTS = { "page:statetimeline": true, "upcoming:chief_gear": true, "upcoming:charm": true, "upcoming:hero_gear": true };
 let UI_HIDDEN_LOADING = null; // callers at the same time share one load
 function ensureUiVisibility() {
   if (UI_HIDDEN && !UI_HIDDEN_FAILED) return Promise.resolve(UI_HIDDEN);
@@ -30203,6 +30241,19 @@ function afterUpcomingChange() {
   if (typeof dashDataChanged === "function") dashDataChanged();
   if (typeof dropKeptGameData === "function") dropKeptGameData();
   PETS_NODES_CACHE = null; PET_REFINE_CACHE = null; CHARM_LEVELS_LOADED = false; RC_NODES_CACHE = null; T11_NODES_CACHE = null; T12_NODES_CACHE = null;
+}
+// Upcoming levels kept private (Admin → Visibility → Upcoming levels,
+// ui_visibility "upcoming:<page>", hidden by default): for everyone but the
+// owner the rows from the first "Upcoming" row on aren't there at all. Each
+// page's loader cuts its rows with upcomingCut and reads saved levels past the
+// end as the last level left (the saved state itself isn't rewritten).
+function upcomingHiddenFor(page) { return !IS_OWNER && isHiddenFromVisitors("upcoming", page); }
+function upcomingCut(page, table, rows) {
+  if (!Array.isArray(rows) || !rows.length || !upcomingHiddenFor(page)) return rows;
+  const ids = upcomingIds(table);
+  if (!ids.size) return rows;
+  const i = rows.findIndex((r) => r && r.id != null && ids.has(String(r.id)));
+  return i >= 0 ? rows.slice(0, Math.max(1, i)) : rows;
 }
 function upcomingTag(isUp) { return isUp ? ` · ${t("upcoming_tag")}` : ""; }
 // What visitors may open read-only (Admin -> Visibility -> Visitor access).
@@ -33531,7 +33582,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=bbd167b783";
+      s.src = "admin.min.js?v=8b5de6a03c";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }

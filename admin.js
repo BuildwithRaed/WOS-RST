@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "bbd167b783";
+window.ADMIN_BUILD = "8b5de6a03c";
 
 // ============================================================
 // ADMIN PAGE
@@ -104,7 +104,7 @@ function adminCardInfo(k) {
   if (k === "rules") { const n = admRulesChangedN(); if (n) line = t("admh_n_changed").replace("{n}", n); }
   if (k === "backup") { const d = adminBackupAge(); line = d == null ? t("admh_bk_never") : d === 0 ? t("admh_bk_today") : t("admh_bk_days").replace("{n}", d); warn = d == null || d > 7; }
   if (k === "languages") { const m = adminLangMissing(); const shown = languageList(true).filter((l) => !l.hidden).length; line = t("admh_n_langs").replace("{n}", shown); if (m && m.n > 0) { line = t("admh_n_missing").replace("{n}", m.n.toLocaleString()); warn = true; } }
-  if (k === "visibility" && typeof UI_HIDDEN === "object" && UI_HIDDEN) { const n = Object.keys(UI_HIDDEN).filter((x) => UI_HIDDEN[x]).length; if (n) line = t("admh_n_hidden").replace("{n}", n); }
+  if (k === "visibility" && typeof UI_HIDDEN === "object" && UI_HIDDEN) { const n = Object.keys(UI_HIDDEN).filter((x) => UI_HIDDEN[x] && !/^upcoming:/.test(x)).length; if (n) line = t("admh_n_hidden").replace("{n}", n); }
   if (ADMIN_UP_MATCH[k]) {
     let n = 0; Object.keys(up).forEach((tb) => { if (ADMIN_UP_MATCH[k].test(tb) && Array.isArray(up[tb])) n += up[tb].length; });
     if (k === "pets") { const p = siteConfig("upcoming_pets", []); if (Array.isArray(p) && p.length) { line = t("admh_n_up_pets").replace("{n}", p.length); warn = true; } }
@@ -1986,6 +1986,14 @@ async function renderAdminVisibility(body) {
       ${rowsHtml || `<div class="meta">—</div>`}
     </div>`;
   await ensureSiteConfig();
+  // Upcoming levels per page (same store, "upcoming:<page>"), with how many rows are ticked.
+  const upN = (table, rows) => (rows || []).filter((r) => isUpcomingRow(table, r)).length;
+  await Promise.all([loadChiefGearRows(), ensureCharmLevelsData(), ensureHeroGearData()]).catch(() => {});
+  const upRows = [
+    ["chief_gear", "vis_up_chief_gear", upN("progression_rows", CHIEF_GEAR_ROWS)],
+    ["charm", "vis_up_charm", upN("charm_levels", CHARM_LEVEL_ROWS)],
+    ["hero_gear", "vis_up_hero_gear", GEAR_LEVELING_TABLES.reduce((a, tn) => a + upN("progression_rows", (HERO_GEAR_TABLES_CACHE || {})[tn]), 0)],
+  ];
   const va = siteConfig("visitor_access", {}) || {};
   const accessRow = (key, label, sub) => `
     <label style="display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px;">
@@ -2005,6 +2013,7 @@ async function renderAdminVisibility(body) {
       accessRow("islandscan", "Scan Storehouse (Islands)", "the 📷 Scan Storehouse button on the Islands page (My Island, Storehouse tabs, lighthouse levels); you teach the buildings first"),
       accessRow("goals", "Order of goals", "Order of goals with its By dates, the goal flags, the \"By your dates\" plan and hero targets on Budgets, and the goal tags on My Purchases; saved per visitor"),
     ].join(""))}
+    ${section(t("vis_upcoming"), t("vis_upcoming_desc"), upRows.map(([k, lbl, n]) => row("upcoming", k, t(lbl), t("vis_up_n").replace("{n}", n))).join(""))}
     ${section(t("vis_pages"), t("vis_pages_desc"), pages.map((p) => row("page", p.tab, p.label, p.group)).join(""), pages.map((p) => ["page", p.tab]))}
     ${section(t("vis_experts"), t("vis_experts_desc"), experts.map((e) => row("experts", e, dataName(e))).join(""), experts.map((e) => ["experts", e]))}
     ${section(t("vis_pets"), t("vis_pets_desc"), pets.map((p) => row("pets", p, dataName(p))).join(""), pets.map((p) => ["pets", p]))}`;
