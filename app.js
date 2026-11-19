@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 111; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 112; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2195,7 +2195,6 @@ const T = {
   vup_see: { en: "Visitors see upcoming" },
   vup_new: { en: "NEW" },
   vup_count: { en: "Count upcoming" },
-  vup_count_sub: { en: "On = counted like released ones for everyone (Max, Dashboard max, Budgets, Free now); still tagged Upcoming" },
   vup_count_on: { en: "Counted" },
   vup_count_off: { en: "Not counted" },
   vup_in_game: { en: "in game" },
@@ -2212,9 +2211,7 @@ const T = {
   vup_join_note: { en: "Join removes the phase end at {l}; the joined group keeps the earlier day." },
   vup_split_done: { en: "Split · saved for everyone" },
   vup_join_done: { en: "Joined · saved for everyone" },
-  vup_see_sub: { en: "Off = the upcoming groups are hidden from visitors" },
   vup_group: { en: "Level group" },
-  vup_cols: { en: "Upcoming · Visitors" },
   vup_n: { en: "{n} upcoming" },
   vup_day_unset: { en: "day not set" },
   vup_day: { en: "Day {d}" },
@@ -2226,7 +2223,7 @@ const T = {
   vup_saved_off: { en: "Not upcoming any more" },
   vup_cg_desc: { en: "Each tier is one group ending at the tier itself (Red T7 = T6 ★3.1 … T7 ★3). Upcoming groups stay pickable on the page for you, tagged Upcoming; Max, Max everything and the Dashboard max stop before them. Switching one on makes a State Timeline stop: set its day in Rules → Unlocks." },
   vup_ch_desc: { en: "Each level is one group ending at the level itself (Lv 17 = 16.1 … 17). Upcoming groups stay pickable for you, tagged Upcoming; Max stops before them. Switching one on makes a State Timeline stop." },
-  vup_hg_desc: { en: "Mastery 1 – 20, Enhancement 0 – 100 and red gear (Mithril) 101 – 200 are one group each; later levels come in groups of 10. Switching one on makes a State Timeline stop." },
+  vup_hg_desc: { en: "Mastery 1 – 20, Enhancement 0 – 100 and red gear (Mithril) 101 – 200 are one group each; levels added later form one new group (split it where the game releases them). Switching one on makes a State Timeline stop." },
   rl_set_day: { en: "set day" },
   up_auto_note: { en: "Upcoming ones are hidden from visitors while \"Visitors see upcoming\" is off (Admin → Visibility). Turning one on makes a State Timeline stop: set its day in Rules → Unlocks by state age." },
   up_auto_saved: { en: "Saved · upcoming · State Timeline stop made (day not set)" },
@@ -2267,12 +2264,6 @@ const T = {
   vis_experts_desc: { en: "Hidden experts are left out of visitors' pages, totals and Dashboard." },
   vis_pets: { en: "Pets" },
   vis_pets_desc: { en: "Hidden pets are left out of visitors' pages, totals and Dashboard." },
-  vis_upcoming: { en: "Upcoming levels" },
-  vis_upcoming_desc: { en: "Levels you tick \"Upcoming\" in Admin (leaks, rumours). Hidden: visitors don't see them at all (lists, Set all, Budgets, Pack cost); a visitor's saved level past them counts as the last level shown. You always see them, tagged Upcoming." },
-  vis_up_chief_gear: { en: "Upcoming Chief Gear levels" },
-  vis_up_charm: { en: "Upcoming Chief Charm levels" },
-  vis_up_hero_gear: { en: "Upcoming Heroes Gears levels" },
-  vis_up_n: { en: "{n} ticked Upcoming" },
   vis_visible: { en: "Visible to visitors" },
   vis_hidden: { en: "Hidden from visitors" },
   vis_now_hidden: { en: "Hidden from visitors" },
@@ -33726,7 +33717,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=19a913b731";
+      s.src = "admin.min.js?v=b0be9b10a3";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }

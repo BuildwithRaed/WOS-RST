@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "19a913b731";
+window.ADMIN_BUILD = "b0be9b10a3";
 
 // ============================================================
 // ADMIN PAGE
@@ -1984,8 +1984,8 @@ const VUP_PIC = { chief_gear: "icons/quick/chief-gear.png", charm: "icons/charms
 // The level groups of the three parts. A group always ENDS at the level itself;
 // the stages after a level belong to the next group (owner, 19 Nov 2026):
 // Chief Gear "Red T7" = T6 ★3.1 … T7 ★3; Charm "Lv 17" = 16.1 … 17; Heroes
-// Gears: Mastery 1 – 20, Enhancement 0 – 100, Mithril (red gear) 101 – 200,
-// later levels in groups of 10.
+// Gears: Mastery 1 – 20, Enhancement 0 – 100, Mithril (red gear) 101 – 200;
+// levels added later form one new group until the owner splits it.
 async function vupParts() {
   const [tabs, charm] = await Promise.all([sb(`progression_tables?select=id,name`), sb(`charm_levels?select=id,level_label&order=sort_order.asc`)]);
   const tid = (n) => ((tabs || []).find((x) => x.name === n) || {}).id;
@@ -2025,7 +2025,7 @@ async function vupParts() {
     const out = cut(items, (x) => x.s0 && all.has(x.lv), (gr, tail) => ({ gr, tail }));
     return out.map(({ gr, tail }, k) => {
       const a = gr[0], b = gr.at(-1), prevEnd = k ? out[k - 1].gr.at(-1).lv : null;
-      const rng = range(lvTxt(a), lvTxt(b)), red = key === "enhance" && a.lv > 100;
+      const rng = range(lvTxt(a), lvTxt(b)), red = key === "enhance" && (a.lv > 100 || (a.lv === 100 && !a.s0));
       const name = key === "mastery" ? `Mastery ${rng}` : red ? `${t("vup_red_gear")} ${rng}` : `Enhancement ${rng}`;
       const isNew = tail && !(b.s0 && all.has(b.lv)) && k > 0;
       return { sec, track: key, name, isNew, items: gr, prevEnd, prevOwn: prevEnd != null && own.has(prevEnd), endLv: b.lv,
