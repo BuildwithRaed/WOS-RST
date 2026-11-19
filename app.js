@@ -2191,12 +2191,35 @@ const T = {
   admpl_released: { en: "Released to" },
   admpl_unsaved: { en: "Unsaved" },
   admpl_rows: { en: "{n} rows" },
-  admpl_upcoming: { en: "Upcoming" },
-  admpl_n_of: { en: "{n} of {m}" },
-  admpl_whole: { en: "whole {what}" },
-  admpl_pet: { en: "pet" },
-  admpl_expert: { en: "expert" },
   rl_auto_sub: { en: "auto · from Upcoming" },
+  vup_see: { en: "Visitors see upcoming" },
+  vup_new: { en: "NEW" },
+  vup_new_levels: { en: "{n} levels · new" },
+  vup_phase: { en: "Phase {n}" },
+  vup_sheet_sub: { en: "{n} levels · tap a level to split after it" },
+  vup_split_here: { en: "Split here" },
+  vup_new_starts: { en: "new group starts at {l}" },
+  vup_split_note: { en: "Adds {l} as a phase end: the levels before and after it get their own switch and day." },
+  vup_split_after: { en: "Split after Lv {l}" },
+  vup_join: { en: "Join with {name}" },
+  vup_join_note: { en: "Join removes the phase end at {l}; the joined group keeps the earlier day." },
+  vup_split_done: { en: "Split · saved for everyone" },
+  vup_join_done: { en: "Joined · saved for everyone" },
+  vup_see_sub: { en: "Off = the upcoming groups are hidden from visitors" },
+  vup_group: { en: "Level group" },
+  vup_cols: { en: "Upcoming · Visitors" },
+  vup_n: { en: "{n} upcoming" },
+  vup_day_unset: { en: "day not set" },
+  vup_day: { en: "Day {d}" },
+  vup_stages: { en: "{n} stages" },
+  vup_mastery: { en: "Mastery Forging" },
+  vup_enhance: { en: "Enhancement" },
+  vup_red_gear: { en: "Red gear" },
+  vup_saved_on: { en: "Upcoming · State Timeline stop made (day not set)" },
+  vup_saved_off: { en: "Not upcoming any more" },
+  vup_cg_desc: { en: "Each tier is one group ending at the tier itself (Red T7 = T6 ★3.1 … T7 ★3). Upcoming groups stay pickable on the page for you, tagged Upcoming; Max, Max everything and the Dashboard max stop before them. Switching one on makes a State Timeline stop: set its day in Rules → Unlocks." },
+  vup_ch_desc: { en: "Each level is one group ending at the level itself (Lv 17 = 16.1 … 17). Upcoming groups stay pickable for you, tagged Upcoming; Max stops before them. Switching one on makes a State Timeline stop." },
+  vup_hg_desc: { en: "Mastery 1 – 20, Enhancement 0 – 100 and red gear (Mithril) 101 – 200 are one group each; later levels come in groups of 10. Switching one on makes a State Timeline stop." },
   rl_set_day: { en: "set day" },
   up_auto_note: { en: "Hidden from visitors until you show it (Admin → Visibility). A State Timeline stop was made: set its day in Rules → Unlocks by state age." },
   up_auto_saved: { en: "Saved · hidden from visitors · State Timeline stop made (day not set)" },
@@ -16429,8 +16452,6 @@ function tlAutoIcon(u, expImg) {
   if (u.table === "t11" || u.table === "t12") return TL_ICONS[u.table];
   if (u.table === "research_center") return "icons/quick/research.png";
   if (u.table === "vip") return "icons/quick/vip.png";
-  if (u.table === "pets") return (u.who && petImage(u.who)) || "icons/quick/pets.png";
-  if (/^expert_/.test(u.table)) return (u.who && expImg[u.who]) || "icons/quick/experts.png";
   return "";
 }
 async function renderStateTimelinePage() {
@@ -30253,24 +30274,12 @@ function levelLocksFor(table, rows) {
     if (!def || def.table !== table) return;
     if (rows && def.match && !def.match(rows)) return;
     if (!rows && !def.row) return;
-    // A stop made for one pet / expert ("who") only covers that one's rows.
-    if (u.who && rows && !lockRowsOf(u, rows)) return;
     const k = def.rankOf(u.level, rows);
     if (k == null || !Number.isFinite(k) || k < 0) return;
     try { if (def.inUse(k)) return; } catch (e) { /* state not loaded yet: the lock applies */ }
-    out.push({ def, k, who: u.who || "", u });
+    out.push({ def, k });
   });
   return out;
-}
-// (`part` = the skill / research path when the stop is for one of them only)
-function lockRowOf(u, r) {
-  if (!r || r.expert == null || r.expert !== u.who) return false;
-  return !u.part || String(r.skill != null ? r.skill : r.path_number) === u.part;
-}
-function lockRowsOf(u, rows) {
-  const r0 = rows && rows[0];
-  if (r0 && r0.expert != null) return lockRowOf(u, r0);
-  return !u.part && !!(typeof PETS_NODES_CACHE !== "undefined" && PETS_NODES_CACHE && PETS_NODES_CACHE[u.who] === rows);
 }
 // Index of the first row a waiting level unlock covers, or -1.
 function levelLockIdx(table, rows) {
@@ -30285,12 +30294,12 @@ function levelLockIdx(table, rows) {
 // Tables with plain level numbers: is this row behind a waiting lock?
 function levelLockedRow(table, row) {
   if (!LEVEL_LOCKS_ON || !row) return false;
-  return levelLocksFor(table).some(({ def, k, u }) => (!u.who || lockRowOf(u, row)) && def.rank(row) >= k);
+  return levelLocksFor(table).some(({ def, k }) => def.rank(row) >= k);
 }
 // The highest level number the waiting locks leave open (T12), or Infinity.
 function levelLockTop(table) {
   if (!LEVEL_LOCKS_ON) return Infinity;
-  return levelLocksFor(table).reduce((m, { k, who }) => (who ? m : Math.min(m, k - 1)), Infinity);
+  return levelLocksFor(table).reduce((m, { k }) => Math.min(m, k - 1), Infinity);
 }
 // Speed: row ids are only downloaded for tables that have "Upcoming" ticks
 // (they made every level table 30-100% bigger). Ticking clears the kept
@@ -33646,7 +33655,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=2eecc53863";
+      s.src = "admin.min.js?v=f355028958";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
@@ -33722,11 +33731,11 @@ function gameRules() {
         { key: "day", label: "State day", type: "num" }],
       // Shown by state day; same day keeps the built-in order.
       // Auto rows with no day (made by "Upcoming") come last, day empty.
-      get: () => STATE_UNLOCKS.concat(STATE_UNLOCKS_WAIT).map((u) => ({ ...(u.key ? { key: u.key } : {}), label: u.label, kind: u.kind, name: u.kind === "level" ? "" : u.name, tab: u.kind === "level" ? "" : (u.tabs || [])[0] || "", table: u.table || "", level: u.level != null ? String(u.level) : "", day: u.day == null ? "" : u.day, ...(u.auto ? { auto: u.auto } : {}), ...(u.who ? { who: u.who } : {}), ...(u.part ? { part: u.part } : {}) })).sort((a, b) => (a.day === "") - (b.day === "") || (Number(a.day) || 0) - (Number(b.day) || 0)),
+      get: () => STATE_UNLOCKS.concat(STATE_UNLOCKS_WAIT).map((u) => ({ ...(u.key ? { key: u.key } : {}), label: u.label, kind: u.kind, name: u.kind === "level" ? "" : u.name, tab: u.kind === "level" ? "" : (u.tabs || [])[0] || "", table: u.table || "", level: u.level != null ? String(u.level) : "", day: u.day == null ? "" : u.day, ...(u.auto ? { auto: u.auto } : {}) })).sort((a, b) => (a.day === "") - (b.day === "") || (Number(a.day) || 0) - (Number(b.day) || 0)),
       set: (rows) => {
         const noDay = (r) => !!r.auto && (r.day === "" || r.day == null);
         const keep = (r) => (r.kind === "level" ? !!LEVEL_LOCK_TARGETS[r.table] && r.level != null && r.level !== "" : !!r.name);
-        const extra = (r) => ({ ...(r.auto ? { auto: String(r.auto) } : {}), ...(r.who ? { who: String(r.who) } : {}), ...(r.part ? { part: String(r.part) } : {}) });
+        const extra = (r) => (r.auto ? { auto: String(r.auto) } : {});
         ruleSetArray(STATE_UNLOCKS_WAIT, rows.filter((r) => noDay(r) && keep(r)).map((r) => {
           if (r.kind === "level") { const d = LEVEL_LOCK_TARGETS[r.table]; return { kind: "level", name: `${r.table}:${r.level}`, table: r.table, level: String(r.level), tabs: d.tabs, day: null, label: r.label || `${d.label} ${r.level}+`, ...extra(r) }; }
           return { kind: r.kind, name: r.name, tabs: RULE_TAB_PAGES[r.kind] || (r.tab ? [r.tab] : []), day: null, label: r.label || r.name, ...extra(r) };

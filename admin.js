@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "2eecc53863";
+window.ADMIN_BUILD = "f355028958";
 
 // ============================================================
 // ADMIN PAGE
@@ -1966,18 +1966,213 @@ function visitorPageList() {
   });
   return out;
 }
+// ---- Admin → Visibility: Upcoming per game part ----
+let ADM_VIS_OPEN = new Set(); // open folds, for the visit
+// Built-in phase ends of the Heroes Gears tracks (Enhance 101 – 200 = Mithril).
+const VUP_PHASE_ENDS = { mastery: [20], enhance: [100, 200] };
+function vupPhaseEnds() {
+  const e = ((siteConfig("upcoming_phases", null) || {}).ends) || {};
+  return { mastery: Array.isArray(e.mastery) ? e.mastery.map(Number) : [], enhance: Array.isArray(e.enhance) ? e.enhance.map(Number) : [] };
+}
+async function vupSavePhaseEnds(ends) {
+  const cur = { ...(siteConfig("upcoming_phases", null) || {}) };
+  const clean = Object.fromEntries(Object.entries(ends).filter(([, v]) => v.length).map(([k, v]) => [k, [...new Set(v)].sort((a, b) => a - b)]));
+  if (Object.keys(clean).length) cur.ends = clean; else delete cur.ends;
+  await saveSiteConfig("upcoming_phases", cur);
+}
+const VUP_PIC = { chief_gear: "icons/quick/chief-gear.png", charm: "icons/charms/charm-infantry-16.webp", hero_gear: "icons/quick/hero-gear.png" };
+// The level groups of the three parts. A group always ENDS at the level itself;
+// the stages after a level belong to the next group (owner, 19 Nov 2026):
+// Chief Gear "Red T7" = T6 ★3.1 … T7 ★3; Charm "Lv 17" = 16.1 … 17; Heroes
+// Gears: Mastery 1 – 20, Enhancement 0 – 100, Mithril (red gear) 101 – 200,
+// later levels in groups of 10.
+async function vupParts() {
+  const [tabs, charm] = await Promise.all([sb(`progression_tables?select=id,name`), sb(`charm_levels?select=id,level_label&order=sort_order.asc`)]);
+  const tid = (n) => ((tabs || []).find((x) => x.name === n) || {}).id;
+  const prog = (n) => (tid(n) ? sb(`progression_rows?table_id=eq.${tid(n)}&select=id,tier,stars,stage,level,stat,display_label&order=sort_order.asc`) : Promise.resolve([]));
+  const [cg, mf, en, mi] = await Promise.all(["Chief Gear", "Hero Gear Mastery Forging", "Hero Gear Enhancement", "Hero Gear Mithril"].map(prog));
+  const stage0 = (r) => r.stage == null || r.stage === "" || String(r.stage) === "0";
+  const cut = (rows, isEnd, make) => {
+    const out = []; let cur = [];
+    rows.forEach((r, i) => { cur.push(r); if (isEnd(r, i)) { out.push(make(cur, false)); cur = []; } });
+    if (cur.length) out.push(make(cur, true));
+    return out;
+  };
+  // Chief Gear: each tier's last whole-star row ends its group.
+  const cgEnd = new Set(); const lastOf = {};
+  (cg || []).forEach((r, i) => { if (stage0(r)) lastOf[r.tier] = i; });
+  Object.values(lastOf).forEach((i) => cgEnd.add(i));
+  const cgShort = (r) => chiefGearRowLabel(r).replace(/^(?:Green|Blue|Purple|Gold|Red) (T\d+)/, "$1");
+  const range = (a, b) => (a === b ? a : `${a} – ${b}`);
+  const cgGroups = cut(cg || [], (r, i) => cgEnd.has(i), (rows, tail) => {
+    const a = rows[0], b = rows.at(-1), name = (CHIEF_GEAR_TIER_SHORT[b.tier] || b.tier) + (tail && !stage0(b) ? " +" : "");
+    const lv = a.level != null && b.level != null ? ` · Lv ${range(String(a.level), String(b.level))}` : "";
+    return { name, range: range(cgShort(a), cgShort(b)) + lv, pic: `icons/chief-gear/helmet-${chiefGearLook(b.tier)}.webp`, table: "progression_rows", ids: rows.map((r) => String(r.id)), target: "chief_gear", level: chiefGearRowLabel(a), label: `Chief Gear ${name}` };
+  });
+  // Chief Charm: whole levels end a group.
+  const chGroups = cut((charm || []).filter((r) => String(r.level_label) !== "0"), (r) => /^\d+$/.test(String(r.level_label)), (rows) => {
+    const a = String(rows[0].level_label), b = String(rows.at(-1).level_label), n = Math.floor(parseFloat(b)) || 1;
+    return { name: `Lv ${b.replace(/\..*$/, "")}${/^\d+$/.test(b) ? "" : " +"}`, range: rows.length > 1 ? `${range(a, b)} · ${t("vup_stages").replace("{n}", rows.length)}` : `Lv ${a}`, pic: `icons/charms/charm-infantry-${Math.max(1, Math.min(18, n))}.webp`, table: "charm_levels", ids: rows.map((r) => String(r.id)), target: "charms", level: a, label: `Chief Charm Lv ${b}` };
+  });
+  // Heroes Gears: phase ends per track (built-in VUP_PHASE_ENDS + the owner's
+  // splits in site_config "upcoming_phases" = { ends: { mastery, enhance } });
+  // rows past the last phase end form one group ("NEW"). Enhance counts on into
+  // the Mithril table (101 – 200).
+  const ends = vupPhaseEnds();
+  const hgTrack = (key, items, target, sec) => {
+    const all = new Set([...VUP_PHASE_ENDS[key], ...ends[key]]), own = new Set(ends[key]);
+    const lvTxt = (x) => `${x.lv}${x.s0 ? "" : "." + x.stage}`;
+    const out = cut(items, (x) => x.s0 && all.has(x.lv), (gr, tail) => ({ gr, tail }));
+    return out.map(({ gr, tail }, k) => {
+      const a = gr[0], b = gr.at(-1), prevEnd = k ? out[k - 1].gr.at(-1).lv : null;
+      const rng = range(lvTxt(a), lvTxt(b)), red = key === "enhance" && a.lv > 100;
+      const name = key === "mastery" ? `Mastery ${rng}` : red ? `${t("vup_red_gear")} ${rng}` : `Enhancement ${rng}`;
+      const isNew = tail && !(b.s0 && all.has(b.lv)) && k > 0;
+      return { sec, track: key, name, isNew, items: gr, prevEnd, prevOwn: prevEnd != null && own.has(prevEnd), endLv: b.lv,
+        range: isNew ? t("vup_new_levels").replace("{n}", gr.length) : `${t("vup_phase").replace("{n}", k + 1)} · Lv ${rng}`,
+        pic: VUP_PIC.hero_gear, table: "progression_rows", ids: gr.map((x) => x.id), target, level: String(a.lv + (a.s0 ? 0 : 1)), label: `${key === "mastery" ? "Hero Mastery" : "Hero Enhance"} ${rng}` };
+    });
+  };
+  const item = (add) => (r) => ({ id: String(r.id), lv: Number(r.level) + add, stage: r.stage, s0: stage0(r), stat: r.stat || "" });
+  const hgGroups = [
+    ...hgTrack("mastery", (mf || []).map(item(0)), "hero_mastery", t("vup_mastery")),
+    ...hgTrack("enhance", [...(en || []).map(item(0)), ...(mi || []).map(item(100))], "hero_enhance", t("vup_enhance")),
+  ];
+  return [
+    { key: "chief_gear", title: "Chief Gear", desc: t("vup_cg_desc"), groups: cgGroups },
+    { key: "charm", title: "Chief Charm", desc: t("vup_ch_desc"), groups: chGroups },
+    { key: "hero_gear", title: "Heroes Gears", desc: t("vup_hg_desc"), groups: hgGroups },
+  ].filter((p) => p.groups.length);
+}
+function vupGroupState(g) { const up = upcomingIds(g.table), n = g.ids.filter((id) => up.has(id)).length; return { on: n === g.ids.length && n > 0, some: n > 0 }; }
+function vupAutoId(g) { return `lv:${g.table}:${g.ids[0]}`; }
+// A group's stop follows its new name after a split / join (its day stays).
+async function vupRelabel(g) {
+  const rows = admUnlockRows(), before = JSON.stringify(rows), u = g && rows.find((x) => x.auto === vupAutoId(g));
+  if (u) u.label = g.label;
+  await admSaveUnlockRows(rows, before);
+}
+async function vupSetGroup(g, on) {
+  const all = { ...(siteConfig("upcoming_levels", {}) || {}) };
+  const keep = new Set(upcomingIds(g.table));
+  g.ids.forEach((id) => { if (on) keep.add(id); else keep.delete(id); });
+  if (keep.size) all[g.table] = [...keep]; else delete all[g.table];
+  await saveSiteConfig("upcoming_levels", all);
+  afterUpcomingChange();
+  const rows = admUnlockRows(), before = JSON.stringify(rows), id = vupAutoId(g);
+  if (on) { if (!rows.some((u) => u.auto === id)) rows.push({ label: g.label, kind: "level", name: "", tab: "", table: g.target, level: g.level, day: "", auto: id }); }
+  else { const i = rows.findIndex((u) => u.auto === id && (u.day === "" || u.day == null)); if (i >= 0) rows.splice(i, 1); }
+  await admSaveUnlockRows(rows, before);
+}
+function vupFoldHtml(pt, row) {
+  const st = pt.groups.map(vupGroupState), nUp = st.filter((x) => x.some).length;
+  let sec = null;
+  const rowsHtml = pt.groups.map((g, gi) => {
+    const s0 = st[gi], u = admAutoUnlock(vupAutoId(g));
+    const head = g.sec && g.sec !== sec ? `<div class="vup-sec">${esc(g.sec)}</div>` : "";
+    sec = g.sec || sec;
+    const day = u ? `<button type="button" class="vup-day" data-vupday>📅 ${esc(u.day == null ? t("vup_day_unset") : t("vup_day").replace("{d}", Number(u.day).toLocaleString()))} &#8250;</button>` : "";
+    const tap = g.track ? ` data-vuptap="${esc(pt.key)}|${gi}" role="button" tabindex="0"` : "";
+    return `${head}<div class="vup-r${s0.some ? " on" : ""}${g.track ? " tap" : ""}"${tap}><img class="vup-pic" src="${esc(g.pic)}" alt="" loading="lazy" /><span class="vup-t"><b>${esc(g.name)}${g.isNew ? ` <em class="vup-new">${esc(t("vup_new"))}</em>` : ""}${s0.some ? ` <em class="vup-tag">${esc(t("upcoming_col"))}</em>` : ""}</b><small>${esc(g.range)}</small>${day}</span><input type="checkbox" class="bset-sw vup-sw${s0.some && !s0.on ? " half" : ""}" data-vupg="${esc(pt.key)}|${gi}" ${s0.on ? "checked" : ""} aria-label="${esc(t("upcoming_col"))}" /></div>`;
+  }).join("");
+  return `<details class="panel adm-visfold" data-visfold="up:${esc(pt.key)}" style="margin-bottom:12px;">
+      <summary><img class="vup-hpic" src="${esc(VUP_PIC[pt.key])}" alt="" /><h2 style="margin:0;">${esc(pt.title)}</h2><span class="meta adm-viscount">${nUp ? `<b class="vup-n">${esc(t("vup_n").replace("{n}", nUp))}</b>` : esc(t("vup_n").replace("{n}", 0))} · ${pt.groups.length}</span><i aria-hidden="true">&#9662;</i></summary>
+      <p class="desc" style="margin:0 0 8px;">${esc(pt.desc)}</p>
+      <div class="vup-see">${row("upcoming", pt.key, t("vup_see"), t("vup_see_sub"))}</div>
+      <div class="vup-h"><span>${esc(t("vup_group"))}</span><span>${esc(t("upcoming_col"))}</span></div>
+      ${rowsHtml}
+    </details>`;
+}
+// Experts / Pets fold: an Upcoming switch next to each one's visitor switch.
+function vupWholeFold(kind, title, desc, list, isUp, pic, row) {
+  const nUp = list.filter(isUp).length, nHid = list.filter((n) => isHiddenFromVisitors(kind, n)).length;
+  const rowsHtml = list.map((n) => {
+    const up = isUp(n), p = pic(n), d = stateUnlockDay(kind, n);
+    return `<div class="vup-w${up ? " on" : ""}">${row(kind, n, dataName(n), "", {
+      pic: p ? `<img class="vup-pic" src="${esc(p)}" alt="" loading="lazy" />` : `<span class="vup-pic vup-l">${esc(String(n)[0])}</span>`,
+      label: `<b class="vup-wn">${esc(dataName(n))}</b>${up ? ` <em class="vup-tag">${esc(t("upcoming_col"))}</em>` : ""}<small class="vup-ws">${esc(d != null ? t("vup_day").replace("{d}", d.toLocaleString()) : up ? t("vup_day_unset") : "")}</small>`,
+      sw: `<input type="checkbox" class="bset-sw vup-sw" data-vupw="${esc(kind)}|${esc(n)}" ${up ? "checked" : ""} aria-label="${esc(t("upcoming_col"))}" />`,
+    })}</div>`;
+  }).join("");
+  return `<details class="panel adm-visfold" data-visfold="w:${kind}" style="margin-bottom:12px;">
+      <summary><h2 style="margin:0;">${esc(title)}</h2><span class="meta adm-viscount">${nUp ? `<b class="vup-n">${esc(t("vup_n").replace("{n}", nUp))}</b> · ` : ""}${esc(t("admh_n_hidden").replace("{n}", nHid))} · ${list.length}</span><i aria-hidden="true">&#9662;</i></summary>
+      <p class="desc" style="margin:0 0 8px;">${esc(desc)}</p>
+      <div class="vup-h"><span></span><span>${esc(t("vup_cols"))}</span></div>
+      ${rowsHtml || `<div class="meta">—</div>`}
+    </details>`;
+}
+// Sheet for one Heroes Gears group: its levels; pick one and "Split after Lv N"
+// makes it a phase end (two groups, each with its own switch and stop; the first
+// keeps its day). "Join with <previous>" removes the owner's phase end before it
+// (the joined group keeps the earlier stop and its day).
+function vupSplitSheet(pt, gi, redraw) {
+  const g = pt.groups[gi], prev = pt.groups[gi - 1];
+  document.querySelectorAll(".vup-ov").forEach((x) => x.remove());
+  const ov = document.createElement("div");
+  ov.className = "modal-overlay admpl-ov vup-ov";
+  let pick = null;
+  const lvRows = g.items.map((x, k) => ({ x, k, end: x.s0 && k < g.items.length - 1 }));
+  const draw = () => {
+    ov.innerHTML = `<div class="modal-box admpl-sh vup-sh" role="dialog" aria-label="${esc(g.name)}">
+      <div class="admpl-sh-h"><img class="vup-pic" src="${esc(g.pic)}" alt="" /><b>${esc(g.name)}<small>${esc(t("vup_sheet_sub").replace("{n}", g.items.length))}</small></b><button type="button" class="admpl-nav admpl-x" data-vupx aria-label="close">&#10005;</button></div>
+      <div class="vup-lvs">${lvRows.map(({ x, k, end }) => `<div class="vup-lv${pick === k ? " pick" : ""}"${end ? ` data-vuplv="${k}" role="button" tabindex="0"` : ""}><b>Lv ${esc(String(x.lv) + (x.s0 ? "" : "." + x.stage))}</b><span>${esc(x.stat)}</span>${pick === k ? `<em>&#9986; ${esc(t("vup_split_here"))}</em>` : ""}</div>${pick === k ? `<div class="vup-cutline">${esc(t("vup_new_starts").replace("{l}", String(g.items[k + 1].lv)))}</div>` : ""}`).join("")}</div>
+      ${pick != null ? `<p class="vup-note">${esc(t("vup_split_note").replace("{l}", g.items[pick].lv))}</p>` : g.prevOwn && prev ? `<p class="vup-note">${esc(t("vup_join_note").replace("{l}", g.prevEnd))}</p>` : ""}
+      <div class="admpl-ft">${pick != null ? `<button type="button" class="btn ghost" data-vupcancel>${esc(t("cancel") === "cancel" ? "Cancel" : t("cancel"))}</button><button type="button" class="btn" data-vupdosplit>${esc(t("vup_split_after").replace("{l}", g.items[pick].lv))}</button>`
+        : `${g.prevOwn && prev ? `<button type="button" class="btn ghost" data-vupjoin>&#8593; ${esc(t("vup_join").replace("{name}", prev.name.replace(/^\D+/, "")))}</button>` : ""}<button type="button" class="btn" data-vupx>${esc(t("admpl_done"))}</button>`}</div>
+    </div>`;
+  };
+  draw();
+  document.body.appendChild(ov);
+  const close = () => { ov.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", onKey);
+  ov.addEventListener("click", async (e) => {
+    if (e.target === ov || e.target.closest("[data-vupx]")) { close(); return; }
+    const lv = e.target.closest("[data-vuplv]");
+    if (lv) { pick = pick === +lv.dataset.vuplv ? null : +lv.dataset.vuplv; draw(); return; }
+    if (e.target.closest("[data-vupcancel]")) { pick = null; draw(); return; }
+    const sp = e.target.closest("[data-vupdosplit]"), jn = e.target.closest("[data-vupjoin]");
+    if (!sp && !jn) return;
+    (sp || jn).disabled = true;
+    try {
+      const ends = vupPhaseEnds(), key = g.track, wasUp = vupGroupState(g).some;
+      if (sp) {
+        ends[key] = [...ends[key], g.items[pick].lv];
+        await vupSavePhaseEnds(ends);
+        // The new second group gets its own switch state and stop.
+        const gs = (await vupParts()).find((x) => x.key === pt.key).groups;
+        await vupRelabel(gs.find((x) => x.ids[0] === g.ids[0]));
+        const after = gs.find((x) => x.ids[0] === g.items[pick + 1].id);
+        if (after && wasUp) await vupSetGroup(after, true);
+        toast(t("vup_split_done"));
+      } else {
+        const prevUp = vupGroupState(prev).some;
+        ends[key] = ends[key].filter((l) => l !== g.prevEnd);
+        await vupSavePhaseEnds(ends);
+        const rows = admUnlockRows(), before = JSON.stringify(rows), id = vupAutoId(g);
+        const k = rows.findIndex((u) => u.auto === id); if (k >= 0) rows.splice(k, 1);
+        await admSaveUnlockRows(rows, before);
+        const joined = (await vupParts()).find((x) => x.key === pt.key).groups.find((x) => x.ids[0] === prev.ids[0]);
+        if (joined && (wasUp || prevUp)) await vupSetGroup(joined, true);
+        await vupRelabel(joined);
+        toast(t("vup_join_done"));
+      }
+    } catch (err) { toast(err.message || "Couldn't save", true); }
+    close(); await redraw();
+  });
+}
 async function renderAdminVisibility(body) {
   await ensureUiVisibility();
   await Promise.all([ensureExpertsRosterGlobal(), ensurePetsData()]);
   const pages = visitorPageList();
   const experts = EXPERTS_IN_ORDER_GLOBAL.slice();
   const pets = [...new Set([...Object.keys(PETS_NODES_CACHE || {}), ...Object.keys(PET_REFINE_CACHE || {})])];
-  const row = (kind, name, label, sub, badge) => `
-    <label style="display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px;">
-      <span style="flex:1 1 0; min-width:0;">${esc(label)}${badge || ""}${sub ? ` <span class="meta" style="font-size:11px;">· ${esc(sub)}</span>` : ""}</span>
+  const row = (kind, name, label, sub, pre) => `
+    <${pre ? "div" : "label"} class="vis-row" style="display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px;">
+      ${pre ? pre.pic : ""}<span style="flex:1 1 0; min-width:0;">${pre ? pre.label : esc(label)}${sub ? ` <span class="meta" style="font-size:11px;">· ${esc(sub)}</span>` : ""}</span>${pre ? pre.sw : ""}
       <span class="meta" data-visstate style="font-size:11px; color:${isHiddenFromVisitors(kind, name) ? "var(--amber)" : "var(--good)"};">${esc(isHiddenFromVisitors(kind, name) ? t("vis_hidden") : t("vis_visible"))}</span>
-      <input type="checkbox" class="bset-sw" data-visitem="${esc(kind)}|${esc(name)}" ${isHiddenFromVisitors(kind, name) ? "" : "checked"} />
-    </label>`;
+      <input type="checkbox" class="bset-sw" data-visitem="${esc(kind)}|${esc(name)}" ${isHiddenFromVisitors(kind, name) ? "" : "checked"} aria-label="${esc(t("vis_visible"))}" />
+    </${pre ? "div" : "label"}>`;
   // Big lists fold away: the heading says how many are hidden.
   const section = (title, desc, rowsHtml, list) => list ? `
     <details class="panel adm-visfold" style="margin-bottom:12px;">
@@ -1991,14 +2186,11 @@ async function renderAdminVisibility(body) {
       ${rowsHtml || `<div class="meta">—</div>`}
     </div>`;
   await ensureSiteConfig();
-  // Upcoming levels per page (same store, "upcoming:<page>"), with how many rows are ticked.
-  const upN = (table, rows) => (rows || []).filter((r) => isUpcomingRow(table, r)).length;
-  await Promise.all([loadChiefGearRows(), ensureCharmLevelsData(), ensureHeroGearData()]).catch(() => {});
-  const upRows = [
-    ["chief_gear", "vis_up_chief_gear", upN("progression_rows", CHIEF_GEAR_ROWS)],
-    ["charm", "vis_up_charm", upN("charm_levels", CHARM_LEVEL_ROWS)],
-    ["hero_gear", "vis_up_hero_gear", GEAR_LEVELING_TABLES.reduce((a, tn) => a + upN("progression_rows", (HERO_GEAR_TABLES_CACHE || {})[tn]), 0)],
-  ];
+  // Upcoming per game part (owner, 19 Nov 2026): Chief Gear, Chief Charm and
+  // Heroes Gears each get a fold with "Visitors see upcoming" (ui_visibility
+  // "upcoming:<page>") and one Upcoming switch per level group (vupParts).
+  const parts = await vupParts().catch(() => []);
+  const expRows = await sb(`experts?select=id,key,upcoming`).catch(() => []);
   const va = siteConfig("visitor_access", {}) || {};
   const accessRow = (key, label, sub) => `
     <label style="display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px;">
@@ -2018,10 +2210,55 @@ async function renderAdminVisibility(body) {
       accessRow("islandscan", "Scan Storehouse (Islands)", "the 📷 Scan Storehouse button on the Islands page (My Island, Storehouse tabs, lighthouse levels); you teach the buildings first"),
       accessRow("goals", "Order of goals", "Order of goals with its By dates, the goal flags, the \"By your dates\" plan and hero targets on Budgets, and the goal tags on My Purchases; saved per visitor"),
     ].join(""))}
-    ${section(t("vis_upcoming"), t("vis_upcoming_desc"), upRows.map(([k, lbl, n]) => row("upcoming", k, t(lbl), t("vis_up_n").replace("{n}", n))).join(""))}
+    ${parts.map((pt) => vupFoldHtml(pt, row)).join("")}
     ${section(t("vis_pages"), t("vis_pages_desc"), pages.map((p) => row("page", p.tab, p.label, p.group)).join(""), pages.map((p) => ["page", p.tab]))}
-    ${section(t("vis_experts"), t("vis_experts_desc"), experts.map((e) => row("experts", e, dataName(e), "", EXPERT_UPCOMING_GLOBAL[e] ? " " + upcomingBadgeHtml() : "")).join(""), experts.map((e) => ["experts", e]))}
-    ${section(t("vis_pets"), t("vis_pets_desc"), pets.map((p) => row("pets", p, dataName(p), "", petIsUpcoming(p) ? " " + upcomingBadgeHtml() : "")).join(""), pets.map((p) => ["pets", p]))}`;
+    ${vupWholeFold("experts", t("vis_experts"), t("vis_experts_desc"), experts, (e) => !!EXPERT_UPCOMING_GLOBAL[e], (e) => (EXPERTS_LIST || []).find((x) => x.key === e)?.img || "", row)}
+    ${vupWholeFold("pets", t("vis_pets"), t("vis_pets_desc"), pets, (p) => petIsUpcoming(p), (p) => petImage(p) || "", row)}`;
+  // Folds stay open across redraws (switching something redraws the screen).
+  body.querySelectorAll("details.adm-visfold").forEach((d, i) => {
+    const k = d.dataset.visfold || "f" + i;
+    if (ADM_VIS_OPEN.has(k)) d.open = true;
+    d.addEventListener("toggle", () => { if (d.open) ADM_VIS_OPEN.add(k); else ADM_VIS_OPEN.delete(k); });
+  });
+  const redraw = async () => { const y = window.scrollY; await renderAdminVisibility(body); window.scrollTo(0, y); };
+  // A level group switched Upcoming / back.
+  body.querySelectorAll("[data-vupg]").forEach((cb) => cb.addEventListener("change", async () => {
+    const [pk, gi] = cb.dataset.vupg.split("|"), pt = parts.find((x) => x.key === pk), g = pt && pt.groups[+gi];
+    if (!g) return;
+    cb.disabled = true;
+    try { await vupSetGroup(g, cb.checked); toast(cb.checked ? t("vup_saved_on") : t("vup_saved_off")); }
+    catch (err) { toast(err.message || "Couldn't save", true); }
+    await redraw();
+  }));
+  body.querySelectorAll("[data-vupday]").forEach((b) => b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); admRuleOpen("unlocks"); }));
+  // Heroes Gears group: its levels in a sheet, "Split here" / "Join with …".
+  body.querySelectorAll("[data-vuptap]").forEach((el) => el.addEventListener("click", (e) => {
+    if (e.target.closest("[data-vupg], [data-vupday]")) return;
+    const [pk, gi] = el.dataset.vuptap.split("|"), pt = parts.find((x) => x.key === pk);
+    if (pt && pt.groups[+gi]) vupSplitSheet(pt, +gi, redraw);
+  }));
+  // A whole expert / pet switched Upcoming / back (hidden from visitors + a timeline stop when turned on).
+  body.querySelectorAll("[data-vupw]").forEach((cb) => cb.addEventListener("change", async () => {
+    const [kind, name] = cb.dataset.vupw.split("|"), on = cb.checked;
+    cb.disabled = true;
+    try {
+      if (kind === "experts") {
+        const r = (expRows || []).find((x) => x.key === name);
+        if (!r) throw new Error("Expert not found");
+        await sb(`experts?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify({ upcoming: on }) });
+        if (on) EXPERT_UPCOMING_GLOBAL[name] = true; else delete EXPERT_UPCOMING_GLOBAL[name];
+        EXPERTS_ROSTER_LOADED = false;
+      } else {
+        const list = new Set(siteConfig("upcoming_pets", []) || []);
+        if (on) list.add(name); else list.delete(name);
+        await saveSiteConfig("upcoming_pets", [...list]);
+      }
+      afterUpcomingChange();
+      await admWholeUpcoming(kind, name, on);
+      toast(on ? t("up_auto_saved") : "Saved");
+    } catch (err) { toast(err.message || "Couldn't save", true); }
+    await redraw();
+  }));
   body.querySelectorAll("[data-visaccess]").forEach((cb) => cb.addEventListener("change", async () => {
     cb.disabled = true;
     try {
@@ -2037,11 +2274,11 @@ async function renderAdminVisibility(body) {
     cb.disabled = true;
     try {
       await setHiddenFromVisitors(kind, name, !cb.checked);
-      const st = cb.closest("label").querySelector("[data-visstate]");
+      const st = cb.closest(".vis-row").querySelector("[data-visstate]");
       const hidden = !cb.checked;
       st.textContent = hidden ? t("vis_hidden") : t("vis_visible");
       st.style.color = hidden ? "var(--amber)" : "var(--good)";
-      const fold = cb.closest(".adm-visfold"), cnt = fold && fold.querySelector(".adm-viscount");
+      const fold = cb.closest(".adm-visfold"), cnt = fold && !fold.dataset.visfold && fold.querySelector(".adm-viscount");
       if (cnt) { const all = [...fold.querySelectorAll("[data-visitem]")]; cnt.textContent = `${t("admh_n_hidden").replace("{n}", all.filter((x) => !x.checked).length)} · ${all.length}`; }
       toast(hidden ? t("vis_now_hidden") : t("vis_now_visible"));
       applyPageVisibility();
@@ -2315,7 +2552,7 @@ async function renderAdminExpertTable(body, tableKey) {
       </table>
     `;
 
-    wireAdmEditBar(wrap, { rowAttr: "data-exprow", table: cfg.table, upTable: cfg.table, upWhole: () => (EXPERT_UPCOMING_GLOBAL[ADMIN_ACTIVE_EXPERT] ? t("admpl_expert") : ""), saveRow: (id) => saveExpRow(id), after: () => { EXPERTS_RESEARCH_NODES_GLOBAL = null; dropKeptGameData(); }, hide: ["#adminExpRowsSaveAll", "[data-exprowsave]"],
+    wireAdmEditBar(wrap, { rowAttr: "data-exprow", table: cfg.table, upTable: cfg.table, saveRow: (id) => saveExpRow(id), after: () => { EXPERTS_RESEARCH_NODES_GLOBAL = null; dropKeptGameData(); }, hide: ["#adminExpRowsSaveAll", "[data-exprowsave]"],
       addForm: "#adminAddRowForm", reload: () => loadRows(),
       create: async (tr) => { await sb(`${cfg.table}`, { method: "POST", body: JSON.stringify({ expert: ADMIN_ACTIVE_EXPERT, ...admNewRowPayload(tr, null) }) }); } });
     admWireRowSave(wrap, "data-exprowsave", saveExpRow);
@@ -2579,7 +2816,7 @@ async function renderAdminPets(body) {
       try { await saveAdminRowOrderInPlace(wrap, "data-petrow", PET_LEVELS_TABLE, rows, orderedIds); PETS_NODES_CACHE = null; }
       catch (err) { toast("Couldn't reorder", true); loadPetRows(); }
     });
-    wireAdmEditBar(wrap, { rowAttr: "data-petrow", table: PET_LEVELS_TABLE, upTable: PET_LEVELS_TABLE, upWhole: () => (petIsUpcoming(ADMIN_ACTIVE_PET) ? t("admpl_pet") : ""), saveRow: (id) => savePetRow(id), after: () => { PETS_NODES_CACHE = null; }, hide: ["#adminPetRowsSaveAll", "[data-petrowsave]"],
+    wireAdmEditBar(wrap, { rowAttr: "data-petrow", table: PET_LEVELS_TABLE, upTable: PET_LEVELS_TABLE, saveRow: (id) => savePetRow(id), after: () => { PETS_NODES_CACHE = null; }, hide: ["#adminPetRowsSaveAll", "[data-petrowsave]"],
       addForm: "#adminAddPetRowForm", reload: () => loadPetRows(),
       create: async (tr) => {
         const payload = { pet: ADMIN_ACTIVE_PET, ...admNewRowPayload(tr, 0) };
@@ -2766,8 +3003,6 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
   };
   // Row name shown (o.rowName: e.g. Chief Gear "Red T7 ★0.1" from its Tier / Stars / Stage).
   const nameOf = (tr) => (o.rowName ? o.rowName(tr) : admPlLabel(parts(tr).lab));
-  const upOf = (tr) => tr.querySelector("[data-up]");
-  const upSaved = (tr) => { const u = upOf(tr); return !!u && u.dataset.orig === "true"; };
   // Groups: by major level ("4", "4.1" … "4.3"), else by name without its last
   // number ("Mythic T1 ★0" … "★3", "Weapons Prep I" × its levels); mostly single
   // rows → blocks of 10. A name that comes back after other names (stat rows like
@@ -2786,20 +3021,12 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
     }
     const out = [];
     list.forEach((tr, i) => { const k = keys[i]; const g = out.at(-1); if (g && g.k === k) g.rows.push(tr); else out.push({ k, rows: [tr] }); });
-    const res = out.length > 12 && list.length / out.length < 1.6 ? (() => {
+    if (out.length > 12 && list.length / out.length < 1.6) {
       const blocks = [];
       list.forEach((tr, i) => { if (i % 10 === 0) blocks.push({ k: "b" + i, rows: [] }); blocks.at(-1).rows.push(tr); });
       return blocks;
-    })() : out;
-    // A fold is cut where its saved "Upcoming" ticks start, so the released and
-    // the upcoming part each get their own switch ("Red T6 ★0–3" / "★3.1–3.4").
-    if (!list.some(upOf)) return res;
-    const cut = [];
-    res.forEach((g) => {
-      let cur = null;
-      g.rows.forEach((tr) => { const u = upSaved(tr); if (!cur || cur.u !== u) { cur = { k: cur ? g.k + "~u" : g.k, rows: [], u, part: !!cur }; cut.push(cur); } cur.rows.push(tr); });
-    });
-    return cut;
+    }
+    return out;
   };
   const draw = () => {
     if (!pl.isConnected) return;
@@ -2815,33 +3042,17 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
     const relIdx = firstUp < 0 ? list.length - 1 : firstUp - 1;
     const rel = relIdx >= 0 ? nameOf(list[relIdx]) : "—";
     const nOld = list.filter((tr) => !tr.hasAttribute("data-newrow")).length;
-    const nUp = upEls.filter((x) => x && x.checked).length;
-    // Group "Upcoming" switch: all ticked = on (amber tag), some = "N of M" (half).
-    const whole = hasUp && o.upWhole ? o.upWhole() : false;
-    const gSw = (g, gi) => {
-      if (!hasUp || g.k === "__new") return "";
-      if (whole) return `<em class="admpl-gtag">${esc(t("admpl_whole").replace("{what}", whole))}</em>`;
-      const ups = g.rows.map(upOf).filter(Boolean);
-      if (!ups.length) return "";
-      const on = ups.filter((x) => x.checked).length, all = on === ups.length;
-      const tag = on ? `<em class="admpl-gtag">${esc(all ? t("upcoming_col") : t("admpl_n_of").replace("{n}", on).replace("{m}", ups.length))}</em>` : "";
-      return `${tag}<input type="checkbox" class="bset-sw admpl-gsw${on && !all ? " half" : ""}" data-plgup="${gi}" ${all ? "checked" : ""} aria-label="${esc(t("upcoming_col"))}" />`;
-    };
     const rowHtml = (tr) => {
       const p = parts(tr), i = list.indexOf(tr);
       const chg = tr.hasAttribute("data-newrow") || !!tr.querySelector(".chg");
       const up = !!(tr.querySelector("[data-up]") || {}).checked;
       return `<button type="button" class="admpl-r${chg ? " chg" : ""}${up ? " up" : ""}" data-plrow="${i}" style="--n:${cols.length}"><b>${esc(nameOf(tr) || (tr.hasAttribute("data-newrow") ? t("admpl_new") : "—"))}</b>${p.main.map((el) => `<span class="${el.classList.contains("chg") ? "chg" : ""}">${esc(admPlFmt(el))}</span>`).join("")}<i aria-hidden="true">&#8250;</i></button>`;
     };
-    // A named fold (o.rowName: "Red T7 ★0" … "★3.4") reads "Red T7", or "Red T6 ★0–3" / "★3.1–3.4" when cut in two.
+    // A named fold (o.rowName: "Red T7 ★0" … "★3.4") reads "Red T7".
     const gLabel = (g) => {
       const a = nameOf(g.rows[0]), b = nameOf(g.rows.at(-1));
       if (g.k === "__new") return t("admpl_new");
-      const key = g.k.replace(/~u$/, "");
-      if (o.rowName && a !== b && a.startsWith(key + " ") && b.startsWith(key + " ")) {
-        const cut = groups.some((x) => x !== g && x.k.replace(/~u$/, "") === key);
-        return cut ? bidiNum(`${key} ${a.slice(key.length + 1)}–${b.slice(key.length + 1).replace(/^[★☆]/, "")}`) : key;
-      }
+      if (o.rowName && a !== b && a.startsWith(g.k + " ") && b.startsWith(g.k + " ")) return g.k;
       return a === b ? a : bidiNum(`${a} – ${b}`);
     };
     // Range chips: the folds split into up to 5 runs.
@@ -2849,13 +3060,12 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
     const per = Math.ceil(groups.length / 5);
     const chips = big ? Array.from({ length: Math.ceil(groups.length / per) }, (_, c) => { const gs = groups.slice(c * per, c * per + per); const a = nameOf(gs[0].rows[0]), b = nameOf(gs.at(-1).rows.at(-1)); return `<button type="button" class="admpl-chip" data-plchip="${c * per}|${gs.length}">${esc(a === b ? a : `${a}–${b}`)}</button>`; }).join("") : "";
     const drag = wrap.classList.contains("adm-hasdrag");
-    pl.innerHTML = `<div class="admpl-sum${o.rowName ? " wide" : ""}"><div><small>${esc(t("admpl_levels"))}</small><b>${nOld}</b></div><div><small>${esc(t("admpl_released"))}</small><b>${esc(hasUp ? rel : nameOf(list[list.length - 1]))}</b></div>${hasUp && (nUp || upEls.some((x) => x && x.dataset.orig === "true")) ? `<div class="${nUp ? "warn" : ""}"><small>${esc(t("admpl_upcoming"))}</small><b>${nUp}</b></div>` : `<div class="${count() ? "warn" : ""}"><small>${esc(t("admpl_unsaved"))}</small><b>${count()}</b></div>`}</div>
+    pl.innerHTML = `<div class="admpl-sum${o.rowName ? " wide" : ""}"><div><small>${esc(t("admpl_levels"))}</small><b>${nOld}</b></div><div><small>${esc(t("admpl_released"))}</small><b>${esc(hasUp ? rel : nameOf(list[list.length - 1]))}</b></div><div class="${count() ? "warn" : ""}"><small>${esc(t("admpl_unsaved"))}</small><b>${count()}</b></div></div>
       ${chips || drag ? `<div class="admpl-chips">${chips}${drag ? `<button type="button" class="admpl-chip admpl-ro" data-plreorder>${st.tbl ? esc(t("admpl_list")) : "&#8942;&#8942; " + esc(t("admpl_reorder"))}</button>` : ""}</div>` : ""}
       <div class="admpl-list${o.rowName ? " wide" : ""}"><div class="admpl-h" style="--n:${cols.length}"><b>${esc(head(p0.lab))}</b>${cols.map((c) => `<span title="${esc(c)}">${esc(c.replace(/\s*\([^)]*\)/g, "") || c)}</span>`).join("")}<i></i></div>
-      ${groups.map((g, gi) => g.rows.length === 1 && g.k !== "__new" ? rowHtml(g.rows[0]) : `<details class="admpl-g" data-plg="${gi}" ${st.open.has(g.k) || g.k === "__new" ? "open" : ""}><summary${g.rows.some((tr) => (upOf(tr) || {}).checked) ? ' class="up"' : ""}><b>${esc(gLabel(g))}</b><span>${esc(t("admpl_rows").replace("{n}", g.rows.length))}</span>${gSw(g, gi)}<i aria-hidden="true">&#9662;</i></summary>${g.rows.map(rowHtml).join("")}</details>`).join("")}</div>`;
+      ${groups.map((g, gi) => g.rows.length === 1 && g.k !== "__new" ? rowHtml(g.rows[0]) : `<details class="admpl-g" data-plg="${gi}" ${st.open.has(g.k) || g.k === "__new" ? "open" : ""}><summary><b>${esc(gLabel(g))}</b><span>${esc(t("admpl_rows").replace("{n}", g.rows.length))}</span><i aria-hidden="true">&#9662;</i></summary>${g.rows.map(rowHtml).join("")}</details>`).join("")}</div>`;
     pl.querySelectorAll("details.admpl-g").forEach((d) => d.addEventListener("toggle", () => { const g = groups[+d.dataset.plg]; if (g) { if (d.open) st.open.add(g.k); else st.open.delete(g.k); } }));
     pl.__groups = groups;
-    pl.__gLabel = gLabel;
   };
   let q = 0;
   wrap.__plDraw = () => { if (q) return; q = requestAnimationFrame(() => { q = 0; draw(); }); };
@@ -2937,15 +3147,6 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
   if (!pl.__wired) {
     pl.__wired = true;
     pl.addEventListener("click", (e) => {
-      // Group switch: ticks / unticks every row of the fold (the Save bar counts them).
-      const gs = e.target.closest("[data-plgup]");
-      if (gs) {
-        e.preventDefault(); e.stopPropagation();
-        const g = (pl.__groups || [])[+gs.dataset.plgup]; if (!g) return;
-        const ups = g.rows.map(upOf).filter(Boolean), on = !ups.every((x) => x.checked);
-        ups.forEach((u) => { if (u.checked !== on) { u.checked = on; u.dispatchEvent(new Event("change", { bubbles: true })); } });
-        draw(); return;
-      }
       const r = e.target.closest("[data-plrow]");
       if (r) { openRow(rows()[+r.dataset.plrow]); return; }
       if (e.target.closest("[data-plreorder]")) { st.tbl = !st.tbl; wrap.querySelectorAll("[data-arrhost]").forEach((h) => arrangeSet(h.dataset.arrhost, st.tbl)); apply(); draw(); return; }
@@ -3024,36 +3225,22 @@ function admWireRowDelete(root, attr, table, after, reload) {
 }
 
 // ---- "Upcoming" → a State Timeline stop (Rules → Unlocks by state age) ----
-// Each fold switched to Upcoming in a level table makes one "level" unlock row
-// by itself with the day left empty (auto: "lv:<table>:<first row id>"); until
-// a day is typed it changes nothing (app.js keeps it in STATE_UNLOCKS_WAIT).
-// Unticking the rows again removes a row that still has no day.
-const ADM_LOCK_BY_TABLE = { charm_levels: "charms", t11_helios_nodes: "t11", t12_nodes: "t12", research_center_nodes: "research_center", expert_affinity_nodes: "expert_level", expert_skill_nodes: "expert_skill", expert_research_nodes: "expert_research", [PET_LEVELS_TABLE]: "pets" };
-const ADM_LOCK_WHAT = { chief_gear: "Chief Gear", charms: "Chief Charm", hero_mastery: "Hero Mastery", hero_enhance: "Hero Enhance / Mithril", t11: "T11", t12: "T12", research_center: "Research Center", vip: "VIP" };
-function admLockOf(o) {
-  const target = o.lockTarget || (o.rowAttr === "data-viprow" ? "vip" : ADM_LOCK_BY_TABLE[o.upTable]);
-  if (!target || !LEVEL_LOCK_TARGETS[target]) return null;
-  const who = target === "pets" ? ADMIN_ACTIVE_PET : /^expert_/.test(target) ? ADMIN_ACTIVE_EXPERT : "";
-  const what = who ? (target === "expert_research" ? `${who} research` : who) : ADM_LOCK_WHAT[target] || LEVEL_LOCK_TARGETS[target].label;
-  const level = o.lockLevel || ((tr) => { const el = tr.querySelector('[data-f="level"], [data-f="level_label"], [data-vipname]'); return el ? String(el.value).trim() : ""; });
-  // One skill / research path only: its name / number goes with the stop.
-  const partEl = (tr) => tr.querySelector(target === "expert_skill" ? '[data-f="skill"]' : target === "expert_research" ? '[data-f="path_number"]' : "x-none");
-  const part = (tr) => { const el = partEl(tr); return el ? String(el.value).trim() : ""; };
-  return { target, who, what, level, part };
-}
+// A level group switched to Upcoming in Admin → Visibility, or a whole expert /
+// pet turned Upcoming, adds one unlock row by itself with the day left empty
+// (`auto`); until a day is typed it changes nothing (app.js keeps it in
+// STATE_UNLOCKS_WAIT). Switching it back removes a row that still has no day.
 function admUnlockRows() {
   const r = gameRules().find((x) => x.key === "unlocks");
   const saved = gameRulesSaved().unlocks;
   return JSON.parse(JSON.stringify(Array.isArray(saved) ? saved : r.def));
 }
-// Saves the unlock rows (same path as Rules' Save) when they changed.
 async function admSaveUnlockRows(rows, before) {
   if (JSON.stringify(rows) === before) return false;
   await saveGameRule("unlocks", rows);
   return true;
 }
-// A whole expert / pet turned Upcoming (on) or back (off): its auto stop and
-// its visitor hide switch (hidden from visitors when it becomes Upcoming).
+// The unlock row made for this auto id (dated or not), or null.
+function admAutoUnlock(id) { return STATE_UNLOCKS.find((u) => u.auto === id) || STATE_UNLOCKS_WAIT.find((u) => u.auto === id) || null; }
 async function admWholeUpcoming(kind, name, on) {
   const rows = admUnlockRows(), before = JSON.stringify(rows), id = `${kind}:${name}`;
   if (on) {
@@ -3063,39 +3250,6 @@ async function admWholeUpcoming(kind, name, on) {
     const i = rows.findIndex((u) => u.auto === id && (u.day === "" || u.day == null));
     if (i >= 0) rows.splice(i, 1);
   }
-  return admSaveUnlockRows(rows, before);
-}
-async function admAutoStops(wrap, o, lock, autoNew) {
-  const rows = admUnlockRows(), before = JSON.stringify(rows), pre = `lv:${o.upTable}:`;
-  const upEl = (tr) => tr.querySelector("[data-up]");
-  const nameOf = (tr) => (o.rowName ? o.rowName(tr) : (() => { const el = [...tr.querySelectorAll(o.fields || "[data-f]")].find((x) => x.type !== "hidden" && x.dataset.up == null && x.closest("td")); return el ? admPlLabel(el).trim() : ""; })());
-  // Unticked again and still no day: the stop goes.
-  const ids = new Map([...wrap.querySelectorAll("[data-up]")].map((el) => [String(el.dataset.up), el.checked]));
-  for (let i = rows.length - 1; i >= 0; i--) {
-    const u = rows[i];
-    if (!u.auto || !String(u.auto).startsWith(pre) || !(u.day === "" || u.day == null)) continue;
-    if (ids.get(String(u.auto).slice(pre.length)) === false) rows.splice(i, 1);
-  }
-  // A fold's tail cut at the old line (e.g. "Red T6 ★3.1–3.4") goes with the
-  // next new fold right after it: one stop, starting at its first row.
-  const list = autoNew.slice();
-  for (let i = 0; i < list.length; i++) {
-    const a = list[i], b = list[i + 1];
-    if (/~u$/.test(a.g.k) && b && b.gi === a.gi + 1) { b.lead = a.lead || a; list.splice(i, 1); i--; }
-  }
-  const num = (x) => /^(?:lv\.?\s*)?-?\d+(?:\.\d+)?$/i.test(x);
-  list.forEach((it) => {
-    const first = (it.lead || it).now[0], id = upEl(first).dataset.up, auto = pre + id;
-    if (rows.some((u) => u.auto === auto)) return;
-    const level = lock.level(first);
-    if (!level) return;
-    const a = nameOf(it.now[0]), b = nameOf(it.now.at(-1)), k = it.g.k;
-    const lvLast = lock.level(it.now.at(-1));
-    const lbl = it.all && !/~u$/.test(k) && !/^(b|row|new)\d/.test(k) && !num(k) ? k
-      : num(a) ? `Lv ${a}${a !== b ? `–${b}` : ""}` : a === b ? `${a} ${level}${lvLast && lvLast !== level ? `–${lvLast}` : ""}` : `${a} – ${b}`;
-    const part = lock.part(first);
-    rows.push({ label: `${lock.what} ${lbl}`, kind: "level", name: "", tab: "", table: lock.target, level, day: "", auto, ...(lock.who ? { who: lock.who } : {}), ...(part ? { part } : {}) });
-  });
   return admSaveUnlockRows(rows, before);
 }
 function wireAdmEditBar(scope, o) {
@@ -3223,19 +3377,6 @@ function wireAdmEditBar(scope, o) {
     btn.disabled = true; btn.textContent = "Saving…";
     const changed = rows().filter((tr) => [...tr.querySelectorAll(".chg")].some((el) => el.dataset.up == null));
     const upChanged = !!wrap.querySelector("[data-up].chg");
-    // Folds that get their first "Upcoming" ticks (saved state → now), for the auto stops.
-    const lock = upChanged && o.upTable ? admLockOf(o) : null;
-    const autoNew = [];
-    if (lock) {
-      const groups = (wrap.__pl && wrap.__pl.__groups) || [];
-      const upEl = (tr) => tr.querySelector("[data-up]");
-      groups.forEach((g, gi) => {
-        if (g.k === "__new") return;
-        const ups = g.rows.filter(upEl);
-        const now = ups.filter((tr) => upEl(tr).checked);
-        if (!ups.some((tr) => upEl(tr).dataset.orig === "true") && now.length) autoNew.push({ g, gi, now, all: now.length === ups.length });
-      });
-    }
     try {
       for (const tr of changed) {
         const id = tr.getAttribute(o.rowAttr);
@@ -3258,7 +3399,6 @@ function wireAdmEditBar(scope, o) {
         await saveSiteConfig("upcoming_levels", all);
         wrap.querySelectorAll("[data-up]").forEach((el) => { el.dataset.orig = val(el); el.classList.remove("chg"); });
         afterUpcomingChange();
-        if (lock) await admAutoStops(wrap, o, lock, autoNew);
       }
       let added = 0;
       for (const tr of newRows()) {
@@ -3797,11 +3937,7 @@ async function renderAdminProgression(body, nameFilter) {
     });
     // Chief Gear rows read "Red T7 ★0.1" (Tier / Stars / Stage) in the phone list.
     const cgName = (tr) => { const v = (k) => { const el = tr.querySelector(`[data-f="${k}"]`); return el ? String(el.value).trim() : ""; }; return chiefGearRowLabel({ tier: v("tier"), stars: v("stars") === "" ? null : v("stars"), stage: v("stage") === "" ? null : v("stage"), display_label: v("display_label") || null }); };
-    // Hero Gear Mithril levels count on from Enhance 100 (Enhance Combined 101+).
-    const isMithril = activeTableName === "Hero Gear Mithril";
-    const lockTarget = isChiefGear ? "chief_gear" : activeTableName === "Hero Gear Mastery Forging" ? "hero_mastery" : activeTableName === "Hero Gear Enhancement" || isMithril ? "hero_enhance" : null;
-    const lvPlus = (tr) => { const el = tr.querySelector('[data-f="level"]'); const n = el && el.value !== "" ? Number(el.value) : NaN; return Number.isFinite(n) ? String(n + 100) : ""; };
-    wireAdmEditBar(wrap, { rowAttr: "data-progrow", table: "progression_rows", upTable: "progression_rows", ...(isChiefGear ? { rowName: cgName, lockLevel: cgName } : {}), ...(isMithril ? { lockLevel: lvPlus } : {}), ...(lockTarget ? { lockTarget } : {}), saveRow: (id) => saveProgRow(id), after: () => invalidateCaches(), hide: ["#adminProgSaveAll", "[data-progsave]"],
+    wireAdmEditBar(wrap, { rowAttr: "data-progrow", table: "progression_rows", upTable: "progression_rows", ...(isChiefGear ? { rowName: cgName } : {}), saveRow: (id) => saveProgRow(id), after: () => invalidateCaches(), hide: ["#adminProgSaveAll", "[data-progsave]"],
       addForm: "#adminProgAddForm", reload: () => loadRows(),
       create: async (tr) => {
         const payload = { table_id: ADMIN_ACTIVE_PROGRESSION, ...admNewRowPayload(tr, null) };
