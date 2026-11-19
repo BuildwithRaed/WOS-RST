@@ -2194,6 +2194,10 @@ const T = {
   rl_auto_sub: { en: "auto · from Upcoming" },
   vup_see: { en: "Visitors see upcoming" },
   vup_new: { en: "NEW" },
+  vup_count: { en: "Count upcoming" },
+  vup_count_sub: { en: "On = counted like released ones for everyone (Max, Dashboard max, Budgets, Free now); still tagged Upcoming" },
+  vup_count_on: { en: "Counted" },
+  vup_count_off: { en: "Not counted" },
   vup_in_game: { en: "in game" },
   vis_experts_up_desc: { en: "Experts you switch Upcoming carry the Upcoming badge and aren't counted until people tick them; while \"Visitors see upcoming\" is off, visitors don't see them at all." },
   vis_pets_up_desc: { en: "Pets you switch Upcoming carry the Upcoming badge and aren't counted until people tick them; while \"Visitors see upcoming\" is off, visitors don't see them at all." },
@@ -6354,7 +6358,8 @@ async function renderGearLevelingGroup(target) {
   const optsByTrack = {};
   GEAR_LEVELING_TABLES.forEach((t) => {
     const open = heroTrackCapIdx(t);
-    optsByTrack[t] = HERO_GEAR_TABLES_CACHE[t].map((r, i) => `<option value="${i}"${i > open ? ' class="opt-up"' : ""}>${esc(rowLabel(r))}${esc(upcomingTag(i > open))}</option>`).join("");
+    // (an upcoming row counted by "Count upcoming" keeps its tag)
+    optsByTrack[t] = HERO_GEAR_TABLES_CACHE[t].map((r, i) => { const up = i > open || isUpcomingRow("progression_rows", r); return `<option value="${i}"${up ? ' class="opt-up"' : ""}>${esc(rowLabel(r))}${esc(upcomingTag(up))}</option>`; }).join("");
   });
 
   // One icon per troop type and piece: icons/hero-gear-<troop>-<piece>.png
@@ -15733,9 +15738,12 @@ CHARM_PIECES.forEach((p) => (CHARM_CALC_STATE[p.key] = [0, 1, 2].map(() => ({ cu
 // Builds <option> tags for a charm/gear level <select> (up to the user's cap).
 function levelOptions(selected) {
   const cap = charmCapIdx();
-  return CHARM_LEVELS.map((l, i) => `<option value="${l}" ${l === selected ? "selected" : ""}${i > cap ? ' class="opt-up"' : ""}>${l === "0" ? "0" + t("none_suffix") : l}${esc(upcomingTag(i > cap))}</option>`).join("");
+  const same = CHARM_LEVEL_ROWS.length === CHARM_LEVELS.length;
+  return CHARM_LEVELS.map((l, i) => { const up = i > cap || (same && isUpcomingRow("charm_levels", CHARM_LEVEL_ROWS[i])); return `<option value="${l}" ${l === selected ? "selected" : ""}${up ? ' class="opt-up"' : ""}>${l === "0" ? "0" + t("none_suffix") : l}${esc(upcomingTag(up))}</option>`; }).join("");
 }
 // Last charm level that's out in the game.
+// A Chief Charm level (CHARM_LEVELS index) ticked Upcoming in Admin (keeps its tag when counted).
+function charmIdxUpcoming(i) { return CHARM_LEVEL_ROWS.length === CHARM_LEVELS.length && isUpcomingRow("charm_levels", CHARM_LEVEL_ROWS[i]); }
 function charmReleasedIdx() { return releasedLastIdx("charm_levels", CHARM_LEVEL_ROWS.length === CHARM_LEVELS.length ? CHARM_LEVEL_ROWS : CHARM_LEVELS.map(() => ({}))); }
 // ---- What is open in the person's state (Chief Charm / Chief Gear / Hero Gear) ----
 // "My max" was removed (the old calc_state "gear_caps" is
@@ -24835,7 +24843,8 @@ async function renderCharmsCalc() {
     const st = CHARM_CALC_STATE[c.piece.key][c.slot];
     const ci = CHARM_LEVELS.indexOf(String(st.current)), ti = CHARM_LEVELS.indexOf(String(st.target));
     const go = ti > ci, now = charmStatAt(st.current), tg = go ? charmStatAt(st.target) : now;
-    const chip = go ? `<span class="ch-tc${ti > cap ? " up" : ""}"${ti > cap ? ` title="${esc(t("upcoming_tag"))}"` : ""}>&rarr; ${esc(st.target)}</span>`
+    const tUp = ti > cap || charmIdxUpcoming(ti);
+    const chip = go ? `<span class="ch-tc${tUp ? " up" : ""}"${tUp ? ` title="${esc(t("upcoming_tag"))}"` : ""}>&rarr; ${esc(st.target)}</span>`
       : ci >= cap ? `<span class="ch-tc ok">&#10003; ${esc(t("max_button"))}</span>` : "";
     const foot = go ? `${pctShort(tg - now)} · ${esc(st.current)}` : `${esc(st.current)} &#10003;`;
     return `<button type="button" class="ch-tile${go ? "" : " done"}" data-chtile="${n}" aria-label="${esc(`${pieceDisplayName(c.piece.name)} · ${t("charm_slot_label")} ${c.slot + 1}`)}">
@@ -24898,7 +24907,7 @@ async function renderCharmsCalc() {
       const lo = role === "target" ? ci : 0;
       let prevN = null;
       const chips = majors.map((k) => {
-        const g = groups.get(k), first = g[0], up = first > cap, off = role === "target" && k < cm;
+        const g = groups.get(k), first = g[0], up = first > cap || charmIdxUpcoming(first), off = role === "target" && k < cm;
         // A thin line between runs of levels with a different number of stages (1–3 · 4–10 · 11–15 · 16–17 · 18).
         const sep = k > 0 && prevN != null && prevN !== g.length ? `<i class="chw-sep"></i>` : "";
         if (k > 0) prevN = g.length;
@@ -25252,7 +25261,7 @@ async function renderChiefGearCalc() {
 
   const TROOP_COLORS = { Lancer: "var(--ice)", Infantry: "#7ee6a8", Marksman: "#f0a3c4" };
   const rowsEl = document.getElementById("gearRows");
-  const optsHtml = () => { const cap = chiefGearCapIdx(); return rows.map((r, i) => `<option value="${i}"${i > cap ? ' class="opt-up"' : ""}>${esc(chiefGearRowLabel(r))}${esc(upcomingTag(i > cap))}</option>`).join(""); };
+  const optsHtml = () => { const cap = chiefGearCapIdx(); return rows.map((r, i) => { const up = i > cap || isUpcomingRow("progression_rows", r); return `<option value="${i}"${up ? ' class="opt-up"' : ""}>${esc(chiefGearRowLabel(r))}${esc(upcomingTag(up))}</option>`; }).join(""); };
   const pieceOf = (key) => CHIEF_GEAR_PIECES.find((p) => p.key === key);
   // The pieces in 3 troop columns, read row by row (also the order of ‹ › in the sheet).
   const COLS = ["Infantry", "Lancer", "Marksman"];
@@ -25263,7 +25272,7 @@ async function renderChiefGearCalc() {
     const from = Math.min(st.from, rows.length - 1), to = Math.min(st.to == null ? from : st.to, rows.length - 1);
     const rf = rows[from], rt = rows[to];
     const chip = to > from
-      ? `<span class="cg-tgt${to > cap ? " up" : ""}"${to > cap ? ` title="${esc(t("upcoming_tag"))}"` : ""}>&rarr; ${esc(rt && rf && rt.tier === rf.tier ? cgStars(rt) : cgBadge(rt))}</span>`
+      ? `<span class="cg-tgt${to > cap || isUpcomingRow("progression_rows", rt) ? " up" : ""}"${to > cap || isUpcomingRow("progression_rows", rt) ? ` title="${esc(t("upcoming_tag"))}"` : ""}>&rarr; ${esc(rt && rf && rt.tier === rf.tier ? cgStars(rt) : cgBadge(rt))}</span>`
       : from >= cap ? `<span class="cg-tgt ok">&#10003; ${esc(t("max_button"))}</span>` : "";
     return `<button type="button" class="cg-pc" data-cgslot="${p.key}" aria-label="${esc(`${pieceDisplayName(p.name)} · ${troopDisplayName(p.troop)}`)}">
       <span class="cg-pic"><img src="${chiefGearIcon(p.key, from)}" alt="" loading="lazy" /><span class="cg-badge">${esc(cgBadge(rf))}</span>${chip}</span>
@@ -25384,10 +25393,11 @@ async function renderChiefGearCalc() {
     const small = (v) => (Math.abs(v) < 1e5 ? Math.round(v).toLocaleString() : shortAmount(v));
     const block = (role, sel, lo, cap) => {
       const ti = tierAt(sel), g = tiers[ti], r = rows[sel];
-      const up = (i) => (i > cap ? " up" : "");
+      const isUp = (i) => i > cap || isUpcomingRow("progression_rows", rows[i]);
+      const up = (i) => (isUp(i) ? " up" : "");
       const tierChips = tiers.map((x, k) => {
         const off = x.last < lo, first = Math.max(x.first, lo);
-        return `<button type="button" class="cgw-c ${tierCls(x.tier)}${k === ti ? " on" : ""}${up(first)}" data-cgw="${role}|t|${k}"${off ? " disabled" : ""}${first > cap ? ` title="${esc(t("upcoming_tag"))}"` : ""}>${esc(tierName(x.tier))}</button>`;
+        return `<button type="button" class="cgw-c ${tierCls(x.tier)}${k === ti ? " on" : ""}${up(first)}" data-cgw="${role}|t|${k}"${off ? " disabled" : ""}${isUp(first) ? ` title="${esc(t("upcoming_tag"))}"` : ""}>${esc(tierName(x.tier))}</button>`;
       }).join("");
       const inTier = idxs(g);
       const stars = [...new Set(inTier.map((i) => rows[i].stars).filter((s) => s != null).map(String))];
@@ -25397,7 +25407,7 @@ async function renderChiefGearCalc() {
       }).join("")}</div>` : "";
       const stg = r.stars != null ? inTier.filter((i) => sameStar(i, sel) && rows[i].stage != null) : [];
       const stageRow = stg.length > 1 ? `<div class="cgw-dots"><span class="cgw-dl">${esc(t("cgw_stage"))}</span>${stg.map((i) => `<button type="button" class="cgw-d${i === sel ? " on" : ""}${up(i)}" data-cgw="${role}|i|${i}"${i < lo ? " disabled" : ""}>.${esc(String(rows[i].stage))}</button>`).join("")}</div>` : "";
-      const tag = role === "to" && sel > cap ? `<span class="cgw-up">${esc(t("upcoming_tag"))}</span>` : "";
+      const tag = role === "to" && isUp(sel) ? `<span class="cgw-up">${esc(t("upcoming_tag"))}</span>` : "";
       const mx = Math.max(lo, cap);
       const maxBtn = role === "to" ? `<button type="button" class="plx-maxbtn plx-max cgw-max" data-cgwmax${sel === mx ? " disabled" : ""}>${esc(t("max_button"))}</button>` : "";
       return `<div class="ch-sec cgw-blk${role === "to" ? " tgt" : ""}"><div class="ch-sec-h"><b>${esc(t(role === "to" ? "t12x_target" : "t12x_now"))}</b><span class="cgw-v${sel > cap ? " up" : ""}">${esc(lvName(r))}</span>${tag}<i class="cgw-sp"></i>${maxBtn}</div>
@@ -30188,8 +30198,20 @@ function upcomingIds(table) {
 function isUpcomingRow(table, row) { return !!row && row.id != null && upcomingIds(table).has(String(row.id)); }
 // Index of the last released row (everything from the first upcoming row on
 // counts as upcoming), or the last row when nothing is upcoming.
+// "Count upcoming" (Admin → Visibility, site_config "upcoming_count" = { chief_gear,
+// charm, hero_gear, experts, pets: true }): for everyone, that section's upcoming
+// things count like released ones (Max, Dashboard max, caps, Budgets, Free now;
+// upcoming experts / pets start ticked). Off / missing = as before.
+function upcomingCountOn(sec) { const c = siteConfig("upcoming_count", null); return !!(c && typeof c === "object" && c[sec] === true); }
+function upcomingSecOf(table, rows) {
+  if (table === "charm_levels") return "charm";
+  if (table !== "progression_rows") return "";
+  const r0 = (rows || []).find((r) => r && typeof r === "object");
+  return r0 && r0.tier ? "chief_gear" : "hero_gear";
+}
 function releasedLastIdx(table, rows) {
-  const ids = upcomingIds(table);
+  const sec = upcomingSecOf(table, rows);
+  const ids = sec && upcomingCountOn(sec) ? new Set() : upcomingIds(table);
   let last = rows.length - 1;
   if (ids.size) {
     const i = rows.findIndex((r) => r && r.id != null && ids.has(String(r.id)));
@@ -30390,7 +30412,7 @@ function unlockedFor(kind, name, savedFlag) {
   // A whole expert / pet marked "Upcoming" in Admin starts unticked (not
   // counted); ticking it plans it in.
   // Once its day (Admin → Rules → Unlocks) has passed in the person's state it counts.
-  if ((kind === "experts" && EXPERT_UPCOMING_GLOBAL[name]) || (kind === "pets" && petIsUpcoming(name))) {
+  if (((kind === "experts" && EXPERT_UPCOMING_GLOBAL[name]) || (kind === "pets" && petIsUpcoming(name))) && !upcomingCountOn(kind)) {
     const ud = stateUnlockDay(kind, name), sd = ud != null ? stateAgeDay() : null;
     if (!(sd != null && sd >= ud)) return false;
   }
@@ -33665,7 +33687,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=ef7f21f0c5";
+      s.src = "admin.min.js?v=f71075a900";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }

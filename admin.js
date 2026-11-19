@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "ef7f21f0c5";
+window.ADMIN_BUILD = "f71075a900";
 
 // ============================================================
 // ADMIN PAGE
@@ -2044,6 +2044,15 @@ async function vupParts() {
     { key: "hero_gear", title: "Heroes Gears", desc: t("vup_hg_desc"), groups: hgGroups },
   ].filter((p) => p.groups.length);
 }
+// "Count upcoming" switch of a section (same look as the visitor switch row).
+function vupCountRow(key) {
+  const on = upcomingCountOn(key);
+  return `<label class="vis-row" style="display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px;">
+      <span style="flex:1 1 0; min-width:0;">${esc(t("vup_count"))} <span class="meta" style="font-size:11px;">· ${esc(t("vup_count_sub"))}</span></span>
+      <span class="meta" style="font-size:11px; color:${on ? "var(--amber)" : "var(--muted)"};">${esc(t(on ? "vup_count_on" : "vup_count_off"))}</span>
+      <input type="checkbox" class="bset-sw" data-vupcount="${esc(key)}" ${on ? "checked" : ""} aria-label="${esc(t("vup_count"))}" />
+    </label>`;
+}
 function vupGroupState(g) { const up = upcomingIds(g.table), n = g.ids.filter((id) => up.has(id)).length; return { on: n === g.ids.length && n > 0, some: n > 0 }; }
 function vupAutoId(g) { return `lv:${g.table}:${g.ids[0]}`; }
 // A group's stop follows its new name after a split / join (its day stays).
@@ -2078,7 +2087,7 @@ function vupFoldHtml(pt, row) {
   return `<details class="panel adm-visfold" data-visfold="up:${esc(pt.key)}" style="margin-bottom:12px;">
       <summary><img class="vup-hpic" src="${esc(VUP_PIC[pt.key])}" alt="" /><h2 style="margin:0;">${esc(pt.title)}</h2><span class="meta adm-viscount">${nUp ? `<b class="vup-n">${esc(t("vup_n").replace("{n}", nUp))}</b>` : esc(t("vup_n").replace("{n}", 0))} · ${pt.groups.length}</span><i aria-hidden="true">&#9662;</i></summary>
       <p class="desc" style="margin:0 0 8px;">${esc(pt.desc)}</p>
-      <div class="vup-see">${row("upcoming", pt.key, t("vup_see"), t("vup_see_sub"))}</div>
+      <div class="vup-see">${row("upcoming", pt.key, t("vup_see"), t("vup_see_sub"))}${vupCountRow(pt.key)}</div>
       <div class="vup-h"><span>${esc(t("vup_group"))}</span><span>${esc(t("upcoming_col"))}</span></div>
       ${rowsHtml}
     </details>`;
@@ -2097,7 +2106,7 @@ function vupWholeFold(kind, title, desc, list, isUp, pic, row) {
   return `<details class="panel adm-visfold" data-visfold="w:${kind}" style="margin-bottom:12px;">
       <summary><img class="vup-hpic" src="${esc(VUP_PIC[kind])}" alt="" /><h2 style="margin:0;">${esc(title)}</h2><span class="meta adm-viscount">${nUp ? `<b class="vup-n">${esc(t("vup_n").replace("{n}", nUp))}</b>` : esc(t("vup_n").replace("{n}", 0))} · ${list.length}</span><i aria-hidden="true">&#9662;</i></summary>
       <p class="desc" style="margin:0 0 8px;">${esc(desc)}</p>
-      <div class="vup-see">${row("upcoming", kind, t("vup_see"), t("vup_see_sub"))}</div>
+      <div class="vup-see">${row("upcoming", kind, t("vup_see"), t("vup_see_sub"))}${vupCountRow(kind)}</div>
       <div class="vup-h"><span>${esc(title)}</span><span>${esc(t("upcoming_col"))}</span></div>
       ${rowsHtml || `<div class="meta">—</div>`}
     </details>`;
@@ -2229,6 +2238,18 @@ async function renderAdminVisibility(body) {
     cb.disabled = true;
     try { await vupSetGroup(g, cb.checked); toast(cb.checked ? t("vup_saved_on") : t("vup_saved_off")); }
     catch (err) { toast(err.message || "Couldn't save", true); }
+    await redraw();
+  }));
+  body.querySelectorAll("[data-vupcount]").forEach((cb) => cb.addEventListener("change", async () => {
+    cb.disabled = true;
+    try {
+      const cur = { ...(siteConfig("upcoming_count", null) || {}) };
+      if (cb.checked) cur[cb.dataset.vupcount] = true; else delete cur[cb.dataset.vupcount];
+      await saveSiteConfig("upcoming_count", cur);
+      afterUpcomingChange();
+      if (cb.dataset.vupcount === "experts") EXPERTS_ROSTER_LOADED = false;
+      toast(t(cb.checked ? "vup_count_on" : "vup_count_off"));
+    } catch (err) { toast(err.message || "Couldn't save", true); }
     await redraw();
   }));
   body.querySelectorAll("[data-vupday]").forEach((b) => b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); admRuleOpen("unlocks"); }));
