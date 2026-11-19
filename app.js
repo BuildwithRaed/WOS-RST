@@ -26613,7 +26613,7 @@ function shiningEvents() {
   return { cur: shiningCurKey(), list: [...keys].sort().map((k) => { const s = packParseDay(k); return { key: k, start: s, end: new Date(s.getTime() + (dur - 1) * DAY) }; }) };
 }
 function shiningEvLabel(e) {
-  const f = (d) => { try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); } catch (x) { return packDayKey(d); } };
+  const f = (d) => { try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); } catch { return packDayKey(d); } };
   return e.start.getUTCMonth() === e.end.getUTCMonth() ? `${f(e.start)} – ${e.end.getUTCDate()}` : `${f(e.start)} – ${f(e.end)}`;
 }
 function shiningEvState(e, cur) {
@@ -26759,7 +26759,7 @@ function shiningSheet(o, tab) {
   // Hold a shop tile: when it was last in Shining City and how often.
   const showSeen = (tile) => {
     popClose();
-    const n = tile.dataset.shtile, sn = seen.get(n), mon = (d) => { try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "short", year: "numeric", timeZone: "UTC" }); } catch (x) { return packDayKey(d); } };
+    const n = tile.dataset.shtile, sn = seen.get(n), mon = (d) => { try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "short", year: "numeric", timeZone: "UTC" }); } catch { return packDayKey(d); } };
     pop = document.createElement("div");
     pop.className = "sht-pop"; pop.setAttribute("role", "status");
     pop.innerHTML = `<b>${esc(n)}</b><span>${sn && sn.last ? esc(t("sh_seen_last").replace("{d}", mon(sn.last))) : esc(t("sh_seen_none"))}</span>${sn && sn.n ? `<span>${esc(t(sn.n === 1 ? "sh_seen_n1" : "sh_seen_n").replace("{n}", sn.n))}</span>` : ""}`;
