@@ -26334,6 +26334,15 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     </div>`;
   }
 
+  // Research pages (T12 / T11 / Research Center): Speedups, Refined FC, FC Shards, Fire Crystal,
+  // Steel, then Meat / Wood / Coal / Iron; Custom Resource Chests only while they cover a short
+  // resource (after the resources), other chests last.
+  const RES_BOX_ORDER = ["Refined FC", "FC Shard", "Fire Crystal", "Steel", "Meat", "Wood", "Coal", "Iron"];
+  const resRank = (n) => (n === RS_KEY ? -1 : RES_BOX_ORDER.includes(n) ? RES_BOX_ORDER.indexOf(n) : !chests.includes(n) ? 50 : BACKPACK_RES_CHESTS.includes(n) ? 60 + BACKPACK_RES_CHESTS.indexOf(n) : 70);
+  const resEntries = () => matEntries
+    .filter(([n]) => !(chests.includes(n) && BACKPACK_RES_CHESTS.includes(n) && !hiddenTrades.some((tr) => tr.from === n)))
+    .map((e, i) => [e, i]).sort((a, b) => resRank(a[0][0]) - resRank(b[0][0]) || a[1] - b[1]).map(([e]) => e);
+  const resTilesHtml = () => `${spdGroup ? "" : genTileHtml()}${resEntries().map(([n]) => (spdGroup && n === RS_KEY ? spdGroupHtml() : editRowHtml(n))).join("")}`;
   const sumHost = summaryOn && BAR_SUMMARY_HOST[calcKey] && document.getElementById(BAR_SUMMARY_HOST[calcKey]);
   // Planner pages: Trade items and Pack Cost sit in their own card, so on
   // phones the boxes can be at the top and these stay at the bottom.
@@ -26344,7 +26353,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     ${timePage ? `<div id="${rowsId}_time">${timeLineHtml()}</div>` : ""}
     ${summaryOn && !sumHost ? `<div id="${rowsId}_sum" class="bs-box">${summaryHtml()}</div>` : ""}
     <div id="${rowsId}" class="${summaryOn ? "bs-edit" : "mat-row"}"${summaryOn && BAR_SHOW_ALL[calcKey] === false ? ` style="display:none;"` : ""}>${summaryOn
-      ? `${bsHelpHtml(matEntries.some(([n]) => tileOff(n)), chests.some((n) => matEntries.some(([m]) => m === n)))}<div class="bs-tiles">${[...matEntries].sort((a, b) => ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(a[0])) - ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(b[0]))).map(([n]) => (spdGroup && n === RS_KEY ? spdGroupHtml() : editRowHtml(n))).join("")}${timePage && !spdGroup ? genTileHtml() : ""}</div>`
+      ? (timePage ? `${bsHelpHtml(resEntries().some(([n]) => tileOff(n)), chests.some((n) => resEntries().some(([m]) => m === n)))}<div class="bs-tiles">${resTilesHtml()}</div>`
+        : `${bsHelpHtml(matEntries.some(([n]) => tileOff(n)), chests.some((n) => matEntries.some(([m]) => m === n)))}<div class="bs-tiles">${[...matEntries].sort((a, b) => ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(a[0])) - ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(b[0]))).map(([n]) => (spdGroup && n === RS_KEY ? spdGroupHtml() : editRowHtml(n))).join("")}</div>`)
       : matEntries.map(materialCellHtml).join("")}</div>
     ${(() => { const ch = chests.filter((n) => CHANCE_CHESTS.includes(n) && (owned[n] || 0) > 0); return ch.length ? ch.map((n) => `<div class="chest-open">${iconFor(n) ? `<img src="${esc(iconFor(n))}" alt="" loading="lazy" />` : ""}<span>${esc(chanceChestLine(n, owned[n]))}</span><button type="button" class="linklike" data-chestopen>${esc(t("chest_open_do"))} &rsaquo;</button></div>`).join("") : ""; })()}
     ${buyHost ? "" : `<div id="${rowsId}_trades"></div>
@@ -26372,6 +26382,9 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     recomputeEffOwned();
     noteEff();
     reachRefresh();
+    // Research pages: a chest box comes and goes with what it covers.
+    const tiles = timePage && el.querySelector(`#${window.CSS.escape(rowsId)} .bs-tiles`);
+    if (tiles) tiles.innerHTML = resTilesHtml();
     names.forEach((n) => groups.forEach((g) => {
       const needed = Number((g.totals || {})[n]) || 0;
       let { statusColor, statusText } = statusFor(n, needed);
