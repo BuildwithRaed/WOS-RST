@@ -5262,3 +5262,59 @@ span.mk.mk svg{flex:none}
   .cg-ans :is(.g1-bp, #cgBp){ padding-top:10px; }
   .sg-ans #islandShardPlan .isl-pl{ padding-top:10px; }
   .sg-ans #islandShardPlan .isl-pl > .isl-bp:first-child{ margin-top:0; }
+
+  /* Experts / Pets: one Troops Stats header for both sides (owner, 20 Nov 2026; xhCardHtml).
+     Legend in the title row, troop tabs, 4 boxes; Experts: a two-colour bar (Level / Research)
+     and the event bonuses fold; Pets: ATK / DEF (blue edge) and LETH / HP (gold edge). */
+  .xh.plx-stats-top{ display:flex; flex-wrap:wrap; align-items:center; column-gap:10px; }
+  .xh.plx-stats-top > *{ flex:1 1 100%; }
+  .xh.plx-stats-top > .t12x-title{ flex:1 1 auto; width:auto; }
+  .xh-leg{ display:flex; gap:12px; align-items:center; flex:none !important; margin-inline-start:auto; font-size:11.5px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--muted); white-space:nowrap; }
+  .xh-leg > span::before{ content:""; display:inline-block; width:9px; height:9px; border-radius:3px; margin-inline-end:5px; background:var(--c); vertical-align:-1px; }
+  .g1-hd .xh-leg{ margin-inline-start:auto; }
+  .g1-top.xh-top .g1-hd{ justify-content:flex-start; }
+  .xh-pill{ margin:0 0 7px; }
+  .xh-body .xh-tabs{ flex:none; max-width:none; width:100%; margin:0 0 8px; }
+  .xh-exp .xh-tabs{ padding:2px !important; border-radius:9px !important; margin:0 !important; }
+  .xh-exp .xh-tabs button{ height:30px !important; min-height:0 !important; font-size:11.5px !important; padding:0 8px !important; border-radius:7px !important; line-height:26px !important; }
+  .xh-pets .xh-tabs button{ min-height:34px !important; font-size:12px !important; padding:4px 8px !important; }
+  .xh-g4{ display:grid !important; grid-template-columns:repeat(4, minmax(0, 1fr)) !important; gap:5px; }
+  .xh-g4 .plx-stat{ padding:7px 6px; min-width:0; }
+  .xh-g4 .plx-stat b{ font-size:14.5px !important; white-space:nowrap; }
+  .xh-g4 .plx-stat small{ white-space:nowrap; }
+  .xh-cb b{ font-size:15px !important; }
+  .xh-split{ display:flex; height:6px; border-radius:99px; background:rgba(255,255,255,.07); overflow:hidden; margin-top:6px; }
+  .xh-split i{ display:block; height:100%; }
+  .xh-parts{ display:flex; flex-direction:column; gap:1px; margin-top:5px; font-size:11px; line-height:1.25; }
+  .xh-parts em{ font-style:normal; white-space:nowrap; color:var(--frost); font-weight:700; }
+  .xh-parts em::before{ content:""; display:inline-block; width:7px; height:7px; border-radius:2px; margin-inline-end:4px; background:var(--c); vertical-align:0; }
+  .xh-p4 .plx-stat{ border-inline-start:3px solid var(--sc); padding:7px 5px; }
+  .xh-p4 .plx-stat b{ font-size:13px !important; letter-spacing:-.02em; }
+  .xh-p4 .plx-stat small{ font-size:10.5px !important; letter-spacing:-.02em; }
+  .xh-evf{ display:flex; align-items:center; gap:8px; width:100%; margin-top:9px; padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:rgba(255,255,255,.03); font:inherit; font-size:12px; color:var(--muted); text-align:start; cursor:pointer; }
+  .xh-evf .tw{ font-size:11px; color:var(--muted); }
+  .xh-evf b{ color:var(--frost); font-weight:700; }
+  .xh-evf .st{ margin-inline-start:auto; font-weight:700; color:var(--good); }
+  .xh-evf.amb{ border-color:rgba(232,162,60,.55); }
+  .xh-evf.amb .st{ color:#f2c27a; }
+  .xh-evt{ width:100%; border-collapse:separate; border-spacing:0; margin-top:6px; border:1px solid var(--line); border-radius:10px; overflow:hidden; font-size:12px !important; table-layout:fixed; }
+  .xh-evt th{ font-size:10.5px !important; font-weight:800; letter-spacing:.05em; color:var(--muted); padding:6px 4px; text-align:center; background:rgba(255,255,255,.035); border-bottom:1px solid var(--line); }
+  .xh-evt th:first-child, .xh-evt td:first-child{ text-align:start; padding-inline-start:9px; width:96px; }
+  .xh-evt td{ padding:6px 4px; text-align:center; border-bottom:1px solid rgba(255,255,255,.05); color:var(--muted); white-space:nowrap; font-size:11.5px; }
+  .xh-evt tr:last-child td{ border-bottom:0; }
+  .xh-evt td.n{ color:var(--frost); font-weight:700; }
+  .xh-evt td.n small{ display:block; font-weight:600; color:var(--muted); font-size:10.5px; }
+  .xh-evt td.ok{ color:var(--good); font-weight:700; }
+  .xh-evt td.a{ font-size:11px; letter-spacing:-.02em; color:#f2c27a; font-weight:800; background:rgba(232,162,60,.12); }
+  /* Pets card header: Max + Count at the top right, like the expert cards */
+  .pet-head .exk-tr{ margin-inline-start:auto; }
+  .pet-head .exp-stl{ margin-top:2px; }
+  #refineList .pet-head{ margin-bottom:10px; }
+  @media (max-width: 900px){
+    /* Both sides' Backpack boxes one size, so the card doesn't move when the side flips
+       (Experts: the Research boxes as tall as Level's; Pets: Level's taller, bigger pictures). */
+    .g1-top.xh-texp .g1-bp .bs-tiles > .bp-tile{ min-height:100px; }
+    .g1-top.xh-tpets .g1-bp .bs-tiles > .bp-tile{ min-height:88px; }
+    .g1-top.xh-tpets #petsMaterialsBar_rows .bs-tiles > .bp-tile img{ width:40px !important; height:40px !important; }
+    .g1-top.xh-top .g1-bp .bs-tiles:not(.bs-slide){ padding-bottom:2px; } /* as tall as a sliding row */
+  }
