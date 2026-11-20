@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 115; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 116; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -1517,19 +1517,25 @@ const T = {
   mb_home: { en: "Home" },
   mb_upgrade: { en: "Upgrade" },
   mb_plan: { en: "Plan" },
-  mb_packs: { en: "Packs" },
-  mb_more: { en: "More" },
+  mb_bonus: { en: "Bonus" },
+  mb_me: { en: "Me" },
+  me_cmd_change: { en: "Commander name · ✎ to change" },
+  me_guest: { en: "Guest" },
+  me_guest_pitch: { en: "Sign in to keep your plans on every phone and PC" },
+  mm_marketplace: { en: "Marketplace" },
+  mm_chip_level: { en: "Level" },
+  pgsw_all_packs: { en: "All packs" },
+  pgsw_my_packs: { en: "My packs" },
+  pgsw_my_packs_n: { en: "My packs ({n})" },
+  mm_chip_research: { en: "Research" },
+  mm_chip_refine: { en: "Refine" },
   mb_pages: { en: "{n} pages" },
   mb_page1: { en: "1 page" },
   ms_title: { en: "Menu style" },
   ms_hub: { en: "Hub" },
-  ms_hub_d: { en: "Groups + status" },
   ms_bar: { en: "Bottom bar" },
-  ms_bar_d: { en: "5 buttons below" },
   ms_to_bar: { en: "Switch to bottom bar" },
   ms_to_hub: { en: "Switch to hub" },
-  ms_note: { en: "Saved on your account. You can change it any time, here or at the bottom of the Menu." },
-  ms_pc_note: { en: "On a wide screen the bottom bar shows as the normal top menu." },
   mm_to_go: { en: "{n} to go" },
   mm_at_target: { en: "at target" },
   mm_day_gen: { en: "Day {d} · Gen {g}" },
@@ -4446,27 +4452,46 @@ function mmGroupLabel(g) {
   // Same name as the PC menu shows (the group button's text; Packs' key is "Marketplace").
   return (NAV_GROUP_LABELS[name] && (NAV_GROUP_LABELS[name][LANG] || NAV_GROUP_LABELS[name].en)) || ((g.querySelector(".topnav-group-btn") || {}).textContent || "").replace(/▼/g, "").trim() || name;
 }
-function mmCardHtml(name, label, btns) {
-  const n = btns.filter((b) => b.style.display !== "none").length;
-  if (!n) return "";
-  let left = 0, total = 0;
-  const tiles = btns.map((b) => {
-    const tab = b.dataset.tab;
-    const ic = b.querySelector(".ic");
-    const c = b.cloneNode(true); const cic = c.querySelector(".ic"); if (cic) cic.remove();
-    const nm = c.textContent.trim();
-    const live = b.style.display === "none" ? null : mmLiveLine(tab);
-    if (live && live.total) { left += live.left; total += live.total; }
-    // The page's own inline style is kept, so pages hidden for visitors stay hidden.
-    const st = b.getAttribute("style");
-    return `<button type="button" data-tab="${esc(tab)}" class="mm-hp${b.classList.contains("active") ? " active" : ""}"${st ? ` style="${esc(st)}"` : ""} title="${esc(nm)}"><span class="ic">${ic ? ic.innerHTML : ""}</span><span class="mm-tx"><b>${esc(nm)}</b>${live ? `<i class="${live.cls || ""}">${esc(live.text)}</i>` : ""}</span></button>`;
-  }).join("");
-  const right = total ? (left ? t("mm_to_go").replace("{n}", left) : "✓ " + t("mm_at_target")) : "";
-  const bar = total ? `<div class="mm-hbar"><i style="width:${Math.round(((total - left) / total) * 100)}%"></i></div>` : "";
+// Pages shown as ONE tile in the Menu: the tile opens the page used last; Experts and
+// Pets carry a chip per page. A pair with one page shown (visitors) is a plain tile.
+const MM_PAIRS = [
+  { key: "market", tabs: ["packs", "mypacks"], label: () => t("mm_marketplace") },
+  { key: "experts", tabs: ["expertspage", "expertsresearchpage"], group: "Experts", chips: ["mm_chip_level", "mm_chip_research"] },
+  { key: "pets", tabs: ["petsdata", "refinepage"], group: "Pets", chips: ["mm_chip_level", "mm_chip_refine"] },
+];
+function mmPairOf(tab) { return MM_PAIRS.find((p) => p.tabs.includes(tab)) || null; }
+function mmPairLast(p) { try { const v = localStorage.getItem("mm_last_" + p.key); return p.tabs.includes(v) ? v : null; } catch (e) { return null; } }
+function mmPairNote(tab) { const p = mmPairOf(tab); if (p) { try { localStorage.setItem("mm_last_" + p.key, tab); } catch (e) { /* storage blocked */ } } }
+function mmBtnName(b) { const c = b.cloneNode(true); const ic = c.querySelector(".ic"); if (ic) ic.remove(); return c.textContent.trim(); }
+function mmIconHtml(b) { const ic = b && b.querySelector(".ic"); return ic ? ic.innerHTML : ""; }
+// One tile: { btn } = a menu page (with its live line), { pair, btns, label } = two pages.
+function mmTileHtml(x) {
+  if (x.btn) {
+    const b = x.btn, tab = b.dataset.tab, nm = mmBtnName(b), live = mmLiveLine(tab);
+    return `<button type="button" data-tab="${esc(tab)}" class="mm-hp${tab === TAB ? " active" : ""}" title="${esc(nm)}"><span class="ic">${mmIconHtml(b)}</span><span class="mm-tx"><b>${esc(nm)}</b>${live ? `<i class="${live.cls || ""}">${esc(live.text)}</i>` : ""}</span></button>`;
+  }
+  const p = x.pair, btns = x.btns, last = mmPairLast(p);
+  const go = (btns.find((b) => b.dataset.tab === last) || btns[0]).dataset.tab;
+  const on = btns.some((b) => b.dataset.tab === TAB);
+  if (!p.chips) return `<button type="button" data-tab="${esc(go)}" class="mm-hp${on ? " active" : ""}" title="${esc(x.label)}"><span class="ic">${mmIconHtml(btns[0])}</span><span class="mm-tx"><b>${esc(x.label)}</b></span></button>`;
+  const chips = btns.map((b) => `<button type="button" data-tab="${esc(b.dataset.tab)}" class="${b.dataset.tab === TAB ? "on" : ""}" title="${esc(mmBtnName(b))}">${esc(t(p.chips[p.tabs.indexOf(b.dataset.tab)]))}</button>`).join("");
+  return `<div class="mm-hp mm-mg${on ? " active" : ""}"><button type="button" data-tab="${esc(go)}" class="mm-mgb" aria-label="${esc(x.label)}" title="${esc(x.label)}"></button><span class="ic">${mmIconHtml(btns[0])}</span><span class="mm-tx"><b>${esc(x.label)}</b><span class="mm-sub">${chips}</span></span></div>`;
+}
+// A block's tiles: plain tiles 3 a row (2 a row for 1, 2 or 4), then the chip tiles 2 a row.
+function mmRowsHtml(items) {
+  const plain = items.filter((x) => !(x.pair && x.pair.chips)), mg = items.filter((x) => x.pair && x.pair.chips);
+  const row = (arr, two) => (arr.length ? `<div class="mm-hrow${two ? " two" : ""}">${arr.map(mmTileHtml).join("")}</div>` : "");
+  const n = plain.length;
+  return row(plain, n === 1 || n === 2 || n === 4) + row(mg, true);
+}
+// One card: its label, then each block (a later block may have its own small heading).
+function mmCardHtml(card) {
+  const blocks = card.blocks.filter((b) => b.items.length);
+  if (!blocks.length) return "";
   return `
-      <div class="mm-hc" data-group="${esc(name)}">
-        <div class="mm-hh"><span>${esc(label)}</span>${right ? `<em class="${left ? "a" : "g"}">${esc(right)}</em>` : ""}</div>
-        <div class="mm-hrow${n === 1 || n === 2 || n === 4 ? " two" : ""}">${tiles}</div>${bar}
+      <div class="mm-hc" data-group="${esc(card.key)}">
+        <div class="mm-hh"><span>${esc(card.label)}</span></div>
+        ${blocks.map((b, i) => `${i && b.sub ? `<div class="mm-hh mm-hs"><span>${esc(b.sub)}</span></div>` : ""}${mmRowsHtml(b.items)}`).join("")}
       </div>`;
 }
 function mmVisibleGroups() {
@@ -4475,13 +4500,40 @@ function mmVisibleGroups() {
 function mmGroupBtns(g) {
   return [...g.querySelectorAll(".topnav-dropdown > button[data-tab]")];
 }
+// The Menu's cards from the real menu (#topnavGroups: Admin renames, moved pages and
+// pages hidden for visitors follow): Overview (+ Planning: Marketplace, Budgets,
+// My Purchases), Gears (+ the Experts and Pets tiles), then the other groups as they are.
+function mmModel() {
+  const groups = mmVisibleGroups();
+  const byName = {};
+  groups.forEach((g) => { byName[g.dataset.group] = g; });
+  const vis = (g) => (g ? mmGroupBtns(g).filter((b) => b.style.display !== "none") : []);
+  const all = groups.filter((g) => g.dataset.group !== "Admin").flatMap(vis);
+  const pairTabs = new Set(MM_PAIRS.flatMap((p) => p.tabs));
+  const lbl = (name, fb) => (byName[name] ? mmGroupLabel(byName[name]) : fb);
+  const pi = {};
+  for (const p of MM_PAIRS) {
+    const btns = p.tabs.map((tb) => all.find((b) => b.dataset.tab === tb)).filter(Boolean);
+    pi[p.key] = !btns.length ? null : btns.length === 1 ? { btn: btns[0] } : { pair: p, btns, label: p.label ? p.label() : lbl(p.group, mmBtnName(btns[0])) };
+  }
+  const own = (name) => vis(byName[name]).filter((b) => !pairTabs.has(b.dataset.tab)).map((btn) => ({ btn }));
+  const done = new Set(["Overview", "Marketplace", "Planning", "Gears", "Experts", "Pets", "Admin"]);
+  const cards = [
+    { key: "Overview", label: lbl("Overview", "Overview"), blocks: [{ items: own("Overview") }, { sub: lbl("Planning", "Planning"), items: [pi.market, ...own("Marketplace"), ...own("Planning")].filter(Boolean) }] },
+    { key: "Gears", label: lbl("Gears", "Gears"), blocks: [{ items: [...own("Gears"), pi.experts, pi.pets, ...own("Experts"), ...own("Pets")].filter(Boolean) }] },
+  ];
+  for (const g of groups) if (!done.has(g.dataset.group)) cards.push({ key: g.dataset.group, label: mmGroupLabel(g), blocks: [{ items: own(g.dataset.group) }] });
+  return cards;
+}
+function mmCardTabs(card) {
+  return card.blocks.flatMap((b) => b.items.flatMap((x) => (x.btn ? [x.btn.dataset.tab] : x.btns.map((b2) => b2.dataset.tab))));
+}
 function renderMobileMenu() {
   const overlay = document.getElementById("mobileMenuOverlay");
   // Admin = a "⚙ Admin" button in the Menu header, not a card.
-  const groups = mmVisibleGroups();
-  const admG = groups.find((g) => g.dataset.group === "Admin");
+  const admG = mmVisibleGroups().find((g) => g.dataset.group === "Admin");
   const admBtn = admG && mmGroupBtns(admG).find((b) => b.dataset.tab === "adminpage");
-  const cards = groups.filter((g) => g !== admG || !admBtn).map((g) => mmCardHtml(g.dataset.group, mmGroupLabel(g), mmGroupBtns(g))).join("");
+  const cards = mmModel().map(mmCardHtml).join("");
   overlay.innerHTML = `
     <div class="mm-header">
       <h2>${esc(t("menu_title"))}</h2>
@@ -4535,10 +4587,6 @@ function setMenuStyle(style) {
   if (changed && hub.classList.contains("open")) closeMobileMenu();
   if (MB_OPEN) mBarOpen(MB_OPEN);
 }
-function menuStyleCardsHtml() {
-  const card = (s, pv) => `<button type="button" class="ms-card${MENU_STYLE === s ? " on" : ""}" data-mstyle="${s}" aria-pressed="${MENU_STYLE === s}">${pv}<b>${esc(t(s === "bar" ? "ms_bar" : "ms_hub"))}</b><small>${esc(t(s === "bar" ? "ms_bar_d" : "ms_hub_d"))}</small></button>`;
-  return `<div class="ms-row"><b>${esc(t("ms_title"))}</b><div class="ms-cards">${card("hub", `<span class="ms-pv hub"><i></i><i></i><i></i><i></i><i></i></span>`)}${card("bar", `<span class="ms-pv bar"><i></i><i style="width:70%"></i><i style="width:85%"></i><i class="f"></i></span>`)}</div><div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("ms_note"))}</div></div>`;
-}
 function fillMenuStyleRow() {
   const el = document.getElementById("accMenuStyle");
   // Owner: the menu style is chosen only at the bottom of the Menu, not in the profile.
@@ -4552,68 +4600,91 @@ document.addEventListener("click", (e) => {
 });
 
 // ---- Bottom bar (phones <= 900 px with html.mstyle-bar) ----
-// Sections from the real menu groups (built-in keys, so Admin renames follow;
-// a page moved to another group goes with that group): Upgrade = Gears /
-// Experts / Pets / Research, Plan = Planning + State Timeline, Packs = the
-// Packs group (key Marketplace), More = everything else.
-const MB_UPGRADE_GROUPS = ["Gears", "Experts", "Pets", "Research"];
+// Home · Upgrade (Gears with Experts / Pets, Research) · Plan (Overview without the
+// Dashboard: Backpack, State Timeline, Planning) · Bonus (every other card) · Me
+// (account, language, menu style, Admin, About / Contact / Privacy, Log out).
 const MB_SECS = [
   { key: "home", label: "mb_home", icon: "icons/logo-64.webp" },
   { key: "upgrade", label: "mb_upgrade", icon: "icons/quick/chief-gear.png" },
   { key: "plan", label: "mb_plan", icon: "icons/quick/calculator.png" },
-  { key: "packs", label: "mb_packs", icon: "icons/quick/gift.png" },
-  { key: "more", label: "mb_more", sym: "☰" },
+  { key: "bonus", label: "mb_bonus", icon: "icons/quick/vip.png" },
+  { key: "me", label: "mb_me" },
 ];
 let MB_OPEN = null; // section whose sheet is open
-function mbSecOfGroup(name) {
-  if (MB_UPGRADE_GROUPS.includes(name)) return "upgrade";
-  if (name === "Planning") return "plan";
-  if (name === "Marketplace") return "packs";
-  return "more";
-}
-// { sec: [{ name, label, btns }] } from the menu as it is now.
-function mbSections() {
-  const out = { upgrade: [], plan: [], packs: [], more: [] };
-  let timeline = null;
-  for (const g of mmVisibleGroups()) {
-    let btns = mmGroupBtns(g);
-    const tl = btns.find((b) => b.dataset.tab === "statetimeline");
-    if (tl) timeline = tl;
-    btns = btns.filter((b) => b.dataset.tab !== "overview" && b.dataset.tab !== "statetimeline");
-    if (btns.length) out[mbSecOfGroup(g.dataset.group)].push({ name: g.dataset.group, label: mmGroupLabel(g), btns });
+let MB_LANG_OPEN = false; // Me: the language list unfolded
+function mbCards(sec) {
+  const cards = mmModel();
+  if (sec === "upgrade") return cards.filter((c) => c.key === "Gears" || c.key === "Research");
+  if (sec === "plan") {
+    return cards.filter((c) => c.key === "Overview").map((c) => ({ ...c, blocks: c.blocks.map((b) => ({ ...b, items: b.items.filter((x) => !(x.btn && x.btn.dataset.tab === "overview")) })) }));
   }
-  if (timeline) {
-    const plan = out.plan.find((x) => x.name === "Planning");
-    if (plan) plan.btns = plan.btns.concat(timeline);
-    else out.plan.push({ name: "Planning", label: navLabel("statetimeline"), btns: [timeline] });
-  }
-  for (const k of Object.keys(out)) out[k].sort((x, y) => (y.name === "Admin") - (x.name === "Admin")); // Admin first
-  return out;
+  if (sec === "bonus") return cards.filter((c) => !["Overview", "Gears", "Research"].includes(c.key));
+  return [];
 }
 function mbSecOfTab(tab) {
   if (tab === "overview") return "home";
-  if (tab === "packcalendar") return "packs";
-  if (tab === "aboutpage" || tab === "contactpage") return "more";
-  const secs = mbSections();
-  for (const k of Object.keys(secs)) if (secs[k].some((x) => x.btns.some((b) => b.dataset.tab === tab))) return k;
+  if (tab === "packcalendar") return "plan";
+  if (tab === "aboutpage" || tab === "contactpage" || tab === "adminpage") return "me";
+  for (const sec of ["upgrade", "plan", "bonus"]) if (mbCards(sec).some((c) => mmCardTabs(c).includes(tab))) return sec;
   return null;
+}
+function mbSignedIn() {
+  const user = CURRENT_SESSION && CURRENT_SESSION.user;
+  return user && user.email && !user.is_anonymous ? user : null;
+}
+function mbMeName() {
+  const user = mbSignedIn();
+  const nameEl = document.getElementById("commanderName");
+  return (nameEl && nameEl.value.trim()) || (user ? user.email.split("@")[0] : "");
 }
 function mBarDraw() {
   const bar = document.getElementById("mBar");
   if (!bar) return;
   if (MENU_STYLE !== "bar") { if (bar.innerHTML) bar.innerHTML = ""; return; }
   const lit = MB_OPEN || mbSecOfTab(TAB);
-  bar.innerHTML = MB_SECS.map((s) => `<button type="button" data-mbsec="${s.key}" class="${s.key === lit ? "on" : ""}"${s.key === "home" ? "" : ` aria-expanded="${MB_OPEN === s.key}"`}><span class="mb-ic">${s.icon ? `<img src="${esc(s.icon)}" alt="" />` : esc(s.sym)}</span><span>${esc(t(s.label))}</span></button>`).join("");
+  const user = mbSignedIn();
+  const meIc = `<span class="mb-av${user ? " in" : ""}">${esc(user ? (mbMeName().charAt(0) || "?").toUpperCase() : "?")}</span>`;
+  bar.innerHTML = MB_SECS.map((s) => `<button type="button" data-mbsec="${s.key}" class="${s.key === lit ? "on" : ""}"${s.key === "home" ? "" : ` aria-expanded="${MB_OPEN === s.key}"`}><span class="mb-ic">${s.icon ? `<img src="${esc(s.icon)}" alt="" />` : meIc}</span><span>${esc(t(s.label))}</span></button>`).join("");
+}
+// Me: the account card, then rows like a phone's settings list.
+function mbMeHtml() {
+  const user = mbSignedIn(), name = mbMeName();
+  const li = (ic, label, right, attrs, cls) => `<button type="button" class="me-li${cls ? " " + cls : ""}" ${attrs}><span class="me-ic">${ic}</span><span class="me-l">${esc(label)}</span>${right || ""}</button>`;
+  const chev = `<span class="me-ch" aria-hidden="true">&#8250;</span>`;
+  // ✎ = the Commander name (same save as the top bar's account panel), for guests too.
+  const edBtn = `<button type="button" class="me-ed" data-meedit aria-label="${esc(t("commander"))}" title="${esc(t("commander"))}">&#9998;</button>`;
+  const nameBox = `<div class="me-name" data-mename hidden><input type="text" data-mename-in value="${esc((document.getElementById("commanderName") || {}).value || "")}" placeholder="${esc(t("commander"))}" aria-label="${esc(t("commander"))}" /><button type="button" class="btn small" data-mesave>${esc(t("save"))}</button></div>`;
+  const acc = user
+    ? `<div class="me-acc"><div class="me-top"><span class="me-av in">${esc((name.charAt(0) || "?").toUpperCase())}</span><span class="me-t"><b>${esc(name)}</b><small>${esc(t("me_cmd_change"))}</small><small class="ok">&#10003; ${esc(t(IS_OWNER ? "logged_in_owner" : "acc_signed_in"))}</small></span>${edBtn}</div>
+        ${nameBox}</div>`
+    : `<div class="me-acc"><div class="me-top"><span class="me-av g">${esc(name ? name.charAt(0).toUpperCase() : "?")}</span><span class="me-t"><b>${esc(name || t("me_guest"))}</b><small>${esc(t("me_guest_pitch"))}</small></span>${edBtn}</div>
+        ${nameBox}
+        <div class="me-gb"><button type="button" class="btn" data-meacc="signin">${esc(t("acc_sign_in"))}</button><button type="button" class="btn ghost" data-meacc="create">${esc(t("create_account"))}</button></div></div>`;
+  const lang = languageList().find((l) => l.code === LANG);
+  const langs = MB_LANG_OPEN ? `<div class="me-langs tn-lang-list">${languageList().map((l) => `<button type="button" data-melang="${esc(l.code)}" class="${l.code === LANG ? "on" : ""}"><span>${esc(l.name + (l.hidden ? " (hidden)" : ""))}</span>${l.code === LANG ? "&#10003;" : ""}</button>`).join("")}</div>` : "";
+  const seg = `<span class="me-sg">${["hub", "bar"].map((s) => `<button type="button" data-mstyle="${s}" class="${MENU_STYLE === s ? "on" : ""}" aria-pressed="${MENU_STYLE === s}">${esc(t(s === "bar" ? "ms_bar" : "ms_hub"))}</button>`).join("")}</span>`;
+  const admin = IS_OWNER && !isHiddenAdminBtn() ? `<div class="me-lst">${li("&#9881;", navLabel("adminpage"), chev, `data-tab="adminpage"`, "adm")}</div>` : "";
+  return `${acc}
+    <div class="me-lst">${li("&#127760;", t("language"), `<span class="me-v">${esc(lang ? lang.name : LANG)}</span>${chev}`, `data-melangopen aria-expanded="${MB_LANG_OPEN}"`)}${langs}
+      <div class="me-li me-row"><span class="me-ic">&#9776;</span><span class="me-l">${esc(t("ms_title"))}</span>${seg}</div></div>
+    ${admin}
+    <div class="me-lst">${li(`<img src="icons/logo-64.webp" alt="" />`, t("about_title"), chev, `data-tab="aboutpage"`)}${li("&#9993;", t("contact_link"), chev, `data-tab="contactpage"`)}<a class="me-li" href="privacy.html"><span class="me-ic">&#128274;</span><span class="me-l">${esc(t("privacy_link"))}</span>${chev}</a></div>
+    ${user ? `<div class="me-lst">${li("&#8617;", t("log_out"), "", "data-melogout", "out")}</div>` : ""}`;
+}
+function isHiddenAdminBtn() {
+  const g = document.getElementById("adminNavGroup");
+  return !g || g.style.display === "none";
 }
 function mBarSheetHtml(sec) {
-  const groups = mbSections()[sec] || [];
-  const cards = groups.map((x) => mmCardHtml(x.name, x.label, x.btns)).join("");
-  const n = groups.reduce((a, x) => a + x.btns.filter((b) => b.style.display !== "none").length, 0);
-  const title = t((MB_SECS.find((s) => s.key === sec) || {}).label || "mb_more");
-  const extra = sec === "more"
-    ? `<div class="mb-links"><button type="button" data-tab="aboutpage">${esc(t("about_title"))}</button><button type="button" data-tab="contactpage">${esc(t("contact_link"))}</button></div>${menuStyleCardsHtml()}<div class="meta" style="font-size:11px; margin:6px 2px 0;">${esc(t("ms_pc_note"))}</div>`
-    : "";
-  return `<div class="mb-sheet" role="dialog" aria-label="${esc(title)}"><div class="mb-grab"></div><div class="mb-shh"><b>${esc(title)}</b><span>${esc(n === 1 ? t("mb_page1") : t("mb_pages").replace("{n}", n))}</span></div>${cards}${extra}</div>`;
+  const title = t((MB_SECS.find((s) => s.key === sec) || {}).label || "mb_home");
+  if (sec === "me") {
+    const user = mbSignedIn();
+    return `<div class="mb-sheet" role="dialog" aria-label="${esc(title)}"><div class="mb-grab"></div><div class="mb-shh"><b>${esc(title)}</b><span>${esc(user ? mbMeName() : t("me_guest"))}</span></div>${mbMeHtml()}</div>`;
+  }
+  const cards = mbCards(sec);
+  const html = cards.map(mmCardHtml).join("");
+  const n = cards.reduce((a, c) => a + c.blocks.reduce((k, b) => k + b.items.length, 0), 0);
+  return `<div class="mb-sheet" role="dialog" aria-label="${esc(title)}"><div class="mb-grab"></div><div class="mb-shh"><b>${esc(title)}</b><span>${esc(n === 1 ? t("mb_page1") : t("mb_pages").replace("{n}", n))}</span></div>${html}</div>`;
 }
 function mBarOpen(sec) {
   const ov = document.getElementById("mBarOv");
@@ -4642,6 +4713,24 @@ document.getElementById("mBarOv").addEventListener("click", (e) => {
   const pageBtn = e.target.closest("button[data-tab]");
   if (pageBtn) { mBarClose(); goToTab(pageBtn.dataset.tab); window.scrollTo(0, 0); return; }
   if (e.target.closest("[data-mstyle]")) return; // handled by the document listener
+  // Me: language list, commander name, sign in / create account, log out.
+  if (e.target.closest("[data-melangopen]")) { MB_LANG_OPEN = !MB_LANG_OPEN; mBarOpen("me"); return; }
+  const lg = e.target.closest("[data-melang]");
+  if (lg) { MB_LANG_OPEN = false; mBarClose(); mBarDraw(); if (lg.dataset.melang !== LANG) setLanguage(lg.dataset.melang); return; }
+  if (e.target.closest("[data-meedit]")) {
+    const box = e.currentTarget.querySelector("[data-mename]");
+    if (box) { box.hidden = !box.hidden; if (!box.hidden) { const inp = box.querySelector("input"); if (inp) inp.focus(); } }
+    return;
+  }
+  if (e.target.closest("[data-mesave]")) {
+    const inp = e.currentTarget.querySelector("[data-mename-in]"), cn = document.getElementById("commanderName"), sv = document.getElementById("saveCommander");
+    if (inp && cn && sv) { cn.value = inp.value; sv.click(); }
+    mBarOpen("me");
+    return;
+  }
+  const acc = e.target.closest("[data-meacc]");
+  if (acc) { mBarClose(); mBarDraw(); openAccountModal(acc.dataset.meacc); return; }
+  if (e.target.closest("[data-melogout]")) { const lo = document.getElementById("ownerLogoutBtn"); if (lo) lo.click(); return; }
   if (!e.target.closest(".mb-sheet")) { mBarClose(); mBarDraw(); }
 });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && MB_OPEN) { mBarClose(); mBarDraw(); } });
@@ -4716,6 +4805,7 @@ function pageDrawn() {
 }
 async function render() {
   const seq = ++RENDER_SEQ;
+  mmPairNote(TAB); // Experts / Pets / Marketplace tiles open the page used last
   // PC text is 2 px bigger on every page but the Dashboard (pcBigger in the head)
   document.documentElement.classList.toggle("on-dash", TAB === "overview");
   // Bottom bar menu style: light the page's section; a page change closes its sheet.
@@ -19163,6 +19253,36 @@ document.addEventListener("click", (e) => {
   g1FoldSync();
 });
 TOPBOX_MQ.addEventListener("change", () => { if (TAB in TOPBOX_TABS || TAB === "chiefgear") render(); });
+// Marketplace = the Packs and My packs pages under one title, with an
+// "All packs | My packs (N)" switch under it (both tab ids / routes stay).
+const PG_SW_PAIRS = { packs: "market", mypacks: "market" };
+function pgSwShown(tab) {
+  const b = document.querySelector(`#topnavGroups [data-tab="${tab}"]`);
+  const g = b && b.closest(".topnav-group");
+  return !!b && b.style.display !== "none" && !(g && g.style.display === "none");
+}
+function pgSwMineCount() {
+  if (IS_OWNER) return PACK_TABLES_ALL ? PACK_TABLES_ALL.filter((tb) => packLinkForBase(tb.id).group === PACK_MINE_GROUP).length : null;
+  return Array.isArray(MY_PACKS) ? MY_PACKS.length : null;
+}
+function pgSwSync(c) {
+  const key = PG_SW_PAIRS[TAB];
+  const old = c.querySelector(":scope > [data-pgsw]");
+  if (!key || !pgSwShown("packs") || !pgSwShown("mypacks")) { if (old) old.remove(); return; }
+  const head = c.querySelector(":scope > .page-head, :scope > .plx-head");
+  if (!head) return;
+  const n = pgSwMineCount();
+  const btn = (tab, label) => `<button type="button" role="tab" aria-selected="${TAB === tab}" data-pgswgo="${tab}" class="${TAB === tab ? "on" : ""}">${esc(label)}</button>`;
+  const html = `<div class="plx-tsw-seg" role="tablist">${btn("packs", t("pgsw_all_packs"))}${btn("mypacks", n == null ? t("pgsw_my_packs") : t("pgsw_my_packs_n").replace("{n}", n))}</div>`;
+  if (old) { if (old.dataset.k !== TAB + "|" + n) { old.innerHTML = html; old.dataset.k = TAB + "|" + n; } if (old.previousElementSibling !== head) head.after(old); return; }
+  const el = document.createElement("div");
+  el.className = "plx-tsw pg-sw"; el.dataset.pgsw = key; el.dataset.k = TAB + "|" + n; el.innerHTML = html;
+  head.after(el);
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest("[data-pgswgo]");
+  if (b && b.dataset.pgswgo !== TAB) goToTab(b.dataset.pgswgo);
+});
 // Common page header: the page name exactly as in the Menu (renamed pages follow), and
 // Chief Gear's ▴ Hide square at the end of its BACKPACK row on phones.
 const HDR_TITLE_SKIP = new Set(["overview", "aboutpage", "contactpage", "adminpage"]);
@@ -19170,7 +19290,7 @@ function hdrSync(c) {
   if (!HDR_TITLE_SKIP.has(TAB) && NAV_PAGE_LABELS[TAB]) {
     const h = c.querySelector(".plx-head h2, .page-head h2");
     const tn = h && [...h.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
-    const want = navLabel(TAB);
+    const want = PG_SW_PAIRS[TAB] === "market" ? t("mm_marketplace") : navLabel(TAB);
     if (tn && want && tn.textContent.trim() !== want) tn.textContent = want;
   }
   if (TAB === "chiefgear") {
@@ -19209,7 +19329,7 @@ document.addEventListener("click", () => { const c = document.getElementById("co
 {
   let queued = false;
   let mkSeen = -1;
-  const run = () => { queued = false; const c = document.getElementById("content"); if (c) { if (visitorCan("cando")) { if (mkSeen !== RENDER_SEQ) { mkSeen = RENDER_SEQ; if (!MK || MK.tab !== TAB) MK = null; mkSoon(500); } mkInfo(c); mkApply(); } infoize(c); plxTopBox(c); hdrSync(c); bsSlideFit(c); if (DASH_RC_OPEN) { if (TAB !== "overview" || !DASH_RC_MQ.matches) dashRcSheet(null); else if (!document.querySelector(".rc-card.rc-open")) dashRcSheet(DASH_RC_OPEN); } } };
+  const run = () => { queued = false; const c = document.getElementById("content"); if (c) { if (visitorCan("cando")) { if (mkSeen !== RENDER_SEQ) { mkSeen = RENDER_SEQ; if (!MK || MK.tab !== TAB) MK = null; mkSoon(500); } mkInfo(c); mkApply(); } infoize(c); plxTopBox(c); hdrSync(c); pgSwSync(c); bsSlideFit(c); if (DASH_RC_OPEN) { if (TAB !== "overview" || !DASH_RC_MQ.matches) dashRcSheet(null); else if (!document.querySelector(".rc-card.rc-open")) dashRcSheet(DASH_RC_OPEN); } } };
   const c = document.getElementById("content");
   if (c) new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(c, { childList: true, subtree: true });
   let pinned = null;
@@ -34385,6 +34505,7 @@ function renderAccountButton() {
     if (head) head.innerHTML = "";
   }
   fillMenuStyleRow();
+  if (typeof mBarDraw === "function") { try { mBarDraw(); } catch (e) { /* menu not ready yet */ } }
 }
 
 // Sign in / create account for everyone. Creating an account upgrades the
