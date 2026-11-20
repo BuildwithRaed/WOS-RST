@@ -4903,6 +4903,8 @@ async function render() {
       if (!content.dataset.holdUntilReady) content.style.minHeight = "";
       LAST_RENDER_TAB = TAB;
       pageDrawn();
+      // Experts / Pets: the side not shown saves its Budgets needs too (quietly).
+      if (!same && sidePairOf(TAB) && sidePairOpen(sidePairOf(TAB))) sideBgNeeds(TAB);
     }
   } catch (e) {
     if (seq !== RENDER_SEQ) return; // a newer page is showing; don't cover it
@@ -33561,6 +33563,190 @@ function sideSwitchHtml(tab) {
   if (!sidePairOpen(p)) return "";
   return `<div class="pkw-tab crs-sw" role="tablist">${p.tabs.map((tb, i) => `<button type="button" role="tab" aria-selected="${tb === tab}" data-sidego="${tb}" class="${tb === tab ? "on" : ""}">${esc(t(p.labels[i]))}</button>`).join("")}</div>`;
 }
+// Experts / Pets: opening either side also saves the other side's Budgets needs (owner, 20 Nov
+// 2026), as the separate pages did when opened: worked out from the saved states, the same way
+// each page does, in the background (nothing is drawn, the page doesn't move). Called by render()
+// after the side shown has drawn (sideBgNeeds).
+async function sideBgNeedsPets(side) {
+  await ensurePetsData();
+  if (side === "pets") {
+    const petNames = petOrderSort(Object.keys(PETS_NODES_CACHE).filter((p) => !hiddenForVisitor("pets", p)));
+    const getState = (pet) => { const s = PETS_STATE[pet]; return s && typeof s === "object" ? s : { from: -1, to: IS_OWNER ? petMaxIdx(pet) : -1 }; };
+    const grand = { Food: 0, Manual: 0, Potion: 0, Serum: 0 };
+    petNames.forEach((pet) => {
+      if (!isPetUnlocked(pet)) return;
+      const { from, to } = getState(pet);
+      (PETS_NODES_CACHE[pet] || []).forEach((r, i) => { if (i <= from || i > to) return; grand.Food += Number(r.food) || 0; grand.Manual += Number(r.manual) || 0; grand.Potion += Number(r.potion) || 0; grand.Serum += Number(r.serum) || 0; });
+    });
+    setPageMinis("pets", petNames.filter((pet) => isPetUnlocked(pet)).flatMap((pet) => {
+      const levels = PETS_NODES_CACHE[pet] || [], { from, to } = getState(pet);
+      const out = [];
+      levels.forEach((r, i) => {
+        if (i <= from || i >= to || !/^\d+0$/.test(String(r.level_label))) return;
+        const n = { Food: 0, Manual: 0, Potion: 0, Serum: 0 };
+        levels.forEach((x, j) => { if (j <= from || j > i) return; n.Food += Number(x.food) || 0; n.Manual += Number(x.manual) || 0; n.Potion += Number(x.potion) || 0; n.Serum += Number(x.serum) || 0; });
+        out.push({ v: `${pet}|${r.level_label}`, grp: pet, grpLabel: pet, label: `${t("goal_lv")} ${r.level_label}`, totals: n });
+      });
+      return out;
+    }), {});
+    setPageUpgrades("pets", petNames.filter((pet) => isPetUnlocked(pet)).map((pet) => {
+      const levels = PETS_NODES_CACHE[pet] || [], { from, to } = getState(pet), n = { Food: 0, Manual: 0, Potion: 0, Serum: 0 }, lv = [];
+      levels.forEach((x, j) => {
+        if (j <= from || j > to) return;
+        n.Food += Number(x.food) || 0; n.Manual += Number(x.manual) || 0; n.Potion += Number(x.potion) || 0; n.Serum += Number(x.serum) || 0;
+        lv.push({ label: String(x.level_label), totals: { ...n } });
+      });
+      return lv.length ? { k: pet, n: dataName(pet), img: petImage(pet), a: from >= 0 && levels[from] ? String(levels[from].level_label) : "0", lv } : null;
+    }).filter(Boolean));
+    await recordBudgetNeeds("pets", [{ label: null, totals: grand }]);
+    return;
+  }
+  // Pet Refine: Common Marks to refine every counted pet to the top released stage.
+  await ensurePetMarksState();
+  const ORDER = ["Cave Hyena", "Arctic Wolf", "Musk Ox", "Giant Tapir", "Titan Roc", "Giant Elk", "Snow Leopard", "Cave Lion", "Snow Ape", "Iron Rhino", "Sabertooth Tiger", "Mammoth", "Frost Gorilla", "Frostscale Chameleon", "Abyssal Shelldragon"];
+  const petNames = Object.keys(PET_REFINE_CACHE).filter((p) => !hiddenForVisitor("pets", p)).sort((a, b) => { const ia = ORDER.indexOf(a), ib = ORDER.indexOf(b); if (ia === -1 && ib === -1) return a.localeCompare(b); if (ia === -1) return 1; if (ib === -1) return -1; return ia - ib; });
+  petOrderSort(petNames, true);
+  const pct1 = (raw) => Math.round(Number(raw) * 10000) / 100;
+  const KEYS = [["il", "infantry_lethality_pct", "troop_infantry", "Lethality"], ["ih", "infantry_health_pct", "troop_infantry", "Health"], ["ll", "lancer_lethality_pct", "troop_lancer_singular", "Lethality"], ["lh", "lancer_health_pct", "troop_lancer_singular", "Health"], ["ml", "marksman_lethality_pct", "troop_marksman", "Lethality"], ["mh", "marksman_health_pct", "troop_marksman", "Health"]];
+  const maxRow = (pet) => { const rows = PET_REFINE_CACHE[pet]; return rows[Math.max(0, releasedLastIdx("pet_refine_nodes", rows))]; };
+  const st = (pet) => (PET_REFINE_TYPED_STATE && PET_REFINE_TYPED_STATE[pet] && typeof PET_REFINE_TYPED_STATE[pet] === "object" ? PET_REFINE_TYPED_STATE[pet] : { il: 0, ih: 0, ll: 0, lh: 0, ml: 0, mh: 0 });
+  const rates = PET_MARKS_STATE.rates, adj = 1 + (PET_MARKS_STATE.adjust || 0) / 100;
+  const marksForStat = (pet, maxKey, curVal) => {
+    let marks = 0, prevMax = 0;
+    PET_REFINE_CACHE[pet].forEach((r) => { const stageMax = pct1(r[maxKey]), lo = Math.max(prevMax, curVal); if (stageMax > lo) marks += (stageMax - lo) * (Number(rates[r.stage]) || 0); prevMax = Math.max(prevMax, stageMax); });
+    return marks;
+  };
+  let marksRaw = 0;
+  petNames.forEach((pet) => { if (!isPetUnlocked(pet)) return; const s = st(pet), m = maxRow(pet); KEYS.forEach(([key, maxKey]) => { const cap = pct1(m[maxKey]); marksRaw += marksForStat(pet, maxKey, Math.min(Number(s[key]) || 0, cap)); }); });
+  const marksNeeded = Math.ceil(marksRaw * adj);
+  const STAGES = ["Grey", "Green", "Blue", "Purple", "Orange", "Red"];
+  setPageMinis("pets_refine", STAGES.map((stage, k) => {
+    let raw = 0;
+    petNames.forEach((pet) => {
+      if (!isPetUnlocked(pet)) return;
+      const s = st(pet), rows = (PET_REFINE_CACHE[pet] || []).filter((r) => STAGES.indexOf(r.stage) <= k), m = maxRow(pet);
+      KEYS.forEach(([key, maxKey]) => {
+        const cur = Math.min(Number(s[key]) || 0, pct1(m[maxKey]));
+        let prevMax = 0;
+        rows.forEach((r) => { const stageMax = pct1(r[maxKey]), lo = Math.max(prevMax, cur); if (stageMax > lo) raw += (stageMax - lo) * (Number(rates[r.stage]) || 0); prevMax = Math.max(prevMax, stageMax); });
+      });
+    });
+    return { v: "stage:" + k, label: t("goal_upto").replace("{x}", stage), totals: { "Common Marks": Math.ceil(raw * adj) } };
+  }), { "Common Marks": marksNeeded });
+  setPageUpgrades("pets_refine", petNames.filter((pet) => isPetUnlocked(pet)).flatMap((pet) => KEYS.map(([key, maxKey, tk, stat]) => {
+    const s = st(pet), m = maxRow(pet), all = PET_REFINE_CACHE[pet] || [], cur = Math.min(Number(s[key]) || 0, pct1(m[maxKey])), lv = [];
+    STAGES.forEach((stage, k) => {
+      const rows = all.filter((r) => STAGES.indexOf(r.stage) <= k);
+      if (!all.some((r) => r.stage === stage)) return;
+      let raw = 0, prevMax = 0, top = 0;
+      rows.forEach((r) => { const stageMax = pct1(r[maxKey]), lo = Math.max(prevMax, cur); if (stageMax > lo) raw += (stageMax - lo) * (Number(rates[r.stage]) || 0); prevMax = Math.max(prevMax, stageMax); top = Math.max(top, stageMax); });
+      if (top > cur && raw > 0) lv.push({ label: `${stage} ${top}%`, totals: { "Common Marks": Math.ceil(raw * adj) } });
+    });
+    return lv.length ? { k: `${pet}|${key}`, n: `${dataName(pet)} · ${t(tk)} ${tStatLabel(stat)}`, img: petImage(pet), a: `${cur}%`, lv } : null;
+  }).filter(Boolean)));
+  await recordBudgetNeeds("pets_refine", [{ label: null, totals: { "Common Marks": marksNeeded } }]);
+}
+async function sideBgNeedsExperts(side) {
+  const [, , lvLoaded, lvUnLoaded, invLoaded, skillRows, affRows, rsLoaded, rsUnLoaded, rsRows] = await Promise.all([
+    ensureExpertsRosterGlobal(), ensureUiVisibility(), loadCalcState("experts"), loadCalcState("experts_unlocked"), loadCalcState("experts_inventory"),
+    loadExpertNodes("skill"), loadExpertNodes("affinity"), loadCalcState("experts_research"), loadCalcState("experts_research_unlocked"), loadExpertNodes("research"),
+  ]);
+  const invSaved = { ...(invLoaded || {}) };
+  await expertsInventoryWithBackpack(invSaved);
+  if (side === "experts") {
+    const saved = renameExpertSkills(lvLoaded || {}), un = lvUnLoaded || {};
+    const SHOWN = EXPERTS_LIST.filter((e) => !hiddenForVisitor("experts", e.key));
+    const on = (k) => unlockedFor("experts", k, un[k]);
+    const { skillMaxLevel, skillCost, skillExpHave, heroAffinityHave, skillNeed, heroSigilLevel, heroTopLevel, heroMaxLevelValue, heroCost } = expertKit(skillRows, affRows, saved);
+    SHOWN.forEach((e) => {
+      if (!saved[e.key]) saved[e.key] = { current: 0, desired: IS_OWNER ? heroMaxLevelValue(e.key) : 0, skills: {} };
+      e.skills.forEach((s) => { if (!saved[e.key].skills[s]) saved[e.key].skills[s] = { current: 0, desired: IS_OWNER ? skillMaxLevel(e.key, s) : 0 }; });
+    });
+    if (!saved.__advLevels) SHOWN.forEach((e) => { const st = saved[e.key]; ["current", "desired"].forEach((k) => { const v = Number(st[k]) || 0; if (v > 0 && v === Math.floor(v) && heroSigilLevel(e.key, v)) st[k] = v + 0.1; }); });
+    let totalExp = 0, totalBook = 0, totalAffinity = 0;
+    const sigilNeededByExpert = {};
+    SHOWN.forEach((e) => {
+      if (!on(e.key)) return;
+      e.skills.forEach((sk) => { const { expNeed, book } = skillNeed(e.key, sk, saved[e.key].skills[sk]); totalExp += expNeed; totalBook += book; });
+      const hs = saved[e.key], { affinity, sigil } = heroCost(e.key, hs.current, hs.desired);
+      totalAffinity += Math.max(0, affinity - Math.min(heroAffinityHave(e.key), affinity));
+      sigilNeededByExpert[e.key] = sigil;
+    });
+    const sig = JSON.stringify(sigilNeededByExpert);
+    if (sig !== EXPERTS_LEVEL_SIGIL_NEED_SIG) { EXPERTS_LEVEL_SIGIL_NEED_SIG = sig; saveCalcState("experts_level_sigil_need", sigilNeededByExpert); }
+    const sigilTotals = {};
+    SHOWN.forEach((e) => { const short = Math.max(0, (sigilNeededByExpert[e.key] || 0) - (Number(invSaved[`${e.key} Sigils`]) || 0)); if (short > 0) sigilTotals[`${e.key} Sigils`] = short; });
+    const totalTimeHours = totalExp / 3600;
+    const packGroups = [{ label: null, totals: { "Books of Knowledge": totalBook, "Affinity": totalAffinity, ...sigilTotals, "Speedups (minutes)": Math.round(totalTimeHours * 60) } }];
+    const expPos = (hero) => { const out = []; for (let n = 0; n <= heroTopLevel(hero); n++) { out.push(n); if (n > 0 && heroSigilLevel(hero, n)) out.push(n + 0.1); } return out; };
+    setPageMinis("experts", SHOWN.filter((e) => on(e.key)).flatMap((e) => {
+      const hs = saved[e.key], cur = Number(hs.current) || 0, des = Number(hs.desired) || 0, out = [];
+      for (let L = Math.floor(cur / 10) * 10 + 10; L < des; L += 10) {
+        const { affinity, sigil } = heroCost(e.key, hs.current, L);
+        out.push({ v: `${e.key}|${L}`, grp: e.key, grpLabel: e.name || e.key, label: `${t("goal_lv")} ${L}`, totals: { Affinity: Math.max(0, affinity - Math.min(heroAffinityHave(e.key), affinity)), [`${e.key} Sigils`]: Math.max(0, sigil - (Number(invSaved[`${e.key} Sigils`]) || 0)) } });
+      }
+      return out;
+    }), {});
+    setPageUpgrades("experts", SHOWN.filter((e) => on(e.key)).flatMap((e) => {
+      const hs = saved[e.key], cur = Number(hs.current) || 0, des = Number(hs.desired) || 0, nm = e.name || e.key, out = [];
+      const lv = expPos(e.key).filter((p) => p > cur + 1e-9 && p <= des + 1e-9).map((p) => {
+        const { affinity, sigil } = heroCost(e.key, hs.current, p);
+        return { label: Number.isInteger(p) ? String(p) : p.toFixed(1), totals: { Affinity: Math.max(0, affinity - Math.min(heroAffinityHave(e.key), affinity)), [`${e.key} Sigils`]: sigil } };
+      });
+      if (lv.length) out.push({ k: `${e.key}|lv`, n: `${nm} · ${t("gu_level")}`, img: e.img, a: String(cur), lv });
+      e.skills.forEach((sk) => {
+        const st = hs.skills[sk] || {}, c = Number(st.current) || 0, d = Number(st.desired) || 0, sl = [];
+        for (let L = c + 1; L <= d; L++) { const { exp, book } = skillCost(e.key, sk, c, L), have = Math.min(skillExpHave(st), exp); sl.push({ label: String(L), totals: { "Books of Knowledge": book, "Speedups (minutes)": Math.round(Math.max(0, exp - have) / 60) } }); }
+        if (sl.length) out.push({ k: `${e.key}|sk|${sk}`, n: `${nm} · ${dataName(sk)}`, img: e.img, a: String(c), lv: sl });
+      });
+      return out;
+    }));
+    await recordBudgetNeeds("experts", packGroups);
+    return;
+  }
+  // Experts Research: each counted expert's paths now → target, sigils after Experts Level's share.
+  const saved = rsLoaded || {}, un = rsUnLoaded || {}, levelSigilNeed = (await loadCalcState("experts_level_sigil_need")) || {};
+  const RC = {}, PN = {};
+  rsRows.forEach((r) => { ((RC[r.expert] = RC[r.expert] || {})[r.path_number] = RC[r.expert][r.path_number] || []).push(r); if (r.path_name) (PN[r.expert] = PN[r.expert] || {})[r.path_number] = r.path_name; });
+  const ORDER = EXPERTS_IN_ORDER_GLOBAL.filter((e) => !hiddenForVisitor("experts", e));
+  const paths = (ex) => Object.keys(RC[ex] || {}).map(Number).sort((a, b) => a - b);
+  const on = (ex) => unlockedFor("experts", ex, un[ex]);
+  ORDER.forEach((ex) => { if (!saved[ex]) saved[ex] = {}; paths(ex).forEach((p) => { if (typeof saved[ex][p] !== "object") saved[ex][p] = { current: 0, desired: 0 }; }); });
+  const sigOf = (ex, p, a, b) => expertPathSigils((RC[ex] || {})[p] || [], a, b);
+  const need = {};
+  ORDER.forEach((ex) => { if (!on(ex)) return; need[ex] = paths(ex).reduce((s, p) => s + sigOf(ex, p, saved[ex][p].current, saved[ex][p].desired), 0); });
+  const ownedLeft = {};
+  ORDER.forEach((ex) => { ownedLeft[ex] = Math.max(0, (Number(invSaved[`${ex} Sigils`]) || 0) - (Number(levelSigilNeed[ex]) || 0)); });
+  const sigilTotals = {};
+  ORDER.forEach((ex) => { const short = Math.max(0, (need[ex] || 0) - ownedLeft[ex]); if (short > 0) sigilTotals[`${ex} Sigils`] = short; });
+  setPageMinis("experts_research", ORDER.filter(on).flatMap((ex) => {
+    const ps = paths(ex), top = Math.max(0, ...ps.map((p) => Number(saved[ex][p].desired) || 0)), out = [];
+    for (let L = 20; L < top; L += 20) {
+      let sg = 0;
+      ps.forEach((p) => { const st = saved[ex][p], to = Math.min(Number(st.desired) || 0, L); if (to > (Number(st.current) || 0)) sg += sigOf(ex, p, st.current, to); });
+      const e = EXPERTS_LIST.find((x) => x.key === ex);
+      out.push({ v: `${ex}|${L}`, grp: ex, grpLabel: (e && e.name) || ex, label: t("goal_paths_lv").replace("{n}", L), totals: { [`${ex} Sigils`]: Math.max(0, sg - (ownedLeft[ex] || 0)) } });
+    }
+    return out;
+  }), {});
+  setPageUpgrades("experts_research", ORDER.filter(on).flatMap((ex) => {
+    const e = EXPERTS_LIST.find((x) => x.key === ex) || {};
+    return paths(ex).map((p) => {
+      const st = saved[ex][p], c = Number(st.current) || 0, d = Number(st.desired) || 0, lv = [];
+      for (let L = c + 1; L <= d; L++) lv.push({ label: String(L), totals: { [`${ex} Sigils`]: sigOf(ex, p, c, L) } });
+      return lv.length ? { k: `${ex}|${p}`, n: `${e.name || ex} · ${dataName((PN[ex] || {})[p] || `${t("path_label")} ${p}`)}`, img: e.img, a: String(c), lv } : null;
+    }).filter(Boolean);
+  }));
+  await recordBudgetNeeds("experts_research", [{ label: null, totals: sigilTotals }]);
+}
+// After a side is drawn on entering the page: the other side's needs, once, quietly.
+function sideBgNeeds(tab) {
+  const p = sidePairOf(tab);
+  if (!p) return;
+  const other = p.picks[1 - p.tabs.indexOf(tab)];
+  const run = () => (p.picks[0] === "pets" ? sideBgNeedsPets(other) : sideBgNeedsExperts(other)).catch((e) => console.warn("side needs", e));
+  setTimeout(run, 400);
+}
 // Which side an Experts / Pets page opens on (owner, 20 Nov 2026): Level, unless every Level card
 // shown (counted or not) is already at its released max (Experts: level and every skill; Pets: level), then
 // Research / Refine. Used when the page is entered (Menu, link, last_tab, reload, the old tabs);
@@ -33674,6 +33860,9 @@ function sideHold(top0) {
       if (give > 0) { extra -= give; apply(pkw); }
       const rest = sw.getBoundingClientRect().top - top0;
       if (rest >= 0.5) { const y = scrollY; window.scrollBy(0, rest); scrolled += scrollY - y; }
+      // under a pixel the page can't scroll: the card's gap above gives it back
+      const sub = sw.getBoundingClientRect().top - top0;
+      if (sub > 0.05 && sub < 1) { gap = pkw; pkw.style.marginTop = `calc(${getComputedStyle(pkw).marginTop} - ${sub}px)`; }
     }
     return false;
   };
