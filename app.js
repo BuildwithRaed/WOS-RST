@@ -1526,6 +1526,9 @@ const T = {
   me_guest_pitch: { en: "Sign in to keep your plans on every phone and PC" },
   mm_marketplace: { en: "Marketplace" },
   mm_chip_level: { en: "Level" },
+  pgsw_all_packs: { en: "All packs" },
+  pgsw_my_packs: { en: "My packs" },
+  pgsw_my_packs_n: { en: "My packs ({n})" },
   mm_chip_research: { en: "Research" },
   mm_chip_refine: { en: "Refine" },
   mb_pages: { en: "{n} pages" },
@@ -4644,10 +4647,14 @@ function mbMeHtml() {
   const user = mbSignedIn(), name = mbMeName();
   const li = (ic, label, right, attrs, cls) => `<button type="button" class="me-li${cls ? " " + cls : ""}" ${attrs}><span class="me-ic">${ic}</span><span class="me-l">${esc(label)}</span>${right || ""}</button>`;
   const chev = `<span class="me-ch" aria-hidden="true">&#8250;</span>`;
+  // ✎ = the Commander name (same save as the top bar's account panel), for guests too.
+  const edBtn = `<button type="button" class="me-ed" data-meedit aria-label="${esc(t("commander"))}" title="${esc(t("commander"))}">&#9998;</button>`;
+  const nameBox = `<div class="me-name" data-mename hidden><input type="text" data-mename-in value="${esc((document.getElementById("commanderName") || {}).value || "")}" placeholder="${esc(t("commander"))}" aria-label="${esc(t("commander"))}" /><button type="button" class="btn small" data-mesave>${esc(t("save"))}</button></div>`;
   const acc = user
-    ? `<div class="me-acc"><div class="me-top"><span class="me-av in">${esc((name.charAt(0) || "?").toUpperCase())}</span><span class="me-t"><b>${esc(name)}</b><small>${esc(t("me_cmd_change"))}</small><small class="ok">&#10003; ${esc(t(IS_OWNER ? "logged_in_owner" : "acc_signed_in"))}</small></span><button type="button" class="me-ed" data-meedit aria-label="${esc(t("commander"))}" title="${esc(t("commander"))}">&#9998;</button></div>
-        <div class="me-name" data-mename hidden><input type="text" data-mename-in value="${esc((document.getElementById("commanderName") || {}).value || "")}" placeholder="${esc(t("commander"))}" aria-label="${esc(t("commander"))}" /><button type="button" class="btn small" data-mesave>${esc(t("save"))}</button></div></div>`
-    : `<div class="me-acc"><div class="me-top"><span class="me-av g">?</span><span class="me-t"><b>${esc(t("me_guest"))}</b><small>${esc(t("me_guest_pitch"))}</small></span></div>
+    ? `<div class="me-acc"><div class="me-top"><span class="me-av in">${esc((name.charAt(0) || "?").toUpperCase())}</span><span class="me-t"><b>${esc(name)}</b><small>${esc(t("me_cmd_change"))}</small><small class="ok">&#10003; ${esc(t(IS_OWNER ? "logged_in_owner" : "acc_signed_in"))}</small></span>${edBtn}</div>
+        ${nameBox}</div>`
+    : `<div class="me-acc"><div class="me-top"><span class="me-av g">${esc(name ? name.charAt(0).toUpperCase() : "?")}</span><span class="me-t"><b>${esc(name || t("me_guest"))}</b><small>${esc(t("me_guest_pitch"))}</small></span>${edBtn}</div>
+        ${nameBox}
         <div class="me-gb"><button type="button" class="btn" data-meacc="signin">${esc(t("acc_sign_in"))}</button><button type="button" class="btn ghost" data-meacc="create">${esc(t("create_account"))}</button></div></div>`;
   const lang = languageList().find((l) => l.code === LANG);
   const langs = MB_LANG_OPEN ? `<div class="me-langs tn-lang-list">${languageList().map((l) => `<button type="button" data-melang="${esc(l.code)}" class="${l.code === LANG ? "on" : ""}"><span>${esc(l.name + (l.hidden ? " (hidden)" : ""))}</span>${l.code === LANG ? "&#10003;" : ""}</button>`).join("")}</div>` : "";
@@ -19241,6 +19248,36 @@ document.addEventListener("click", (e) => {
   g1FoldSync();
 });
 TOPBOX_MQ.addEventListener("change", () => { if (TAB in TOPBOX_TABS || TAB === "chiefgear") render(); });
+// Marketplace = the Packs and My packs pages under one title, with an
+// "All packs | My packs (N)" switch under it (both tab ids / routes stay).
+const PG_SW_PAIRS = { packs: "market", mypacks: "market" };
+function pgSwShown(tab) {
+  const b = document.querySelector(`#topnavGroups [data-tab="${tab}"]`);
+  const g = b && b.closest(".topnav-group");
+  return !!b && b.style.display !== "none" && !(g && g.style.display === "none");
+}
+function pgSwMineCount() {
+  if (IS_OWNER) return PACK_TABLES_ALL ? PACK_TABLES_ALL.filter((tb) => packLinkForBase(tb.id).group === PACK_MINE_GROUP).length : null;
+  return Array.isArray(MY_PACKS) ? MY_PACKS.length : null;
+}
+function pgSwSync(c) {
+  const key = PG_SW_PAIRS[TAB];
+  const old = c.querySelector(":scope > [data-pgsw]");
+  if (!key || !pgSwShown("packs") || !pgSwShown("mypacks")) { if (old) old.remove(); return; }
+  const head = c.querySelector(":scope > .page-head, :scope > .plx-head");
+  if (!head) return;
+  const n = pgSwMineCount();
+  const btn = (tab, label) => `<button type="button" role="tab" aria-selected="${TAB === tab}" data-pgswgo="${tab}" class="${TAB === tab ? "on" : ""}">${esc(label)}</button>`;
+  const html = `<div class="plx-tsw-seg" role="tablist">${btn("packs", t("pgsw_all_packs"))}${btn("mypacks", n == null ? t("pgsw_my_packs") : t("pgsw_my_packs_n").replace("{n}", n))}</div>`;
+  if (old) { if (old.dataset.k !== TAB + "|" + n) { old.innerHTML = html; old.dataset.k = TAB + "|" + n; } if (old.previousElementSibling !== head) head.after(old); return; }
+  const el = document.createElement("div");
+  el.className = "plx-tsw pg-sw"; el.dataset.pgsw = key; el.dataset.k = TAB + "|" + n; el.innerHTML = html;
+  head.after(el);
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest("[data-pgswgo]");
+  if (b && b.dataset.pgswgo !== TAB) goToTab(b.dataset.pgswgo);
+});
 // Common page header: the page name exactly as in the Menu (renamed pages follow), and
 // Chief Gear's ▴ Hide square at the end of its BACKPACK row on phones.
 const HDR_TITLE_SKIP = new Set(["overview", "aboutpage", "contactpage", "adminpage"]);
@@ -19248,7 +19285,7 @@ function hdrSync(c) {
   if (!HDR_TITLE_SKIP.has(TAB) && NAV_PAGE_LABELS[TAB]) {
     const h = c.querySelector(".plx-head h2, .page-head h2");
     const tn = h && [...h.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
-    const want = navLabel(TAB);
+    const want = PG_SW_PAIRS[TAB] === "market" ? t("mm_marketplace") : navLabel(TAB);
     if (tn && want && tn.textContent.trim() !== want) tn.textContent = want;
   }
   if (TAB === "chiefgear") {
@@ -19287,7 +19324,7 @@ document.addEventListener("click", () => { const c = document.getElementById("co
 {
   let queued = false;
   let mkSeen = -1;
-  const run = () => { queued = false; const c = document.getElementById("content"); if (c) { if (visitorCan("cando")) { if (mkSeen !== RENDER_SEQ) { mkSeen = RENDER_SEQ; if (!MK || MK.tab !== TAB) MK = null; mkSoon(500); } mkInfo(c); mkApply(); } infoize(c); plxTopBox(c); hdrSync(c); bsSlideFit(c); if (DASH_RC_OPEN) { if (TAB !== "overview" || !DASH_RC_MQ.matches) dashRcSheet(null); else if (!document.querySelector(".rc-card.rc-open")) dashRcSheet(DASH_RC_OPEN); } } };
+  const run = () => { queued = false; const c = document.getElementById("content"); if (c) { if (visitorCan("cando")) { if (mkSeen !== RENDER_SEQ) { mkSeen = RENDER_SEQ; if (!MK || MK.tab !== TAB) MK = null; mkSoon(500); } mkInfo(c); mkApply(); } infoize(c); plxTopBox(c); hdrSync(c); pgSwSync(c); bsSlideFit(c); if (DASH_RC_OPEN) { if (TAB !== "overview" || !DASH_RC_MQ.matches) dashRcSheet(null); else if (!document.querySelector(".rc-card.rc-open")) dashRcSheet(DASH_RC_OPEN); } } };
   const c = document.getElementById("content");
   if (c) new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(c, { childList: true, subtree: true });
   let pinned = null;

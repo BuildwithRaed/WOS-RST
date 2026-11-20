@@ -2129,6 +2129,9 @@ input,select,textarea{
   .plx-tsw-seg button{ flex:1; min-height:34px; border:0; border-radius:9px; background:none; color:var(--muted); font-weight:700; font-size:13px; cursor:pointer; }
   .plx-tsw-seg button.on{ background:var(--tc, var(--ice)); color:#0f141b; }
   .plx-tsw-stats:empty{ display:none; }
+  /* Marketplace: "All packs | My packs" under the page title (the troop switch's look, not pinned). */
+  .plx-tsw.pg-sw{ position:static; margin:0 0 12px; box-shadow:none; }
+  .plx-tsw.pg-sw .plx-tsw-seg button{ min-height:40px; font-size:14px; }
   .plx-tsw-stats{ margin-top:8px; }
   /* Chief Charm tiles */
   .ch-grid{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; }
