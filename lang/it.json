@@ -2893,5 +2893,13 @@
 "t:tl_later":"In arrivo più avanti",
 "t:tl_later_sub":"giorno ancora sconosciuto",
 "t:tl_new_pet":"Nuovo animale",
-"t:tl_new_expert":"Nuovo esperto"
+"t:tl_new_expert":"Nuovo esperto",
+"t:marks_gems_trade":"Scambia Gemme per Marchi comuni",
+"t:marks_gems_trade_rate":"500 Gemme = 1 Marchio comune · le gemme dello Zaino e dei pacchetti",
+"t:pca_mk_buy_as":"Compra i marchi come",
+"t:pca_mk_adv":"Avanzati",
+"t:pca_mk_com":"Comuni",
+"t:pca_mk_same":"Stesso prezzo: 1 avanzato = {n} comuni in questo pacchetto ({list}).",
+"t:pca_mk_game":"scegli {m} nel gioco",
+"t:pca_mk_or":"{a} o {c}"
 }

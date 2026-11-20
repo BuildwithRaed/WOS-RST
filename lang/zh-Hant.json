@@ -2892,5 +2892,13 @@
 "t:tl_later":"稍後推出",
 "t:tl_later_sub":"日期尚未知曉",
 "t:tl_new_pet":"新寵物",
-"t:tl_new_expert":"新專家"
+"t:tl_new_expert":"新專家",
+"t:marks_gems_trade":"用寶石兌換普通印記",
+"t:marks_gems_trade_rate":"500 寶石 = 1 普通印記 · 背包和禮包中的寶石",
+"t:pca_mk_buy_as":"印記購買為",
+"t:pca_mk_adv":"高級",
+"t:pca_mk_com":"普通",
+"t:pca_mk_same":"價格相同：此禮包中 1 高級 = {n} 普通（{list}）。",
+"t:pca_mk_game":"在遊戲中選擇{m}",
+"t:pca_mk_or":"{a} 或 {c}"
 }

@@ -2892,5 +2892,13 @@
 "t:tl_later":"나중에 출시",
 "t:tl_later_sub":"날짜 미정",
 "t:tl_new_pet":"새 펫",
-"t:tl_new_expert":"새 전문가"
+"t:tl_new_expert":"새 전문가",
+"t:marks_gems_trade":"보석을 일반 문장으로 교환",
+"t:marks_gems_trade_rate":"500 보석 = 일반 문장 1 · 배낭과 패키지의 보석",
+"t:pca_mk_buy_as":"문장 구매 방식",
+"t:pca_mk_adv":"고급",
+"t:pca_mk_com":"일반",
+"t:pca_mk_same":"같은 가격: 이 패키지에서 고급 1 = 일반 {n} ({list}).",
+"t:pca_mk_game":"게임에서 {m} 선택",
+"t:pca_mk_or":"{a} 또는 {c}"
 }

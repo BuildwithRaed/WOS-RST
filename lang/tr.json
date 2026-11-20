@@ -2892,5 +2892,13 @@
 "t:tl_later":"Daha sonra",
 "t:tl_later_sub":"gün henüz bilinmiyor",
 "t:tl_new_pet":"Yeni evcil hayvan",
-"t:tl_new_expert":"Yeni uzman"
+"t:tl_new_expert":"Yeni uzman",
+"t:marks_gems_trade":"Mücevherleri Sıradan Nişana takas et",
+"t:marks_gems_trade_rate":"500 Mücevher = 1 Sıradan Nişan · Çantandaki ve paketlerdeki mücevherler",
+"t:pca_mk_buy_as":"Nişanları şöyle al",
+"t:pca_mk_adv":"Gelişmiş",
+"t:pca_mk_com":"Sıradan",
+"t:pca_mk_same":"Aynı fiyat: bu pakette 1 Gelişmiş = {n} Sıradan ({list}).",
+"t:pca_mk_game":"oyunda {m} seç",
+"t:pca_mk_or":"{a} veya {c}"
 }
