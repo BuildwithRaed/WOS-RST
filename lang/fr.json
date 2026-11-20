@@ -2903,5 +2903,22 @@
 "t:er_sig_paths":"{n} voies",
 "t:er_sig_path1":"1 voie",
 "t:er_sig_general":"{n} généraux",
-"t:er_sig_from_gen":"{n} des généraux"
+"t:er_sig_from_gen":"{n} des généraux",
+"t:exr_count":"Compter la recherche",
+"t:exp_sig_split":"Niveau {lv} · Recherche {rs}",
+"t:exp_sig_gen_note":"Les sceaux généraux couvrent le manque",
+"t:exr_count_tip":"Activé : la Recherche des experts compte dans les stats des troupes, le Tableau de bord et les Budgets. Désactivé : la recherche est exclue partout (le niveau des experts compte toujours).",
+"t:exr_not_counted":"Non compté",
+"t:exr_research_off":"désactivée",
+"t:xs_of_max":"sur {max} max · {left} restant",
+"t:xs_levels":"Niveaux des experts",
+"t:xs_skills":"Compétences",
+"t:xs_research":"Recherche",
+"t:xs_paths":"Recherche · {n} voies",
+"t:xs_path1":"Recherche · 1 voie",
+"t:xs_left":"{n} restant",
+"t:xs_max":"max",
+"t:xs_troop_only":"{troop} uniquement",
+"t:xs_research_off":"La recherche est désactivée (Compter la recherche), elle n’est donc pas comptée.",
+"t:xs_nothing":"Rien ne donne encore cette stat."
 }

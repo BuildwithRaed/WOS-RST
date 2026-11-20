@@ -2903,5 +2903,22 @@
 "t:er_sig_paths":"{n}ルート",
 "t:er_sig_path1":"1ルート",
 "t:er_sig_general":"汎用{n}",
-"t:er_sig_from_gen":"汎用から{n}"
+"t:er_sig_from_gen":"汎用から{n}",
+"t:exr_count":"研究を反映",
+"t:exp_sig_split":"レベル {lv} · 研究 {rs}",
+"t:exp_sig_gen_note":"汎用紋章で不足を補う",
+"t:exr_count_tip":"オン：専門家研究が部隊ステータス、ダッシュボード、予算に反映されます。オフ：研究はすべてから除外されます（専門家レベルは常に反映）。",
+"t:exr_not_counted":"反映なし",
+"t:exr_research_off":"オフ",
+"t:xs_of_max":"最大 {max} 中 · 残り {left}",
+"t:xs_levels":"専門家レベル",
+"t:xs_skills":"スキル",
+"t:xs_research":"研究",
+"t:xs_paths":"研究 · {n} ルート",
+"t:xs_path1":"研究 · 1 ルート",
+"t:xs_left":"残り {n}",
+"t:xs_max":"最大",
+"t:xs_troop_only":"{troop}のみ",
+"t:xs_research_off":"研究がオフ（研究を反映）のため反映されません。",
+"t:xs_nothing":"このステータスを与えるものはまだありません。"
 }

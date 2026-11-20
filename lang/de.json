@@ -2903,5 +2903,22 @@
 "t:er_sig_paths":"{n} Pfade",
 "t:er_sig_path1":"1 Pfad",
 "t:er_sig_general":"{n} allgemeine",
-"t:er_sig_from_gen":"{n} aus allgemeinen"
+"t:er_sig_from_gen":"{n} aus allgemeinen",
+"t:exr_count":"Forschung zählen",
+"t:exp_sig_split":"Stufe {lv} · Forschung {rs}",
+"t:exp_sig_gen_note":"Allgemeine Siegel decken den Rest",
+"t:exr_count_tip":"An: Experten-Forschung zählt in den Truppenwerten, der Übersicht und den Budgets. Aus: Forschung wird überall weggelassen (Expertenstufen zählen immer).",
+"t:exr_not_counted":"Nicht gezählt",
+"t:exr_research_off":"aus",
+"t:xs_of_max":"von {max} max · {left} offen",
+"t:xs_levels":"Expertenstufen",
+"t:xs_skills":"Fähigkeiten",
+"t:xs_research":"Forschung",
+"t:xs_paths":"Forschung · {n} Pfade",
+"t:xs_path1":"Forschung · 1 Pfad",
+"t:xs_left":"{n} offen",
+"t:xs_max":"max",
+"t:xs_troop_only":"nur {troop}",
+"t:xs_research_off":"Forschung ist ausgeschaltet (Forschung zählen) und wird nicht gezählt.",
+"t:xs_nothing":"Noch gibt nichts diesen Wert."
 }

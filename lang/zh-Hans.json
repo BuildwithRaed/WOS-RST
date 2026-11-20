@@ -2903,5 +2903,22 @@
 "t:er_sig_paths":"{n} 条路线",
 "t:er_sig_path1":"1 条路线",
 "t:er_sig_general":"通用 {n}",
-"t:er_sig_from_gen":"来自通用 {n}"
+"t:er_sig_from_gen":"来自通用 {n}",
+"t:exr_count":"计入研究",
+"t:exp_sig_split":"等级 {lv} · 研究 {rs}",
+"t:exp_sig_gen_note":"通用徽记补足缺口",
+"t:exr_count_tip":"开：专家研究计入部队属性、总览和预算。关：研究在所有地方都不计入（专家等级始终计入）。",
+"t:exr_not_counted":"未计入",
+"t:exr_research_off":"关",
+"t:xs_of_max":"满 {max} 中 · 还差 {left}",
+"t:xs_levels":"专家等级",
+"t:xs_skills":"技能",
+"t:xs_research":"研究",
+"t:xs_paths":"研究 · {n} 条路线",
+"t:xs_path1":"研究 · 1 条路线",
+"t:xs_left":"还差 {n}",
+"t:xs_max":"满级",
+"t:xs_troop_only":"仅{troop}",
+"t:xs_research_off":"研究已关闭（计入研究），因此不计入。",
+"t:xs_nothing":"暂时没有提供此属性的来源。"
 }

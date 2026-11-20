@@ -2903,5 +2903,22 @@
 "t:er_sig_paths":"{n} percorsi",
 "t:er_sig_path1":"1 percorso",
 "t:er_sig_general":"{n} generali",
-"t:er_sig_from_gen":"{n} dai generali"
+"t:er_sig_from_gen":"{n} dai generali",
+"t:exr_count":"Conta ricerca",
+"t:exp_sig_split":"Livello {lv} · Ricerca {rs}",
+"t:exp_sig_gen_note":"I sigilli generali coprono ciò che manca",
+"t:exr_count_tip":"Attivo: la Ricerca esperti conta nelle statistiche truppe, nella Dashboard e nei Budget. Spento: la ricerca è esclusa ovunque (il livello degli esperti conta sempre).",
+"t:exr_not_counted":"Non contato",
+"t:exr_research_off":"spenta",
+"t:xs_of_max":"di {max} max · mancano {left}",
+"t:xs_levels":"Livelli esperti",
+"t:xs_skills":"Abilità",
+"t:xs_research":"Ricerca",
+"t:xs_paths":"Ricerca · {n} percorsi",
+"t:xs_path1":"Ricerca · 1 percorso",
+"t:xs_left":"mancano {n}",
+"t:xs_max":"max",
+"t:xs_troop_only":"solo {troop}",
+"t:xs_research_off":"La ricerca è spenta (Conta ricerca), quindi non viene contata.",
+"t:xs_nothing":"Ancora nulla dà questa statistica."
 }

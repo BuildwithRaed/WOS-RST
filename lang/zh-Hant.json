@@ -2902,5 +2902,22 @@
 "t:er_sig_paths":"{n} 條路線",
 "t:er_sig_path1":"1 條路線",
 "t:er_sig_general":"通用 {n}",
-"t:er_sig_from_gen":"來自通用 {n}"
+"t:er_sig_from_gen":"來自通用 {n}",
+"t:exr_count":"計入研究",
+"t:exp_sig_split":"等級 {lv} · 研究 {rs}",
+"t:exp_sig_gen_note":"通用徽記補足缺口",
+"t:exr_count_tip":"開：專家研究計入兵種數據、總覽和預算。關：研究在所有地方都不計入（專家等級始終計入）。",
+"t:exr_not_counted":"未計入",
+"t:exr_research_off":"關",
+"t:xs_of_max":"最大 {max} 中 · 還差 {left}",
+"t:xs_levels":"專家等級",
+"t:xs_skills":"技能",
+"t:xs_research":"研究",
+"t:xs_paths":"研究 · {n} 條路線",
+"t:xs_path1":"研究 · 1 條路線",
+"t:xs_left":"還差 {n}",
+"t:xs_max":"最大",
+"t:xs_troop_only":"僅{troop}",
+"t:xs_research_off":"研究已關閉（計入研究），因此不計入。",
+"t:xs_nothing":"暫時沒有提供此數值的來源。"
 }

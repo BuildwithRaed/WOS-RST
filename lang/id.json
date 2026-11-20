@@ -2902,5 +2902,22 @@
 "t:er_sig_paths":"{n} jalur",
 "t:er_sig_path1":"1 jalur",
 "t:er_sig_general":"{n} umum",
-"t:er_sig_from_gen":"{n} dari umum"
+"t:er_sig_from_gen":"{n} dari umum",
+"t:exr_count":"Hitung riset",
+"t:exp_sig_split":"Level {lv} · Riset {rs}",
+"t:exp_sig_gen_note":"Sigil Umum menutup kekurangan",
+"t:exr_count_tip":"Aktif: Riset Expert dihitung di statistik pasukan, Dasbor, dan Anggaran. Mati: riset tidak dihitung di mana pun (level expert selalu dihitung).",
+"t:exr_not_counted":"Tidak dihitung",
+"t:exr_research_off":"mati",
+"t:xs_of_max":"dari {max} maks · sisa {left}",
+"t:xs_levels":"Level expert",
+"t:xs_skills":"Skill",
+"t:xs_research":"Riset",
+"t:xs_paths":"Riset · {n} jalur",
+"t:xs_path1":"Riset · 1 jalur",
+"t:xs_left":"sisa {n}",
+"t:xs_max":"maks",
+"t:xs_troop_only":"hanya {troop}",
+"t:xs_research_off":"Riset dimatikan (Hitung riset), jadi tidak dihitung.",
+"t:xs_nothing":"Belum ada yang memberi statistik ini."
 }

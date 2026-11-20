@@ -2903,5 +2903,22 @@
 "t:er_sig_paths":"{n} rutas",
 "t:er_sig_path1":"1 ruta",
 "t:er_sig_general":"{n} generales",
-"t:er_sig_from_gen":"{n} de generales"
+"t:er_sig_from_gen":"{n} de generales",
+"t:exr_count":"Contar investigación",
+"t:exp_sig_split":"Nivel {lv} · Investigación {rs}",
+"t:exp_sig_gen_note":"Los sellos generales cubren lo que falta",
+"t:exr_count_tip":"Activado: la Investigación de Expertos cuenta en las estadísticas de tropas, el Panel y los Presupuestos. Desactivado: la investigación se excluye de todo (el nivel de los expertos siempre cuenta).",
+"t:exr_not_counted":"No contado",
+"t:exr_research_off":"desactivada",
+"t:xs_of_max":"de {max} máx. · faltan {left}",
+"t:xs_levels":"Niveles de expertos",
+"t:xs_skills":"Habilidades",
+"t:xs_research":"Investigación",
+"t:xs_paths":"Investigación · {n} rutas",
+"t:xs_path1":"Investigación · 1 ruta",
+"t:xs_left":"faltan {n}",
+"t:xs_max":"máx.",
+"t:xs_troop_only":"solo {troop}",
+"t:xs_research_off":"La investigación está desactivada (Contar investigación), así que no se cuenta.",
+"t:xs_nothing":"Nada da esta estadística todavía."
 }

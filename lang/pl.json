@@ -2903,5 +2903,22 @@
 "t:er_sig_paths":"{n} ścieżek",
 "t:er_sig_path1":"1 ścieżka",
 "t:er_sig_general":"{n} ogólnych",
-"t:er_sig_from_gen":"{n} z ogólnych"
+"t:er_sig_from_gen":"{n} z ogólnych",
+"t:exr_count":"Licz badania",
+"t:exp_sig_split":"Poziom {lv} · Badania {rs}",
+"t:exp_sig_gen_note":"Ogólne Pieczęcie pokrywają brak",
+"t:exr_count_tip":"Wł.: Badania Ekspertów liczą się w statystykach jednostek, Panelu i Budżetach. Wył.: badania są pomijane wszędzie (poziom ekspertów liczy się zawsze).",
+"t:exr_not_counted":"Nie liczony",
+"t:exr_research_off":"wył.",
+"t:xs_of_max":"z {max} maks. · zostało {left}",
+"t:xs_levels":"Poziomy ekspertów",
+"t:xs_skills":"Umiejętności",
+"t:xs_research":"Badania",
+"t:xs_paths":"Badania · ścieżki: {n}",
+"t:xs_path1":"Badania · 1 ścieżka",
+"t:xs_left":"zostało {n}",
+"t:xs_max":"maks.",
+"t:xs_troop_only":"tylko {troop}",
+"t:xs_research_off":"Badania są wyłączone (Licz badania), więc się nie liczą.",
+"t:xs_nothing":"Nic jeszcze nie daje tej statystyki."
 }

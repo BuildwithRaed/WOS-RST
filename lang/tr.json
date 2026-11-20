@@ -2902,5 +2902,22 @@
 "t:er_sig_paths":"{n} yol",
 "t:er_sig_path1":"1 yol",
 "t:er_sig_general":"{n} genel",
-"t:er_sig_from_gen":"genelden {n}"
+"t:er_sig_from_gen":"genelden {n}",
+"t:exr_count":"Araştırmayı say",
+"t:exp_sig_split":"Seviye {lv} · Araştırma {rs}",
+"t:exp_sig_gen_note":"Genel Mühürler eksiği karşılar",
+"t:exr_count_tip":"Açık: Uzman Araştırması birlik istatistiklerinde, Panelde ve Bütçelerde sayılır. Kapalı: araştırma her yerde dışarıda kalır (uzman seviyesi her zaman sayılır).",
+"t:exr_not_counted":"Sayılmıyor",
+"t:exr_research_off":"kapalı",
+"t:xs_of_max":"{max} maks. içinden · {left} kaldı",
+"t:xs_levels":"Uzman seviyeleri",
+"t:xs_skills":"Yetenekler",
+"t:xs_research":"Araştırma",
+"t:xs_paths":"Araştırma · {n} yol",
+"t:xs_path1":"Araştırma · 1 yol",
+"t:xs_left":"{n} kaldı",
+"t:xs_max":"maks",
+"t:xs_troop_only":"yalnız {troop}",
+"t:xs_research_off":"Araştırma kapalı (Araştırmayı say), bu yüzden sayılmıyor.",
+"t:xs_nothing":"Henüz bu istatistiği veren bir şey yok."
 }
