@@ -2892,5 +2892,13 @@
 "t:tl_later":"Mais tarde",
 "t:tl_later_sub":"dia ainda desconhecido",
 "t:tl_new_pet":"Novo pet",
-"t:tl_new_expert":"Novo especialista"
+"t:tl_new_expert":"Novo especialista",
+"t:marks_gems_trade":"Trocar Gemas por Marcas Comuns",
+"t:marks_gems_trade_rate":"500 Gemas = 1 Marca Comum · as gemas da sua Mochila e dos pacotes",
+"t:pca_mk_buy_as":"Comprar as marcas como",
+"t:pca_mk_adv":"Avançadas",
+"t:pca_mk_com":"Comuns",
+"t:pca_mk_same":"Mesmo preço: 1 Avançada = {n} Comuns neste pacote ({list}).",
+"t:pca_mk_game":"escolha {m} no jogo",
+"t:pca_mk_or":"{a} ou {c}"
 }

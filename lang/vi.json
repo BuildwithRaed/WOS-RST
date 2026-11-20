@@ -2892,5 +2892,13 @@
 "t:tl_later":"Sắp tới",
 "t:tl_later_sub":"chưa biết ngày",
 "t:tl_new_pet":"Thú cưng mới",
-"t:tl_new_expert":"Chuyên gia mới"
+"t:tl_new_expert":"Chuyên gia mới",
+"t:marks_gems_trade":"Đổi Đá Quý lấy Dấu Ấn Thường",
+"t:marks_gems_trade_rate":"500 Đá Quý = 1 Dấu Ấn Thường · đá quý trong Ba lô và trong gói",
+"t:pca_mk_buy_as":"Mua dấu ấn dạng",
+"t:pca_mk_adv":"Cao Cấp",
+"t:pca_mk_com":"Thường",
+"t:pca_mk_same":"Cùng giá: 1 Cao Cấp = {n} Thường trong gói này ({list}).",
+"t:pca_mk_game":"chọn {m} trong game",
+"t:pca_mk_or":"{a} hoặc {c}"
 }

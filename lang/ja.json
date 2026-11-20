@@ -2893,5 +2893,13 @@
 "t:tl_later":"今後追加",
 "t:tl_later_sub":"日付未定",
 "t:tl_new_pet":"新しいペット",
-"t:tl_new_expert":"新しいエキスパート"
+"t:tl_new_expert":"新しいエキスパート",
+"t:marks_gems_trade":"ジェムを通常マークに交換",
+"t:marks_gems_trade_rate":"500ジェム = 通常マーク1 · バッグとパックのジェム",
+"t:pca_mk_buy_as":"マークの購入方法",
+"t:pca_mk_adv":"上級",
+"t:pca_mk_com":"通常",
+"t:pca_mk_same":"同じ価格: このパックでは上級1 = 通常{n} ({list})。",
+"t:pca_mk_game":"ゲームで{m}を選択",
+"t:pca_mk_or":"{a} または {c}"
 }

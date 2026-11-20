@@ -2893,5 +2893,13 @@
 "t:tl_later":"Plus tard",
 "t:tl_later_sub":"jour encore inconnu",
 "t:tl_new_pet":"Nouveau familier",
-"t:tl_new_expert":"Nouvel expert"
+"t:tl_new_expert":"Nouvel expert",
+"t:marks_gems_trade":"Échanger des Gemmes contre des Marques communes",
+"t:marks_gems_trade_rate":"500 Gemmes = 1 Marque commune · les gemmes de ton Sac et des packs",
+"t:pca_mk_buy_as":"Acheter les marques en",
+"t:pca_mk_adv":"Avancées",
+"t:pca_mk_com":"Communes",
+"t:pca_mk_same":"Même prix : 1 avancée = {n} communes dans ce pack ({list}).",
+"t:pca_mk_game":"choisis {m} dans le jeu",
+"t:pca_mk_or":"{a} ou {c}"
 }

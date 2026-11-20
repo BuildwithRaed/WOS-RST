@@ -2893,5 +2893,13 @@
 "t:tl_later":"稍后推出",
 "t:tl_later_sub":"日期尚未知晓",
 "t:tl_new_pet":"新宠物",
-"t:tl_new_expert":"新专家"
+"t:tl_new_expert":"新专家",
+"t:marks_gems_trade":"用宝石兑换普通印记",
+"t:marks_gems_trade_rate":"500 宝石 = 1 普通印记 · 背包和礼包中的宝石",
+"t:pca_mk_buy_as":"印记购买为",
+"t:pca_mk_adv":"高级",
+"t:pca_mk_com":"普通",
+"t:pca_mk_same":"价格相同：此礼包中 1 高级 = {n} 普通（{list}）。",
+"t:pca_mk_game":"在游戏中选择{m}",
+"t:pca_mk_or":"{a} 或 {c}"
 }

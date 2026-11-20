@@ -2893,5 +2893,13 @@
 "t:tl_later":"Kommt später",
 "t:tl_later_sub":"Tag noch unbekannt",
 "t:tl_new_pet":"Neues Haustier",
-"t:tl_new_expert":"Neuer Experte"
+"t:tl_new_expert":"Neuer Experte",
+"t:marks_gems_trade":"Edelsteine gegen Gewöhnliche Marken tauschen",
+"t:marks_gems_trade_rate":"500 Edelsteine = 1 Gewöhnliche Marke · Edelsteine aus deinem Rucksack und den Paketen",
+"t:pca_mk_buy_as":"Marken kaufen als",
+"t:pca_mk_adv":"Fortgeschritten",
+"t:pca_mk_com":"Gewöhnlich",
+"t:pca_mk_same":"Gleicher Preis: 1 Fortgeschrittene = {n} Gewöhnliche in diesem Paket ({list}).",
+"t:pca_mk_game":"im Spiel {m} wählen",
+"t:pca_mk_or":"{a} oder {c}"
 }
