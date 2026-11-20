@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 117; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 118; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2006,6 +2006,9 @@ const T = {
   isl_rs_sh_next: { en: "next shards from a pack: {d}" },
   isl_tag_ev: { en: "\ud83c\udfaa {t}" },
   isl_tag_rk: { en: "\ud83c\udfc6 {t}" },
+  isl_dy1: { en: "{n} day" },
+  isl_dy: { en: "{n} days" },
+  isl_today_s: { en: "today" },
   isl_wk: { en: "{n} wk" },
   isl_mo: { en: "{n} mo" },
   isl_not_counted: { en: "{n} buildings not counted (event / ranked)" },
@@ -27642,8 +27645,13 @@ function islNextEvent(src) {
     const g = islFindEvent(src.ev);
     if (g && packParseDay(gameEventAnchor(g))) {
       const today = packStartOfToday();
-      const st = gameEventStarts(g, today, new Date(today.getTime() + (g.every * 2 + 7) * 86400000)).find((d) => d >= today);
-      if (st) return { off: Math.round((st - today) / 86400000), every: g.every, known: true, weeks4: g.every === 28, evName: g.name };
+      // A league running now counts too: event copies come now, ranked ones on its last day.
+      const st = gameEventStarts(g, today, new Date(today.getTime() + (g.every * 2 + 7) * 86400000))[0];
+      if (st) {
+        const len = Math.max(1, Number(g.days) || 1), end = new Date(st.getTime() + (len - 1) * 86400000);
+        const off = st >= today ? Math.round((st - today) / 86400000) : src.kind === "ranked" ? Math.round((end - today) / 86400000) : 0;
+        return { off, every: g.every, known: true, weeks4: g.every === 28, evName: g.name, running: st < today };
+      }
     }
   }
   if (src.dates === "pack" && src.pack && ISL_PACKS && ISL_PACK_TABLES && ISL_PACK_TABLES.some((tb) => String(tb.id) === src.pack)) {
@@ -28113,7 +28121,7 @@ async function renderIslandGallery() {
     const d = packStartOfToday(); d.setUTCDate(d.getUTCDate() + days);
     return { src, per, copies, cycles, days, nx, at: d, date: d.toLocaleDateString(undefined, { month: "short", year: "numeric", timeZone: "UTC" }) };
   };
-  const evShort = (days) => (days < 56 ? t("isl_wk").replace("{n}", Math.max(1, Math.ceil(days / 7))) : t("isl_mo").replace("{n}", Math.round(days / 30)));
+  const evShort = (days) => (days <= 0 ? t("isl_today_s") : days < 7 ? t(days === 1 ? "isl_dy1" : "isl_dy").replace("{n}", days) : days < 56 ? t("isl_wk").replace("{n}", Math.max(1, Math.ceil(days / 7))) : t("isl_mo").replace("{n}", Math.round(days / 30)));
   // Time for one building as if everything went to it: { days } or null without income.
   // When the building reaches its target in the shared plan (days from today), or null.
   const bTime = (s) => (usesShards(s) || usesEssence(s) ? (sharedPlan(true).fin.has(s.id) ? sharedPlan(true).fin.get(s.id) : 0) : null);
