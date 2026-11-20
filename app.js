@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 116; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 117; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -1529,6 +1529,20 @@ const T = {
   pgsw_my_packs_n: { en: "My packs ({n})" },
   mm_chip_research: { en: "Research" },
   mm_chip_refine: { en: "Refine" },
+  mrg_experts_title: { en: "Experts" },
+  mrg_pets_title: { en: "Pets" },
+  xh_exp_d: { en: "Level (blue) = every counted expert's level stat plus Romulus's and Gareth's troop skills, for all troops. Research (gold) = the general experts' research plus the picked troop's own expert. Event bonuses come on top during that event." },
+  xh_pets_d: { en: "ATK and DEF (blue) = Pets Level of all counted pets, for all troops. LETH and HP (gold) = Pet Refine of all counted pets, for the troop picked." },
+  xh_ev_title: { en: "Event bonuses" },
+  xh_ev_all: { en: "all max" },
+  xh_ev_n: { en: "{n} not at max · {name}" },
+  xh_ev_off: { en: "not counted" },
+  xh_rf_at_max: { en: "Refine {n} stats at max" },
+  xh_n_of: { en: "{a} of {b}" },
+  er_sig_paths: { en: "{n} paths" },
+  er_sig_path1: { en: "1 path" },
+  er_sig_general: { en: "{n} General" },
+  er_sig_from_gen: { en: "{n} from General" },
   mb_pages: { en: "{n} pages" },
   mb_page1: { en: "1 page" },
   ms_title: { en: "Menu style" },
@@ -1622,7 +1636,6 @@ const T = {
   pk_picks_s: { en: "Pick options" },
   pk_close: { en: "Close" },
   plx_all_troops: { en: "All troops" },
-  plx_all: { en: "All" },
   t12x_target: { en: "Target" },
   t12x_node1: { en: "1 node" },
   t12x_max_pct: { en: "max {n}%" },
@@ -2083,7 +2096,6 @@ const T = {
   stars_of_5: { en: "/ 5 stars" },
   hs_no_heroes: { en: "No heroes here yet." },
   pets_level_title: { en: "Pets Level" },
-  pets_summed_desc: { en: "Summed across all 15 pets, based on current levels." },
   not_started: { en: "Not started" },
   max_suffix: { en: " (Max)" },
   upcoming_tag: { en: "Upcoming" },
@@ -2255,7 +2267,6 @@ const T = {
   material_serum: { en: "Serum" },
   troop_lancer_singular: { en: "Lancer" },
   pets_refine_title: { en: "Pets Refine" },
-  tier_suffix: { en: "tier" },
   max_button: { en: "Max" },
   rl_lab_btn: { en: "Lab" },
   rl_lab_go: { en: "Open the Research Lab (Refined FC)" },
@@ -2308,13 +2319,6 @@ const T = {
   t11_helios_title: { en: "T11 Research" },
   data_not_available_troop: { en: "Data not yet available for this troop type." },
   stats_data_not_available: { en: "Stats data not available yet." },
-  exp_all_d: { en: "every counted expert's level stat, plus Romulus's and Gareth's troop skills. Always on." },
-  exp_svs_d: { en: "only Valeria's Battle Concerto skill and Conqueror's Spirit talent, in the SvS Battle Phase." },
-  exp_foundry_d: { en: "only Fabian's Heightened Firepower skill and Craftsman of War talent, in Foundry Battle." },
-  exp_frost_d: { en: "only Kathy's Child of Frost talent, in Frostfire Mine." },
-  exp_tundra_d: { en: "only Ronne's Trade Dominion talent, on the Tundra Trade Route." },
-  exp_tabs_note: { en: "An event tab shows only that event's extra bonus; it comes on top of All." },
-  exp_ev_off: { en: "{name} isn't counted: tick Count on the expert's card." },
   foundry_title: { en: "Foundry" },
   svs_title: { en: "SvS" },
   frostfire_mine_title: { en: "Frostfire Mine" },
@@ -2324,7 +2328,6 @@ const T = {
   resource_affinity: { en: "Affinity" },
   resource_sigils: { en: "Sigils" },
   experts_research_title: { en: "Experts Research" },
-  experts_research_desc: { en: "Attack/Defense/Lethality/Health from Expert Research. Troop-specific experts are counted per troop below." },
   only_suffix: { en: "only" },
   max_page_note: { en: "Max 6% page 1, max 10% page 2 (per path)" },
   path_label: { en: "Path" },
@@ -2396,7 +2399,6 @@ const T = {
   contact_soon: { en: "Contact details will be added soon." },
   marks_no_estimate: { en: "No estimate yet for these stages (not counted in the total until a formula close to the real result is confirmed):" },
   expert_upcoming: { en: "Upcoming" },
-  experts_sigils_summary: { en: "Expert sigils" },
   experts_sigils_summary_note: { en: "Change these on each expert's card" },
   expert_count_tick: { en: "Count" },
   expert_count_tip: { en: "Ticked: this expert counts in the totals, Dashboard and Budgets." },
@@ -2885,7 +2887,6 @@ const T = {
   rf_mk_common: { en: "Common" },
   rf_mk_or_adv: { en: "or {n} Advanced" },
   rf_mk_calc: { en: "Calculator" },
-  rf_stats_info: { en: "Each box is the refine bonus of all your counted pets together for the troop picked above, out of the most they can reach now." },
   marks_desc: { en: "Refining is random, so this is the closest average formula: every missing 1% of a stat costs the Common Marks rate of the stage it's in. Tune the rates or the overall adjustment as your own results come in. These are the fewest marks that reach the target on average; your real count may differ." },
   marks_rates: { en: "Common Marks per 1% (by stage)" },
   marks_rates_note: { en: "Grey/Green/Blue: average over all stats. Purple/Orange: per 1% of one stat. Red uses Orange's rate until you set it." },
@@ -2906,15 +2907,11 @@ const T = {
   pca_mk_game: { en: "choose {m} in the game" },
   pca_mk_or: { en: "{a} or {c}" },
   g1_hide: { en: "Hide" },
-  er_paths_to_go: { en: "{n} paths to go" },
-  er_path_to_go_1: { en: "1 path to go" },
   er_gives: { en: "These levels give" },
   rc_settings: { en: "Roster settings" },
   rc_count_desc: { en: "Adds these 3 heroes' stats to the troop totals" },
   rc_maxgen: { en: "Max uses your highest Gen" },
   rc_maxgen_desc: { en: "{gen} for all heroes when working out the max" },
-  exp_have_n: { en: "have {n}" },
-  exp_general_n: { en: "+ {n} general" },
   exp_sigils_of: { en: "{name} Sigils" },
   exp_in_bar_title: { en: "Affinity already in {name}'s bar" },
   exp_max_one: { en: "Max {name}" },
@@ -3459,7 +3456,6 @@ const T = {
   pur_added_dates: { en: "Added on {n} dates" },
   set_info: { en: "What these settings do" },
   info_more: { en: "More about this" },
-  exp_sig_short: { en: "{n} short" },
   pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again." },
   pur_updating: { en: "Updating…" },
   sa_lock_line: { en: "{what} opens around day {day} — in about {n} days (≈ {date})." },
@@ -4262,7 +4258,9 @@ function admRedrawKeep(fn) { return keepPlace(() => keepBoxes(content, fn)); }
 // "settings", "missing", "page:<calcKey>"); kept across redraws, closed on navigation.
 let BUDGET_SHEET = null;
 let CDA_BUILD_P = null; // the "Free now" (Can do) build of this Budgets visit (shared, cleared by goToTab)
+let SIDE_HOLD = null; // the Experts / Pets side flip keeping the switch in place (sideHold)
 function goToTab(tab, opts = {}) {
+  if (typeof sideHoldStop === "function") sideHoldStop(false);
   if (tab === "roadmap" || tab === "cando") tab = "budgets"; // the old Roadmap / Can do pages (Back / Forward to them)
   CDA_BUILD_P = null; // "Free now" is worked out again on the next Budgets visit
   if (!isValidTab(tab)) tab = "overview";
@@ -4822,6 +4820,17 @@ async function render() {
   // The first draw keeps the loading layout instead of "Loading…".
   if (!content.querySelector(":scope > .boot-ld")) content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
+    // Experts / Pets: entering the page picks its side (sideEntryTab).
+    if (!same && sidePairOf(TAB)) {
+      const tb = await sideEntryTab(TAB);
+      if (seq !== RENDER_SEQ) return;
+      if (tb !== TAB) {
+        TAB = tb;
+        try { localStorage.setItem("last_tab", TAB); } catch (e) { /* storage blocked */ }
+        document.querySelectorAll("button[data-tab]").forEach((x) => x.classList.toggle("active", x.dataset.tab === TAB));
+        history.replaceState({ tab: TAB }, "", location.pathname + location.search);
+      }
+    }
     // Visitor pages that follow Admin's visitor access: when the settings
     // didn't load (weak connection), stay on the page and try again instead of
     // sending the person to the Dashboard.
@@ -4889,10 +4898,13 @@ async function render() {
       if (head) head.insertAdjacentHTML("afterend", nh); else content.insertAdjacentHTML("afterbegin", nh);
     }
     if (seq === RENDER_SEQ) {
-      if (same) { putBoxes(); window.scrollTo(0, y0); }
+      // (an Experts / Pets side flip keeps the switch in place itself: sideHold)
+      if (same) { putBoxes(); if (!SIDE_HOLD) window.scrollTo(0, y0); }
       if (!content.dataset.holdUntilReady) content.style.minHeight = "";
       LAST_RENDER_TAB = TAB;
       pageDrawn();
+      // Experts / Pets: the side not shown saves its Budgets needs too (quietly).
+      if (!same && sidePairOf(TAB) && sidePairOpen(sidePairOf(TAB))) sideBgNeeds(TAB);
     }
   } catch (e) {
     if (seq !== RENDER_SEQ) return; // a newer page is showing; don't cover it
@@ -19164,7 +19176,7 @@ function infoize(root) {
 // Chief Gear's top box on the other planner pages: on phones one card at the top holds the stats (troop switch), "Can do
 // now" and the Backpack boxes with Trades / Pack cost. The page's own elements move
 // in (their redraws keep working: anything redrawn outside is moved in again).
-const TOPBOX_TABS = { charmscalc: "LETH & HP", herogearcalc: "hg", refinepage: "", petsdata: "", t12research: "nostats", t11helios: "nostats", researchcenter: "nostats", expertspage: "experts", expertsresearchpage: "experts" };
+const TOPBOX_TABS = { charmscalc: "LETH & HP", herogearcalc: "hg", refinepage: "xh", petsdata: "xh", t12research: "nostats", t11helios: "nostats", researchcenter: "nostats", expertspage: "xh", expertsresearchpage: "xh" };
 const TOPBOX_MQ = window.matchMedia("(max-width: 900px)");
 // Pages whose Settings line moves into the top box, above the stats.
 const TOPBOX_SET_TABS = new Set(["t12research", "t11helios", "researchcenter"]);
@@ -19186,15 +19198,12 @@ function plxTopBox(root) {
     // Settings row, "TROOPS STATS" title, troop switch, stats, BACKPACK row (with the ▴ Hide square) and its boxes.
     box.innerHTML = `<div class="g1-set"></div><div class="g1-hd"${kind === "nostats" ? " hidden" : ""}><span class="g1-hd-t">${esc(t("troops_stats_title"))}</span></div><div class="g1-sw"></div><div class="g1-st"></div><div class="g1-mk"></div><div class="cg-sec g1-can"></div><div class="cg-sec cg-bp g1-bp"></div><div class="g1-gem"></div>`;
     main.insertBefore(box, main.firstChild);
-    if (TAB === "refinepage") {
-      const d = document.createElement("p"); d.className = "desc"; d.textContent = t("rf_stats_info");
-      infoAttach(box.querySelector(".g1-hd-t"), d);
-    }
+    if (kind === "xh") box.classList.add("xh-top", TAB === "petsdata" || TAB === "refinepage" ? "xh-tpets" : "xh-texp");
   }
   let fold = box.querySelector("[data-g1fold]");
   if (!fold) {
     fold = document.createElement("button");
-    fold.type = "button"; fold.className = "g1-fold g1-sq"; fold.dataset.g1fold = `top:${TAB}`;
+    fold.type = "button"; fold.className = "g1-fold g1-sq"; fold.dataset.g1fold = g1TopKey(TAB);
   }
   const put = (slot, el) => { if (el && !slot.contains(el)) { slot.replaceChildren(el); } };
   // The page's Settings card (same element, so its boxes keep their handlers).
@@ -19202,7 +19211,15 @@ function plxTopBox(root) {
   // Pets Refine: "Pack gems count as marks" is a slim line under the Backpack boxes.
   if (TAB === "refinepage") put(box.querySelector(".g1-gem"), shell.querySelector(".t12x-side > .t12x-settings"));
   // Research pages keep their stats where they are.
-  if (kind === "experts") {
+  if (kind === "xh") {
+    // Experts / Pets (both sides): the shared Troops Stats card moves in; its title (with its (i))
+    // becomes the box's title and its legend sits at the right of that row.
+    put(box.querySelector(".g1-st"), shell.querySelector(".t12x-main > .plx-stats-top.xh"));
+    const ttl = box.querySelector(".g1-st > .plx-stats-top > .t12x-title");
+    if (ttl) put(box.querySelector(".g1-hd-t"), ttl);
+    const hd = box.querySelector(".g1-hd"), leg = box.querySelector(".g1-st .xh-leg");
+    if (leg) hd.insertBefore(leg, box.querySelector(".g1-hd-t").nextSibling);
+  } else if (kind === "experts") {
     // Experts Level / Research: the Troops Stats card moves in, and
     // its title (with the (i) of what each tab counts) becomes the box's title.
     put(box.querySelector(".g1-st"), shell.querySelector(".t12x-main > .plx-stats-top"));
@@ -19230,9 +19247,19 @@ function plxTopBox(root) {
 // everything under the stats (Can do now, Backpack, Pack cost), remembered per
 // page on the account with the "Hide boxes" choices (calc_state "bar_hidden",
 // keys "top:<tab>").
+// Experts / Pets: one Hide / Show for both sides of the page ("top:experts" / "top:pets"); until it is
+// first tapped it follows the old per-side choice (Level's, else the other side's).
+function g1TopKey(tab) { const p = sidePairOf(tab); return p && sidePairOpen(p) ? `top:${p.picks[0]}` : `top:${tab}`; }
+function g1FoldVal(key) {
+  if (BAR_SHOW_ALL[key] !== undefined) return BAR_SHOW_ALL[key];
+  const p = SIDE_PAIRS.find((x) => `top:${x.picks[0]}` === key);
+  if (!p) return undefined;
+  const o = p.tabs.map((tb) => BAR_SHOW_ALL[`top:${tb}`]).find((v) => v !== undefined);
+  return o;
+}
 function g1FoldSync(root) {
   (root || document).querySelectorAll("[data-g1fold]").forEach((b) => {
-    const folded = BAR_SHOW_ALL[b.dataset.g1fold] === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc, .trd-rules");
+    const folded = g1FoldVal(b.dataset.g1fold) === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc, .trd-rules");
     if (box) box.classList.toggle("g1-folded", folded);
     // Compared as text: innerHTML gives back the real arrow, not "&#9662;", so an
     // HTML compare rewrote the button every time and the #content observer looped.
@@ -19247,8 +19274,12 @@ document.addEventListener("click", (e) => {
   const b = e.target.closest && e.target.closest("[data-g1fold]");
   if (!b) return;
   const key = b.dataset.g1fold;
+  sideHoldStop(true);
   document.querySelectorAll(".isl-mk-shown").forEach((x) => x.classList.remove("isl-mk-shown"));
-  BAR_SHOW_ALL[key] = BAR_SHOW_ALL[key] === false;
+  BAR_SHOW_ALL[key] = g1FoldVal(key) === false;
+  // the pair's one key now decides: the old per-side keys go (else a "shown" choice, which isn't
+  // saved, would fall back to an old "hidden" one next visit)
+  SIDE_PAIRS.forEach((p) => { if (key === `top:${p.picks[0]}`) p.tabs.forEach((tb) => delete BAR_SHOW_ALL[`top:${tb}`]); });
   saveBarHidden();
   g1FoldSync();
 });
@@ -19290,7 +19321,7 @@ function hdrSync(c) {
   if (!HDR_TITLE_SKIP.has(TAB) && NAV_PAGE_LABELS[TAB]) {
     const h = c.querySelector(".plx-head h2, .page-head h2");
     const tn = h && [...h.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
-    const want = PG_SW_PAIRS[TAB] === "market" ? t("mm_marketplace") : navLabel(TAB);
+    const want = PG_SW_PAIRS[TAB] === "market" ? t("mm_marketplace") : sideTitle(TAB, navLabel(TAB));
     if (tn && want && tn.textContent.trim() !== want) tn.textContent = want;
   }
   if (TAB === "chiefgear") {
@@ -19381,21 +19412,25 @@ document.addEventListener("click", (e) => {
   const card = !open && e.target.closest(".rc-card[data-rcopen]");
   if (card) { e.preventDefault(); e.stopPropagation(); dashRcSheet(card.dataset.rcopen); }
 }, true);
-let EXP_SIG_OPEN = false; // Experts Level sigils fold, kept for the visit
 let ROSTER_SET_OPEN = false; // Dashboard roster settings sheet (C1) is open
-document.addEventListener("toggle", (e) => { if (e.target.matches && e.target.matches("[data-expsig]")) EXP_SIG_OPEN = e.target.open; }, true);
 // Planner pages: "⇄ Trades ›" and
 // "$ <price> ›" beside the Backpack title open the Trades / Pack cost card as a
 // window on phones (on PC the card stays in the side column).
 const plxPriceLabel = (calcKey) => `${esc(PACK_COST_SHOWN[calcKey] || t("pack_cost_title"))} &#8250;`;
 let REFINE_CALC_OPEN = null; // set by the Pet Refine page: opens its advanced calculator
 let REFINE_REFRESH = null; // set by the Pet Refine page: redraws its totals, Backpack and windows
-document.addEventListener("click", (e) => { if (e.target.closest("[data-rfcalcbtn]") && TAB === "refinepage" && REFINE_CALC_OPEN) REFINE_CALC_OPEN(); });
+let REFINE_CALC_PENDING = false; // Pets Level's ⚙: flip to Refine, then open the calculator there
+document.addEventListener("click", (e) => {
+  if (!e.target.closest || !e.target.closest("[data-rfcalcbtn]")) return;
+  if (TAB === "refinepage" && REFINE_CALC_OPEN) REFINE_CALC_OPEN();
+  else if (TAB === "petsdata") { REFINE_CALC_PENDING = true; sideGo("refinepage"); }
+});
 function plxBuyBtnsHtml(calcKey) {
   // Chief Gear: its own sheet buttons (data-cgsheet), under its 🎒 Backpack line like the other pages
   if (calcKey === "chief_gear") return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-cgsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button>${visitorCan("packcost") ? `<button type="button" class="cg-bpbtn ice" data-cgsheet="packs" data-cgprice>${esc(PACK_COST_SHOWN.chief_gear || t("pack_cost_title"))} &#8250;</button>` : ""}</span>`;
   // Pet Refine: the advanced calculator beside Pack cost, where Trades sits on other pages
-  if (calcKey === "pets_refine") return `<span class="cg-bpb plx-bpb rf-bpb"><button type="button" class="cg-bpbtn rf-calcbtn" data-rfcalcbtn title="${esc(t("rf_mk_calc"))}" aria-label="${esc(t("rf_mk_calc"))}">&#9881;</button><button type="button" class="cg-bpbtn" data-plxsheet="trades" title="${esc(t("cg_trades"))}" aria-label="${esc(t("cg_trades"))}">&#8644;<span class="rf-tw"> ${esc(t("cg_trades"))}</span></button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
+  // Pets Level (with its Refine side): the same ⚙ (it opens the Refine side's calculator)
+  if (calcKey === "pets_refine" || (calcKey === "pets" && sidePairOpen(SIDE_PAIRS[1]))) return `<span class="cg-bpb plx-bpb rf-bpb"><button type="button" class="cg-bpbtn rf-calcbtn" data-rfcalcbtn title="${esc(t("rf_mk_calc"))}" aria-label="${esc(t("rf_mk_calc"))}">&#9881;</button><button type="button" class="cg-bpbtn" data-plxsheet="trades" title="${esc(t("cg_trades"))}" aria-label="${esc(t("cg_trades"))}">&#8644;<span class="rf-tw"> ${esc(t("cg_trades"))}</span></button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
   return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-plxsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
 }
 document.addEventListener("click", (e) => {
@@ -25015,13 +25050,55 @@ function wireTroopSwipe(el, troops, current, onSelect) {
     if (next >= 0 && next < troops.length) onSelect(troops[next]);
   });
 }
-// For longer lists (pets, experts) a "3 / 10" counter reads better than a
-// row of 10 dots. Arrows either side step through them one at a time.
+// Pets / experts cards (carousel): the card follows a sideways finger / mouse drag and snaps to
+// the next / previous card past a threshold (or back when not); at the first / last card it only
+// gives a little. A vertical move is left to the page (touch-action pan-y), a second finger to
+// pinch zoom, a drag that starts on a control to the control. Property handlers (no stacking).
 function wireIndexSwipe(el, count, activeIndex, onNavigate) {
-  wireSwipeGesture(el, (dir) => {
-    const next = activeIndex + dir;
-    if (next >= 0 && next < count) onNavigate(next);
-  });
+  el.style.touchAction = "pan-y pinch-zoom";
+  const INTERACTIVE = "select, input, textarea, button, a, option, label, [contenteditable='true']";
+  let sx = null, sy = null, mode = null, ptype = "", moved = false;
+  const back = () => { el.style.transition = "transform .18s ease-out"; el.style.transform = ""; };
+  // A card that just came in slides in from the side it came from.
+  if (CRS_ENTER && el.animate) {
+    try { el.animate([{ transform: `translateX(${CRS_ENTER * (document.dir === "rtl" ? -24 : 24)}%)`, opacity: 0.35 }, { transform: "none", opacity: 1 }], { duration: 210, easing: "ease-out" }); } catch (e) { /* no animation */ }
+  }
+  CRS_ENTER = 0;
+  el.onpointerdown = (e) => {
+    sx = null;
+    if (e.target.closest && e.target.closest(INTERACTIVE)) return;
+    if (!e.isPrimary) return; // a second finger = a pinch
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    sx = e.clientX; sy = e.clientY; mode = null; ptype = e.pointerType; moved = false;
+    el.style.transition = "";
+  };
+  el.onpointermove = (e) => {
+    if (sx == null || !e.isPrimary) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (!mode) {
+      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.2) { mode = "x"; try { el.setPointerCapture(e.pointerId); } catch (er) { /* not capturable */ } }
+      else if (Math.abs(dy) > 8) { mode = "y"; sx = null; return; }
+      else return;
+    }
+    moved = true;
+    const end = (dx < 0 && activeIndex >= count - 1) || (dx > 0 && activeIndex <= 0);
+    el.style.transform = `translateX(${end ? dx * 0.25 : dx}px)`;
+  };
+  el.onpointerup = (e) => {
+    if (sx == null) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    sx = null;
+    if (mode !== "x") { if (moved) back(); return; }
+    const minX = ptype === "mouse" ? 40 : 60, dir = dx < 0 ? 1 : -1, next = activeIndex + dir;
+    if (Math.abs(dx) > minX && Math.abs(dx) > Math.abs(dy) * 1.5 && next >= 0 && next < count) {
+      el.style.transition = "transform .15s ease-in";
+      el.style.transform = `translateX(${dx < 0 ? "-" : ""}${el.offsetWidth + 24}px)`;
+      setTimeout(() => { el.style.transition = ""; el.style.transform = ""; CRS_ENTER = dir; onNavigate(next); }, 150);
+    } else back();
+  };
+  el.onpointercancel = () => { sx = null; if (moved) back(); };
+  // Stops a mouse drag across the card from highlighting all its text.
+  el.ondragstart = (e) => { if (!(e.target.closest && e.target.closest(INTERACTIVE))) e.preventDefault(); };
 }
 
 // Chief Charm = tile grid: one pinned troop
@@ -25776,6 +25853,7 @@ const BAR_SUMMARY_KEYS = new Set(["t12_research", "t11_helios", "research_center
 // Research pages show research speedups in their time box, not as a square.
 const BAR_TIME_KEYS = new Set(["t12_research", "t11_helios", "research_center"]);
 const BAR_SHOW_ALL = {}; // { calcKey: false } - item tiles hidden (they start shown)
+const BAR_EFF_HOOKS = {}; // calcKey -> redraw what reads BAR_EFF_OWNED on the page (Pets Level's card boxes)
 const BAR_EFF_OWNED = {}; // { calcKey: { item: amount } } what the Backpack boxes count (chests and hidden trades in)
 // "Hide boxes" is remembered per page on the person's account (owner, 20 Oct
 // 2026): calc_state "bar_hidden" = { calcKey: true }.
@@ -25952,7 +26030,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     }).filter((tr) => !tr.lab || tr.getQty > 0);
     hiddenTrades.forEach((tr) => { effOwned[tr.to] = (effOwned[tr.to] || 0) + tr.getQty; });
   }
-  const noteEff = () => { BAR_EFF_OWNED[calcKey || "chief_gear"] = effOwned; };
+  const noteEff = () => { BAR_EFF_OWNED[calcKey || "chief_gear"] = effOwned; if (BAR_EFF_HOOKS[calcKey || "chief_gear"]) { try { BAR_EFF_HOOKS[calcKey || "chief_gear"](); } catch (e) { console.warn("bar", e); } } };
   recomputeEffOwned();
   noteEff();
   // What the page's "can reach" marks spend; redrawn
@@ -30907,16 +30985,15 @@ async function renderExpertsResearchPage() {
     return { sigil, stats };
   }
 
+  // The shared Troops Stats header (both sides): Research (this page, live) + Level (saved).
+  const XD = await xhExpData();
+  if (seq !== RENDER_SEQ) return;
+  XD.rs = saved; XD.rsUn = unlockedState;
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
-    title: t("experts_research_title"),
-    maxId: "expResearchMaxAllBtn",
+    title: sideTitle(TAB, t("experts_research_title")),
     amountsId: "expResearchAmounts", needId: "expResearchSigils",
-    statsHtml: `<div class="t12x-card plx-stats-top">
-      <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
-      ${plxStatTabsHtml("experts_research", [{ key: "all", label: t("plx_all_troops"), html: `<p class="desc" style="font-size:12px; margin:0 0 8px;">${esc(t("experts_research_desc"))}</p><div id="expResearchTotals"></div>` }]
-        .concat(["Infantry", "Lancer", "Marksman"].map((tr) => ({ key: tr, label: troopDisplayName(tr), color: PLX_TROOP_COLORS[tr], html: `<p class="desc" style="font-size:12px; margin:0 0 8px;" data-ertroopwho="${tr}"></p><div data-ertroop="${tr}"></div>` }))))}
-    </div>`,
+    statsHtml: xhCardHtml("exp"),
     mainHtml: `<div id="expResearchSwipeCounter"></div>
     <div id="expResearchGrid"></div>`,
   });
@@ -30929,37 +31006,6 @@ async function renderExpertsResearchPage() {
 
   let ER_SIG = { need: {}, left: {}, general: 0 }; // per expert: sigils needed / own left (for the card)
   const sigilsEl = document.getElementById("expResearchSigils");
-  const totalsEl = document.getElementById("expResearchTotals");
-  const TROOP_STAT_ORDER = ["Infantry", "Lancer", "Marksman"];
-  // Which experts are tied to a troop comes from the roster (Admin -> Experts
-  // Roster -> "Lancers only" / "Infantry only" / "Marksman only"), so a new
-  // troop-specific expert needs no code change.
-  const TROOP_STAT_EXPERT = {};
-  TROOP_STAT_ORDER.forEach((tr) => {
-    const names = expertsForTroop(tr, EXPERTS_IN_ORDER).map((e) => dataName(e));
-    TROOP_STAT_EXPERT[tr] = names.length ? names.join(", ") : null;
-  });
-  function computeStatTotals(includeExperts) {
-    const totals = { ATK: 0, DEF: 0, DMG: 0, HP: 0 };
-    const maxTotals = { ATK: 0, DEF: 0, DMG: 0, HP: 0 };
-    EXPERTS_IN_ORDER.forEach((expert) => {
-      if (!includeExperts.has(expert)) return;
-      if (!isResearchUnlocked(expert)) return;
-      pathNumbersFor(expert).forEach((p) => {
-        const st = saved[expert][p];
-        const { stats } = pathCost(expert, p, 0, st.current);
-        Object.keys(stats).forEach((k) => (totals[k] += stats[k]));
-        const { stats: mStats } = pathCost(expert, p, 0, pathTop(expert, p));
-        Object.keys(mStats).forEach((k) => (maxTotals[k] += mStats[k]));
-      });
-    });
-    return { totals, maxTotals };
-  }
-  // Two decimals: the main stat moves 0.01% per level, which one decimal hides.
-  function statTotalsHtml(totals, maxTotals) {
-    return plxStatBoxesHtml([["ATK", "ATK"], ["DEF", "DEF"], ["LETH", "DMG"], ["HP", "HP"]].map(([label, k]) => ({ label, val: totals[k], max: maxTotals[k], dp: 2 })), true);
-  }
-  const GENERAL_EXPERTS = new Set(EXPERTS_IN_ORDER.filter((e) => !expertTroopKey(e)));
   function renderTotals() {
     let totalSigil = 0;
     const sigilNeededByExpert = {};
@@ -31034,22 +31080,7 @@ async function renderExpertsResearchPage() {
     }));
     recordBudgetNeeds("experts_research", packGroups);
 
-    // General stat totals: every expert with no troop set on the roster
-    const general = computeStatTotals(GENERAL_EXPERTS);
-    totalsEl.innerHTML = statTotalsHtml(general.totals, general.maxTotals);
-
-    // Per troop: only the experts the roster ties to that troop, so it's clear
-    // what each one adds on top of the general totals above.
-    const troopData = {};
-    TROOP_STAT_ORDER.forEach((tr) => {
-      troopData[tr] = computeStatTotals(new Set(expertsForTroop(tr, EXPERTS_IN_ORDER)));
-    });
-    TROOP_STAT_ORDER.forEach((tr) => {
-      const d = troopData[tr];
-      const box = content.querySelector(`[data-ertroop="${tr}"]`), who = content.querySelector(`[data-ertroopwho="${tr}"]`);
-      if (box) box.innerHTML = statTotalsHtml(d.totals, d.maxTotals);
-      if (who) who.textContent = TROOP_STAT_EXPERT[tr] || "";
-    });
+    xhExpDraw(XD);
   }
 
   const gridEl = document.getElementById("expResearchGrid");
@@ -31082,6 +31113,14 @@ async function renderExpertsResearchPage() {
     const toGo = paths.filter((p) => (Number(saved[expert][p].desired) || 0) > (Number(saved[expert][p].current) || 0)).length;
     const need = Math.round(ER_SIG.need[expert] || 0), own = Math.round(ER_SIG.left[expert] || 0), gen = Math.round(ER_SIG.general || 0);
     const ER_SHORT = { ATK: "ATK", DEF: "DEF", DMG: "LETH", HP: "HP" };
+    // Sigils strip at the card's bottom (design H, owner 20 Nov 2026): the expert's own sigils
+    // you have / need (after Experts Level's share), what's short, paths to go, General Sigils left.
+    // General Sigils cover what the expert's own leave: short = need − own − General (✓ when covered).
+    const sigImg = EXPERT_INVENTORY_ICONS[`${expert} Sigils`] || "icons/item_icon_570000.png";
+    const ownShort = Math.max(0, need - own), sigShort = Math.max(0, need - own - gen);
+    const sigStrip = `<div class="er-sig" title="${esc(t("exp_sigils_of").replace("{name}", dataName(expert)))}"><img src="${esc(sigImg)}" alt="" /><span>${need > 0
+      ? `<b>${bidiNum(Math.min(own, need).toLocaleString())}</b> / ${bidiNum(need.toLocaleString())} · ${sigShort > 0 ? `<em class="bad">${bidiNum(sigShort.toLocaleString())} ${esc(t("bs_short_word"))}</em>` : ownShort > 0 ? `<em class="ok">&#10003; ${esc(t("er_sig_from_gen").replace("{n}", bidiNum(ownShort.toLocaleString())))}</em>` : `<em class="ok">&#10003;</em>`}`
+      : `<em class="ok">&#10003;</em>${own > 0 ? ` <b>${bidiNum(own.toLocaleString())}</b>` : ""}`}</span><i class="sp"></i><span>${toGo ? `${esc(toGo === 1 ? t("er_sig_path1") : t("er_sig_paths").replace("{n}", toGo))} · ` : ""}<img class="g" src="icons/item_icon_570000.png" alt="" title="${esc(t("material_general_sigils"))}" /> ${esc(t("er_sig_general").replace("{n}", bidiNum(gen.toLocaleString())))}</span></div>`;
     const val = (v, sel, tgt) => `<span class="exk-n${tgt ? " t" : ""}">${esc(v)}${sel}</span>`;
     // One row per path, all in the card: name, what the levels give, tappable "Now → Target"
     // (see-through selects over the numbers), bar now / target, the sigils it needs.
@@ -31107,23 +31146,12 @@ async function renderExpertsResearchPage() {
     };
     return `
       <div class="panel exp-h4c" style="${unlocked ? "" : "opacity:0.55;"}">
-        <div class="exp-hd">
-          ${img ? `<img src="${esc(img)}" alt="${esc(dataName(expert))}" loading="lazy" />` : ""}
-          <div class="exp-hd-t">
-            <div class="name">${esc(dataName(expert))}</div>
-            <div class="exp-stl">${esc(mainLabel)} <b>${bidiNum(`+${now.toFixed(2)}%`)}</b>${tgt > now ? ` &rarr; <b class="tg">${bidiNum(`+${tgt.toFixed(2)}%`)}</b>` : ""}${EXPERT_MAIN_STAT_TROOP[expert] ? ` · ${esc(troopDisplayName(EXPERT_MAIN_STAT_TROOP[expert]))} ${esc(t("only_suffix"))}` : ""}</div>
-            ${expertBadgeHtml(expert) ? `<div class="exp-tags">${expertBadgeHtml(expert)}</div>` : ""}
-          </div>
-        </div>
-        <div class="exp-nbs one">
-          <div class="exp-nb"><img src="${esc(EXPERT_INVENTORY_ICONS[`${expert} Sigils`] || "icons/item_icon_570000.png")}" alt="" /><span><small>${esc(t("exp_sigils_of").replace("{name}", dataName(expert)))}${toGo ? ` · ${esc(toGo === 1 ? t("er_path_to_go_1") : t("er_paths_to_go").replace("{n}", toGo))}` : ""}</small><b class="${need > 0 ? (need > own + gen ? "bad" : "") : "ok"}">${need > 0 ? bidiNum(need.toLocaleString()) : "&#10003;"}</b><small>${esc(t("exp_have_n").replace("{n}", shortAmount(own)))}${gen ? ` · ${esc(t("exp_general_n").replace("{n}", shortAmount(gen)))}` : ""}</small></span></div>
-        </div>
+        ${expertHeadHtml({ img, name: expert, talent: (EXPERTS_LIST.find((x) => x.key === expert) || {}).talent,
+          stat: `${esc(mainLabel)} <b>${bidiNum(`+${now.toFixed(2)}%`)}</b>${tgt > now ? ` &rarr; <b class="tg">${bidiNum(`+${tgt.toFixed(2)}%`)}</b>` : ""}${EXPERT_MAIN_STAT_TROOP[expert] ? ` · ${esc(troopDisplayName(EXPERT_MAIN_STAT_TROOP[expert]))} ${esc(t("only_suffix"))}` : ""}`,
+          max: `data-expresearchmax="${esc(expert)}"`, count: `data-expresearchunlock="${esc(expert)}"`, on: unlocked })}
         ${EXPERT_MAIN_STAT_TROOP[expert] ? `<div class="meta er-note">${esc(t("max_page_note"))}</div>` : ""}
         <div class="exp-skl-list">${paths.map(pathRow).join("")}</div>
-        <div class="exp-ft">
-          <label class="exp-count" title="${esc(t("expert_count_tip"))}"><input type="checkbox" data-expresearchunlock="${esc(expert)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
-          <button type="button" class="btn ghost exp-maxe" data-expresearchmax="${esc(expert)}">${esc(t("exp_max_one").replace("{name}", dataName(expert)))}</button>
-        </div>
+        ${sigStrip}
       </div>
       `;
   }
@@ -31216,16 +31244,6 @@ async function renderExpertsResearchPage() {
 
   renderTotals();
   renderGrid();
-  // Max / Reset (like Chief Gear): every counted expert's research paths, now and target.
-  wirePageMax({
-    btnId: "expResearchMaxAllBtn", key: "experts_research",
-    allMax: () => EXPERTS_IN_ORDER.filter(isResearchUnlocked).every((ex) => pathNumbersFor(ex).every((pn) => (Number(saved[ex][pn].current) || 0) >= pathTop(ex, pn))),
-    snap: () => Object.fromEntries(EXPERTS_IN_ORDER.map((ex) => [ex, saved[ex]])),
-    max: () => EXPERTS_IN_ORDER.filter(isResearchUnlocked).forEach((ex) => pathNumbersFor(ex).forEach((pn) => { const st = saved[ex][pn], v = Math.max(Number(st.current) || 0, pathTop(ex, pn)); st.current = v; st.desired = v; })),
-    reset: (kept) => EXPERTS_IN_ORDER.forEach((ex) => { if (kept && kept[ex]) saved[ex] = kept[ex]; }),
-    save: () => saveCalcState("experts_research", saved),
-    after: () => render(),
-  });
 }
 
 // Last per-expert sigil need saved by Experts Level, so it's only re-saved
@@ -31407,169 +31425,27 @@ async function renderExpertsPage() {
   await ensureBarHidden();
   await maxBeforeLoad("experts");
   if (seq !== RENDER_SEQ) return;
-  // Short tab names, SvS before Foundry. The event tabs count
-  // only their own bonus, so each one's text says what it counts.
-  const EXP_STAT_TABS = [
-    ["base", "plx_all", "exp_all_d", "expertsStatHeader"],
-    ["svs", "svs_title", "exp_svs_d", "expertsSvsHeader"],
-    ["foundry", "foundry_title", "exp_foundry_d", "expertsFoundryHeader"],
-    ["frostfire", "frostfire_mine_title", "exp_frost_d", "expertsFrostfireHeader"],
-    ["tundra", "tundra_trade_tab", "exp_tundra_d", "expertsTundraHeader"],
-  ];
+  // The shared Troops Stats header (both sides): Level (this page, live) + Research (saved).
+  const XD = await xhExpData();
+  if (seq !== RENDER_SEQ) return;
+  XD.lv = saved; XD.lvUn = unlockedState;
+
   content.innerHTML = plxShellHtml({
-    title: t("expertspage_title"),
-    maxId: "expertsMaxAllBtn",
+    title: sideTitle(TAB, t("expertspage_title")),
     // General speedups are a box in "Amounts from your Backpack" now, so this page has no Settings card.
     amountsId: "expertsAmounts", needId: "expertsSummary",
-    statsHtml: `<div class="t12x-card plx-stats-top">
-      <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
-      <div class="desc exp-tabs-d">${EXP_STAT_TABS.map(([, title, desc]) => `<div><b>${esc(t(title))}</b> · ${esc(t(desc))}</div>`).join("")}<div>${esc(t("exp_tabs_note"))}</div></div>
-      ${plxStatTabsHtml("experts", EXP_STAT_TABS.map(([key, title, , id]) => ({ key, label: t(title), html: `<div id="${id}"></div>` })))}
-    </div>`,
+    statsHtml: xhCardHtml("exp"),
     mainHtml: `
     <div id="expertsSwipeCounter"></div>
     <div id="expertsGrid"></div>`,
   });
   document.getElementById("expertsAmounts").innerHTML = `
     <div id="expertsFoot"></div>
-    <div id="expertsTime"></div>
     <div id="expertsInventory"${BAR_SHOW_ALL.experts !== false ? "" : ` style="display:none;"`}></div>
 `;
   { const b = document.getElementById("expertsAmounts_buy"); (b.querySelector("[data-buybody]") || b).innerHTML = `<div id="expertsPacks"></div>`; }
 
-  // Max / Reset (like Chief Gear): every counted expert's level and skills, now and target.
-  wirePageMax({
-    btnId: "expertsMaxAllBtn", key: "experts",
-    allMax: () => EXPERTS_SHOWN.filter((e) => isExpertUnlocked(e.key)).every((e) => (Number(saved[e.key].current) || 0) >= heroMaxLevelValue(e.key) - 0.001 && e.skills.every((sk) => (Number(saved[e.key].skills[sk].current) || 0) >= skillMaxLevel(e.key, sk))),
-    snap: () => Object.fromEntries(EXPERTS_SHOWN.map((e) => [e.key, saved[e.key]])),
-    max: () => EXPERTS_SHOWN.filter((e) => isExpertUnlocked(e.key)).forEach((e) => {
-      const hs = saved[e.key], top = heroMaxLevelValue(e.key);
-      const v = (Number(hs.current) || 0) >= top - 0.001 ? hs.current : top;
-      hs.current = v; hs.desired = v;
-      e.skills.forEach((sk) => { const st = hs.skills[sk], m = skillMaxLevel(e.key, sk), w = Math.max(Number(st.current) || 0, m); st.current = w; st.desired = w; });
-    }),
-    reset: (kept) => EXPERTS_SHOWN.forEach((e) => { if (kept && kept[e.key]) saved[e.key] = kept[e.key]; }),
-    save: () => saveCalcState("experts", saved),
-    after: () => render(),
-  });
-  const statHeaderEl = document.getElementById("expertsStatHeader");
-  function addLevelBaseToTotals(totals, hero, includeTalent, useTarget) {
-    if (!isExpertUnlocked(hero)) return; // unticked cards don't count anywhere
-    // plain 100 = before its Advance, 100.1 = the full value (expertLevelStat)
-    expertAddLevel(totals, AFFINITY_CACHE[hero] || [], saved[hero] ? (useTarget ? saved[hero].desired : saved[hero].current) : 0, includeTalent);
-  }
-  // Two sides of the same sum: the top figure uses every expert's Current
-  // level, the second line the same experts at their Target. Both walk the
-  // roster, so an expert added later counts on both sides with no code change.
-  function computeBaseTroopStats() {
-    const totals = { Attack: 0, Defense: 0, Lethality: 0, Health: 0 };
-    EXPERTS_SHOWN.forEach((e) => addLevelBaseToTotals(totals, e.key));
-    // Romulus's Last Line + Spirit of Aeetis, Gareth's Porcupine + Undefeated Will
-    addSkillStatsToTotals(totals, "Romulus", "Last Line");
-    addSkillStatsToTotals(totals, "Romulus", "Spirit of Aeetis");
-    addSkillStatsToTotals(totals, "Gareth", "Porcupine");
-    addSkillStatsToTotals(totals, "Gareth", "Undefeated Will");
-    return totals;
-  }
-  // The ceiling: every expert at its best level and those same skills maxed.
-  // Walks the roster, so an expert added later counts here too.
-  function computeBaseTroopStatsMax() {
-    const totals = { Attack: 0, Defense: 0, Lethality: 0, Health: 0 };
-    EXPERTS_SHOWN.forEach((e) => {
-      if (!isExpertUnlocked(e.key)) return;
-      const rows = (AFFINITY_CACHE[e.key] || []).slice(0, releasedLastIdx("expert_affinity_nodes", AFFINITY_CACHE[e.key] || []) + 1);
-      if (!rows.length) return;
-      // True peak across all levels, not just the last row - some curves dip at
-      // level 100 because of a relationship-tier reset.
-      const peak = rows.reduce((best, r) => (Number(r.stat_value) > Number(best.stat_value) ? r : best), rows[0]);
-      if (peak.stat_type) {
-        peak.stat_type.split(",").forEach((statName) => {
-          if (totals[statName] != null) totals[statName] += Number(peak.stat_value) || 0;
-        });
-      }
-    });
-    addSkillMaxToTotals(totals, "Romulus", "Last Line");
-    addSkillMaxToTotals(totals, "Romulus", "Spirit of Aeetis");
-    addSkillMaxToTotals(totals, "Gareth", "Porcupine");
-    addSkillMaxToTotals(totals, "Gareth", "Undefeated Will");
-    return totals;
-  }
-  function statHeaderHtml(totals, maxTotals) {
-    return plxStatBoxesHtml([["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].map(([label, key]) => ({ label, val: totals[key], max: maxTotals ? maxTotals[key] : null })), true);
-  }
-  function addSkillMaxToTotals(totals, hero, skill) {
-    if (!isExpertUnlocked(hero)) return;
-    const rows = SKILL_CACHE[`${hero}|${skill}`];
-    if (!rows || !rows.length) return;
-    const last = rows[Math.max(0, releasedLastIdx("expert_skill_nodes", rows))];
-    if (!last.stat_type) return;
-    last.stat_type.split(",").forEach((statName) => {
-      if (totals[statName] != null) totals[statName] += Number(last.stat_value) || 0;
-    });
-  }
-  function addSkillStatsToTotals(totals, hero, skill, useTarget) {
-    if (!isExpertUnlocked(hero)) return;
-    const rows = SKILL_CACHE[`${hero}|${skill}`];
-    const st = saved[hero] && saved[hero].skills[skill];
-    if (!rows || !st) return;
-    // rows are cumulative per level; find the row at (or below) that level
-    const lvl = useTarget ? st.desired : st.current;
-    let match = null;
-    rows.forEach((r) => {
-      if (r.level <= lvl) match = r;
-    });
-    if (!match || !match.stat_type) return;
-    match.stat_type.split(",").forEach((statName) => {
-      if (totals[statName] != null) totals[statName] += Number(match.stat_value) || 0;
-    });
-  }
-  function addTalentToTotals(totals, hero, useTarget) {
-    if (!isExpertUnlocked(hero)) return;
-    const s = expertLevelStat(AFFINITY_CACHE[hero] || [], saved[hero] ? (useTarget ? saved[hero].desired : saved[hero].current) : 0);
-    if (s && s.row.stat_type2) {
-      s.row.stat_type2.split(",").forEach((statName) => {
-        if (totals[statName] != null) totals[statName] += s.v2;
-      });
-    }
-  }
-  function addTalentMaxToTotals(totals, hero) {
-    if (!isExpertUnlocked(hero)) return;
-    const rows = AFFINITY_CACHE[hero] || [];
-    const last = rows[Math.max(0, releasedLastIdx("expert_affinity_nodes", rows))];
-    if (last && last.stat_type2) {
-      last.stat_type2.split(",").forEach((statName) => {
-        if (totals[statName] != null) totals[statName] += Number(last.stat_value2) || 0;
-      });
-    }
-  }
-  function renderStatHeader() {
-    statHeaderEl.innerHTML = statHeaderHtml(computeBaseTroopStats(), computeBaseTroopStatsMax());
-  }
-
-  // Event tabs count only that event's own bonus: the expert's event skill
-  // and talent, against their own max; stats the event doesn't give are left out.
-  function eventHeader(el, hero, skill) {
-    if (!el) return;
-    const zero = () => ({ Attack: 0, Defense: 0, Lethality: 0, Health: 0 });
-    const totals = zero(), maxTotals = zero(), types = new Set();
-    const rows = AFFINITY_CACHE[hero] || [], sk = skill ? SKILL_CACHE[`${hero}|${skill}`] || [] : [];
-    rows.forEach((r) => { if (r.stat_type2) r.stat_type2.split(",").forEach((k) => types.add(k.trim())); });
-    sk.forEach((r) => { if (r.stat_type) r.stat_type.split(",").forEach((k) => types.add(k.trim())); });
-    if (skill) { addSkillStatsToTotals(totals, hero, skill); addSkillMaxToTotals(maxTotals, hero, skill); }
-    addTalentToTotals(totals, hero);
-    addTalentMaxToTotals(maxTotals, hero);
-    const list = [["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].filter(([, key]) => types.has(key));
-    const off = isExpertUnlocked(hero) ? "" : `<div class="meta exp-ev-off">${esc(t("exp_ev_off").replace("{name}", dataName(hero)))}</div>`;
-    el.innerHTML = list.length ? plxStatBoxesHtml(list.map(([label, key]) => ({ label, val: totals[key], max: maxTotals[key] || null })), true) + off : off;
-  }
-  const foundryEl = document.getElementById("expertsFoundryHeader");
-  function renderFoundryHeader() { eventHeader(foundryEl, "Fabian", "Heightened Firepower"); } // + Craftsman of War talent
-  const svsEl = document.getElementById("expertsSvsHeader");
-  function renderSvsHeader() { eventHeader(svsEl, "Valeria", "Battle Concerto"); } // + Conqueror's Spirit talent
-  const frostfireEl = document.getElementById("expertsFrostfireHeader");
-  function renderFrostfireHeader() { eventHeader(frostfireEl, "Kathy"); } // Child of Frost talent
-  const tundraEl = document.getElementById("expertsTundraHeader");
-  function renderTundraHeader() { eventHeader(tundraEl, "Ronne"); } // Trade Dominion talent
+  const renderStatHeader = () => xhExpDraw(XD);
 
   const totalsEl = document.getElementById("expertsSummary");
   const footEl = document.getElementById("expertsFoot");
@@ -31789,19 +31665,7 @@ async function renderExpertsPage() {
     };
     gridEl.innerHTML = `
       <div class="panel exp-h4c exk" style="${unlocked ? "" : "opacity:0.55;"}">
-        <div class="exk-hd">
-          <img src="${esc(e.img)}" alt="${esc(dataName(hero))}" loading="lazy" />
-          <div class="exk-hd-t">
-            <div class="nm">${esc(dataName(hero))}</div>
-            ${e.talent ? `<div class="mt">${esc(t("expert_talent"))}: ${esc(dataName(e.talent))}</div>` : ""}
-            ${statLine ? `<div class="exp-stl">${statLine}</div>` : ""}
-            ${expertBadgeHtml(hero) ? `<div class="exp-tags">${expertBadgeHtml(hero)}</div>` : ""}
-          </div>
-          <div class="exk-tr">
-            <button type="button" class="btn ghost exp-maxe" data-expmax="${esc(hero)}" title="${esc(t("exp_max_one").replace("{name}", dataName(hero)))}">${esc(t("max_button"))}</button>
-            <label class="exp-count" title="${esc(t("expert_count_tip"))}"><input type="checkbox" data-expunlock="${esc(hero)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
-          </div>
-        </div>
+        ${expertHeadHtml({ img: e.img, name: hero, talent: e.talent, stat: statLine, max: `data-expmax="${esc(hero)}"`, count: `data-expunlock="${esc(hero)}"`, on: unlocked })}
         ${lvLine}${levelHtml}
         ${e.skills.map(skillRow).join("")}
       </div>`;
@@ -31842,10 +31706,6 @@ async function renderExpertsPage() {
         saved[sel.dataset.expcur].current = Number(sel.value);
         saveCalcState("experts", saved);
         renderStatHeader();
-        renderFoundryHeader();
-        renderSvsHeader();
-        renderFrostfireHeader();
-        renderTundraHeader();
         renderTotals();
         renderGrid();
       });
@@ -31869,10 +31729,6 @@ async function renderExpertsPage() {
         saveCalcState("experts_unlocked", unlockedState);
         renderTotals();
         renderStatHeader();
-        renderFoundryHeader();
-        renderSvsHeader();
-        renderFrostfireHeader();
-        renderTundraHeader();
         renderGrid();
       });
     });
@@ -31902,10 +31758,6 @@ async function renderExpertsPage() {
         }
         saveCalcState("experts", saved);
         renderStatHeader();
-        renderFoundryHeader();
-        renderSvsHeader();
-        renderFrostfireHeader();
-        renderTundraHeader();
         renderTotals();
         renderGrid();
       });
@@ -31916,10 +31768,6 @@ async function renderExpertsPage() {
         saved[hero].skills[skill].current = Number(sel.value);
         saveCalcState("experts", saved);
         renderStatHeader();
-        renderFoundryHeader();
-        renderSvsHeader();
-        renderFrostfireHeader();
-        renderTundraHeader();
         renderTotals();
         renderGrid();
       });
@@ -31954,12 +31802,6 @@ async function renderExpertsPage() {
     };
     // General speedups (shared with the research pages) right after the Expert ones.
     const fields = expertInventoryFields().flatMap((f) => (f === "Expert Speedups (minutes)" ? [f, GENERAL_SPEEDUP_KEY] : [f]));
-    // Skill time left after all your speedups, small, above the boxes (like the research pages).
-    const tn = tileNeed && tileNeed["Expert Speedups (minutes)"];
-    const timeLine = tn && tn.need > 0 ? `<div class="bs-time"><img src="icons/speedup-expert.png" alt="" /><span>${esc(t("resource_time"))} <b>${bidiNum(bsTime(tn.need))}</b></span>${tn.short > 0 ? `<span class="sh">${bidiNum(bsTime(tn.short))} ${esc(t("bs_short_word"))}</span>` : `<span class="ok">&#10003; ${esc(t("t12x_covered"))}</span>`}</div>
-      <div class="t12x-prog bs-time-bar"><i style="width:${Math.min(100, ((tn.need - tn.short) / tn.need) * 100)}%;${tn.short > 0 ? "" : " background:var(--good);"}"></i></div>` : "";
-    // Outside the boxes, so it stays when "Hide boxes" folds them (like the research pages).
-    document.getElementById("expertsTime").innerHTML = timeLine;
     // Boxes that give the same thing share one box and one short line: the three
     // Affinity items, and Expert + General Speedups (both pay the skills' time).
     const affItems = fields.filter((f) => f in AFFINITY_ITEM_VALUE);
@@ -32007,13 +31849,11 @@ async function renderExpertsPage() {
         },
       });
     };
-    const tilesHtml = fields.map((f) => { const k = grpOf(f); return k ? (f === GROUPS[k].items[0] ? grpHtml(k) : "") : tile(f); }).join("");
-    invEl.innerHTML = `${bsHelpHtml(!!tileNeed && fields.some((f) => tileNeed[f] && !(tileNeed[f].need > 0)), false)}<div class="bs-tiles">${tilesHtml}</div>
-      ${(() => { // folded (less on the page); the line says how many are short
-        const sg = (tileNeed && tileNeed.sigils) || {}, sh = Object.values(sg).filter((x) => x && x.short > 0).length;
-        return `<details class="exp-sigf" data-expsig${EXP_SIG_OPEN ? " open" : ""}><summary><span class="t12x-k">${esc(t("experts_sigils_summary"))}</span><span class="${sh ? "sh" : "ok"}">${sh ? esc(t("exp_sig_short").replace("{n}", sh)) : "&#10003;"}</span><span class="exp-sigf-c">&#9662;</span></summary>
-      ${expertSigilTilesHtml(invSaved, EXPERTS_SHOWN, tileNeed && tileNeed.sigils)}</details>`;
-      })()}
+    // One row (design D2, owner 20 Nov 2026): the Speedups box first, then Affinity, Books,
+    // General Sigils and every expert's own sigils (their item pictures); no time line above.
+    const ordered = fields.filter((f) => grpOf(f) === "spd").concat(fields.filter((f) => grpOf(f) !== "spd"));
+    const tilesHtml = ordered.map((f) => { const k = grpOf(f); return k ? (f === GROUPS[k].items[0] ? grpHtml(k) : "") : tile(f); }).join("");
+    invEl.innerHTML = `${bsHelpHtml(!!tileNeed && fields.some((f) => tileNeed[f] && !(tileNeed[f].need > 0)), false)}<div class="bs-tiles">${tilesHtml}${expertSigilTilesInner(invSaved, EXPERTS_SHOWN, tileNeed && tileNeed.sigils)}</div>
       <div class="bs-help bs-note">${esc(t("experts_sigils_summary_note"))}</div>`;
     invEl.querySelectorAll("[data-expedit]").forEach((btn) => btn.addEventListener("click", () => {
       const f = btn.dataset.expedit;
@@ -32077,10 +31917,6 @@ async function renderExpertsPage() {
   });
 
   renderStatHeader();
-  renderFoundryHeader();
-  renderSvsHeader();
-  renderFrostfireHeader();
-  renderTundraHeader();
   renderTotals();
   renderGrid();
   renderInventory();
@@ -32151,29 +31987,19 @@ async function renderRefinePage() {
 
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
-    title: t("pets_refine_title"),
-    maxId: "refineMaxAllBtn",
+    title: sideTitle(TAB, t("pets_refine_title")),
     amountsId: "refineMarksBar", needId: "refineNeed",
     // One pinned troop switch: it picks which troop's LETH / HP boxes show.
     // Header: the troop switch with its
     // Lethality / Health boxes, then the "Marks to max" answer row.
-    statsHtml: plxTroopSwitchHtml("pets_refine", "") + `<div class="rf-mk" id="refineMk"></div>`,
+    statsHtml: xhCardHtml("pets") + `<div class="rf-mk" id="refineMk"></div>`,
     mainHtml: `<div id="refineSwipeCounter"></div>
     <div id="refineList"></div>
     <div id="refineTotals" style="margin-top:12px;"></div>`,
   });
 
-  // The pinned troop switch's stat boxes (summed over every pet).
-  let refineStatsNow = null;
-  function drawRefineStats() {
-    const el = content.querySelector('[data-tsw="pets_refine"] .plx-tsw-stats');
-    if (!el || !refineStatsNow) return;
-    const [l, h] = { Infantry: ["il", "ih"], Lancer: ["ll", "lh"], Marksman: ["ml", "mh"] }[plxTroopOf("pets_refine")];
-    const { grand, grandMax } = refineStatsNow;
-    // Planner stat style, in one row: LETH / HP, "+now%", "/ +max%", a thin bar.
-    el.innerHTML = plxStatBoxesHtml([{ label: bnAbbr("Lethality"), val: grand[l], max: grandMax[l], dp: 2 }, { label: bnAbbr("Health"), val: grand[h], max: grandMax[h], dp: 2 }], true);
-  }
-  wirePlxTroopSwitch(content, "pets_refine", drawRefineStats);
+  // The shared Troops Stats header (Level ATK / DEF + this page's LETH / HP for the troop picked).
+  const drawRefineStats = () => xhPetsDraw();
   // The highest stage that's out (stages ticked "Upcoming" in Admin after it).
   function maxRow(pet) {
     const rows = PET_REFINE_CACHE[pet];
@@ -32290,7 +32116,6 @@ async function renderRefinePage() {
             <button type="button" class="btn small ghost" data-marksclear>${esc(t("marks_clear"))}</button>
             <button type="button" class="btn small ghost" data-marksadvanced="0">${esc(t("marks_advanced_close"))}</button>
           </div>`}`}`;
-    refineStatsNow = { grand, grandMax };
     drawRefineStats();
     // "Marks to max · all pets" row (same numbers as the card at the bottom).
     REFINE_REFRESH = () => { if (TAB === "refinepage") renderTotals(); };
@@ -32305,6 +32130,7 @@ async function renderRefinePage() {
       infoAttach(mkEl.querySelector(".rf-mkl"), d);
       mkEl.querySelector("[data-rfcalc]").addEventListener("click", () => { refineAdvOpen = true; drawAdv(); });
       REFINE_CALC_OPEN = () => { refineAdvOpen = true; drawAdv(); };
+      if (REFINE_CALC_PENDING) { REFINE_CALC_PENDING = false; REFINE_CALC_OPEN(); }
     }
     document.getElementById("refineTotals").innerHTML = `
       <div class="t12x-card">
@@ -32407,6 +32233,8 @@ async function renderRefinePage() {
     const isMaxed = remaining <= 0.005;
     const { color } = stageForValue(pet, statDef.maxKey, curVal);
 
+    const stl = listEl.querySelector(".pet-head .exp-stl");
+    if (stl) stl.innerHTML = rfAtMaxLine(pet);
     const barFill = row.querySelector("[data-refinebar] > div");
     if (barFill) {
       barFill.style.width = `${pct}%`;
@@ -32420,6 +32248,12 @@ async function renderRefinePage() {
       remainingEl.style.overflow = isMaxed ? "hidden" : "";
     }
   }
+  // "Refine N of 6 stats at max" (the card's stat line, same place as Level's).
+  function rfAtMaxLine(pet) {
+    const m = maxRow(pet), s = petState(pet);
+    const n = STAT_KEYS.filter(({ key, maxKey }) => { const mx = pct1(m[maxKey]); return mx > 0 && Math.min(Number(s[key]) || 0, mx) >= mx - 0.005; }).length;
+    return esc(t("xh_rf_at_max")).replace("{n}", `<b>${bidiNum(esc(t("xh_n_of").replace("{a}", n).replace("{b}", STAT_KEYS.length)))}</b>`);
+  }
   const refineCounterEl = document.getElementById("refineSwipeCounter");
   const refineWork = (pet) => isPetUnlocked(pet) && STAT_KEYS.some(({ key, maxKey }) => { const mx = pct1(maxRow(pet)[maxKey]); return mx - Math.min(Number(petState(pet)[key]) || 0, mx) > 0.005; });
   let activeRefineIdx = pagePickIdx("pets_refine", petNames, fresh, refineWork, { done: (pet) => isPetUnlocked(pet) && STAT_KEYS.some(({ key }) => (Number(petState(pet)[key]) || 0) > 0) });
@@ -32429,20 +32263,11 @@ async function renderRefinePage() {
     const pet = petNames[idx];
     const m = maxRow(pet);
     const s = petState(pet);
-    const tier = m.category || "Other";
     const color = PET_TROOP_COLORS_CYCLE[idx % PET_TROOP_COLORS_CYCLE.length];
     const unlocked = isPetUnlocked(pet);
     listEl.innerHTML = `
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:start;">
-          <div class="meta" style="font-size:10.5px; margin-bottom:8px;">${esc(refineTierDisplayName(tier))} ${esc(t("tier_suffix"))}</div>
-          <div style="display:flex; align-items:center; justify-content:flex-start; gap:8px; margin-bottom:12px; flex-wrap:nowrap;">
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; min-width:0; flex-wrap:nowrap;">
-              <input type="checkbox" data-petunlockrefine="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
-              ${petImage(pet) ? `<img src="${esc(petImage(pet))}" alt="" style="width:44px; height:44px; border-radius:10px; object-fit:cover; flex-shrink:0;" />` : ""}
-              <div class="name" style="font-size:12.5px; font-weight:700; color:${color}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(dataName(pet))}</div>${petIsUpcoming(pet) ? upcomingBadgeHtml() : ""}
-            </label>
-            <button class="btn ghost small" data-refinemaxpet="${esc(pet)}" style="flex-shrink:0; margin-left:auto;">${esc(t("max_button"))}</button>
-          </div>
+          ${petHeadHtml({ pet, color, on: unlocked, stat: rfAtMaxLine(pet), max: `data-refinemaxpet="${esc(pet)}"`, count: `data-petunlockrefine="${esc(pet)}"` })}
           ${STAT_KEYS.map(
             ({ key, label, maxKey }) => {
               const maxVal = pct1(m[maxKey]);
@@ -32515,16 +32340,6 @@ async function renderRefinePage() {
 
   renderTotals();
   renderList();
-  // Max / Reset (like Chief Gear): every counted pet's refine stats to the top released stage.
-  wirePageMax({
-    btnId: "refineMaxAllBtn", key: "pets_refine",
-    allMax: () => petNames.filter((pet) => isPetUnlocked(pet)).every((pet) => { const m = maxRow(pet), st = petState(pet); return STAT_KEYS.every(({ key, maxKey }) => (Number(st[key]) || 0) >= pct1(m[maxKey]) - 0.001); }),
-    snap: () => Object.fromEntries(petNames.map((pet) => [pet, PET_REFINE_TYPED_STATE[pet] == null ? null : PET_REFINE_TYPED_STATE[pet]])),
-    max: () => petNames.filter((pet) => isPetUnlocked(pet)).forEach((pet) => { const m = maxRow(pet), st = petState(pet); STAT_KEYS.forEach(({ key, maxKey }) => { st[key] = Math.max(Number(st[key]) || 0, pct1(m[maxKey])); }); }),
-    reset: (kept) => petNames.forEach((pet) => { if (!kept || !(pet in kept)) return; if (kept[pet] == null) delete PET_REFINE_TYPED_STATE[pet]; else PET_REFINE_TYPED_STATE[pet] = kept[pet]; }),
-    save: () => saveCalcState("pet_refine_typed", PET_REFINE_TYPED_STATE),
-    after: () => render(),
-  });
 }
 
 async function renderPetsDataPage() {
@@ -32534,10 +32349,9 @@ async function renderPetsDataPage() {
 
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
-    title: t("pets_level_title"),
+    title: sideTitle(TAB, t("pets_level_title")),
     amountsId: "petsMaterialsBar", needId: "petsNeed",
-    maxId: "petsMaxAllBtn",
-    statsHtml: `<div class="t12x-card plx-stats-top" id="petsTotals"></div>`,
+    statsHtml: xhCardHtml("pets"),
     mainHtml: `<div id="petsSwipeCounter"></div>
     <div id="petsList"></div>`,
   });
@@ -32549,7 +32363,6 @@ async function renderPetsDataPage() {
     const maxIdx = petMaxIdx(pet);
     return { from: -1, to: IS_OWNER ? maxIdx : -1 };
   }
-  const petsAllMax = () => petNames.every((pet) => getState(pet).from >= petMaxIdx(pet));
 
   function computeNeeded(pet) {
     const levels = PETS_NODES_CACHE[pet];
@@ -32580,9 +32393,7 @@ async function renderPetsDataPage() {
   }
 
   function renderTotals() {
-    maxBtnSync("petsMaxAllBtn", "pets", petsAllMax());
     const grand = { food: 0, manual: 0, potion: 0, serum: 0 };
-    let grandAtk = 0, grandAtkMax = 0;
     petNames.forEach((pet) => {
       if (!isPetUnlocked(pet)) return;
       const n = computeNeeded(pet);
@@ -32590,14 +32401,8 @@ async function renderPetsDataPage() {
       grand.manual += n.manual;
       grand.potion += n.potion;
       grand.serum += n.serum;
-      grandAtk += currentAtkDef(pet);
-      grandAtkMax += maxAtkDef(pet);
     });
-    document.getElementById("petsTotals").innerHTML = `
-        <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
-        <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("pets_summed_desc"))}</p>
-        ${plxStatBoxesHtml([{ label: bnAbbr("Attack"), val: grandAtk, max: grandAtkMax }, { label: bnAbbr("Defense"), val: grandAtk, max: grandAtkMax }], true)}
-    `;
+    xhPetsDraw(); // the shared Troops Stats header (this page's ATK / DEF + Refine's LETH / HP)
     // Mini targets: one pet up to level N (every 10 levels between now and its target).
     setPageMinis("pets", petNames.filter((pet) => isPetUnlocked(pet)).flatMap((pet) => {
       const levels = PETS_NODES_CACHE[pet] || [], { from, to } = getState(pet);
@@ -32633,6 +32438,18 @@ async function renderPetsDataPage() {
 
   const listEl = document.getElementById("petsList");
   const petsCounterEl = document.getElementById("petsSwipeCounter");
+  function fillPetRes() {
+    const have = BAR_EFF_OWNED.pets;
+    listEl.querySelectorAll("[data-pcres]").forEach((b) => {
+      const st = b.querySelector("[data-pcst]"), need = Number(b.dataset.need) || 0;
+      if (!st) return;
+      if (!(need > 0)) { st.innerHTML = `<span style="color:var(--good);">&#10003;</span>`; return; }
+      if (!have) { st.textContent = ""; return; }
+      const short = Math.max(0, need - (Number(have[b.dataset.pcres]) || 0));
+      st.innerHTML = short > 0 ? `<span style="color:var(--danger);">&minus;${esc(shortAmount(Math.round(short)))}</span>` : `<span style="color:var(--good);">&#10003;</span>`;
+    });
+  }
+  BAR_EFF_HOOKS.pets = () => { if (listEl.isConnected) fillPetRes(); };
   let activePetIdx = pagePickIdx("pets", petNames, fresh, (pet) => { if (!isPetUnlocked(pet)) return false; const { from, to } = getState(pet); return to > from; }, { done: (pet) => isPetUnlocked(pet) && getState(pet).from >= 0 });
   function renderList() {
     renderPickStrip(petsCounterEl, petNames.map((pt, i) => ({ label: dataName(pt), img: petImage(pt), color: PET_TROOP_COLORS_CYCLE[i % PET_TROOP_COLORS_CYCLE.length], dim: !isPetUnlocked(pt) })), activePetIdx, (next) => { activePetIdx = next; pagePickSet("pets", petNames[next]); renderList(); });
@@ -32682,15 +32499,15 @@ async function renderPetsDataPage() {
           <span class="pc-val${val > relMax ? " up" : ""}" data-petval="${role}">${esc(shortLbl(val))}<select data-pet${role}="${esc(pet)}" aria-label="${esc(t(role === "to" ? "target_label" : "current_label"))}">${opts}</select></span>
           <button type="button" data-petstep="${role}" data-d="1" aria-label="+" ${val >= maxI ? "disabled" : ""}>+</button>
         </div></div>`;
-    const chip = (icon, name, v) => `<span class="pc-chip" title="${esc(name)}"><img src="${esc(icon)}" alt="" />${Math.round(v).toLocaleString()}</span>`;
+    // Fixed A (owner, 20 Nov 2026): one row of 4 Backpack-style boxes (picture, "need N", red
+    // "−short" or ✓) against what the page's Backpack boxes count (BAR_EFF_OWNED.pets: Backpack,
+    // Pet Chests and trades in); filled by fillPetRes once the bar has worked them out.
+    const resBox = (item, icon, name, v) => `<div class="bp-tile bs-tile pc-rb" data-pcres="${item}" data-need="${Math.round(v)}" title="${esc(name)}"><img src="${esc(icon)}" alt="${esc(name)}" />${v > 0 ? `<span class="bs-need">${esc(t("bs_need").replace("{n}", shortAmount(Math.round(v))))}</span>` : `<span class="bs-need">${esc(name)}</span>`}<span class="bs-st" data-pcst></span></div>`;
 
     listEl.innerHTML = `
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:start;">
-          <div class="pc-head pet-head">
-            ${petImage(pet) ? `<img src="${esc(petImage(pet))}" alt="" />` : ""}
-            <div class="pet-nm"><div class="name" style="color:${color};">${esc(dataName(pet))}${done ? ` <span class="pc-done-ic" title="${esc(t("pet_done"))}">&#10003;</span>` : ""}</div>${petIsUpcoming(pet) || IS_OWNER ? `<div class="pet-tags">${petIsUpcoming(pet) ? upcomingBadgeHtml() : ""}</div>` : ""}</div>
-            <label class="exp-count" title="${esc(t("pet_count_tip"))}"><input type="checkbox" data-petunlock="${esc(pet)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
-          </div>
+          ${petHeadHtml({ pet, color, on: unlocked, done, stat: `${esc(bnAbbr("Attack"))} · ${esc(bnAbbr("Defense"))} <b>${bidiNum(`+${cur.toFixed(1)}%`)}</b> · ${esc(t("of_max_prefix"))} ${bidiNum(`+${max.toFixed(1)}%`)}`,
+            max: `data-petmaxone="${esc(pet)}"${from >= relMax && to >= relMax ? " disabled" : ""}`, count: `data-petunlock="${esc(pet)}"` })}
           <div class="pc-row">
             <div class="pc-stat">
               <span>${esc(t("troops_stats_title"))}</span>
@@ -32701,15 +32518,24 @@ async function renderPetsDataPage() {
             ${step("from", from, -1, lastIdx, fromOpts)}
             ${step("to", to, Math.max(0, from), lastIdx, levelOpts(to))}
           </div>
-          ${done ? `<div class="pc-done">&#10003; ${esc(t("pet_done"))}</div>` : `<div class="pc-chips">
-            ${chip(PET_MATERIAL_ICONS.food, t("material_food"), needed.food)}
-            ${chip(PET_MATERIAL_ICONS.manual, t("material_manual"), needed.manual)}
-            ${chip(PET_MATERIAL_ICONS.potion, t("material_potion"), needed.potion)}
-            ${chip(PET_MATERIAL_ICONS.serum, t("material_serum"), needed.serum)}
+          ${done ? `<div class="pc-done">&#10003; ${esc(t("pet_done"))}</div>` : `<div class="pc-res">
+            ${resBox("Food", PET_MATERIAL_ICONS.food, t("material_food"), needed.food)}
+            ${resBox("Manual", PET_MATERIAL_ICONS.manual, t("material_manual"), needed.manual)}
+            ${resBox("Potion", PET_MATERIAL_ICONS.potion, t("material_potion"), needed.potion)}
+            ${resBox("Serum", PET_MATERIAL_ICONS.serum, t("material_serum"), needed.serum)}
           </div>`}
         </div>`;
     wireIndexSwipe(listEl, petNames.length, activePetIdx, (next) => { activePetIdx = next; pagePickSet("pets", petNames[next]); renderList(); });
+    fillPetRes();
 
+    // Max (this pet): level and target to its highest open level (like the page's Max, one pet).
+    listEl.querySelectorAll("[data-petmaxone]").forEach((b) => b.addEventListener("click", () => {
+      const p = b.dataset.petmaxone, v = Math.max(getState(p).from, petMaxIdx(p));
+      PETS_STATE[p] = { from: v, to: Math.max(v, getState(p).to) };
+      savePetsState();
+      renderTotals();
+      renderList();
+    }));
     listEl.querySelectorAll("input[data-petunlock]").forEach((cb) => {
       cb.addEventListener("change", async () => {
         const pet = cb.dataset.petunlock;
@@ -32772,22 +32598,6 @@ async function renderPetsDataPage() {
     });
   }
 
-  // Max / Reset like Chief Gear (maxBeforeLoad / maxBtnSync): every pet's level and target.
-  document.getElementById("petsMaxAllBtn").addEventListener("click", pageMaxClick({
-    key: "pets",
-    allMax: petsAllMax,
-    keep: () => ({ cur: jsonCopy(Object.fromEntries(petNames.map((pet) => [pet, PETS_STATE[pet] == null ? null : PETS_STATE[pet]]))) }),
-    max: () => petNames.forEach((pet) => {
-      const v = Math.max(getState(pet).from, petMaxIdx(pet));
-      PETS_STATE[pet] = { from: v, to: v };
-    }),
-    reset: (b) => petNames.forEach((pet) => { const v = b.cur && b.cur[pet]; if (v == null) delete PETS_STATE[pet]; else PETS_STATE[pet] = v; }),
-    done: () => {
-      savePetsState();
-      renderTotals();
-      renderList();
-    },
-  }));
 
   renderTotals();
   renderList();
@@ -33503,35 +33313,598 @@ function bsHelpHtml(dash, chest, tap = true) {
 // Expert sigil tiles (each expert's picture and the sigils you hold for them).
 // need: { key: { need, short } } adds the short / ✓ / — line.
 function expertSigilTilesHtml(inv, experts, need) {
-  return `<div class="bs-tiles plx-sig">${experts.map((e) => {
+  return `<div class="bs-tiles plx-sig">${expertSigilTilesInner(inv, experts, need)}</div>`;
+}
+// Each box shows the "<Name> Sigils" item picture (General Sigils its own), not the portrait.
+function expertSigilTilesInner(inv, experts, need) {
+  return experts.map((e) => {
     // A counted expert with nothing to buy shows ✓;
     // not counted shows "—".
-    const n = need && need[e.key];
+    const n = need && need[e.key], item = `${e.key} Sigils`;
     const st = n ? (n.on && !(n.need > 0) ? { html: `<span class="bs-st"><span style="color:var(--good);">\u2713</span></span>`, off: false } : bsTileStatus(n.need, n.short)) : null;
-    return `<div class="bp-tile bs-tile ro${st && st.off ? " off" : ""}" title="${esc(dataName(e.key))}">
-      ${e.img ? `<img src="${esc(e.img)}" alt="" loading="lazy" style="border-radius:8px;" />` : ""}
-      <span class="bp-qty">${(Number(inv[`${e.key} Sigils`]) || 0).toLocaleString()}</span>
-      <span class="bp-name">${esc(dataName(e.key))}</span>
+    const img = itemRegIcon(item) || EXPERT_INVENTORY_ICONS[item] || "icons/item_icon_570000.png";
+    return `<div class="bp-tile bs-tile ro${st && st.off ? " off" : ""}" title="${esc(materialDisplayName(item))}">
+      <img src="${esc(img)}" alt="" loading="lazy" />
+      <span class="bp-qty">${(Number(inv[item]) || 0).toLocaleString()}</span>
+      <span class="bp-name">${esc(materialDisplayName(item))}</span>
       ${st ? st.html : ""}
     </div>`;
-  }).join("")}</div>`;
+  }).join("");
 }
-// Pet / expert switcher (owner picked B, 18 Nov 2026; replaces the picture strip):
-// a small "‹ 9 / 11 ›" tab on the card's top edge (arrows grey at the first / last)
-// and the previous / next one's picture peeking out at each side of the card
-// (tap = go there). The card itself still swipes (wireIndexSwipe).
-// items: [{ label, img, color, dim }]; the card is containerEl's next sibling.
+// One card header for every expert / pet card on both sides (owner, 20 Nov 2026): picture, name,
+// talent (experts), one stat line (the side's own stat, same place and size), the Upcoming tag,
+// Max + Count at the top right. max / count = the side's own data attributes (handlers unchanged).
+function expertHeadHtml(o) {
+  return `<div class="exk-hd">
+          ${o.img ? `<img src="${esc(o.img)}" alt="${esc(dataName(o.name))}" loading="lazy" />` : ""}
+          <div class="exk-hd-t">
+            <div class="nm">${esc(dataName(o.name))}</div>
+            ${o.talent ? `<div class="mt">${esc(t("expert_talent"))}: ${esc(dataName(o.talent))}</div>` : ""}
+            ${o.stat ? `<div class="exp-stl">${o.stat}</div>` : ""}
+            ${expertBadgeHtml(o.name) ? `<div class="exp-tags">${expertBadgeHtml(o.name)}</div>` : ""}
+          </div>
+          <div class="exk-tr">
+            <button type="button" class="btn ghost exp-maxe" ${o.max} title="${esc(t("exp_max_one").replace("{name}", dataName(o.name)))}">${esc(t("max_button"))}</button>
+            <label class="exp-count" title="${esc(t("expert_count_tip"))}"><input type="checkbox" ${o.count} ${o.on ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
+          </div>
+        </div>`;
+}
+function petHeadHtml(o) {
+  return `<div class="pc-head pet-head">
+            ${petImage(o.pet) ? `<img src="${esc(petImage(o.pet))}" alt="" />` : ""}
+            <div class="pet-nm"><div class="name" style="color:${o.color};">${esc(dataName(o.pet))}${o.done ? ` <span class="pc-done-ic" title="${esc(t("pet_done"))}">&#10003;</span>` : ""}</div>${o.stat ? `<div class="exp-stl">${o.stat}</div>` : ""}${petIsUpcoming(o.pet) ? `<div class="pet-tags">${upcomingBadgeHtml()}</div>` : ""}</div>
+            <div class="exk-tr">
+              <button type="button" class="btn ghost exp-maxe" ${o.max} title="${esc(t("exp_max_one").replace("{name}", dataName(o.pet)))}">${esc(t("max_button"))}</button>
+              <label class="exp-count" title="${esc(t("pet_count_tip"))}"><input type="checkbox" ${o.count} ${o.on ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
+            </div>
+          </div>`;
+}
+// ---- Experts / Pets: one Troops Stats header for both sides (owner picked the final
+// mock-ups, 20 Nov 2026). The card is the same on Level and Research (Refine): the legend
+// "● Level ● Research" in the title row, Infantry / Lancer / Marksman tabs, then
+// Experts: 4 boxes ATK / DEF / LETH / HP = Level (All) + that troop's Research (the general
+// experts + the troop's own expert), a two-colour bar and the two parts under it, and a folded
+// "Event bonuses" table (each event's own bonus vs its max);
+// Pets: ATK / DEF from Pets Level (blue edge) and LETH / HP from Pet Refine for the troop (gold edge).
+// Both sides work it out from the same saved states (the side shown passes its live copy).
+const XH_GOLD = "#e0b25a";
+const XH_EVENTS = [["svs", "svs_title", "Valeria", "Battle Concerto"], ["foundry", "foundry_title", "Fabian", "Heightened Firepower"], ["frostfire", "frostfire_mine_title", "Kathy", null], ["tundra", "tundra_trade_tab", "Ronne", null]];
+const XH_STATS = [["ATK", "Attack", "ATK"], ["DEF", "Defense", "DEF"], ["LETH", "Lethality", "DMG"], ["HP", "Health", "HP"]];
+let XH_EV_OPEN = false; // Experts' "Event bonuses" fold, kept for the visit
+let XH_REDRAW = null; // the shown side's header redraw (troop tab / event fold taps)
+const xhTroop = (kind) => plxTroopOf(`xh_${kind}`);
+// Everything both Experts sides need for the header (all kept for the visit).
+async function xhExpData() {
+  const [, lv, lvUn, skillRows, affRows, rs, rsUn, rsRows] = await Promise.all([
+    ensureExpertsRosterGlobal(), loadCalcState("experts"), loadCalcState("experts_unlocked"), loadExpertNodes("skill"), loadExpertNodes("affinity"),
+    loadCalcState("experts_research"), loadCalcState("experts_research_unlocked"), loadExpertNodes("research"),
+  ]);
+  const kit = expertKit(skillRows, affRows, {});
+  const RC = {};
+  rsRows.forEach((r) => { ((RC[r.expert] = RC[r.expert] || {})[r.path_number] = RC[r.expert][r.path_number] || []).push(r); });
+  return { lv: renameExpertSkills(lv || {}), lvUn: lvUn || {}, AFF: kit.AFFINITY_CACHE, SKILL: kit.SKILL_CACHE, rs: rs || {}, rsUn: rsUn || {}, RC };
+}
+// Level side: every counted expert's level stat + Romulus's / Gareth's troop skills (= the old
+// "All" tab), and each event's own bonus (the expert's event skill + talent) vs its max.
+function xhExpLevel(D) {
+  const on = (h) => unlockedFor("experts", h, D.lvUn[h]);
+  const lvOf = (h, key) => {
+    const v = Number(D.lv[h] && D.lv[h][key]) || 0;
+    if (D.lv.__advLevels || v <= 0 || v !== Math.floor(v)) return v;
+    const r = (D.AFF[h] || []).length ? expertLvRow(D.AFF[h], v) : null;
+    return r && (Number(r.sigil_cost) || 0) > 0 ? v + 0.1 : v;
+  };
+  const z = () => ({ Attack: 0, Defense: 0, Lethality: 0, Health: 0 });
+  const addTypes = (tot, types, v) => { if (types) types.split(",").forEach((k) => { k = k.trim(); if (tot[k] != null) tot[k] += v; }); };
+  const skillRowAt = (h, sk) => {
+    const rows = D.SKILL[`${h}|${sk}`] || [], st = D.lv[h] && D.lv[h].skills && D.lv[h].skills[sk];
+    let m = null;
+    if (st) rows.forEach((r) => { if (r.level <= (Number(st.current) || 0)) m = r; });
+    return m;
+  };
+  const skillMax = (h, sk) => { const rows = D.SKILL[`${h}|${sk}`] || []; return rows.length ? rows[Math.max(0, releasedLastIdx("expert_skill_nodes", rows))] : null; };
+  const now = z(), max = z();
+  EXPERTS_LIST.filter((e) => !hiddenForVisitor("experts", e.key)).forEach((e) => {
+    if (!on(e.key)) return;
+    const rows = D.AFF[e.key] || [];
+    expertAddLevel(now, rows, lvOf(e.key, "current"));
+    const rel = rows.slice(0, releasedLastIdx("expert_affinity_nodes", rows) + 1);
+    if (rel.length) { const pk = rel.reduce((b, r) => (Number(r.stat_value) > Number(b.stat_value) ? r : b), rel[0]); addTypes(max, pk.stat_type, Number(pk.stat_value) || 0); }
+  });
+  [["Romulus", "Last Line"], ["Romulus", "Spirit of Aeetis"], ["Gareth", "Porcupine"], ["Gareth", "Undefeated Will"]].forEach(([h, sk]) => {
+    if (!on(h)) return;
+    const r = skillRowAt(h, sk), m = skillMax(h, sk);
+    if (r) addTypes(now, r.stat_type, Number(r.stat_value) || 0);
+    if (m) addTypes(max, m.stat_type, Number(m.stat_value) || 0);
+  });
+  const ev = XH_EVENTS.map(([key, title, h, sk]) => {
+    const types = new Set(), en = z(), em = z(), rows = D.AFF[h] || [], skr = sk ? D.SKILL[`${h}|${sk}`] || [] : [];
+    rows.forEach((r) => { if (r.stat_type2) r.stat_type2.split(",").forEach((k) => types.add(k.trim())); });
+    skr.forEach((r) => { if (r.stat_type) r.stat_type.split(",").forEach((k) => types.add(k.trim())); });
+    const counted = on(h) && !hiddenForVisitor("experts", h);
+    if (counted) {
+      if (sk) { const r = skillRowAt(h, sk), m = skillMax(h, sk); if (r) addTypes(en, r.stat_type, Number(r.stat_value) || 0); if (m) addTypes(em, m.stat_type, Number(m.stat_value) || 0); }
+      const s = expertLevelStat(rows, lvOf(h, "current"));
+      if (s && s.row.stat_type2) addTypes(en, s.row.stat_type2, s.v2);
+      const last = rows[Math.max(0, releasedLastIdx("expert_affinity_nodes", rows))];
+      if (last && last.stat_type2) addTypes(em, last.stat_type2, Number(last.stat_value2) || 0);
+    }
+    return { key, title, hero: h, counted, cells: Object.fromEntries(XH_STATS.map(([, k]) => [k, types.has(k) && counted && em[k] > 0 ? { v: en[k], m: em[k] } : null])) };
+  });
+  return { now, max, ev };
+}
+// Research for a troop: the general experts (no troop on the roster) + that troop's own experts.
+function xhExpResearch(D, troop) {
+  const z = () => ({ ATK: 0, DEF: 0, DMG: 0, HP: 0 });
+  const now = z(), max = z();
+  const order = EXPERTS_IN_ORDER_GLOBAL.filter((e) => !hiddenForVisitor("experts", e));
+  const inc = new Set(order.filter((e) => !expertTroopKey(e)));
+  expertsForTroop(troop, order).forEach((e) => inc.add(e));
+  const stats = (ex, p, rows, to) => {
+    const o = z();
+    rows.forEach((r) => { if (r.level > 0 && r.level <= to && o[r.stat_type] != null) o[r.stat_type] += Number(r.stat_value) || 0; });
+    const ms = EXPERT_MAIN_STAT_GLOBAL_MAP[ex];
+    if (ms && o[ms] != null) o[ms] += Math.max(0, Math.min(200, to)) * (expertTroopKey(ex) ? (p <= 3 ? 0.03 : 0.05) : 0.01);
+    return o;
+  };
+  inc.forEach((ex) => {
+    if (!unlockedFor("experts", ex, D.rsUn[ex])) return;
+    Object.keys(D.RC[ex] || {}).map(Number).forEach((p) => {
+      const rows = (D.RC[ex][p] || []).slice().sort((a, b) => Number(a.level) - Number(b.level));
+      const ri = releasedLastIdx("expert_research_nodes", rows), top = ri >= rows.length - 1 ? 200 : ri < 0 ? 0 : Number(rows[ri].level) || 0;
+      const st = (D.rs[ex] || {})[p] || {};
+      const a = stats(ex, p, rows, Number(st.current) || 0), b = stats(ex, p, rows, top);
+      Object.keys(a).forEach((k) => { now[k] += a[k]; max[k] += b[k]; });
+    });
+  });
+  return { now, max };
+}
+// Pets Level: every counted pet's ATK / DEF now and at its highest open level (all troops).
+function xhPetsLevel() {
+  let v = 0, m = 0;
+  Object.keys(PETS_NODES_CACHE || {}).filter((p) => !hiddenForVisitor("pets", p)).forEach((pet) => {
+    if (!isPetUnlocked(pet)) return;
+    const lv = PETS_NODES_CACHE[pet] || [], s = PETS_STATE && PETS_STATE[pet], from = s && typeof s === "object" ? Number(s.from) : -1;
+    if (from >= 0 && lv[from] && lv[from].atk_def_pct != null) v += Number(lv[from].atk_def_pct) * 100;
+    for (let i = petMaxIdx(pet); i >= 0; i--) if (lv[i] && lv[i].atk_def_pct != null) { m += Number(lv[i].atk_def_pct) * 100; break; }
+  });
+  return { v, m };
+}
+// Pet Refine for a troop: every counted pet's Lethality / Health now and at the top released stage.
+const XH_REFINE_KEYS = { Infantry: [["il", "infantry_lethality_pct"], ["ih", "infantry_health_pct"]], Lancer: [["ll", "lancer_lethality_pct"], ["lh", "lancer_health_pct"]], Marksman: [["ml", "marksman_lethality_pct"], ["mh", "marksman_health_pct"]] };
+function xhPetsRefine(troop) {
+  const pct1 = (raw) => Math.round(Number(raw) * 10000) / 100;
+  const out = XH_REFINE_KEYS[troop].map(() => ({ v: 0, m: 0 }));
+  Object.keys(PET_REFINE_CACHE || {}).filter((p) => !hiddenForVisitor("pets", p)).forEach((pet) => {
+    if (!isPetUnlocked(pet)) return;
+    const rows = PET_REFINE_CACHE[pet] || [], mr = rows[Math.max(0, releasedLastIdx("pet_refine_nodes", rows))], s = (PET_REFINE_TYPED_STATE || {})[pet] || {};
+    if (!mr) return;
+    XH_REFINE_KEYS[troop].forEach(([k, mk], i) => { const cap = pct1(mr[mk]); out[i].v += Math.min(Number(s[k]) || 0, cap); out[i].m += cap; });
+  });
+  return out;
+}
+const xhPct = (v, m) => (m > 0 ? Math.max(0, Math.min(100, (v / m) * 100)) : 0);
+const xhNum = (v, dp) => bidiNum(`+${Number(Number(v || 0).toFixed(dp))}%`);
+function xhTabsHtml(kind) {
+  const tr = xhTroop(kind);
+  return `<div class="t12x-tabs plx-stat-tabs xh-tabs" role="tablist">${PLX_TROOPS.map((x) => `<button type="button" role="tab" aria-selected="${x === tr}" data-xhtroop="${kind}|${x}" class="${x === tr ? "on" : ""}" style="--tc:${PLX_TROOP_COLORS[x]};">${esc(troopDisplayName(x))}</button>`).join("")}</div>`;
+}
+// The card (statsHtml of all four pages); its body is drawn by xhExpDraw / xhPetsDraw.
+function xhCardHtml(kind) {
+  const p = SIDE_PAIRS[kind === "exp" ? 0 : 1];
+  return `<div class="t12x-card plx-stats-top xh xh-${kind}" data-xh="${kind}">
+      <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
+      <p class="desc">${esc(t(kind === "exp" ? "xh_exp_d" : "xh_pets_d"))}</p>
+      <span class="xh-leg"><span style="--c:var(--ice);">${esc(t(p.labels[0]))}</span><span style="--c:${XH_GOLD};">${esc(t(p.labels[1]))}</span></span>
+      <div class="xh-body"></div>
+    </div>`;
+}
+function xhBody(kind) { return document.querySelector(`#content [data-xh="${kind}"] .xh-body`); }
+function xhExpDraw(D) {
+  const el = xhBody("exp");
+  XH_REDRAW = () => xhExpDraw(D);
+  if (!el || !D) return;
+  const L = xhExpLevel(D), R = xhExpResearch(D, xhTroop("exp"));
+  const boxes = XH_STATS.map(([lab, k, rk]) => {
+    const lv = L.now[k], lm = L.max[k], rv = R.now[rk], rm = R.max[rk], tv = lv + rv, tm = lm + rm;
+    return `<div class="plx-stat xh-cb"><span>${esc(lab)}</span><b>${xhNum(tv, 1)}</b><small>${bidiNum(`/ +${Number(tm.toFixed(1))}%`)}</small>
+      <div class="xh-split"><i style="width:${xhPct(lv, tm).toFixed(2)}%;background:var(--ice);"></i><i style="width:${Math.max(xhPct(rv, tm), rv > 0 ? 1.5 : 0).toFixed(2)}%;background:${XH_GOLD};"></i></div>
+      <div class="xh-parts"><em style="--c:var(--ice);">${bidiNum(`${lv.toFixed(1)}%`)}</em><em style="--c:${XH_GOLD};">${bidiNum(`${rv.toFixed(2)}%`)}</em></div></div>`;
+  }).join("");
+  const short = L.ev.filter((e) => XH_STATS.some(([, k]) => e.cells[k] && e.cells[k].v < e.cells[k].m - 1e-6));
+  const pc = (v) => `${Number(Number(v).toFixed(1))}%`;
+  const table = `<table class="xh-evt"><thead><tr><th></th>${XH_STATS.map(([lab]) => `<th>${esc(lab)}</th>`).join("")}</tr></thead><tbody>${L.ev.map((e) => `<tr><td class="n">${esc(t(e.title))}${e.counted ? "" : `<small>${esc(t("xh_ev_off"))}</small>`}</td>${XH_STATS.map(([, k]) => {
+    const c = e.cells[k];
+    if (!c) return "<td>&mdash;</td>";
+    return c.v >= c.m - 1e-6 ? `<td class="ok">${bidiNum(pc(c.m))} &#10003;</td>` : `<td class="a">${bidiNum(`${pc(c.v)} / ${pc(c.m)}`)}</td>`;
+  }).join("")}</tr>`).join("")}</tbody></table>`;
+  el.innerHTML = `<div class="xh-pill">${xhTabsHtml("exp")}</div>
+    <div class="plx-stats one xh-g4">${boxes}</div>
+    <button type="button" class="xh-evf${short.length ? " amb" : ""}" data-xhev aria-expanded="${XH_EV_OPEN}"><span class="tw" aria-hidden="true">${XH_EV_OPEN ? "&#9662;" : "&#9656;"}</span><b>${esc(t("xh_ev_title"))}</b><span class="st">${short.length ? esc(t("xh_ev_n").replace("{n}", short.length).replace("{name}", t(short[0].title))) : `${esc(t("xh_ev_all"))} &#10003;`}</span></button>
+    ${XH_EV_OPEN ? table : ""}`;
+}
+function xhPetsDraw() {
+  const el = xhBody("pets");
+  XH_REDRAW = () => xhPetsDraw();
+  if (!el) return;
+  const L = xhPetsLevel(), R = xhPetsRefine(xhTroop("pets"));
+  const box = (lab, v, m, dp, c) => `<div class="plx-stat" style="--sc:${c};"><span>${esc(lab)}</span><b>${xhNum(v, dp)}</b><small>${bidiNum(`/ +${Number(Number(m).toFixed(dp))}%`)}</small><div class="t12x-bar"><i style="width:${xhPct(v, m)}%;${m > 0 && v >= m - 1e-6 ? " background:var(--good);" : ""}"></i></div></div>`;
+  el.innerHTML = `${xhTabsHtml("pets")}<div class="plx-stats one xh-g4 xh-p4">${box("ATK", L.v, L.m, 1, "var(--ice)")}${box("DEF", L.v, L.m, 1, "var(--ice)")}${box("LETH", R[0].v, R[0].m, 2, XH_GOLD)}${box("HP", R[1].v, R[1].m, 2, XH_GOLD)}</div>`;
+}
+document.addEventListener("click", (e) => {
+  const tb = e.target.closest && e.target.closest("[data-xhtroop]");
+  const ev = !tb && e.target.closest && e.target.closest("[data-xhev]");
+  if (!tb && !ev) return;
+  if (tb) {
+    const [kind, tr] = tb.dataset.xhtroop.split("|");
+    if (tr === xhTroop(kind)) return;
+    PLX_TROOP[`xh_${kind}`] = tr;
+  } else XH_EV_OPEN = !XH_EV_OPEN;
+  sideHoldStop(!tb);
+  if (XH_REDRAW) XH_REDRAW();
+});
+// Experts / Pets cards (owner picked concept 5, 20 Nov 2026): the cards slide sideways like a
+// carousel. The next / previous card's edge shows at each side (tap = go there), dots under the
+// card, the card follows the finger and snaps (wireIndexSwipe). On the card's top edge sits the
+// Level | Research (Experts) or Level | Refine (Pets) switch: both sides are one page, the side
+// shown is shared by every card (sideGo). items: [{ label, img, color, dim }]; the card is
+// containerEl's next sibling.
+const SIDE_PAIRS = [
+  { tabs: ["expertspage", "expertsresearchpage"], picks: ["experts", "experts_research"], labels: ["mm_chip_level", "mm_chip_research"], title: "mrg_experts_title" },
+  { tabs: ["petsdata", "refinepage"], picks: ["pets", "pets_refine"], labels: ["mm_chip_level", "mm_chip_refine"], title: "mrg_pets_title" },
+];
+function sidePairOf(tab) { return SIDE_PAIRS.find((p) => p.tabs.includes(tab)) || null; }
+// Both sides open to this person (a visitor with one side hidden gets no switch).
+function sidePairOpen(p) { return !!p && p.tabs.every((tb) => IS_OWNER || !isHiddenFromVisitors("page", tb)); }
+// The merged page's title: "Experts" / "Pets" on both sides.
+function sideTitle(tab, fallback) { const p = sidePairOf(tab); return p && sidePairOpen(p) ? t(p.title) : fallback; }
+function sideSwitchHtml(tab) {
+  const p = sidePairOf(tab);
+  if (!sidePairOpen(p)) return "";
+  return `<div class="pkw-tab crs-sw" role="tablist">${p.tabs.map((tb, i) => `<button type="button" role="tab" aria-selected="${tb === tab}" data-sidego="${tb}" class="${tb === tab ? "on" : ""}">${esc(t(p.labels[i]))}</button>`).join("")}</div>`;
+}
+// Experts / Pets: opening either side also saves the other side's Budgets needs (owner, 20 Nov
+// 2026), as the separate pages did when opened: worked out from the saved states, the same way
+// each page does, in the background (nothing is drawn, the page doesn't move). Called by render()
+// after the side shown has drawn (sideBgNeeds).
+async function sideBgNeedsPets(side) {
+  await ensurePetsData();
+  if (side === "pets") {
+    const petNames = petOrderSort(Object.keys(PETS_NODES_CACHE).filter((p) => !hiddenForVisitor("pets", p)));
+    const getState = (pet) => { const s = PETS_STATE[pet]; return s && typeof s === "object" ? s : { from: -1, to: IS_OWNER ? petMaxIdx(pet) : -1 }; };
+    const grand = { Food: 0, Manual: 0, Potion: 0, Serum: 0 };
+    petNames.forEach((pet) => {
+      if (!isPetUnlocked(pet)) return;
+      const { from, to } = getState(pet);
+      (PETS_NODES_CACHE[pet] || []).forEach((r, i) => { if (i <= from || i > to) return; grand.Food += Number(r.food) || 0; grand.Manual += Number(r.manual) || 0; grand.Potion += Number(r.potion) || 0; grand.Serum += Number(r.serum) || 0; });
+    });
+    setPageMinis("pets", petNames.filter((pet) => isPetUnlocked(pet)).flatMap((pet) => {
+      const levels = PETS_NODES_CACHE[pet] || [], { from, to } = getState(pet);
+      const out = [];
+      levels.forEach((r, i) => {
+        if (i <= from || i >= to || !/^\d+0$/.test(String(r.level_label))) return;
+        const n = { Food: 0, Manual: 0, Potion: 0, Serum: 0 };
+        levels.forEach((x, j) => { if (j <= from || j > i) return; n.Food += Number(x.food) || 0; n.Manual += Number(x.manual) || 0; n.Potion += Number(x.potion) || 0; n.Serum += Number(x.serum) || 0; });
+        out.push({ v: `${pet}|${r.level_label}`, grp: pet, grpLabel: pet, label: `${t("goal_lv")} ${r.level_label}`, totals: n });
+      });
+      return out;
+    }), {});
+    setPageUpgrades("pets", petNames.filter((pet) => isPetUnlocked(pet)).map((pet) => {
+      const levels = PETS_NODES_CACHE[pet] || [], { from, to } = getState(pet), n = { Food: 0, Manual: 0, Potion: 0, Serum: 0 }, lv = [];
+      levels.forEach((x, j) => {
+        if (j <= from || j > to) return;
+        n.Food += Number(x.food) || 0; n.Manual += Number(x.manual) || 0; n.Potion += Number(x.potion) || 0; n.Serum += Number(x.serum) || 0;
+        lv.push({ label: String(x.level_label), totals: { ...n } });
+      });
+      return lv.length ? { k: pet, n: dataName(pet), img: petImage(pet), a: from >= 0 && levels[from] ? String(levels[from].level_label) : "0", lv } : null;
+    }).filter(Boolean));
+    await recordBudgetNeeds("pets", [{ label: null, totals: grand }]);
+    return;
+  }
+  // Pet Refine: Common Marks to refine every counted pet to the top released stage.
+  await ensurePetMarksState();
+  const ORDER = ["Cave Hyena", "Arctic Wolf", "Musk Ox", "Giant Tapir", "Titan Roc", "Giant Elk", "Snow Leopard", "Cave Lion", "Snow Ape", "Iron Rhino", "Sabertooth Tiger", "Mammoth", "Frost Gorilla", "Frostscale Chameleon", "Abyssal Shelldragon"];
+  const petNames = Object.keys(PET_REFINE_CACHE).filter((p) => !hiddenForVisitor("pets", p)).sort((a, b) => { const ia = ORDER.indexOf(a), ib = ORDER.indexOf(b); if (ia === -1 && ib === -1) return a.localeCompare(b); if (ia === -1) return 1; if (ib === -1) return -1; return ia - ib; });
+  petOrderSort(petNames, true);
+  const pct1 = (raw) => Math.round(Number(raw) * 10000) / 100;
+  const KEYS = [["il", "infantry_lethality_pct", "troop_infantry", "Lethality"], ["ih", "infantry_health_pct", "troop_infantry", "Health"], ["ll", "lancer_lethality_pct", "troop_lancer_singular", "Lethality"], ["lh", "lancer_health_pct", "troop_lancer_singular", "Health"], ["ml", "marksman_lethality_pct", "troop_marksman", "Lethality"], ["mh", "marksman_health_pct", "troop_marksman", "Health"]];
+  const maxRow = (pet) => { const rows = PET_REFINE_CACHE[pet]; return rows[Math.max(0, releasedLastIdx("pet_refine_nodes", rows))]; };
+  const st = (pet) => (PET_REFINE_TYPED_STATE && PET_REFINE_TYPED_STATE[pet] && typeof PET_REFINE_TYPED_STATE[pet] === "object" ? PET_REFINE_TYPED_STATE[pet] : { il: 0, ih: 0, ll: 0, lh: 0, ml: 0, mh: 0 });
+  const rates = PET_MARKS_STATE.rates, adj = 1 + (PET_MARKS_STATE.adjust || 0) / 100;
+  const marksForStat = (pet, maxKey, curVal) => {
+    let marks = 0, prevMax = 0;
+    PET_REFINE_CACHE[pet].forEach((r) => { const stageMax = pct1(r[maxKey]), lo = Math.max(prevMax, curVal); if (stageMax > lo) marks += (stageMax - lo) * (Number(rates[r.stage]) || 0); prevMax = Math.max(prevMax, stageMax); });
+    return marks;
+  };
+  let marksRaw = 0;
+  petNames.forEach((pet) => { if (!isPetUnlocked(pet)) return; const s = st(pet), m = maxRow(pet); KEYS.forEach(([key, maxKey]) => { const cap = pct1(m[maxKey]); marksRaw += marksForStat(pet, maxKey, Math.min(Number(s[key]) || 0, cap)); }); });
+  const marksNeeded = Math.ceil(marksRaw * adj);
+  const STAGES = ["Grey", "Green", "Blue", "Purple", "Orange", "Red"];
+  setPageMinis("pets_refine", STAGES.map((stage, k) => {
+    let raw = 0;
+    petNames.forEach((pet) => {
+      if (!isPetUnlocked(pet)) return;
+      const s = st(pet), rows = (PET_REFINE_CACHE[pet] || []).filter((r) => STAGES.indexOf(r.stage) <= k), m = maxRow(pet);
+      KEYS.forEach(([key, maxKey]) => {
+        const cur = Math.min(Number(s[key]) || 0, pct1(m[maxKey]));
+        let prevMax = 0;
+        rows.forEach((r) => { const stageMax = pct1(r[maxKey]), lo = Math.max(prevMax, cur); if (stageMax > lo) raw += (stageMax - lo) * (Number(rates[r.stage]) || 0); prevMax = Math.max(prevMax, stageMax); });
+      });
+    });
+    return { v: "stage:" + k, label: t("goal_upto").replace("{x}", stage), totals: { "Common Marks": Math.ceil(raw * adj) } };
+  }), { "Common Marks": marksNeeded });
+  setPageUpgrades("pets_refine", petNames.filter((pet) => isPetUnlocked(pet)).flatMap((pet) => KEYS.map(([key, maxKey, tk, stat]) => {
+    const s = st(pet), m = maxRow(pet), all = PET_REFINE_CACHE[pet] || [], cur = Math.min(Number(s[key]) || 0, pct1(m[maxKey])), lv = [];
+    STAGES.forEach((stage, k) => {
+      const rows = all.filter((r) => STAGES.indexOf(r.stage) <= k);
+      if (!all.some((r) => r.stage === stage)) return;
+      let raw = 0, prevMax = 0, top = 0;
+      rows.forEach((r) => { const stageMax = pct1(r[maxKey]), lo = Math.max(prevMax, cur); if (stageMax > lo) raw += (stageMax - lo) * (Number(rates[r.stage]) || 0); prevMax = Math.max(prevMax, stageMax); top = Math.max(top, stageMax); });
+      if (top > cur && raw > 0) lv.push({ label: `${stage} ${top}%`, totals: { "Common Marks": Math.ceil(raw * adj) } });
+    });
+    return lv.length ? { k: `${pet}|${key}`, n: `${dataName(pet)} · ${t(tk)} ${tStatLabel(stat)}`, img: petImage(pet), a: `${cur}%`, lv } : null;
+  }).filter(Boolean)));
+  await recordBudgetNeeds("pets_refine", [{ label: null, totals: { "Common Marks": marksNeeded } }]);
+}
+async function sideBgNeedsExperts(side) {
+  const [, , lvLoaded, lvUnLoaded, invLoaded, skillRows, affRows, rsLoaded, rsUnLoaded, rsRows] = await Promise.all([
+    ensureExpertsRosterGlobal(), ensureUiVisibility(), loadCalcState("experts"), loadCalcState("experts_unlocked"), loadCalcState("experts_inventory"),
+    loadExpertNodes("skill"), loadExpertNodes("affinity"), loadCalcState("experts_research"), loadCalcState("experts_research_unlocked"), loadExpertNodes("research"),
+  ]);
+  const invSaved = { ...(invLoaded || {}) };
+  await expertsInventoryWithBackpack(invSaved);
+  if (side === "experts") {
+    const saved = renameExpertSkills(lvLoaded || {}), un = lvUnLoaded || {};
+    const SHOWN = EXPERTS_LIST.filter((e) => !hiddenForVisitor("experts", e.key));
+    const on = (k) => unlockedFor("experts", k, un[k]);
+    const { skillMaxLevel, skillCost, skillExpHave, heroAffinityHave, skillNeed, heroSigilLevel, heroTopLevel, heroMaxLevelValue, heroCost } = expertKit(skillRows, affRows, saved);
+    SHOWN.forEach((e) => {
+      if (!saved[e.key]) saved[e.key] = { current: 0, desired: IS_OWNER ? heroMaxLevelValue(e.key) : 0, skills: {} };
+      e.skills.forEach((s) => { if (!saved[e.key].skills[s]) saved[e.key].skills[s] = { current: 0, desired: IS_OWNER ? skillMaxLevel(e.key, s) : 0 }; });
+    });
+    if (!saved.__advLevels) SHOWN.forEach((e) => { const st = saved[e.key]; ["current", "desired"].forEach((k) => { const v = Number(st[k]) || 0; if (v > 0 && v === Math.floor(v) && heroSigilLevel(e.key, v)) st[k] = v + 0.1; }); });
+    let totalExp = 0, totalBook = 0, totalAffinity = 0;
+    const sigilNeededByExpert = {};
+    SHOWN.forEach((e) => {
+      if (!on(e.key)) return;
+      e.skills.forEach((sk) => { const { expNeed, book } = skillNeed(e.key, sk, saved[e.key].skills[sk]); totalExp += expNeed; totalBook += book; });
+      const hs = saved[e.key], { affinity, sigil } = heroCost(e.key, hs.current, hs.desired);
+      totalAffinity += Math.max(0, affinity - Math.min(heroAffinityHave(e.key), affinity));
+      sigilNeededByExpert[e.key] = sigil;
+    });
+    const sig = JSON.stringify(sigilNeededByExpert);
+    if (sig !== EXPERTS_LEVEL_SIGIL_NEED_SIG) { EXPERTS_LEVEL_SIGIL_NEED_SIG = sig; saveCalcState("experts_level_sigil_need", sigilNeededByExpert); }
+    const sigilTotals = {};
+    SHOWN.forEach((e) => { const short = Math.max(0, (sigilNeededByExpert[e.key] || 0) - (Number(invSaved[`${e.key} Sigils`]) || 0)); if (short > 0) sigilTotals[`${e.key} Sigils`] = short; });
+    const totalTimeHours = totalExp / 3600;
+    const packGroups = [{ label: null, totals: { "Books of Knowledge": totalBook, "Affinity": totalAffinity, ...sigilTotals, "Speedups (minutes)": Math.round(totalTimeHours * 60) } }];
+    const expPos = (hero) => { const out = []; for (let n = 0; n <= heroTopLevel(hero); n++) { out.push(n); if (n > 0 && heroSigilLevel(hero, n)) out.push(n + 0.1); } return out; };
+    setPageMinis("experts", SHOWN.filter((e) => on(e.key)).flatMap((e) => {
+      const hs = saved[e.key], cur = Number(hs.current) || 0, des = Number(hs.desired) || 0, out = [];
+      for (let L = Math.floor(cur / 10) * 10 + 10; L < des; L += 10) {
+        const { affinity, sigil } = heroCost(e.key, hs.current, L);
+        out.push({ v: `${e.key}|${L}`, grp: e.key, grpLabel: e.name || e.key, label: `${t("goal_lv")} ${L}`, totals: { Affinity: Math.max(0, affinity - Math.min(heroAffinityHave(e.key), affinity)), [`${e.key} Sigils`]: Math.max(0, sigil - (Number(invSaved[`${e.key} Sigils`]) || 0)) } });
+      }
+      return out;
+    }), {});
+    setPageUpgrades("experts", SHOWN.filter((e) => on(e.key)).flatMap((e) => {
+      const hs = saved[e.key], cur = Number(hs.current) || 0, des = Number(hs.desired) || 0, nm = e.name || e.key, out = [];
+      const lv = expPos(e.key).filter((p) => p > cur + 1e-9 && p <= des + 1e-9).map((p) => {
+        const { affinity, sigil } = heroCost(e.key, hs.current, p);
+        return { label: Number.isInteger(p) ? String(p) : p.toFixed(1), totals: { Affinity: Math.max(0, affinity - Math.min(heroAffinityHave(e.key), affinity)), [`${e.key} Sigils`]: sigil } };
+      });
+      if (lv.length) out.push({ k: `${e.key}|lv`, n: `${nm} · ${t("gu_level")}`, img: e.img, a: String(cur), lv });
+      e.skills.forEach((sk) => {
+        const st = hs.skills[sk] || {}, c = Number(st.current) || 0, d = Number(st.desired) || 0, sl = [];
+        for (let L = c + 1; L <= d; L++) { const { exp, book } = skillCost(e.key, sk, c, L), have = Math.min(skillExpHave(st), exp); sl.push({ label: String(L), totals: { "Books of Knowledge": book, "Speedups (minutes)": Math.round(Math.max(0, exp - have) / 60) } }); }
+        if (sl.length) out.push({ k: `${e.key}|sk|${sk}`, n: `${nm} · ${dataName(sk)}`, img: e.img, a: String(c), lv: sl });
+      });
+      return out;
+    }));
+    await recordBudgetNeeds("experts", packGroups);
+    return;
+  }
+  // Experts Research: each counted expert's paths now → target, sigils after Experts Level's share.
+  const saved = rsLoaded || {}, un = rsUnLoaded || {}, levelSigilNeed = (await loadCalcState("experts_level_sigil_need")) || {};
+  const RC = {}, PN = {};
+  rsRows.forEach((r) => { ((RC[r.expert] = RC[r.expert] || {})[r.path_number] = RC[r.expert][r.path_number] || []).push(r); if (r.path_name) (PN[r.expert] = PN[r.expert] || {})[r.path_number] = r.path_name; });
+  const ORDER = EXPERTS_IN_ORDER_GLOBAL.filter((e) => !hiddenForVisitor("experts", e));
+  const paths = (ex) => Object.keys(RC[ex] || {}).map(Number).sort((a, b) => a - b);
+  const on = (ex) => unlockedFor("experts", ex, un[ex]);
+  ORDER.forEach((ex) => { if (!saved[ex]) saved[ex] = {}; paths(ex).forEach((p) => { if (typeof saved[ex][p] !== "object") saved[ex][p] = { current: 0, desired: 0 }; }); });
+  const sigOf = (ex, p, a, b) => expertPathSigils((RC[ex] || {})[p] || [], a, b);
+  const need = {};
+  ORDER.forEach((ex) => { if (!on(ex)) return; need[ex] = paths(ex).reduce((s, p) => s + sigOf(ex, p, saved[ex][p].current, saved[ex][p].desired), 0); });
+  const ownedLeft = {};
+  ORDER.forEach((ex) => { ownedLeft[ex] = Math.max(0, (Number(invSaved[`${ex} Sigils`]) || 0) - (Number(levelSigilNeed[ex]) || 0)); });
+  const sigilTotals = {};
+  ORDER.forEach((ex) => { const short = Math.max(0, (need[ex] || 0) - ownedLeft[ex]); if (short > 0) sigilTotals[`${ex} Sigils`] = short; });
+  setPageMinis("experts_research", ORDER.filter(on).flatMap((ex) => {
+    const ps = paths(ex), top = Math.max(0, ...ps.map((p) => Number(saved[ex][p].desired) || 0)), out = [];
+    for (let L = 20; L < top; L += 20) {
+      let sg = 0;
+      ps.forEach((p) => { const st = saved[ex][p], to = Math.min(Number(st.desired) || 0, L); if (to > (Number(st.current) || 0)) sg += sigOf(ex, p, st.current, to); });
+      const e = EXPERTS_LIST.find((x) => x.key === ex);
+      out.push({ v: `${ex}|${L}`, grp: ex, grpLabel: (e && e.name) || ex, label: t("goal_paths_lv").replace("{n}", L), totals: { [`${ex} Sigils`]: Math.max(0, sg - (ownedLeft[ex] || 0)) } });
+    }
+    return out;
+  }), {});
+  setPageUpgrades("experts_research", ORDER.filter(on).flatMap((ex) => {
+    const e = EXPERTS_LIST.find((x) => x.key === ex) || {};
+    return paths(ex).map((p) => {
+      const st = saved[ex][p], c = Number(st.current) || 0, d = Number(st.desired) || 0, lv = [];
+      for (let L = c + 1; L <= d; L++) lv.push({ label: String(L), totals: { [`${ex} Sigils`]: sigOf(ex, p, c, L) } });
+      return lv.length ? { k: `${ex}|${p}`, n: `${e.name || ex} · ${dataName((PN[ex] || {})[p] || `${t("path_label")} ${p}`)}`, img: e.img, a: String(c), lv } : null;
+    }).filter(Boolean);
+  }));
+  await recordBudgetNeeds("experts_research", [{ label: null, totals: sigilTotals }]);
+}
+// After a side is drawn on entering the page: the other side's needs, once, quietly.
+function sideBgNeeds(tab) {
+  const p = sidePairOf(tab);
+  if (!p) return;
+  const other = p.picks[1 - p.tabs.indexOf(tab)];
+  const run = () => (p.picks[0] === "pets" ? sideBgNeedsPets(other) : sideBgNeedsExperts(other)).catch((e) => console.warn("side needs", e));
+  setTimeout(run, 400);
+}
+// Which side an Experts / Pets page opens on (owner, 20 Nov 2026): Level, unless every Level card
+// shown (counted or not) is already at its released max (Experts: level and every skill; Pets: level), then
+// Research / Refine. Used when the page is entered (Menu, link, last_tab, reload, the old tabs);
+// a flip during the visit (sideGo) keeps the side picked.
+async function sideEntryTab(tab) {
+  const p = sidePairOf(tab);
+  if (!p || !sidePairOpen(p)) return tab;
+  try {
+    let allMax = false;
+    if (p.picks[0] === "experts") {
+      const D = await xhExpData();
+      const kit = expertKit(D.SKILL ? Object.values(D.SKILL).flat() : [], Object.values(D.AFF).flat(), D.lv);
+      const shown = EXPERTS_LIST.filter((e) => !hiddenForVisitor("experts", e.key));
+      allMax = shown.length > 0 && shown.every((e) => {
+        const st = D.lv[e.key] || {};
+        let v = Number(st.current) || 0;
+        if (!D.lv.__advLevels && v > 0 && v === Math.floor(v) && kit.heroSigilLevel(e.key, v)) v += 0.1;
+        return v >= kit.heroMaxLevelValue(e.key) - 0.05 && e.skills.every((sk) => (Number(st.skills && st.skills[sk] && st.skills[sk].current) || 0) >= kit.skillMaxLevel(e.key, sk));
+      });
+    } else {
+      await ensurePetsData();
+      const pets = Object.keys(PETS_NODES_CACHE || {}).filter((pet) => !hiddenForVisitor("pets", pet));
+      allMax = pets.length > 0 && pets.every((pet) => { const s = PETS_STATE && PETS_STATE[pet]; return !!s && typeof s === "object" && Number(s.from) >= petMaxIdx(pet); });
+    }
+    return p.tabs[allMax ? 1 : 0];
+  } catch (e) {
+    return tab;
+  }
+}
+// Flip the side: the same card stays (its pick is copied over), no new history step,
+// the page keeps its scroll place (drawn as the same page).
+function sideGo(tab) {
+  const p = sidePairOf(TAB);
+  if (!p || tab === TAB || !p.tabs.includes(tab)) return;
+  const from = PAGE_PICK[p.picks[p.tabs.indexOf(TAB)]];
+  if (from && from.name) PAGE_PICK[p.picks[p.tabs.indexOf(tab)]] = { name: from.name, user: true };
+  TAB = tab;
+  try { localStorage.setItem("last_tab", TAB); } catch (e) { /* storage blocked */ }
+  document.querySelectorAll("button[data-tab]").forEach((x) => x.classList.toggle("active", x.dataset.tab === TAB));
+  history.replaceState({ tab: TAB }, "", location.pathname + location.search);
+  const sw = content.querySelector(".crs-sw");
+  sideHoldStop(false);
+  const top0 = sw ? sw.getBoundingClientRect().top : null;
+  LAST_RENDER_TAB = TAB;
+  render();
+  if (top0 != null) sideHold(top0);
+}
+// The switch tab (and the card) stays under the finger after a flip (owner, 20 Nov 2026). Both
+// sides' stats boxes are drawn the same height (same header, Backpack boxes of one size), but the
+// new side draws in steps (the Backpack boxes come in later), so for a moment after the flip,
+// every frame before it's painted, the switch tab is put back at its old place: a box that came
+// out shorter gets a min-height (the stats box above the card; else a gap above the card), one
+// that came out taller gives that back or scrolls the page by the difference. Stops once still
+// for a while, or when the person touches, scrolls or types.
+function sideHoldStop(clear) {
+  const h = SIDE_HOLD;
+  if (h) { h.stop(); if (clear) h.clear(); }
+  // a fold opened / closed: the stats box takes its own height again
+  if (clear) content.querySelectorAll(".g1-top, .plx-stats-top").forEach((b) => { b.style.minHeight = ""; });
+}
+// What grows: the visible stats box just above the card (phones: the top box, PC: the stats card).
+function sideHolderOf(pkw) {
+  let e = pkw && pkw.previousElementSibling;
+  while (e && !e.offsetHeight) e = e.previousElementSibling;
+  return e && (e.classList.contains("g1-top") || e.classList.contains("plx-stats-top")) ? e : null;
+}
+function sideHold(top0) {
+  sideHoldStop(false);
+  const evs = ["touchstart", "wheel", "keydown", "pointerdown"];
+  let extra = 0, still = 0, seen = 0, raf = 0, holder = null, gap = null, scrolled = 0;
+  const t0 = performance.now();
+  const h = {
+    stop() { (window.__hd = window.__hd || []).push(['stop', new Error().stack.split('\n')[2]]); cancelAnimationFrame(raf); mo.disconnect(); evs.forEach((ev) => removeEventListener(ev, h.stop, true)); if (SIDE_HOLD === h) SIDE_HOLD = null; },
+    clear() { if (holder) holder.style.minHeight = ""; if (gap) gap.style.marginTop = ""; extra = 0; },
+  };
+  evs.forEach((ev) => addEventListener(ev, h.stop, true));
+  // The box gets its own height + what the hold adds (else a gap above the card).
+  const apply = (pkw) => {
+    const box = sideHolderOf(pkw);
+    if (gap) { gap.style.marginTop = ""; gap = null; }
+    if (box) {
+      if (holder && holder !== box) holder.style.minHeight = "";
+      holder = box;
+      box.style.minHeight = "";
+      if (extra > 0) box.style.minHeight = box.getBoundingClientRect().height + extra + "px";
+    } else if (extra > 0) { gap = pkw; pkw.style.marginTop = `calc(${getComputedStyle(pkw).marginTop} + ${extra}px)`; }
+  };
+  // Also right when the new side's content lands (a promise step can draw it after this frame's
+  // check): before that frame is painted.
+  const mo = new MutationObserver(() => fix());
+  mo.observe(content, { childList: true, subtree: true });
+  const fix = () => {
+    // The phones' top box is built in the content observer's frame, after this one: build it now,
+    // so the tab isn't measured (and the page scrolled) for a layout that is never shown.
+    if (TOPBOX_MQ.matches && TAB in TOPBOX_TABS && content.querySelector(".t12x.g1:not(.cg1) .t12x-main")) { mo.disconnect(); infoize(content); plxTopBox(content); bsSlideFit(content); mo.observe(content, { childList: true, subtree: true }); }
+    const sw = content.querySelector(".crs-sw"), pkw = sw && sw.closest(".pkw");
+    if (!pkw) return null;
+    if (!seen) seen = performance.now();
+    apply(pkw);
+    const d = sw.getBoundingClientRect().top - top0;
+    (window.__hd = window.__hd || []).push([Math.round(d * 10) / 10, extra, scrollY, scrolled, performance.now() - t0 | 0]);
+    if (Math.abs(d) < 0.05) return true;
+    if (d < 0) {
+      // scrolled down for a step drawn taller earlier: scroll back first, then grow the box
+      const back = Math.min(scrolled, -d);
+      if (back >= 0.5) { const y = scrollY; window.scrollBy(0, -back); scrolled -= y - scrollY; }
+      const rest = sw.getBoundingClientRect().top - top0;
+      if (rest < -0.05) { extra += -rest; apply(pkw); }
+    } else {
+      const give = Math.min(extra, d);
+      if (give > 0) { extra -= give; apply(pkw); }
+      const rest = sw.getBoundingClientRect().top - top0;
+      if (rest >= 0.5) { const y = scrollY; window.scrollBy(0, rest); scrolled += scrollY - y; }
+      // under a pixel the page can't scroll: the card's gap above gives it back
+      const sub = sw.getBoundingClientRect().top - top0;
+      if (sub > 0.05 && sub < 1) { gap = pkw; pkw.style.marginTop = `calc(${getComputedStyle(pkw).marginTop} - ${sub}px)`; }
+    }
+    return false;
+  };
+  const step = () => {
+    const r = fix();
+    if (r === true) still++; else if (r === false) still = 0;
+    const now = performance.now();
+    if ((seen && still > 90) || now - t0 > 8000) { h.stop(); return; }
+    raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+  SIDE_HOLD = h;
+}
+let CRS_ENTER = 0; // the next card slides in from this side (1 = from the end, -1 = from the start)
 function renderPickStrip(containerEl, items, activeIndex, onPick) {
-  containerEl.className = "pkw";
+  containerEl.className = "pkw crs";
   const n = items.length, pv = items[activeIndex - 1], nx = items[activeIndex + 1];
   const pic = (it) => it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy" />` : `<span class="pkw-ph" style="--tc:${it.color || "var(--ice)"};">${esc(String(it.label).trim().charAt(0))}</span>`;
   const peek = (it, i, side) => it ? `<button type="button" class="pkw-pk ${side}${it.dim ? " dim" : ""}" data-pick="${i}" title="${esc(it.label)}" aria-label="${esc(it.label)}">${pic(it)}</button>` : "";
-  const arrow = (it, i, side, ch) => `<button type="button" class="pkw-a ${side}" ${it ? `data-pick="${i}" title="${esc(it.label)}" aria-label="${esc(it.label)}"` : 'disabled aria-hidden="true"'}>${ch}</button>`;
-  containerEl.innerHTML = `${peek(pv, activeIndex - 1, "s")}${peek(nx, activeIndex + 1, "e")}<div class="pkw-tab">${arrow(pv, activeIndex - 1, "s", "&lsaquo;")}<span>${bidiNum(`${activeIndex + 1} / ${n}`)}</span>${arrow(nx, activeIndex + 1, "e", "&rsaquo;")}</div>`;
+  containerEl.innerHTML = `${peek(pv, activeIndex - 1, "s")}${peek(nx, activeIndex + 1, "e")}${sideSwitchHtml(TAB)}`;
+  const go = (i) => { if (i === activeIndex || i < 0 || i >= n) return; CRS_ENTER = i > activeIndex ? 1 : -1; onPick(i); };
   containerEl.onclick = (ev) => {
+    const sb = ev.target.closest("[data-sidego]");
+    if (sb) { sideGo(sb.dataset.sidego); return; }
     const b = ev.target.closest("[data-pick]");
-    if (b) onPick(Number(b.dataset.pick));
+    if (b) go(Number(b.dataset.pick));
   };
+  // Dots under the card (one per card, the shown one long).
+  const card = containerEl.nextElementSibling;
+  if (!card) return;
+  let dots = card.nextElementSibling;
+  if (!dots || !dots.classList.contains("crs-dots")) { dots = document.createElement("div"); dots.className = "crs-dots"; card.after(dots); }
+  dots.innerHTML = n > 1 ? items.map((it, i) => `<button type="button" data-pick="${i}" class="${i === activeIndex ? "on" : ""}${it.dim ? " dim" : ""}" aria-label="${esc(it.label)}" title="${esc(it.label)}"${i === activeIndex ? ' aria-current="true"' : ""}><i></i></button>`).join("") : "";
+  dots.onclick = (ev) => { const b = ev.target.closest("[data-pick]"); if (b) go(Number(b.dataset.pick)); };
+  // The side cards' edges are as tall as the card.
+  const fit = () => { containerEl.style.setProperty("--ch", card.offsetHeight + "px"); };
+  fit();
+  if (window.ResizeObserver) {
+    if (containerEl._crsRo) containerEl._crsRo.disconnect();
+    containerEl._crsRo = new ResizeObserver(fit);
+    containerEl._crsRo.observe(card);
+  }
 }
 // Research time box: time after research speed, and how much of it the
 // general + research speedups you own cover.
