@@ -2614,6 +2614,8 @@ const T = {
   b3_not_counted: { en: "not in this budget" },
   b3_nothing: { en: "nothing planned" },
   b3_tick: { en: "Count in this budget" },
+  b3_tile_research_center: { en: "Research" },
+  b3_tile_hero_shards: { en: "Heroes" },
   b3_ring_tip: { en: "You already have {p}% of what this page needs (Backpack + trades)" },
   b3_missing: { en: "{n} pages not in the plan yet" },
   b3_week: { en: "This week {v}" },
@@ -2901,6 +2903,14 @@ const T = {
   marks_pack_gems: { en: "Count gems from packs toward marks (500 gems = 1 Common Mark)" },
   marks_pack_gems_short: { en: "Pack gems count as marks" },
   marks_pack_gems_rate: { en: "500 gems = 1 Common Mark" },
+  marks_gems_trade: { en: "Trade Gems for Common Marks" },
+  marks_gems_trade_rate: { en: "500 Gems = 1 Common Mark · your Backpack's and the packs' gems" },
+  pca_mk_buy_as: { en: "Buy the marks as" },
+  pca_mk_adv: { en: "Advanced" },
+  pca_mk_com: { en: "Common" },
+  pca_mk_same: { en: "Same price: 1 Advanced = {n} Common in this pack ({list})." },
+  pca_mk_game: { en: "choose {m} in the game" },
+  pca_mk_or: { en: "{a} or {c}" },
   g1_hide: { en: "Hide" },
   er_paths_to_go: { en: "{n} paths to go" },
   er_path_to_go_1: { en: "1 path to go" },
@@ -6296,6 +6306,11 @@ function heroGearSetLeft(name) {
   const st = HERO_GEAR_SETS[name];
   return !!st && HERO_GEAR_TROOPS.some((tr) => HERO_GEAR_PIECE_NAMES.some((pc) => GEAR_LEVELING_TABLES.some((tn) => { const x = st[tr][pc][tn]; return x && x.to > x.from; })));
 }
+// A set with any level above 0 (a set never used stays out of "the last set at target").
+function heroGearSetUsed(name) {
+  const st = HERO_GEAR_SETS[name];
+  return !!st && HERO_GEAR_TROOPS.some((tr) => HERO_GEAR_PIECE_NAMES.some((pc) => GEAR_LEVELING_TABLES.some((tn) => { const x = st[tr][pc][tn]; return x && x.from > 0; })));
+}
 let heroGearActiveTroop = "Infantry";
 // Which hero gear set the Dashboard breakdown modal is currently showing.
 let BREAKDOWN_HERO_GEAR_SET = "Set 1";
@@ -6397,13 +6412,16 @@ async function renderGearLevelingGroup(target) {
   // then the first troop with a track below its target (the person's own picks win).
   if (fresh) {
     if (!PAGE_USER_PICKED.hero_gear_set && !heroGearSetLeft(heroGearActiveSet)) {
-      const s = HERO_GEAR_SET_NAMES.find((n) => heroGearSetLeft(n));
+      // Nothing left anywhere: the last set that is in use (all at target).
+      const s = HERO_GEAR_SET_NAMES.find((n) => heroGearSetLeft(n)) || [...HERO_GEAR_SET_NAMES].reverse().find((n) => heroGearSetUsed(n));
       if (s) heroGearActiveSet = s;
     }
     if (!PAGE_USER_PICKED.hero_gear) {
       const st = HERO_GEAR_SETS[heroGearActiveSet];
       const tr = st && HERO_GEAR_TROOPS.find((x) => HERO_GEAR_PIECE_NAMES.some((pc) => GEAR_LEVELING_TABLES.some((tn) => { const v = st[x][pc][tn]; return v && v.to > v.from; })));
-      if (tr) heroGearActiveTroop = tr;
+      const done = (x) => st && HERO_GEAR_PIECE_NAMES.some((pc) => GEAR_LEVELING_TABLES.some((tn) => { const v = st[x][pc][tn]; return v && v.from > 0; }));
+      const last = tr || [...HERO_GEAR_TROOPS].reverse().find(done); // nothing left: the last troop at its target
+      if (last) heroGearActiveTroop = last;
     }
   }
   await maxBeforeLoad(HERO_GEAR_STORAGE_KEYS[heroGearActiveSet]);
@@ -7413,29 +7431,6 @@ const CDA_PAGES = [
     })));
     return { tracks, bar: "research_center", general: CDA_RT };
   } },
-  { key: "pets_refine", tab: "refinepage", unit: "cda_u_stats", async build() {
-    // Small steps of 0.5% per pet and stat, each priced in Common Marks at its stage's rate
-    // (with the page's adjustment), the way the page counts marks.
-    await Promise.all([ensurePetsData(), ensurePetMarksState()]);
-    const rates = PET_MARKS_STATE.rates, adj = 1 + (PET_MARKS_STATE.adjust || 0) / 100;
-    const pct1 = (raw) => Math.round(Number(raw) * 10000) / 100;
-    const KEYS = [["il", "infantry_lethality_pct", "Infantry", "Lethality"], ["ih", "infantry_health_pct", "Infantry", "Health"], ["ll", "lancer_lethality_pct", "Lancer", "Lethality"], ["lh", "lancer_health_pct", "Lancer", "Health"], ["ml", "marksman_lethality_pct", "Marksman", "Lethality"], ["mh", "marksman_health_pct", "Marksman", "Health"]];
-    const STEP = 0.5, tracks = [];
-    Object.keys(PET_REFINE_CACHE || {}).filter((pet) => !hiddenForVisitor("pets", pet) && isPetUnlocked(pet)).forEach((pet) => {
-      const rows = PET_REFINE_CACHE[pet] || [], top = rows[Math.max(0, releasedLastIdx("pet_refine_nodes", rows))] || {};
-      const s = (PET_REFINE_TYPED_STATE && PET_REFINE_TYPED_STATE[pet]) || {};
-      KEYS.forEach(([k, maxKey, troop, stat]) => {
-        const cap = pct1(top[maxKey]), cur = Math.min(Number(s[k]) || 0, cap);
-        const n = Math.max(0, Math.ceil((cap - cur) / STEP - 1e-6));
-        if (!n) return;
-        const val = (i) => Math.min(cap, cur + i * STEP);
-        const marks = (lo, hi) => { let m = 0, prev = 0; rows.forEach((r) => { const sm = pct1(r[maxKey]), a = Math.max(prev, lo), b = Math.min(sm, hi); if (b > a) m += (b - a) * (Number(rates[r.stage]) || 0); prev = Math.max(prev, sm); }); return m * adj; };
-        tracks.push({ id: `${pet}|${k}`, troop, bulk: true, from: 0, to: n, name: `${dataName(pet)} · ${troopDisplayName(troop)} ${tStatLabel(stat)}`, lab: (i) => `${Number(val(i).toFixed(2))}%`,
-          cost: (i) => ({ "Common Marks": marks(val(i - 1), val(i)) }), gain: (i) => ({ [stat]: val(i) }) });
-      });
-    });
-    return { tracks, bar: "pets_refine", pic: (tr) => petImage(tr.raw.split("|")[0]), step: (tr, lv) => `${tr.lab(tr.from)} → ${tr.lab(lv)}` };
-  } },
   { key: "experts", tab: "expertspage", unit: "rch_u_experts", async build() {
     // Levels (Affinity + the expert's Sigils, General Sigils for any expert) and skills
     // (Books + expert speedups, general speedups too). Banked EXP / Affinity come off first.
@@ -7988,7 +7983,6 @@ const MK_SLOTS = {
     return n ? { in: n.querySelector(".t12x-nm"), before: n.querySelector(".t12x-nm > .meta") } : {};
   },
   researchcenter: (tr) => { const n = mkQ(`.t12x-node[data-pxnode="${mkE(tr.raw)}"]`); return n ? { in: n.querySelector(".t12x-nm"), before: n.querySelector(".t12x-nm > .meta") } : {}; },
-  refinepage: (tr) => { const r = mkQ(`[data-refinerowfor="${mkE(tr.raw)}"]`); return r ? { in: r, before: r.querySelector("[data-refinepet]") && r.querySelector("[data-refinepet]").nextElementSibling } : {}; },
   expertspage: (tr) => {
     const p = String(tr.raw).split("|");
     const s = p[0] === "exp" ? mkQ(`[data-expcur="${mkE(p[1])}"]`) : mkQ(`[data-expskillcur="${mkE(`${p[1]}|${p.slice(2).join("|")}`)}"]`);
@@ -17806,9 +17800,11 @@ function packPickGroups(tb, link) {
 // Packs that let you choose Common or Advanced Marks (Custom Pet Chest):
 // always take Advanced when it is worth at least as much (1 Advanced = 8
 // Common), so the plan buys Advanced.
+// Pet Refine's "Buy the marks as" (Pack cost): "common" keeps the Common choice instead.
 function packPreferAdvancedMarks(optCols, cols, rows, link) {
   const com = optCols.find((ci) => cols[ci] === "Common Marks"), adv = optCols.find((ci) => cols[ci] === "Advanced Marks");
   if (com == null || adv == null) return optCols;
+  if (petMarksBuyAs() === "common") return optCols.filter((ci) => ci !== adv);
   const better = rows.every((cells) => packParseNum(cells[adv]) * packColMultiplier(link, adv) * ADVANCED_MARK_VALUE >= packParseNum(cells[com]) * packColMultiplier(link, com));
   return better ? optCols.filter((ci) => ci !== com) : optCols;
 }
@@ -17896,7 +17892,21 @@ function packBuildOptionLadder(title, lead, perTable, tags, lastMax) {
 }
 // Pages that may spend packs' gems, and whether they currently want to.
 function packGemsCountFor(calcKey) {
-  return budgetKeysOf(calcKey).includes("pets_refine") && !!(PET_MARKS_STATE && PET_MARKS_STATE.packGems);
+  return budgetKeysOf(calcKey).includes("pets_refine") && petGemsTradeOn();
+}
+// Pet Refine choices, per person (calc_state pet_refine_marks), also readable before
+// the page has loaded them (Budgets): one switch for trading gems (the Backpack's and
+// the packs'), missing = on; and which mark the packs that offer both are bought as.
+function petMarksPref(k) {
+  const s = PET_MARKS_STATE || (CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID ? CALC_STATE_CACHE.pet_refine_marks : null);
+  return s ? s[k] : undefined;
+}
+function petGemsTradeOn() { return petMarksPref("packGems") !== false; }
+let PET_BUYAS_FORCE = null; // Pack cost prices the other choice with this set
+function petMarksBuyAs() { return PET_BUYAS_FORCE || (petMarksPref("buyAs") === "common" ? "common" : "adv"); }
+// Tables that sell Common or Advanced Marks (your choice), e.g. Custom Pet Chest.
+function packMarksChoiceTables(tables) {
+  return (tables || []).filter((tb) => { const v = Object.values(packEffectiveCols(tb)); return v.includes("Common Marks") && v.includes("Advanced Marks"); });
 }
 // Built pack groups, kept for the visit: Budgets asks for the same tables
 // for every page (and again on each date change). Cleared by
@@ -18032,7 +18042,7 @@ function packPlanSchedule(rows) {
 function packGroupsFor(tables, calcKey) {
   const stripGems = !packGemsCountFor(calcKey);
   if (PACK_GROUPS_CACHE.tables !== PACK_TABLES_CACHE) PACK_GROUPS_CACHE = { tables: PACK_TABLES_CACHE, map: new Map(), perTable: new Map() };
-  const key = [stripGems ? 1 : 0, LANG, DISPLAY_CURRENCY, new Date().toDateString(), tables.map((tb) => tb.id).join(",")].join("|");
+  const key = [stripGems ? 1 : 0, petMarksBuyAs(), LANG, DISPLAY_CURRENCY, new Date().toDateString(), tables.map((tb) => tb.id).join(",")].join("|");
   let out = PACK_GROUPS_CACHE.map.get(key);
   if (!out) { out = packGroupsForBuild(tables, stripGems); PACK_GROUPS_CACHE.map.set(key, out); }
   return packPurchaseUse(out);
@@ -18063,7 +18073,7 @@ function packShiningBonusOf(tb, link) {
 // most tables, so each table is built once and reused (kept with the other
 // built groups in PACK_GROUPS_CACHE; the key covers labels, currency and day).
 function packTableGroups(tb) {
-  const cacheKey = [tb.id, LANG, DISPLAY_CURRENCY, new Date().toDateString(), vipTierNow()].join("|");
+  const cacheKey = [tb.id, LANG, DISPLAY_CURRENCY, new Date().toDateString(), vipTierNow(), petMarksBuyAs()].join("|");
   const per = PACK_GROUPS_CACHE.perTable;
   if (per && per.has(cacheKey)) return per.get(cacheKey);
   const groups = [];
@@ -19243,6 +19253,7 @@ document.addEventListener("click", (e) => {
   const b = e.target.closest && e.target.closest("[data-g1fold]");
   if (!b) return;
   const key = b.dataset.g1fold;
+  document.querySelectorAll(".isl-mk-shown").forEach((x) => x.classList.remove("isl-mk-shown"));
   BAR_SHOW_ALL[key] = BAR_SHOW_ALL[key] === false;
   saveBarHidden();
   g1FoldSync();
@@ -19384,12 +19395,13 @@ document.addEventListener("toggle", (e) => { if (e.target.matches && e.target.ma
 // window on phones (on PC the card stays in the side column).
 const plxPriceLabel = (calcKey) => `${esc(PACK_COST_SHOWN[calcKey] || t("pack_cost_title"))} &#8250;`;
 let REFINE_CALC_OPEN = null; // set by the Pet Refine page: opens its advanced calculator
+let REFINE_REFRESH = null; // set by the Pet Refine page: redraws its totals, Backpack and windows
 document.addEventListener("click", (e) => { if (e.target.closest("[data-rfcalcbtn]") && TAB === "refinepage" && REFINE_CALC_OPEN) REFINE_CALC_OPEN(); });
 function plxBuyBtnsHtml(calcKey) {
   // Chief Gear: its own sheet buttons (data-cgsheet), under its 🎒 Backpack line like the other pages
   if (calcKey === "chief_gear") return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-cgsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button>${visitorCan("packcost") ? `<button type="button" class="cg-bpbtn ice" data-cgsheet="packs" data-cgprice>${esc(PACK_COST_SHOWN.chief_gear || t("pack_cost_title"))} &#8250;</button>` : ""}</span>`;
   // Pet Refine: the advanced calculator beside Pack cost, where Trades sits on other pages
-  if (calcKey === "pets_refine") return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn rf-calcbtn" data-rfcalcbtn>&#9881; ${esc(t("rf_mk_calc"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
+  if (calcKey === "pets_refine") return `<span class="cg-bpb plx-bpb rf-bpb"><button type="button" class="cg-bpbtn rf-calcbtn" data-rfcalcbtn title="${esc(t("rf_mk_calc"))}" aria-label="${esc(t("rf_mk_calc"))}">&#9881;</button><button type="button" class="cg-bpbtn" data-plxsheet="trades" title="${esc(t("cg_trades"))}" aria-label="${esc(t("cg_trades"))}">&#8644;<span class="rf-tw"> ${esc(t("cg_trades"))}</span></button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
   return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-plxsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
 }
 document.addEventListener("click", (e) => {
@@ -19551,13 +19563,24 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   // comes back, what it gives (needed items first) and its price; tap = its steps.
   const pcaIcon = (n) => { const src = materialIconSrc(n); return src ? `<img src="${esc(src)}" alt="" loading="lazy" />` : ""; };
   const pcaCur = (v) => String(v).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small> ');
-  const pcaNeeded = (n) => (Number(need[n]) || 0) > 0;
+  // (Pet Refine: Advanced Marks count as Common ones, so they are needed too.)
+  const pcaNeeded = (n) => (Number(need[n]) || 0) > 0 || (n === "Advanced Marks" && (Number(need["Common Marks"]) || 0) > 0);
+  // Pet Refine: packs where you pick Common or Advanced Marks in the game ("Buy the marks as").
+  const mkTables = calcKey === "pets_refine" ? packMarksChoiceTables(tables) : [];
+  const mkIds = new Set(mkTables.map((tb) => String(tb.id)));
+  const mkNote = (g) => (mkIds.size && g.lines.some((r) => (r.tables || []).some((id) => mkIds.has(String(id)))) ? t("pca_mk_game").replace("{m}", t(petMarksBuyAs() === "common" ? "pca_mk_com" : "pca_mk_adv")) : "");
   const pcaRows = (byPack, rowsAll, priceOf, noteOf) => {
     const all = {};
     rowsAll.forEach((r) => Object.entries(r.gives || {}).forEach(([n, q]) => { all[n] = (all[n] || 0) + (Number(q) || 0) * r.count; }));
     return byPack.slice().sort((a, b) => b.subtotal - a.subtotal).map((g) => {
       const gv = {};
       g.lines.forEach((r) => Object.entries(r.gives || {}).forEach(([n, q]) => { gv[n] = (gv[n] || 0) + (Number(q) || 0) * r.count; }));
+      // Pet Refine, bought as Advanced: the plan counts them as Common (1 = 8); show the Advanced ones.
+      if (mkNote(g) && petMarksBuyAs() === "adv" && gv["Common Marks"] > 0) {
+        gv["Advanced Marks"] = (gv["Advanced Marks"] || 0) + gv["Common Marks"] / ADVANCED_MARK_VALUE;
+        all["Advanced Marks"] = (all["Advanced Marks"] || 0) + gv["Common Marks"] / ADVANCED_MARK_VALUE;
+        delete gv["Common Marks"];
+      }
       const share = (n) => gv[n] / (all[n] || 1);
       const items = Object.keys(gv).filter((n) => gv[n] > 0 && n !== "Gems");
       const pool = items.filter(pcaNeeded).length ? items.filter(pcaNeeded) : items;
@@ -19567,7 +19590,8 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       // (A run's left-over steps are a one-off group: say how often the pack itself comes back.)
       const rr = g.lines.find((r) => typeof r.reset === "number" && r.reset < PACK_ONE_TIME_DAYS);
       if (rr && typeof g.reset === "number" && g.reset >= PACK_ONE_TIME_DAYS) { g = { ...g, reset: rr.reset, resetDay: rr.resetDay }; }
-      const every = typeof g.reset === "number" && !packStackInfo(g.reset) ? resetText(g.reset, g.resetDay).split(" \u00b7 ")[0] : packStackInfo(g.reset) ? t("pc_card_days").replace("{n}", packStackInfo(g.reset).days || 7) : "";
+      const every0 = typeof g.reset === "number" && !packStackInfo(g.reset) ? resetText(g.reset, g.resetDay).split(" \u00b7 ")[0] : packStackInfo(g.reset) ? t("pc_card_days").replace("{n}", packStackInfo(g.reset).days || 7) : "";
+      const every = [every0, mkNote(g)].filter(Boolean).join(" \u00b7 ");
       return `<details class="pca-pk"><summary><span class="pca-pic">${main ? pcaIcon(main) : ""}</span><span class="pca-mid"><span class="pca-nm">${esc(name)} <small>&times;${qty(g.count)}</small></span>${every ? `<span class="pca-sb">${esc(every)}</span>` : ""}${chips.length ? `<span class="pca-gv">${chips.map((n) => `<span class="pca-chip${pcaNeeded(n) ? "" : " x"}" title="${esc(materialDisplayName(n))}">${pcaIcon(n)}+${esc(shortAmount(gv[n]))}</span>`).join("")}</span>` : ""}</span><b class="pca-pr">${pcaCur(packFmtLocal(g.subtotal, g.currency, false, g.sample))}</b></summary>
         <div class="pc-lines">${g.lines.slice().sort((a, b) => b.count - a.count).map((r) => `<div><span>${qty(r.count)}&times;</span><span>${esc(r.label)}${noteOf ? noteOf(r) : ""}</span><span class="meta">${packFmtLocal(priceOf(r), r.currency, false, r.price)}</span></div>`).join("")}</div></details>`;
     }).join("");
@@ -19789,10 +19813,39 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           aBuilt = true;
           const targetA = `<div class="pca-tg"><span aria-hidden="true">&#127919;</span><span>${esc(t("pca_target"))}</span><input type="date" data-packtarget value="${esc(targetDate)}" aria-label="${esc(t("pack_target_by"))}" />${targetDays != null ? `<span class="${targetDays < 0 ? "bad" : "left"}">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : `<span>${esc(t("pack_no_date"))}</span>`}${targetDate ? `<button type="button" class="pca-x" data-packtargetclear title="${esc(t("pack_no_date"))}" aria-label="${esc(t("pack_no_date"))}">&times;</button>` : ""}</div>`;
           const rowsA = pcaRows(byPack, p.rows, packRowLocal, null);
+          // Pet Refine: "Buy the marks as Advanced | Common", each side with its own plan's price.
+          let marksA = "";
+          if (mkTables.length) {
+            const as = petMarksBuyAs(), other = as === "adv" ? "common" : "adv";
+            let og = null;
+            PET_BUYAS_FORCE = other;
+            try { og = packGroupsFor(tables, calcKey); } finally { PET_BUYAS_FORCE = null; }
+            let op = null;
+            try { op = await plannerRun("page", { groups: og, need, calcKey, targetDays }); } catch (e) { op = null; }
+            if (stale()) return;
+            const oPlan = op ? (pick.key === "fastest" ? op.fastest : pick.key === "target" ? op.byTarget : op.cheapest) : null;
+            const priceOf = (pl) => (pl ? packFmtLocal(Math.ceil(packPlanLocal(pl)), currency, true, pl.rows[0]?.price) : "\u2014");
+            const pr = { [as]: priceOf(p), [other]: priceOf(oPlan) };
+            const same = oPlan && Math.ceil(packPlanLocal(oPlan)) === Math.ceil(packPlanLocal(p));
+            // "1 Advanced = 8 Common in this pack (2 or 16, 4 or 32 … 40 or 320)", from the pack's own rows.
+            let sameHtml = "";
+            if (same) {
+              const tb = mkTables[0], cols = packEffectiveCols(tb), lk = packLinkFor(tb.id);
+              const ci = (nm) => Number(Object.keys(cols).find((k) => cols[k] === nm));
+              const ca = ci("Advanced Marks"), cc = ci("Common Marks");
+              const pairs = (tb.rows || []).map((r) => r.cells || []).filter((c) => packParseNum(c[lk.priceCol]) > 0).map((c) => [packParseNum(c[ca]) * packColMultiplier(lk, ca), packParseNum(c[cc]) * packColMultiplier(lk, cc)]).filter(([a, c]) => a > 0 && c > 0);
+              const txt = pairs.map(([a, c]) => t("pca_mk_or").replace("{a}", qty(a)).replace("{c}", qty(c)));
+              const list = txt.length > 3 ? `${txt.slice(0, 2).join(", ")} \u2026 ${txt[txt.length - 1]}` : txt.join(", ");
+              const ratio = pairs.length ? Math.round(pairs[0][1] / pairs[0][0]) : ADVANCED_MARK_VALUE;
+              sameHtml = `<div class="pca-note ok">&#10003; ${esc(t("pca_mk_same").replace("{n}", ratio).replace("{list}", list))}</div>`;
+            }
+            const btn = (k, item, lbl) => `<button type="button" data-pcamarks="${k}" class="${as === k ? "active" : ""}" aria-pressed="${as === k}">${pcaIcon(item)}<span>${esc(t(lbl))} &middot; ${esc(pr[k])}</span></button>`;
+            marksA = `<div class="pca-mk"><div class="pca-mk-t">${esc(t("pca_mk_buy_as"))}</div><div class="seg pca-mk-seg">${btn("adv", "Advanced Marks", "pca_mk_adv")}${btn("common", "Common Marks", "pca_mk_com")}</div>${sameHtml}</div>`;
+          }
           const tradesA = tradesCard(p.trades);
           // Free day bonus (Shining City Pack's first buy of each event day): not a pack row.
           const bonusA = Object.entries(p.bonus || {}).map(([n, v]) => `<div class="pca-bonus">${pcaIcon(n)}<span>${esc(t("pca_day_bonus").replace("{q}", (Number(ISL_RULES.tomeFreeDay) || 0).toLocaleString()).replace("{n}", qty(v)))}</span></div>`).join("");
-          sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${targetA}<div class="pc-list">${tradesA}<div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${bonusA}${islCopiesLine(p)}${islCheckedHtml(p.rows)}@@PCFREE@@</div>`;
+          sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${marksA}${targetA}<div class="pc-list">${tradesA}<div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${bonusA}${islCopiesLine(p)}${islCheckedHtml(p.rows)}@@PCFREE@@</div>`;
         }
       }
     }
@@ -19833,6 +19886,15 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     </div>`;
   containerEl.querySelectorAll("[data-packviewbtn]").forEach((b) => b.addEventListener("click", () => { PACK_COST_VIEW[calcKey] = b.dataset.packviewbtn; rerender(); }));
   containerEl.querySelectorAll("[data-packpick]").forEach((b) => b.addEventListener("click", () => { PACK_PLAN_PICK[calcKey] = b.dataset.packpick; rerender(); }));
+  containerEl.querySelectorAll("[data-pcamarks]").forEach((b) => b.addEventListener("click", async () => {
+    const st = await ensurePetMarksState();
+    if (st.buyAs === b.dataset.pcamarks) return;
+    st.buyAs = b.dataset.pcamarks === "common" ? "common" : "adv";
+    saveCalcState("pet_refine_marks", st);
+    PACK_PLAN_CACHE.clear();
+    budgetInvalidate();
+    rerender();
+  }));
   const toBudgets = containerEl.querySelector("[data-gotobudgets]");
   if (toBudgets) toBudgets.addEventListener("click", () => { const b = document.querySelector('.topnav-groups [data-tab="budgets"]'); if (b) b.click(); });
   containerEl.querySelector("[data-packtoggle]").addEventListener("click", () => { PACK_COST_OPEN[calcKey] = false; rerender(); });
@@ -21137,6 +21199,20 @@ function tradeRatesFor(calcKey) {
   // at the weekly plan chosen there, one lot per week).
   const extra = (typeof TRADE_EXTRA_RATES !== "undefined" && TRADE_EXTRA_RATES && TRADE_EXTRA_RATES[calcKey]) || [];
   extra.forEach((r) => out.push(r));
+  // Pet Refine: 500 Gems → 1 Common Mark is a trade the person picks (one switch for the
+  // Backpack's and the packs' gems): off = no such trade, on = a trade shown and listed.
+  if (calcKey === "pets_refine") {
+    const gi = out.findIndex((r) => r.from === "Gems" && r.to === "Common Marks");
+    if (gi >= 0) {
+      if (!petGemsTradeOn()) out.splice(gi, 1);
+      else {
+        const m = tradeRatesFor.gems || (tradeRatesFor.gems = new WeakMap());
+        let v = m.get(out[gi]);
+        if (!v) { v = { ...out[gi], hidden: false, silent: false }; m.set(out[gi], v); }
+        out[gi] = v;
+      }
+    }
+  }
   out.__calcKey = calcKey; // lets applyTrades find this page's priorities
   return out;
 }
@@ -21265,7 +21341,28 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   if (!containerEl) return;
   await ensureTradeRates();
   const rates = tradeRatesFor(calcKey).filter((r) => !r.hidden);
-  if (!rates.length) { containerEl.innerHTML = ""; return; }
+  // Pet Refine: the "Trade Gems for Common Marks" switch lives here (one switch for the
+  // Backpack's and the packs' gems), so the window shows even with it off.
+  const gemsSw = calcKey === "pets_refine" ? `<label class="trd-use trd-gems" title="${esc(t("marks_gems_trade"))}"><span>${esc(t("marks_gems_trade"))}<small>${esc(t("marks_gems_trade_rate"))}</small></span><span class="pc-switch"><input type="checkbox" data-markspackgems ${petGemsTradeOn() && TRADE_APPLY[calcKey] !== false ? "checked" : ""} /><i></i></span></label>` : "";
+  const wireGems = () => {
+    const pg = containerEl.querySelector("[data-markspackgems]");
+    if (pg) pg.addEventListener("change", async () => {
+      const st = await ensurePetMarksState();
+      st.packGems = pg.checked;
+      // Gems are this page's only trade: the one switch also sets "Use trades in Pack cost".
+      if ((TRADE_APPLY[calcKey] !== false) !== pg.checked) { TRADE_APPLY[calcKey] = pg.checked; saveTradeSettings(); }
+      PACK_PLAN_CACHE.clear();
+      budgetInvalidate();
+      saveCalcState("pet_refine_marks", st);
+      // The Backpack's gems change what's counted too: redraw the whole page part.
+      if (REFINE_REFRESH && TAB === "refinepage") REFINE_REFRESH(); else if (onChange) onChange();
+    });
+  };
+  if (!rates.length) {
+    containerEl.innerHTML = gemsSw ? `<div class="pc-card trd"><div class="pc-head trd-title"><b>&#8644; ${esc(t("trade_title"))}</b></div>${gemsSw}</div>` : "";
+    wireGems();
+    return;
+  }
   const nm = (n) => materialDisplayName(itemShortName(n)).replace(/\s*\((minutes|min)\)$/, "");
   // Calculator: short Fire Crystal names (FC, FCS, RFC) so it stays on one line.
   const cnm = (n) => ({ "Fire Crystal": "FC", "FC Shard": "FCS", "Refined FC": "RFC" }[n]) || nm(n);
@@ -21335,10 +21432,11 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
       <span class="trd-res" data-traderesult></span></div>`;
   containerEl.innerHTML = `<div class="pc-card trd">
     <div class="pc-head trd-title"><b>&#8644; ${esc(t("trade_title"))}</b></div>
-    ${switchHtml}${shortHtml}
+    ${gemsSw}${gemsSw ? "" : switchHtml}${shortHtml}
     ${doHtml}${rulesHtml}
     <div class="trd-lbl">${esc(t("trd_calc"))}</div>${calcHtml}
   </div>`;
+  wireGems();
   const applyCb = containerEl.querySelector("[data-tradeapply]");
   if (applyCb) applyCb.addEventListener("change", async (e) => {
     TRADE_APPLY[calcKey] = e.target.checked;
@@ -23599,11 +23697,11 @@ function budgetGoalShort(g) {
   return last ? `${g.mini && g.opt.grpLabel ? g.opt.grpLabel : packPageLabel(g.page)} ${last}` : packPageLabel(g.page);
 }
 function budgetGoalIcon(g, pages) {
-  if (g.rest) return { src: g.page ? QUICK_ICONS[(BUDGET_PAGES.find((x) => x.key === g.page) || {}).tab] || goalPageIcon((pages || []).find((x) => x.calcKey === g.page)) || "" : "", face: false };
+  if (g.rest) return { src: g.page ? budgetPagePic(g.page) || goalPageIcon((pages || []).find((x) => x.calcKey === g.page)) || "" : "", face: false };
   if (g.up) return { src: g.up.img || QUICK_ICONS[(BUDGET_PAGES.find((x) => x.key === g.page) || {}).tab] || "", face: !!g.up.face };
   const hero = budgetGoalHero(g), pg = (pages || []).find((x) => x.calcKey === g.page);
   if (hero) return { src: hero.image_url || HERO_IMG_BY_NAME[hero.name] || goalPageIcon(pg), face: true };
-  return { src: QUICK_ICONS[(BUDGET_PAGES.find((x) => x.key === g.page) || {}).tab] || goalPageIcon(pg), face: false };
+  return { src: budgetPagePic(g.page) || goalPageIcon(pg), face: false };
 }
 // Which goal a pack is bought for: the first goal in order that needs what
 // it gives (or what trades into it: Mystery Points → widgets, General shards
@@ -23934,6 +24032,14 @@ function wireBudgetGoals(box) {
   }));
 }
 // A picture for a page: its first needed item's.
+// A Budgets page's picture: its Menu page's quick picture; Hero shards & widgets (whose page is
+// the Backpack, an emoji there) the Mythic General Hero Shard.
+// Shorter names on the Budgets page tiles only (full name in the tile's title / aria-label).
+const B3_TILE_SHORT = { research_center: "b3_tile_research_center", hero_shards: "b3_tile_hero_shards" };
+function budgetPagePic(key) {
+  const tab = (BUDGET_PAGES.find((x) => x.key === key) || {}).tab;
+  return QUICK_ICONS[tab] || (key === "hero_shards" ? BP_SHARD_ICONS["Mythic General Hero Shard"] : "");
+}
 function goalPageIcon(pg) {
   for (const n of Object.keys((pg && pg.needFull) || {})) { const ic = itemRegIcon(n) || bpIcon({ name: n.replace(/ \(minutes\)$/, "") }); if (ic) return ic; }
   return "";
@@ -24647,7 +24753,7 @@ async function renderBudgetsPage(opts = {}) {
   // Each page as a tile: picture, name, tick, its price, when it's done (by
   // the target / after it) and a ring = how much of what it needs you
   // already have (Backpack + trades). Tap → its details in a sheet.
-  const pageIcon = (x) => (x.pg.sh && x.pg.sh.img) || QUICK_ICONS[BUDGET_PAGES[x.i].tab] || goalPageIcon(x.pg);
+  const pageIcon = (x) => (x.pg.sh && x.pg.sh.img) || budgetPagePic(BUDGET_PAGES[x.i].key) || goalPageIcon(x.pg);
   const datedSegs = datedLead ? budgetGoalSegs(datedSetup.goals, pagesRaw) : null; // (what each goal still needs: a page with nothing left has no date)
   const timing = (x) => {
     const k = x.pg.calcKey;
@@ -24688,7 +24794,7 @@ async function renderBudgetsPage(opts = {}) {
     const k = x.pg.calcKey, ic = pageIcon(x), nothing = isNothing(x);
     const [cls, sub] = nothing ? ["mu", k === "hero_gear" ? BUDGET_HG_SETS.map(gearSetDisplayName).join(" · ") : ""] : timing(x);
     return `<div class="b3-tile b3-pt${x.inc ? "" : " off"}" data-b3page="${esc(k)}" role="button" tabindex="0" aria-label="${esc(x.label)}">
-      <div class="b3-pt-h">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<b>${esc(x.label)}</b><label class="b3-tk" title="${esc(t("b3_tick"))}"><input type="checkbox" data-budgetinc="${esc(k)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" /></label></div>
+      <div class="b3-pt-h">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<b${B3_TILE_SHORT[k] ? ` title="${esc(x.label)}"` : ""}>${esc(B3_TILE_SHORT[k] ? t(B3_TILE_SHORT[k]) : x.label)}</b><label class="b3-tk" title="${esc(t("b3_tick"))}"><input type="checkbox" data-budgetinc="${esc(k)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" /></label></div>
       ${nothing ? `<div class="b3-pt-p nothing">&#10003; ${esc(t("b3_nothing"))}</div>` : `<div class="b3-pt-p">${x.right}</div>`}
       <div class="b3-pt-m ${cls}">${esc(sub)}</div>${nothing ? ringHtml(100, true) : x.inc ? ringHtml(covered(x.pg), false) : ""}</div>`;
   };
@@ -24979,10 +25085,12 @@ async function renderCharmsCalc() {
   await Promise.all([ensureCharmData(), ensureCharmLevelsData(), ensureUpgradeOrder(), maxBeforeLoad("charm")]); // levels reload after Upcoming ticks change
 
   if (seq !== RENDER_SEQ) return;
-  // Entering the page: the first troop with a charm below its target (unless the person picked one).
+  // Entering the page: the first troop with a charm below its target, else the last troop (unless the person picked one).
   if (fresh && !PAGE_USER_PICKED.charm) {
     const tr = PLX_TROOPS.find((x) => charmFlat(x).some((c) => { const st = CHARM_CALC_STATE[c.piece.key][c.slot]; return CHARM_LEVELS.indexOf(String(st.target)) > CHARM_LEVELS.indexOf(String(st.current)); }));
-    if (tr) PLX_TROOP.charm = tr;
+    const done = (x) => charmFlat(x).some((c) => CHARM_LEVELS.indexOf(String(CHARM_CALC_STATE[c.piece.key][c.slot].current)) > 0);
+    const last = tr || [...PLX_TROOPS].reverse().find(done); // nothing left: the last troop at its target
+    if (last) PLX_TROOP.charm = last;
   }
   content.innerHTML = plxShellHtml({
     title: navLabel("charmscalc"),
@@ -27952,7 +28060,7 @@ async function renderIslandGallery() {
     }
     if (!tracked(s) || lvOf(s) >= maxOf(s) || tgtOf(s) <= lvOf(s)) return { badge: "", line: "" };
     const kind = srcOf(s).kind;
-    const st = storeOf(s) ? `<span class="nw">&#128230;${storeOf(s)} &middot;</span> ` : "";
+    const st = storeOf(s) ? `<span class="nw"><span class="isl-sti">&#128230;</span>${storeOf(s)} &middot;</span> ` : "";
     const tail = ""; // no finish date on the cards (owner, 9 Nov 2026); the pop-up still has it
     const line = kind === "none" ? ""
       : marksOf(s) || tomesOf(s) ? `<span class="isl-tsh mk two">${needOf(s) ? `<span class="nw">${st}${bidiNum(needOf(s).toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true">${tail} +</span>` : st}${[marksOf(s) ? ` <span class="nw"><img class="isl-mki" src="icons/mark-of-revival.png" alt="" /> ${bidiNum(marksOf(s) >= 10000 ? islK(marksOf(s)) : marksOf(s).toLocaleString())}</span>` : "", tomesOf(s) ? ` <span class="nw"><img class="isl-mki" src="icons/glorious-tome.png" alt="" /> ${bidiNum(tomesOf(s) >= 10000 ? islK(tomesOf(s)) : tomesOf(s).toLocaleString())}</span>` : ""].filter(Boolean).join(" +")}</span>`
@@ -28167,7 +28275,13 @@ async function renderIslandGallery() {
   function islOpenPacks() {
     if (ISL_POP) ISL_POP.close();
     if (window.matchMedia("(max-width: 900px)").matches) islPacksTo(true);
-    else { const c = document.getElementById("islMkBuy"); if (c) c.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    else {
+      // PC: the card sits under the folded top card, hidden while folded; the price
+      // button still shows it (until the next Hide / Show).
+      const w = document.getElementById("islMkWrap"), c = document.getElementById("islMkBuy");
+      if (w) w.classList.add("isl-mk-shown");
+      if (c) c.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }
   {
     const w = document.getElementById("islMkWrap");
@@ -29861,7 +29975,7 @@ async function renderT11HeliosPage() {
   const troopsEl = document.getElementById("t11Troops");
   const t11DotsEl = document.getElementById("t11TroopDots");
   const T11_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
-  let t11ActiveTroop = T11_TROOPS[pagePickIdx("t11_helios", T11_TROOPS, fresh, (tr) => !!T11_NODES_CACHE[tr] && computeNeeded(tr).time_hours > 0)];
+  let t11ActiveTroop = T11_TROOPS[pagePickIdx("t11_helios", T11_TROOPS, fresh, (tr) => !!T11_NODES_CACHE[tr] && computeNeeded(tr).time_hours > 0, { done: (tr) => Object.values(T11_STATE[tr] || {}).some((v) => Number(v) > 0) })];
   function renderGrandTotal() {
     const grand = { meat: 0, wood: 0, coal: 0, iron: 0, steel: 0, refined_fc: 0, fc_shard: 0, time_hours: 0 };
     T11_TROOPS.forEach((troop) => {
@@ -30133,7 +30247,7 @@ async function ensurePetMarksState() {
     // Advanced refine calculator, where their own rates and adjustment apply.
     const advanced = !IS_OWNER && saved.advanced === true;
     const rates = !IS_OWNER ? (advanced ? visitorRates : { ...published }) : testMode ? testRates : published;
-    PET_MARKS_STATE = { rates, published, testMode, testRates, visitorRates, visitorCustom: !IS_OWNER && visitorCustom, advanced, adjust: (IS_OWNER || advanced) ? (Number(saved.savedAdjust != null ? saved.savedAdjust : saved.adjust) || 0) : 0, savedAdjust: Number(saved.savedAdjust != null ? saved.savedAdjust : saved.adjust) || 0, packGems: saved.packGems === true };
+    PET_MARKS_STATE = { rates, published, testMode, testRates, visitorRates, visitorCustom: !IS_OWNER && visitorCustom, advanced, adjust: (IS_OWNER || advanced) ? (Number(saved.savedAdjust != null ? saved.savedAdjust : saved.adjust) || 0) : 0, savedAdjust: Number(saved.savedAdjust != null ? saved.savedAdjust : saved.adjust) || 0, packGems: saved.packGems !== false, buyAs: saved.buyAs === "common" ? "common" : "adv" };
   }
   return PET_MARKS_STATE;
 }
@@ -31021,7 +31135,8 @@ async function renderExpertsResearchPage() {
   }
   const expResearchCounterEl = document.getElementById("expResearchSwipeCounter");
   const erWork = (ex) => pathNumbersFor(ex).some((p) => { const st = (saved[ex] || {})[p] || {}; return (Number(st.desired) || 0) > (Number(st.current) || 0); });
-  let activeResearchIdx = pagePickIdx("experts_research", EXPERTS_IN_ORDER, fresh, (ex) => isResearchUnlocked(ex) && erWork(ex), erWork);
+  const erSome = (ex) => isResearchUnlocked(ex) && pathNumbersFor(ex).some((p) => (Number(((saved[ex] || {})[p] || {}).current) || 0) > 0);
+  let activeResearchIdx = pagePickIdx("experts_research", EXPERTS_IN_ORDER, fresh, (ex) => isResearchUnlocked(ex) && erWork(ex), erWork, { done: erSome });
   function renderGrid() {
     renderPickStrip(expResearchCounterEl, EXPERTS_IN_ORDER.map((ex) => ({ label: dataName(ex), img: (EXPERTS_LIST.find((e) => e.key === ex) || {}).img, dim: !isResearchUnlocked(ex) })), activeResearchIdx, (next) => {
       activeResearchIdx = next;
@@ -31589,7 +31704,7 @@ async function renderExpertsPage() {
     const cur = Number(hs.current) || 0, des = Number(hs.desired) || 0;
     return des > cur + 0.05 || Object.values(hs.skills || {}).some((st) => (Number(st && st.desired) || 0) > (Number(st && st.current) || 0));
   };
-  let activeExpertIdx = pagePickIdx("experts", EXPERTS_SHOWN.map((e) => e.key), fresh, (k) => isExpertUnlocked(k) && expWork(k), expWork);
+  let activeExpertIdx = pagePickIdx("experts", EXPERTS_SHOWN.map((e) => e.key), fresh, (k) => isExpertUnlocked(k) && expWork(k), expWork, { done: (k) => isExpertUnlocked(k) && (Number((saved[k] || {}).current) || 0) > 0 });
   // H4: level positions (every level, plus "N.1" where that level's Advance costs sigils)
   function expPos(hero) {
     const out = [];
@@ -32044,7 +32159,6 @@ async function renderRefinePage() {
   content.innerHTML = plxShellHtml({
     title: t("pets_refine_title"),
     maxId: "refineMaxAllBtn",
-    settings: `<label class="t12x-check pr-gems" title="${esc(t("marks_pack_gems"))}"><span class="pr-gems-t"><b>${esc(t("marks_pack_gems_short"))}</b><small>${esc(t("marks_pack_gems_rate"))}</small></span><input type="checkbox" class="bset-sw" data-markspackgems ${PET_MARKS_STATE.packGems ? "checked" : ""} /></label>`,
     amountsId: "refineMarksBar", needId: "refineNeed",
     // One pinned troop switch: it picks which troop's LETH / HP boxes show.
     // Header: the troop switch with its
@@ -32053,13 +32167,6 @@ async function renderRefinePage() {
     mainHtml: `<div id="refineSwipeCounter"></div>
     <div id="refineList"></div>
     <div id="refineTotals" style="margin-top:12px;"></div>`,
-  });
-  const pg = content.querySelector("[data-markspackgems]");
-  if (pg) pg.addEventListener("change", () => {
-    PET_MARKS_STATE.packGems = pg.checked;
-    PACK_PLAN_CACHE.clear();
-    saveCalcState("pet_refine_marks", PET_MARKS_STATE);
-    renderTotals();
   });
 
   // The pinned troop switch's stat boxes (summed over every pet).
@@ -32192,6 +32299,7 @@ async function renderRefinePage() {
     refineStatsNow = { grand, grandMax };
     drawRefineStats();
     // "Marks to max · all pets" row (same numbers as the card at the bottom).
+    REFINE_REFRESH = () => { if (TAB === "refinepage") renderTotals(); };
     const mkEl = document.getElementById("refineMk");
     if (mkEl) {
       mkEl.innerHTML = `<img class="rf-mki" src="${esc(materialIconSrc("Common Marks") || "")}" alt="" />
@@ -32243,7 +32351,7 @@ async function renderRefinePage() {
       root.querySelectorAll("[data-marksadvanced]").forEach((b) => b.addEventListener("click", async () => {
         const on = b.dataset.marksadvanced === "1";
         const st = PET_MARKS_STATE;
-        saveCalcState("pet_refine_marks", { adjust: st.savedAdjust, savedAdjust: st.savedAdjust, packGems: st.packGems, visitorRates: st.visitorRates, visitorCustom: st.visitorCustom, advanced: on });
+        saveCalcState("pet_refine_marks", { adjust: st.savedAdjust, savedAdjust: st.savedAdjust, packGems: st.packGems, buyAs: st.buyAs, visitorRates: st.visitorRates, visitorCustom: st.visitorCustom, advanced: on });
         PET_MARKS_STATE = null;
         await ensurePetMarksState();
         PACK_PLAN_CACHE.clear(); if (typeof budgetInvalidate === "function") budgetInvalidate();
@@ -32320,7 +32428,7 @@ async function renderRefinePage() {
   }
   const refineCounterEl = document.getElementById("refineSwipeCounter");
   const refineWork = (pet) => isPetUnlocked(pet) && STAT_KEYS.some(({ key, maxKey }) => { const mx = pct1(maxRow(pet)[maxKey]); return mx - Math.min(Number(petState(pet)[key]) || 0, mx) > 0.005; });
-  let activeRefineIdx = pagePickIdx("pets_refine", petNames, fresh, refineWork);
+  let activeRefineIdx = pagePickIdx("pets_refine", petNames, fresh, refineWork, { done: (pet) => isPetUnlocked(pet) && STAT_KEYS.some(({ key }) => (Number(petState(pet)[key]) || 0) > 0) });
   function renderList() {
     renderPickStrip(refineCounterEl, petNames.map((pt, i) => ({ label: dataName(pt), img: petImage(pt), color: PET_TROOP_COLORS_CYCLE[i % PET_TROOP_COLORS_CYCLE.length], dim: !isPetUnlocked(pt) })), activeRefineIdx, (next) => { activeRefineIdx = next; pagePickSet("pets_refine", petNames[next]); renderList(); });
     const idx = activeRefineIdx;
@@ -32531,7 +32639,7 @@ async function renderPetsDataPage() {
 
   const listEl = document.getElementById("petsList");
   const petsCounterEl = document.getElementById("petsSwipeCounter");
-  let activePetIdx = pagePickIdx("pets", petNames, fresh, (pet) => { if (!isPetUnlocked(pet)) return false; const { from, to } = getState(pet); return to > from; });
+  let activePetIdx = pagePickIdx("pets", petNames, fresh, (pet) => { if (!isPetUnlocked(pet)) return false; const { from, to } = getState(pet); return to > from; }, { done: (pet) => isPetUnlocked(pet) && getState(pet).from >= 0 });
   function renderList() {
     renderPickStrip(petsCounterEl, petNames.map((pt, i) => ({ label: dataName(pt), img: petImage(pt), color: PET_TROOP_COLORS_CYCLE[i % PET_TROOP_COLORS_CYCLE.length], dim: !isPetUnlocked(pt) })), activePetIdx, (next) => { activePetIdx = next; pagePickSet("pets", petNames[next]); renderList(); });
     const idx = activePetIdx;
@@ -32896,8 +33004,8 @@ async function renderResearchCenterPage() {
     };
   }
 
-  // Entering the page: the first group with research time left (else Infantry as before).
-  rcActive = RC_GROUPS[pagePickIdx("research_center", RC_GROUPS, fresh, rcWork, (g) => g === rcActive)];
+  // Entering the page: the first group with research time left (else the last group, all done).
+  rcActive = RC_GROUPS[pagePickIdx("research_center", RC_GROUPS, fresh, rcWork, { done: (g) => tracksOf(RC_BASE_CATEGORIES[g] || []).some((tr) => Number(RC_STATE[tr]) > 0) })];
   renderTotals();
   renderGroups();
 }
@@ -32983,14 +33091,28 @@ function pageEntered(key) {
   return true;
 }
 // Index of the card to show: the person's pick, else (entering) the first with work,
-// else the one shown before (redraws) or the first. works: predicates tried in order.
+// else (nothing has work, owner 20 Nov 2026) the LAST card that is done (maxed / at its
+// target), else the one shown before (redraws) or the first. works: predicates tried in
+// order; an optional last argument { done: [predicates] } says which cards count as done
+// (tried in order, last match wins; no list = every card, so the last one).
 function pagePickIdx(key, names, fresh, ...works) {
+  const opt = works.length && typeof works[works.length - 1] === "object" ? works.pop() : {};
   const p = PAGE_PICK[key];
   if (p && (p.user || !fresh)) { const i = names.indexOf(p.name); if (i >= 0) return i; }
   let i = 0;
-  if (fresh) for (const w of works) { const k = names.findIndex((n, j) => w(n, j)); if (k >= 0) { i = k; break; } }
+  if (fresh) {
+    let found = false;
+    for (const w of works) { const k = names.findIndex((n, j) => w(n, j)); if (k >= 0) { i = k; found = true; break; } }
+    if (!found && names.length) i = pageLastDone(names, opt.done, 0);
+  }
   if (names.length) PAGE_PICK[key] = { name: names[i], user: false };
   return i;
+}
+// Last index whose name passes the first done predicate that matches any (none given = the last).
+function pageLastDone(names, done, dflt) {
+  if (!done) return names.length - 1;
+  for (const d of [].concat(done)) { for (let j = names.length - 1; j >= 0; j--) if (d(names[j], j)) return j; }
+  return dflt;
 }
 function pagePickSet(key, name) { PAGE_PICK[key] = { name, user: true }; }
 function plxTroopOf(key) { return PLX_TROOP[key] || PLX_TROOPS[0]; }
@@ -33646,7 +33768,7 @@ async function renderT12ResearchPage() {
   }
 
   const T12_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
-  let t12ActiveTroop = T12_TROOPS[pagePickIdx("t12_research", T12_TROOPS, fresh, (tr) => computeNeeded(T12_STATE[tr], tr).time_hours > 0)];
+  let t12ActiveTroop = T12_TROOPS[pagePickIdx("t12_research", T12_TROOPS, fresh, (tr) => computeNeeded(T12_STATE[tr], tr).time_hours > 0, { done: (tr) => Object.values(T12_STATE[tr] || {}).some((v) => Number(v) > 0) })];
   const t12Open = {}; // { group: true/false } chosen this visit
   function renderTroopPanels() {
     const troopsEl = document.getElementById("t12Troops");
