@@ -2492,6 +2492,12 @@ input,select,textarea{
   .pca .pc-view{ margin-top:0; padding-top:0; border-top:0; }
   .pca-scope .seg{ display:grid; grid-template-columns:1fr 1fr; width:100%; margin:8px 0 0; }
   .pca-scope .seg button{ min-height:32px; }
+  .pca-mk{ margin:10px 0 2px; }
+  .pca-mk-t{ font-size:12.5px; color:var(--frost); margin:0 0 6px; }
+  .pca-mk-seg{ display:grid; grid-template-columns:1fr 1fr; width:100%; }
+  .pca-mk-seg button{ display:flex; align-items:center; justify-content:center; gap:5px; min-height:34px; min-width:0; padding:4px 6px; font-size:12px; }
+  .pca-mk-seg button img{ width:18px; height:18px; object-fit:contain; flex:none; }
+  .pca-mk-seg button span{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   /* In Chief Gear's Pack cost window: one title (the window's), no card inside
      the card, and one fixed size whichever plan is picked. */
   @media (max-width: 900px){
@@ -5161,6 +5167,10 @@ span.mk.mk svg{flex:none}
     :is(.g1-top .g1-bp, #cgBp, #islandShardPlan .isl-bp) .bs-foot .plx-bpb{ display:flex !important; flex:none !important; width:auto !important; margin:0 !important; gap:5px; flex-wrap:nowrap; }
     :is(.g1-top .g1-bp, #cgBp, #islandShardPlan .isl-bp) .bs-foot .plx-bpb .cg-bpbtn{ width:auto !important; flex:none !important; padding:0 9px !important; height:32px !important; min-height:32px !important; font-size:12px; }
     :is(.g1-top .g1-bp, #cgBp, #islandShardPlan .isl-bp) .bs-foot > .g1-sq{ width:32px; min-width:32px; height:32px; margin-inline-start:0; }
+  }
+  @media (max-width: 900px){
+    :is(.g1-top .g1-bp, #cgBp) .bs-foot:has(.plx-bpb.rf-3){ flex-wrap:wrap !important; row-gap:6px; }
+    :is(.g1-top .g1-bp, #cgBp) .bs-foot .plx-bpb.rf-3{ order:3; width:100% !important; justify-content:flex-end; }
   }
   @media (max-width: 380px){
     :is(.g1-top .g1-bp, #cgBp, #islandShardPlan .isl-bp) .bs-foot > span:first-child{ letter-spacing:.02em; }
