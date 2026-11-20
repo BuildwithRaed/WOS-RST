@@ -5173,8 +5173,11 @@ span.mk.mk svg{flex:none}
     :is(.g1-top .g1-bp, #cgBp, #islandShardPlan .isl-bp) .bs-foot > .g1-sq{ width:32px; min-width:32px; height:32px; margin-inline-start:0; }
   }
   @media (max-width: 900px){
-    :is(.g1-top .g1-bp, #cgBp) .bs-foot:has(.plx-bpb.rf-3){ flex-wrap:wrap !important; row-gap:6px; }
-    :is(.g1-top .g1-bp, #cgBp) .bs-foot .plx-bpb.rf-3{ order:3; width:100% !important; justify-content:flex-end; }
+    :is(.g1-top .g1-bp, #cgBp) .bs-foot .plx-bpb.rf-bpb{ gap:4px; }
+    :is(.g1-top .g1-bp, #cgBp) .bs-foot .plx-bpb.rf-bpb .cg-bpbtn{ padding:0 7px !important; }
+  }
+  @media (max-width: 380px){
+    :is(.g1-top .g1-bp, #cgBp) .bs-foot .plx-bpb.rf-bpb .rf-tw{ display:none; }
   }
   @media (max-width: 380px){
     :is(.g1-top .g1-bp, #cgBp, #islandShardPlan .isl-bp) .bs-foot > span:first-child{ letter-spacing:.02em; }

@@ -19264,7 +19264,7 @@ function plxBuyBtnsHtml(calcKey) {
   // Chief Gear: its own sheet buttons (data-cgsheet), under its 🎒 Backpack line like the other pages
   if (calcKey === "chief_gear") return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-cgsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button>${visitorCan("packcost") ? `<button type="button" class="cg-bpbtn ice" data-cgsheet="packs" data-cgprice>${esc(PACK_COST_SHOWN.chief_gear || t("pack_cost_title"))} &#8250;</button>` : ""}</span>`;
   // Pet Refine: the advanced calculator beside Pack cost, where Trades sits on other pages
-  if (calcKey === "pets_refine") return `<span class="cg-bpb plx-bpb rf-3"><button type="button" class="cg-bpbtn rf-calcbtn" data-rfcalcbtn>&#9881; ${esc(t("rf_mk_calc"))} &#8250;</button><button type="button" class="cg-bpbtn" data-plxsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
+  if (calcKey === "pets_refine") return `<span class="cg-bpb plx-bpb rf-bpb"><button type="button" class="cg-bpbtn rf-calcbtn" data-rfcalcbtn title="${esc(t("rf_mk_calc"))}" aria-label="${esc(t("rf_mk_calc"))}">&#9881;</button><button type="button" class="cg-bpbtn" data-plxsheet="trades" title="${esc(t("cg_trades"))}" aria-label="${esc(t("cg_trades"))}">&#8644;<span class="rf-tw"> ${esc(t("cg_trades"))}</span></button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
   return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-plxsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
 }
 document.addEventListener("click", (e) => {
@@ -21206,12 +21206,14 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   const rates = tradeRatesFor(calcKey).filter((r) => !r.hidden);
   // Pet Refine: the "Trade Gems for Common Marks" switch lives here (one switch for the
   // Backpack's and the packs' gems), so the window shows even with it off.
-  const gemsSw = calcKey === "pets_refine" ? `<label class="trd-use trd-gems" title="${esc(t("marks_gems_trade"))}"><span>${esc(t("marks_gems_trade"))}<small>${esc(t("marks_gems_trade_rate"))}</small></span><span class="pc-switch"><input type="checkbox" data-markspackgems ${petGemsTradeOn() ? "checked" : ""} /><i></i></span></label>` : "";
+  const gemsSw = calcKey === "pets_refine" ? `<label class="trd-use trd-gems" title="${esc(t("marks_gems_trade"))}"><span>${esc(t("marks_gems_trade"))}<small>${esc(t("marks_gems_trade_rate"))}</small></span><span class="pc-switch"><input type="checkbox" data-markspackgems ${petGemsTradeOn() && TRADE_APPLY[calcKey] !== false ? "checked" : ""} /><i></i></span></label>` : "";
   const wireGems = () => {
     const pg = containerEl.querySelector("[data-markspackgems]");
     if (pg) pg.addEventListener("change", async () => {
       const st = await ensurePetMarksState();
       st.packGems = pg.checked;
+      // Gems are this page's only trade: the one switch also sets "Use trades in Pack cost".
+      if ((TRADE_APPLY[calcKey] !== false) !== pg.checked) { TRADE_APPLY[calcKey] = pg.checked; saveTradeSettings(); }
       PACK_PLAN_CACHE.clear();
       budgetInvalidate();
       saveCalcState("pet_refine_marks", st);
@@ -21293,7 +21295,7 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
       <span class="trd-res" data-traderesult></span></div>`;
   containerEl.innerHTML = `<div class="pc-card trd">
     <div class="pc-head trd-title"><b>&#8644; ${esc(t("trade_title"))}</b></div>
-    ${gemsSw}${switchHtml}${shortHtml}
+    ${gemsSw}${gemsSw ? "" : switchHtml}${shortHtml}
     ${doHtml}${rulesHtml}
     <div class="trd-lbl">${esc(t("trd_calc"))}</div>${calcHtml}
   </div>`;
