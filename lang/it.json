@@ -2901,5 +2901,7 @@
 "t:pca_mk_com":"Comuni",
 "t:pca_mk_same":"Stesso prezzo: 1 avanzato = {n} comuni in questo pacchetto ({list}).",
 "t:pca_mk_game":"scegli {m} nel gioco",
-"t:pca_mk_or":"{a} o {c}"
+"t:pca_mk_or":"{a} o {c}",
+"t:b3_tile_research_center":"Ricerca",
+"t:b3_tile_hero_shards":"Eroi"
 }

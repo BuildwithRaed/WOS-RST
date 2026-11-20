@@ -2900,5 +2900,7 @@
 "t:pca_mk_com":"ทั่วไป",
 "t:pca_mk_same":"ราคาเท่ากัน: ในแพ็กนี้ ขั้นสูง 1 = ทั่วไป {n} ({list})",
 "t:pca_mk_game":"เลือก {m} ในเกม",
-"t:pca_mk_or":"{a} หรือ {c}"
+"t:pca_mk_or":"{a} หรือ {c}",
+"t:b3_tile_research_center":"วิจัย",
+"t:b3_tile_hero_shards":"ฮีโร่"
 }
