@@ -2891,6 +2891,14 @@ const T = {
   marks_pack_gems: { en: "Count gems from packs toward marks (500 gems = 1 Common Mark)" },
   marks_pack_gems_short: { en: "Pack gems count as marks" },
   marks_pack_gems_rate: { en: "500 gems = 1 Common Mark" },
+  marks_gems_trade: { en: "Trade Gems for Common Marks" },
+  marks_gems_trade_rate: { en: "500 Gems = 1 Common Mark · your Backpack's and the packs' gems" },
+  pca_mk_buy_as: { en: "Buy the marks as" },
+  pca_mk_adv: { en: "Advanced" },
+  pca_mk_com: { en: "Common" },
+  pca_mk_same: { en: "Same price: 1 Advanced = {n} Common in this pack ({list})." },
+  pca_mk_game: { en: "choose {m} in the game" },
+  pca_mk_or: { en: "{a} or {c}" },
   g1_hide: { en: "Hide" },
   er_paths_to_go: { en: "{n} paths to go" },
   er_path_to_go_1: { en: "1 path to go" },
@@ -7319,29 +7327,6 @@ const CDA_PAGES = [
     })));
     return { tracks, bar: "research_center", general: CDA_RT };
   } },
-  { key: "pets_refine", tab: "refinepage", unit: "cda_u_stats", async build() {
-    // Small steps of 0.5% per pet and stat, each priced in Common Marks at its stage's rate
-    // (with the page's adjustment), the way the page counts marks.
-    await Promise.all([ensurePetsData(), ensurePetMarksState()]);
-    const rates = PET_MARKS_STATE.rates, adj = 1 + (PET_MARKS_STATE.adjust || 0) / 100;
-    const pct1 = (raw) => Math.round(Number(raw) * 10000) / 100;
-    const KEYS = [["il", "infantry_lethality_pct", "Infantry", "Lethality"], ["ih", "infantry_health_pct", "Infantry", "Health"], ["ll", "lancer_lethality_pct", "Lancer", "Lethality"], ["lh", "lancer_health_pct", "Lancer", "Health"], ["ml", "marksman_lethality_pct", "Marksman", "Lethality"], ["mh", "marksman_health_pct", "Marksman", "Health"]];
-    const STEP = 0.5, tracks = [];
-    Object.keys(PET_REFINE_CACHE || {}).filter((pet) => !hiddenForVisitor("pets", pet) && isPetUnlocked(pet)).forEach((pet) => {
-      const rows = PET_REFINE_CACHE[pet] || [], top = rows[Math.max(0, releasedLastIdx("pet_refine_nodes", rows))] || {};
-      const s = (PET_REFINE_TYPED_STATE && PET_REFINE_TYPED_STATE[pet]) || {};
-      KEYS.forEach(([k, maxKey, troop, stat]) => {
-        const cap = pct1(top[maxKey]), cur = Math.min(Number(s[k]) || 0, cap);
-        const n = Math.max(0, Math.ceil((cap - cur) / STEP - 1e-6));
-        if (!n) return;
-        const val = (i) => Math.min(cap, cur + i * STEP);
-        const marks = (lo, hi) => { let m = 0, prev = 0; rows.forEach((r) => { const sm = pct1(r[maxKey]), a = Math.max(prev, lo), b = Math.min(sm, hi); if (b > a) m += (b - a) * (Number(rates[r.stage]) || 0); prev = Math.max(prev, sm); }); return m * adj; };
-        tracks.push({ id: `${pet}|${k}`, troop, bulk: true, from: 0, to: n, name: `${dataName(pet)} · ${troopDisplayName(troop)} ${tStatLabel(stat)}`, lab: (i) => `${Number(val(i).toFixed(2))}%`,
-          cost: (i) => ({ "Common Marks": marks(val(i - 1), val(i)) }), gain: (i) => ({ [stat]: val(i) }) });
-      });
-    });
-    return { tracks, bar: "pets_refine", pic: (tr) => petImage(tr.raw.split("|")[0]), step: (tr, lv) => `${tr.lab(tr.from)} → ${tr.lab(lv)}` };
-  } },
   { key: "experts", tab: "expertspage", unit: "rch_u_experts", async build() {
     // Levels (Affinity + the expert's Sigils, General Sigils for any expert) and skills
     // (Books + expert speedups, general speedups too). Banked EXP / Affinity come off first.
@@ -7894,7 +7879,6 @@ const MK_SLOTS = {
     return n ? { in: n.querySelector(".t12x-nm"), before: n.querySelector(".t12x-nm > .meta") } : {};
   },
   researchcenter: (tr) => { const n = mkQ(`.t12x-node[data-pxnode="${mkE(tr.raw)}"]`); return n ? { in: n.querySelector(".t12x-nm"), before: n.querySelector(".t12x-nm > .meta") } : {}; },
-  refinepage: (tr) => { const r = mkQ(`[data-refinerowfor="${mkE(tr.raw)}"]`); return r ? { in: r, before: r.querySelector("[data-refinepet]") && r.querySelector("[data-refinepet]").nextElementSibling } : {}; },
   expertspage: (tr) => {
     const p = String(tr.raw).split("|");
     const s = p[0] === "exp" ? mkQ(`[data-expcur="${mkE(p[1])}"]`) : mkQ(`[data-expskillcur="${mkE(`${p[1]}|${p.slice(2).join("|")}`)}"]`);
@@ -17712,9 +17696,11 @@ function packPickGroups(tb, link) {
 // Packs that let you choose Common or Advanced Marks (Custom Pet Chest):
 // always take Advanced when it is worth at least as much (1 Advanced = 8
 // Common), so the plan buys Advanced.
+// Pet Refine's "Buy the marks as" (Pack cost): "common" keeps the Common choice instead.
 function packPreferAdvancedMarks(optCols, cols, rows, link) {
   const com = optCols.find((ci) => cols[ci] === "Common Marks"), adv = optCols.find((ci) => cols[ci] === "Advanced Marks");
   if (com == null || adv == null) return optCols;
+  if (petMarksBuyAs() === "common") return optCols.filter((ci) => ci !== adv);
   const better = rows.every((cells) => packParseNum(cells[adv]) * packColMultiplier(link, adv) * ADVANCED_MARK_VALUE >= packParseNum(cells[com]) * packColMultiplier(link, com));
   return better ? optCols.filter((ci) => ci !== com) : optCols;
 }
@@ -17802,7 +17788,21 @@ function packBuildOptionLadder(title, lead, perTable, tags, lastMax) {
 }
 // Pages that may spend packs' gems, and whether they currently want to.
 function packGemsCountFor(calcKey) {
-  return budgetKeysOf(calcKey).includes("pets_refine") && !!(PET_MARKS_STATE && PET_MARKS_STATE.packGems);
+  return budgetKeysOf(calcKey).includes("pets_refine") && petGemsTradeOn();
+}
+// Pet Refine choices, per person (calc_state pet_refine_marks), also readable before
+// the page has loaded them (Budgets): one switch for trading gems (the Backpack's and
+// the packs'), missing = on; and which mark the packs that offer both are bought as.
+function petMarksPref(k) {
+  const s = PET_MARKS_STATE || (CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID ? CALC_STATE_CACHE.pet_refine_marks : null);
+  return s ? s[k] : undefined;
+}
+function petGemsTradeOn() { return petMarksPref("packGems") !== false; }
+let PET_BUYAS_FORCE = null; // Pack cost prices the other choice with this set
+function petMarksBuyAs() { return PET_BUYAS_FORCE || (petMarksPref("buyAs") === "common" ? "common" : "adv"); }
+// Tables that sell Common or Advanced Marks (your choice), e.g. Custom Pet Chest.
+function packMarksChoiceTables(tables) {
+  return (tables || []).filter((tb) => { const v = Object.values(packEffectiveCols(tb)); return v.includes("Common Marks") && v.includes("Advanced Marks"); });
 }
 // Built pack groups, kept for the visit: Budgets asks for the same tables
 // for every page (and again on each date change). Cleared by
@@ -17938,7 +17938,7 @@ function packPlanSchedule(rows) {
 function packGroupsFor(tables, calcKey) {
   const stripGems = !packGemsCountFor(calcKey);
   if (PACK_GROUPS_CACHE.tables !== PACK_TABLES_CACHE) PACK_GROUPS_CACHE = { tables: PACK_TABLES_CACHE, map: new Map(), perTable: new Map() };
-  const key = [stripGems ? 1 : 0, LANG, DISPLAY_CURRENCY, new Date().toDateString(), tables.map((tb) => tb.id).join(",")].join("|");
+  const key = [stripGems ? 1 : 0, petMarksBuyAs(), LANG, DISPLAY_CURRENCY, new Date().toDateString(), tables.map((tb) => tb.id).join(",")].join("|");
   let out = PACK_GROUPS_CACHE.map.get(key);
   if (!out) { out = packGroupsForBuild(tables, stripGems); PACK_GROUPS_CACHE.map.set(key, out); }
   return packPurchaseUse(out);
@@ -17969,7 +17969,7 @@ function packShiningBonusOf(tb, link) {
 // most tables, so each table is built once and reused (kept with the other
 // built groups in PACK_GROUPS_CACHE; the key covers labels, currency and day).
 function packTableGroups(tb) {
-  const cacheKey = [tb.id, LANG, DISPLAY_CURRENCY, new Date().toDateString(), vipTierNow()].join("|");
+  const cacheKey = [tb.id, LANG, DISPLAY_CURRENCY, new Date().toDateString(), vipTierNow(), petMarksBuyAs()].join("|");
   const per = PACK_GROUPS_CACHE.perTable;
   if (per && per.has(cacheKey)) return per.get(cacheKey);
   const groups = [];
@@ -19261,12 +19261,13 @@ document.addEventListener("toggle", (e) => { if (e.target.matches && e.target.ma
 // window on phones (on PC the card stays in the side column).
 const plxPriceLabel = (calcKey) => `${esc(PACK_COST_SHOWN[calcKey] || t("pack_cost_title"))} &#8250;`;
 let REFINE_CALC_OPEN = null; // set by the Pet Refine page: opens its advanced calculator
+let REFINE_REFRESH = null; // set by the Pet Refine page: redraws its totals, Backpack and windows
 document.addEventListener("click", (e) => { if (e.target.closest("[data-rfcalcbtn]") && TAB === "refinepage" && REFINE_CALC_OPEN) REFINE_CALC_OPEN(); });
 function plxBuyBtnsHtml(calcKey) {
   // Chief Gear: its own sheet buttons (data-cgsheet), under its 🎒 Backpack line like the other pages
   if (calcKey === "chief_gear") return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-cgsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button>${visitorCan("packcost") ? `<button type="button" class="cg-bpbtn ice" data-cgsheet="packs" data-cgprice>${esc(PACK_COST_SHOWN.chief_gear || t("pack_cost_title"))} &#8250;</button>` : ""}</span>`;
   // Pet Refine: the advanced calculator beside Pack cost, where Trades sits on other pages
-  if (calcKey === "pets_refine") return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn rf-calcbtn" data-rfcalcbtn>&#9881; ${esc(t("rf_mk_calc"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
+  if (calcKey === "pets_refine") return `<span class="cg-bpb plx-bpb rf-bpb"><button type="button" class="cg-bpbtn rf-calcbtn" data-rfcalcbtn title="${esc(t("rf_mk_calc"))}" aria-label="${esc(t("rf_mk_calc"))}">&#9881;</button><button type="button" class="cg-bpbtn" data-plxsheet="trades" title="${esc(t("cg_trades"))}" aria-label="${esc(t("cg_trades"))}">&#8644;<span class="rf-tw"> ${esc(t("cg_trades"))}</span></button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
   return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-plxsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
 }
 document.addEventListener("click", (e) => {
@@ -19428,13 +19429,24 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   // comes back, what it gives (needed items first) and its price; tap = its steps.
   const pcaIcon = (n) => { const src = materialIconSrc(n); return src ? `<img src="${esc(src)}" alt="" loading="lazy" />` : ""; };
   const pcaCur = (v) => String(v).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small> ');
-  const pcaNeeded = (n) => (Number(need[n]) || 0) > 0;
+  // (Pet Refine: Advanced Marks count as Common ones, so they are needed too.)
+  const pcaNeeded = (n) => (Number(need[n]) || 0) > 0 || (n === "Advanced Marks" && (Number(need["Common Marks"]) || 0) > 0);
+  // Pet Refine: packs where you pick Common or Advanced Marks in the game ("Buy the marks as").
+  const mkTables = calcKey === "pets_refine" ? packMarksChoiceTables(tables) : [];
+  const mkIds = new Set(mkTables.map((tb) => String(tb.id)));
+  const mkNote = (g) => (mkIds.size && g.lines.some((r) => (r.tables || []).some((id) => mkIds.has(String(id)))) ? t("pca_mk_game").replace("{m}", t(petMarksBuyAs() === "common" ? "pca_mk_com" : "pca_mk_adv")) : "");
   const pcaRows = (byPack, rowsAll, priceOf, noteOf) => {
     const all = {};
     rowsAll.forEach((r) => Object.entries(r.gives || {}).forEach(([n, q]) => { all[n] = (all[n] || 0) + (Number(q) || 0) * r.count; }));
     return byPack.slice().sort((a, b) => b.subtotal - a.subtotal).map((g) => {
       const gv = {};
       g.lines.forEach((r) => Object.entries(r.gives || {}).forEach(([n, q]) => { gv[n] = (gv[n] || 0) + (Number(q) || 0) * r.count; }));
+      // Pet Refine, bought as Advanced: the plan counts them as Common (1 = 8); show the Advanced ones.
+      if (mkNote(g) && petMarksBuyAs() === "adv" && gv["Common Marks"] > 0) {
+        gv["Advanced Marks"] = (gv["Advanced Marks"] || 0) + gv["Common Marks"] / ADVANCED_MARK_VALUE;
+        all["Advanced Marks"] = (all["Advanced Marks"] || 0) + gv["Common Marks"] / ADVANCED_MARK_VALUE;
+        delete gv["Common Marks"];
+      }
       const share = (n) => gv[n] / (all[n] || 1);
       const items = Object.keys(gv).filter((n) => gv[n] > 0 && n !== "Gems");
       const pool = items.filter(pcaNeeded).length ? items.filter(pcaNeeded) : items;
@@ -19444,7 +19456,8 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       // (A run's left-over steps are a one-off group: say how often the pack itself comes back.)
       const rr = g.lines.find((r) => typeof r.reset === "number" && r.reset < PACK_ONE_TIME_DAYS);
       if (rr && typeof g.reset === "number" && g.reset >= PACK_ONE_TIME_DAYS) { g = { ...g, reset: rr.reset, resetDay: rr.resetDay }; }
-      const every = typeof g.reset === "number" && !packStackInfo(g.reset) ? resetText(g.reset, g.resetDay).split(" \u00b7 ")[0] : packStackInfo(g.reset) ? t("pc_card_days").replace("{n}", packStackInfo(g.reset).days || 7) : "";
+      const every0 = typeof g.reset === "number" && !packStackInfo(g.reset) ? resetText(g.reset, g.resetDay).split(" \u00b7 ")[0] : packStackInfo(g.reset) ? t("pc_card_days").replace("{n}", packStackInfo(g.reset).days || 7) : "";
+      const every = [every0, mkNote(g)].filter(Boolean).join(" \u00b7 ");
       return `<details class="pca-pk"><summary><span class="pca-pic">${main ? pcaIcon(main) : ""}</span><span class="pca-mid"><span class="pca-nm">${esc(name)} <small>&times;${qty(g.count)}</small></span>${every ? `<span class="pca-sb">${esc(every)}</span>` : ""}${chips.length ? `<span class="pca-gv">${chips.map((n) => `<span class="pca-chip${pcaNeeded(n) ? "" : " x"}" title="${esc(materialDisplayName(n))}">${pcaIcon(n)}+${esc(shortAmount(gv[n]))}</span>`).join("")}</span>` : ""}</span><b class="pca-pr">${pcaCur(packFmtLocal(g.subtotal, g.currency, false, g.sample))}</b></summary>
         <div class="pc-lines">${g.lines.slice().sort((a, b) => b.count - a.count).map((r) => `<div><span>${qty(r.count)}&times;</span><span>${esc(r.label)}${noteOf ? noteOf(r) : ""}</span><span class="meta">${packFmtLocal(priceOf(r), r.currency, false, r.price)}</span></div>`).join("")}</div></details>`;
     }).join("");
@@ -19666,10 +19679,39 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           aBuilt = true;
           const targetA = `<div class="pca-tg"><span aria-hidden="true">&#127919;</span><span>${esc(t("pca_target"))}</span><input type="date" data-packtarget value="${esc(targetDate)}" aria-label="${esc(t("pack_target_by"))}" />${targetDays != null ? `<span class="${targetDays < 0 ? "bad" : "left"}">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : `<span>${esc(t("pack_no_date"))}</span>`}${targetDate ? `<button type="button" class="pca-x" data-packtargetclear title="${esc(t("pack_no_date"))}" aria-label="${esc(t("pack_no_date"))}">&times;</button>` : ""}</div>`;
           const rowsA = pcaRows(byPack, p.rows, packRowLocal, null);
+          // Pet Refine: "Buy the marks as Advanced | Common", each side with its own plan's price.
+          let marksA = "";
+          if (mkTables.length) {
+            const as = petMarksBuyAs(), other = as === "adv" ? "common" : "adv";
+            let og = null;
+            PET_BUYAS_FORCE = other;
+            try { og = packGroupsFor(tables, calcKey); } finally { PET_BUYAS_FORCE = null; }
+            let op = null;
+            try { op = await plannerRun("page", { groups: og, need, calcKey, targetDays }); } catch (e) { op = null; }
+            if (stale()) return;
+            const oPlan = op ? (pick.key === "fastest" ? op.fastest : pick.key === "target" ? op.byTarget : op.cheapest) : null;
+            const priceOf = (pl) => (pl ? packFmtLocal(Math.ceil(packPlanLocal(pl)), currency, true, pl.rows[0]?.price) : "\u2014");
+            const pr = { [as]: priceOf(p), [other]: priceOf(oPlan) };
+            const same = oPlan && Math.ceil(packPlanLocal(oPlan)) === Math.ceil(packPlanLocal(p));
+            // "1 Advanced = 8 Common in this pack (2 or 16, 4 or 32 … 40 or 320)", from the pack's own rows.
+            let sameHtml = "";
+            if (same) {
+              const tb = mkTables[0], cols = packEffectiveCols(tb), lk = packLinkFor(tb.id);
+              const ci = (nm) => Number(Object.keys(cols).find((k) => cols[k] === nm));
+              const ca = ci("Advanced Marks"), cc = ci("Common Marks");
+              const pairs = (tb.rows || []).map((r) => r.cells || []).filter((c) => packParseNum(c[lk.priceCol]) > 0).map((c) => [packParseNum(c[ca]) * packColMultiplier(lk, ca), packParseNum(c[cc]) * packColMultiplier(lk, cc)]).filter(([a, c]) => a > 0 && c > 0);
+              const txt = pairs.map(([a, c]) => t("pca_mk_or").replace("{a}", qty(a)).replace("{c}", qty(c)));
+              const list = txt.length > 3 ? `${txt.slice(0, 2).join(", ")} \u2026 ${txt[txt.length - 1]}` : txt.join(", ");
+              const ratio = pairs.length ? Math.round(pairs[0][1] / pairs[0][0]) : ADVANCED_MARK_VALUE;
+              sameHtml = `<div class="pca-note ok">&#10003; ${esc(t("pca_mk_same").replace("{n}", ratio).replace("{list}", list))}</div>`;
+            }
+            const btn = (k, item, lbl) => `<button type="button" data-pcamarks="${k}" class="${as === k ? "active" : ""}" aria-pressed="${as === k}">${pcaIcon(item)}<span>${esc(t(lbl))} &middot; ${esc(pr[k])}</span></button>`;
+            marksA = `<div class="pca-mk"><div class="pca-mk-t">${esc(t("pca_mk_buy_as"))}</div><div class="seg pca-mk-seg">${btn("adv", "Advanced Marks", "pca_mk_adv")}${btn("common", "Common Marks", "pca_mk_com")}</div>${sameHtml}</div>`;
+          }
           const tradesA = tradesCard(p.trades);
           // Free day bonus (Shining City Pack's first buy of each event day): not a pack row.
           const bonusA = Object.entries(p.bonus || {}).map(([n, v]) => `<div class="pca-bonus">${pcaIcon(n)}<span>${esc(t("pca_day_bonus").replace("{q}", (Number(ISL_RULES.tomeFreeDay) || 0).toLocaleString()).replace("{n}", qty(v)))}</span></div>`).join("");
-          sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${targetA}<div class="pc-list">${tradesA}<div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${bonusA}${islCopiesLine(p)}${islCheckedHtml(p.rows)}@@PCFREE@@</div>`;
+          sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${marksA}${targetA}<div class="pc-list">${tradesA}<div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${bonusA}${islCopiesLine(p)}${islCheckedHtml(p.rows)}@@PCFREE@@</div>`;
         }
       }
     }
@@ -19710,6 +19752,15 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     </div>`;
   containerEl.querySelectorAll("[data-packviewbtn]").forEach((b) => b.addEventListener("click", () => { PACK_COST_VIEW[calcKey] = b.dataset.packviewbtn; rerender(); }));
   containerEl.querySelectorAll("[data-packpick]").forEach((b) => b.addEventListener("click", () => { PACK_PLAN_PICK[calcKey] = b.dataset.packpick; rerender(); }));
+  containerEl.querySelectorAll("[data-pcamarks]").forEach((b) => b.addEventListener("click", async () => {
+    const st = await ensurePetMarksState();
+    if (st.buyAs === b.dataset.pcamarks) return;
+    st.buyAs = b.dataset.pcamarks === "common" ? "common" : "adv";
+    saveCalcState("pet_refine_marks", st);
+    PACK_PLAN_CACHE.clear();
+    budgetInvalidate();
+    rerender();
+  }));
   const toBudgets = containerEl.querySelector("[data-gotobudgets]");
   if (toBudgets) toBudgets.addEventListener("click", () => { const b = document.querySelector('.topnav-groups [data-tab="budgets"]'); if (b) b.click(); });
   containerEl.querySelector("[data-packtoggle]").addEventListener("click", () => { PACK_COST_OPEN[calcKey] = false; rerender(); });
@@ -21014,6 +21065,20 @@ function tradeRatesFor(calcKey) {
   // at the weekly plan chosen there, one lot per week).
   const extra = (typeof TRADE_EXTRA_RATES !== "undefined" && TRADE_EXTRA_RATES && TRADE_EXTRA_RATES[calcKey]) || [];
   extra.forEach((r) => out.push(r));
+  // Pet Refine: 500 Gems → 1 Common Mark is a trade the person picks (one switch for the
+  // Backpack's and the packs' gems): off = no such trade, on = a trade shown and listed.
+  if (calcKey === "pets_refine") {
+    const gi = out.findIndex((r) => r.from === "Gems" && r.to === "Common Marks");
+    if (gi >= 0) {
+      if (!petGemsTradeOn()) out.splice(gi, 1);
+      else {
+        const m = tradeRatesFor.gems || (tradeRatesFor.gems = new WeakMap());
+        let v = m.get(out[gi]);
+        if (!v) { v = { ...out[gi], hidden: false, silent: false }; m.set(out[gi], v); }
+        out[gi] = v;
+      }
+    }
+  }
   out.__calcKey = calcKey; // lets applyTrades find this page's priorities
   return out;
 }
@@ -21142,7 +21207,28 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   if (!containerEl) return;
   await ensureTradeRates();
   const rates = tradeRatesFor(calcKey).filter((r) => !r.hidden);
-  if (!rates.length) { containerEl.innerHTML = ""; return; }
+  // Pet Refine: the "Trade Gems for Common Marks" switch lives here (one switch for the
+  // Backpack's and the packs' gems), so the window shows even with it off.
+  const gemsSw = calcKey === "pets_refine" ? `<label class="trd-use trd-gems" title="${esc(t("marks_gems_trade"))}"><span>${esc(t("marks_gems_trade"))}<small>${esc(t("marks_gems_trade_rate"))}</small></span><span class="pc-switch"><input type="checkbox" data-markspackgems ${petGemsTradeOn() && TRADE_APPLY[calcKey] !== false ? "checked" : ""} /><i></i></span></label>` : "";
+  const wireGems = () => {
+    const pg = containerEl.querySelector("[data-markspackgems]");
+    if (pg) pg.addEventListener("change", async () => {
+      const st = await ensurePetMarksState();
+      st.packGems = pg.checked;
+      // Gems are this page's only trade: the one switch also sets "Use trades in Pack cost".
+      if ((TRADE_APPLY[calcKey] !== false) !== pg.checked) { TRADE_APPLY[calcKey] = pg.checked; saveTradeSettings(); }
+      PACK_PLAN_CACHE.clear();
+      budgetInvalidate();
+      saveCalcState("pet_refine_marks", st);
+      // The Backpack's gems change what's counted too: redraw the whole page part.
+      if (REFINE_REFRESH && TAB === "refinepage") REFINE_REFRESH(); else if (onChange) onChange();
+    });
+  };
+  if (!rates.length) {
+    containerEl.innerHTML = gemsSw ? `<div class="pc-card trd"><div class="pc-head trd-title"><b>&#8644; ${esc(t("trade_title"))}</b></div>${gemsSw}</div>` : "";
+    wireGems();
+    return;
+  }
   const nm = (n) => materialDisplayName(itemShortName(n)).replace(/\s*\((minutes|min)\)$/, "");
   // Calculator: short Fire Crystal names (FC, FCS, RFC) so it stays on one line.
   const cnm = (n) => ({ "Fire Crystal": "FC", "FC Shard": "FCS", "Refined FC": "RFC" }[n]) || nm(n);
@@ -21212,10 +21298,11 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
       <span class="trd-res" data-traderesult></span></div>`;
   containerEl.innerHTML = `<div class="pc-card trd">
     <div class="pc-head trd-title"><b>&#8644; ${esc(t("trade_title"))}</b></div>
-    ${switchHtml}${shortHtml}
+    ${gemsSw}${gemsSw ? "" : switchHtml}${shortHtml}
     ${doHtml}${rulesHtml}
     <div class="trd-lbl">${esc(t("trd_calc"))}</div>${calcHtml}
   </div>`;
+  wireGems();
   const applyCb = containerEl.querySelector("[data-tradeapply]");
   if (applyCb) applyCb.addEventListener("change", async (e) => {
     TRADE_APPLY[calcKey] = e.target.checked;
@@ -30024,7 +30111,7 @@ async function ensurePetMarksState() {
     // Advanced refine calculator, where their own rates and adjustment apply.
     const advanced = !IS_OWNER && saved.advanced === true;
     const rates = !IS_OWNER ? (advanced ? visitorRates : { ...published }) : testMode ? testRates : published;
-    PET_MARKS_STATE = { rates, published, testMode, testRates, visitorRates, visitorCustom: !IS_OWNER && visitorCustom, advanced, adjust: (IS_OWNER || advanced) ? (Number(saved.savedAdjust != null ? saved.savedAdjust : saved.adjust) || 0) : 0, savedAdjust: Number(saved.savedAdjust != null ? saved.savedAdjust : saved.adjust) || 0, packGems: saved.packGems === true };
+    PET_MARKS_STATE = { rates, published, testMode, testRates, visitorRates, visitorCustom: !IS_OWNER && visitorCustom, advanced, adjust: (IS_OWNER || advanced) ? (Number(saved.savedAdjust != null ? saved.savedAdjust : saved.adjust) || 0) : 0, savedAdjust: Number(saved.savedAdjust != null ? saved.savedAdjust : saved.adjust) || 0, packGems: saved.packGems !== false, buyAs: saved.buyAs === "common" ? "common" : "adv" };
   }
   return PET_MARKS_STATE;
 }
@@ -31935,7 +32022,6 @@ async function renderRefinePage() {
   content.innerHTML = plxShellHtml({
     title: t("pets_refine_title"),
     maxId: "refineMaxAllBtn",
-    settings: `<label class="t12x-check pr-gems" title="${esc(t("marks_pack_gems"))}"><span class="pr-gems-t"><b>${esc(t("marks_pack_gems_short"))}</b><small>${esc(t("marks_pack_gems_rate"))}</small></span><input type="checkbox" class="bset-sw" data-markspackgems ${PET_MARKS_STATE.packGems ? "checked" : ""} /></label>`,
     amountsId: "refineMarksBar", needId: "refineNeed",
     // One pinned troop switch: it picks which troop's LETH / HP boxes show.
     // Header: the troop switch with its
@@ -31944,13 +32030,6 @@ async function renderRefinePage() {
     mainHtml: `<div id="refineSwipeCounter"></div>
     <div id="refineList"></div>
     <div id="refineTotals" style="margin-top:12px;"></div>`,
-  });
-  const pg = content.querySelector("[data-markspackgems]");
-  if (pg) pg.addEventListener("change", () => {
-    PET_MARKS_STATE.packGems = pg.checked;
-    PACK_PLAN_CACHE.clear();
-    saveCalcState("pet_refine_marks", PET_MARKS_STATE);
-    renderTotals();
   });
 
   // The pinned troop switch's stat boxes (summed over every pet).
@@ -32083,6 +32162,7 @@ async function renderRefinePage() {
     refineStatsNow = { grand, grandMax };
     drawRefineStats();
     // "Marks to max · all pets" row (same numbers as the card at the bottom).
+    REFINE_REFRESH = () => { if (TAB === "refinepage") renderTotals(); };
     const mkEl = document.getElementById("refineMk");
     if (mkEl) {
       mkEl.innerHTML = `<img class="rf-mki" src="${esc(materialIconSrc("Common Marks") || "")}" alt="" />
@@ -32134,7 +32214,7 @@ async function renderRefinePage() {
       root.querySelectorAll("[data-marksadvanced]").forEach((b) => b.addEventListener("click", async () => {
         const on = b.dataset.marksadvanced === "1";
         const st = PET_MARKS_STATE;
-        saveCalcState("pet_refine_marks", { adjust: st.savedAdjust, savedAdjust: st.savedAdjust, packGems: st.packGems, visitorRates: st.visitorRates, visitorCustom: st.visitorCustom, advanced: on });
+        saveCalcState("pet_refine_marks", { adjust: st.savedAdjust, savedAdjust: st.savedAdjust, packGems: st.packGems, buyAs: st.buyAs, visitorRates: st.visitorRates, visitorCustom: st.visitorCustom, advanced: on });
         PET_MARKS_STATE = null;
         await ensurePetMarksState();
         PACK_PLAN_CACHE.clear(); if (typeof budgetInvalidate === "function") budgetInvalidate();
