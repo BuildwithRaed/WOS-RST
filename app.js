@@ -6200,6 +6200,11 @@ function heroGearSetLeft(name) {
   const st = HERO_GEAR_SETS[name];
   return !!st && HERO_GEAR_TROOPS.some((tr) => HERO_GEAR_PIECE_NAMES.some((pc) => GEAR_LEVELING_TABLES.some((tn) => { const x = st[tr][pc][tn]; return x && x.to > x.from; })));
 }
+// A set with any level above 0 (a set never used stays out of "the last set at target").
+function heroGearSetUsed(name) {
+  const st = HERO_GEAR_SETS[name];
+  return !!st && HERO_GEAR_TROOPS.some((tr) => HERO_GEAR_PIECE_NAMES.some((pc) => GEAR_LEVELING_TABLES.some((tn) => { const x = st[tr][pc][tn]; return x && x.from > 0; })));
+}
 let heroGearActiveTroop = "Infantry";
 // Which hero gear set the Dashboard breakdown modal is currently showing.
 let BREAKDOWN_HERO_GEAR_SET = "Set 1";
@@ -6301,13 +6306,16 @@ async function renderGearLevelingGroup(target) {
   // then the first troop with a track below its target (the person's own picks win).
   if (fresh) {
     if (!PAGE_USER_PICKED.hero_gear_set && !heroGearSetLeft(heroGearActiveSet)) {
-      const s = HERO_GEAR_SET_NAMES.find((n) => heroGearSetLeft(n));
+      // Nothing left anywhere: the last set that is in use (all at target).
+      const s = HERO_GEAR_SET_NAMES.find((n) => heroGearSetLeft(n)) || [...HERO_GEAR_SET_NAMES].reverse().find((n) => heroGearSetUsed(n));
       if (s) heroGearActiveSet = s;
     }
     if (!PAGE_USER_PICKED.hero_gear) {
       const st = HERO_GEAR_SETS[heroGearActiveSet];
       const tr = st && HERO_GEAR_TROOPS.find((x) => HERO_GEAR_PIECE_NAMES.some((pc) => GEAR_LEVELING_TABLES.some((tn) => { const v = st[x][pc][tn]; return v && v.to > v.from; })));
-      if (tr) heroGearActiveTroop = tr;
+      const done = (x) => st && HERO_GEAR_PIECE_NAMES.some((pc) => GEAR_LEVELING_TABLES.some((tn) => { const v = st[x][pc][tn]; return v && v.from > 0; }));
+      const last = tr || [...HERO_GEAR_TROOPS].reverse().find(done); // nothing left: the last troop at its target
+      if (last) heroGearActiveTroop = last;
     }
   }
   await maxBeforeLoad(HERO_GEAR_STORAGE_KEYS[heroGearActiveSet]);
@@ -24853,10 +24861,12 @@ async function renderCharmsCalc() {
   await Promise.all([ensureCharmData(), ensureCharmLevelsData(), ensureUpgradeOrder(), maxBeforeLoad("charm")]); // levels reload after Upcoming ticks change
 
   if (seq !== RENDER_SEQ) return;
-  // Entering the page: the first troop with a charm below its target (unless the person picked one).
+  // Entering the page: the first troop with a charm below its target, else the last troop (unless the person picked one).
   if (fresh && !PAGE_USER_PICKED.charm) {
     const tr = PLX_TROOPS.find((x) => charmFlat(x).some((c) => { const st = CHARM_CALC_STATE[c.piece.key][c.slot]; return CHARM_LEVELS.indexOf(String(st.target)) > CHARM_LEVELS.indexOf(String(st.current)); }));
-    if (tr) PLX_TROOP.charm = tr;
+    const done = (x) => charmFlat(x).some((c) => CHARM_LEVELS.indexOf(String(CHARM_CALC_STATE[c.piece.key][c.slot].current)) > 0);
+    const last = tr || [...PLX_TROOPS].reverse().find(done); // nothing left: the last troop at its target
+    if (last) PLX_TROOP.charm = last;
   }
   content.innerHTML = plxShellHtml({
     title: navLabel("charmscalc"),
@@ -29735,7 +29745,7 @@ async function renderT11HeliosPage() {
   const troopsEl = document.getElementById("t11Troops");
   const t11DotsEl = document.getElementById("t11TroopDots");
   const T11_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
-  let t11ActiveTroop = T11_TROOPS[pagePickIdx("t11_helios", T11_TROOPS, fresh, (tr) => !!T11_NODES_CACHE[tr] && computeNeeded(tr).time_hours > 0)];
+  let t11ActiveTroop = T11_TROOPS[pagePickIdx("t11_helios", T11_TROOPS, fresh, (tr) => !!T11_NODES_CACHE[tr] && computeNeeded(tr).time_hours > 0, { done: (tr) => Object.values(T11_STATE[tr] || {}).some((v) => Number(v) > 0) })];
   function renderGrandTotal() {
     const grand = { meat: 0, wood: 0, coal: 0, iron: 0, steel: 0, refined_fc: 0, fc_shard: 0, time_hours: 0 };
     T11_TROOPS.forEach((troop) => {
@@ -30895,7 +30905,8 @@ async function renderExpertsResearchPage() {
   }
   const expResearchCounterEl = document.getElementById("expResearchSwipeCounter");
   const erWork = (ex) => pathNumbersFor(ex).some((p) => { const st = (saved[ex] || {})[p] || {}; return (Number(st.desired) || 0) > (Number(st.current) || 0); });
-  let activeResearchIdx = pagePickIdx("experts_research", EXPERTS_IN_ORDER, fresh, (ex) => isResearchUnlocked(ex) && erWork(ex), erWork);
+  const erSome = (ex) => isResearchUnlocked(ex) && pathNumbersFor(ex).some((p) => (Number(((saved[ex] || {})[p] || {}).current) || 0) > 0);
+  let activeResearchIdx = pagePickIdx("experts_research", EXPERTS_IN_ORDER, fresh, (ex) => isResearchUnlocked(ex) && erWork(ex), erWork, { done: erSome });
   function renderGrid() {
     renderPickStrip(expResearchCounterEl, EXPERTS_IN_ORDER.map((ex) => ({ label: dataName(ex), img: (EXPERTS_LIST.find((e) => e.key === ex) || {}).img, dim: !isResearchUnlocked(ex) })), activeResearchIdx, (next) => {
       activeResearchIdx = next;
@@ -31463,7 +31474,7 @@ async function renderExpertsPage() {
     const cur = Number(hs.current) || 0, des = Number(hs.desired) || 0;
     return des > cur + 0.05 || Object.values(hs.skills || {}).some((st) => (Number(st && st.desired) || 0) > (Number(st && st.current) || 0));
   };
-  let activeExpertIdx = pagePickIdx("experts", EXPERTS_SHOWN.map((e) => e.key), fresh, (k) => isExpertUnlocked(k) && expWork(k), expWork);
+  let activeExpertIdx = pagePickIdx("experts", EXPERTS_SHOWN.map((e) => e.key), fresh, (k) => isExpertUnlocked(k) && expWork(k), expWork, { done: (k) => isExpertUnlocked(k) && (Number((saved[k] || {}).current) || 0) > 0 });
   // H4: level positions (every level, plus "N.1" where that level's Advance costs sigils)
   function expPos(hero) {
     const out = [];
@@ -32194,7 +32205,7 @@ async function renderRefinePage() {
   }
   const refineCounterEl = document.getElementById("refineSwipeCounter");
   const refineWork = (pet) => isPetUnlocked(pet) && STAT_KEYS.some(({ key, maxKey }) => { const mx = pct1(maxRow(pet)[maxKey]); return mx - Math.min(Number(petState(pet)[key]) || 0, mx) > 0.005; });
-  let activeRefineIdx = pagePickIdx("pets_refine", petNames, fresh, refineWork);
+  let activeRefineIdx = pagePickIdx("pets_refine", petNames, fresh, refineWork, { done: (pet) => isPetUnlocked(pet) && STAT_KEYS.some(({ key }) => (Number(petState(pet)[key]) || 0) > 0) });
   function renderList() {
     renderPickStrip(refineCounterEl, petNames.map((pt, i) => ({ label: dataName(pt), img: petImage(pt), color: PET_TROOP_COLORS_CYCLE[i % PET_TROOP_COLORS_CYCLE.length], dim: !isPetUnlocked(pt) })), activeRefineIdx, (next) => { activeRefineIdx = next; pagePickSet("pets_refine", petNames[next]); renderList(); });
     const idx = activeRefineIdx;
@@ -32405,7 +32416,7 @@ async function renderPetsDataPage() {
 
   const listEl = document.getElementById("petsList");
   const petsCounterEl = document.getElementById("petsSwipeCounter");
-  let activePetIdx = pagePickIdx("pets", petNames, fresh, (pet) => { if (!isPetUnlocked(pet)) return false; const { from, to } = getState(pet); return to > from; });
+  let activePetIdx = pagePickIdx("pets", petNames, fresh, (pet) => { if (!isPetUnlocked(pet)) return false; const { from, to } = getState(pet); return to > from; }, { done: (pet) => isPetUnlocked(pet) && getState(pet).from >= 0 });
   function renderList() {
     renderPickStrip(petsCounterEl, petNames.map((pt, i) => ({ label: dataName(pt), img: petImage(pt), color: PET_TROOP_COLORS_CYCLE[i % PET_TROOP_COLORS_CYCLE.length], dim: !isPetUnlocked(pt) })), activePetIdx, (next) => { activePetIdx = next; pagePickSet("pets", petNames[next]); renderList(); });
     const idx = activePetIdx;
@@ -32770,8 +32781,8 @@ async function renderResearchCenterPage() {
     };
   }
 
-  // Entering the page: the first group with research time left (else Infantry as before).
-  rcActive = RC_GROUPS[pagePickIdx("research_center", RC_GROUPS, fresh, rcWork, (g) => g === rcActive)];
+  // Entering the page: the first group with research time left (else the last group, all done).
+  rcActive = RC_GROUPS[pagePickIdx("research_center", RC_GROUPS, fresh, rcWork, { done: (g) => tracksOf(RC_BASE_CATEGORIES[g] || []).some((tr) => Number(RC_STATE[tr]) > 0) })];
   renderTotals();
   renderGroups();
 }
@@ -32857,14 +32868,28 @@ function pageEntered(key) {
   return true;
 }
 // Index of the card to show: the person's pick, else (entering) the first with work,
-// else the one shown before (redraws) or the first. works: predicates tried in order.
+// else (nothing has work, owner 20 Nov 2026) the LAST card that is done (maxed / at its
+// target), else the one shown before (redraws) or the first. works: predicates tried in
+// order; an optional last argument { done: [predicates] } says which cards count as done
+// (tried in order, last match wins; no list = every card, so the last one).
 function pagePickIdx(key, names, fresh, ...works) {
+  const opt = works.length && typeof works[works.length - 1] === "object" ? works.pop() : {};
   const p = PAGE_PICK[key];
   if (p && (p.user || !fresh)) { const i = names.indexOf(p.name); if (i >= 0) return i; }
   let i = 0;
-  if (fresh) for (const w of works) { const k = names.findIndex((n, j) => w(n, j)); if (k >= 0) { i = k; break; } }
+  if (fresh) {
+    let found = false;
+    for (const w of works) { const k = names.findIndex((n, j) => w(n, j)); if (k >= 0) { i = k; found = true; break; } }
+    if (!found && names.length) i = pageLastDone(names, opt.done, 0);
+  }
   if (names.length) PAGE_PICK[key] = { name: names[i], user: false };
   return i;
+}
+// Last index whose name passes the first done predicate that matches any (none given = the last).
+function pageLastDone(names, done, dflt) {
+  if (!done) return names.length - 1;
+  for (const d of [].concat(done)) { for (let j = names.length - 1; j >= 0; j--) if (d(names[j], j)) return j; }
+  return dflt;
 }
 function pagePickSet(key, name) { PAGE_PICK[key] = { name, user: true }; }
 function plxTroopOf(key) { return PLX_TROOP[key] || PLX_TROOPS[0]; }
@@ -33520,7 +33545,7 @@ async function renderT12ResearchPage() {
   }
 
   const T12_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
-  let t12ActiveTroop = T12_TROOPS[pagePickIdx("t12_research", T12_TROOPS, fresh, (tr) => computeNeeded(T12_STATE[tr], tr).time_hours > 0)];
+  let t12ActiveTroop = T12_TROOPS[pagePickIdx("t12_research", T12_TROOPS, fresh, (tr) => computeNeeded(T12_STATE[tr], tr).time_hours > 0, { done: (tr) => Object.values(T12_STATE[tr] || {}).some((v) => Number(v) > 0) })];
   const t12Open = {}; // { group: true/false } chosen this visit
   function renderTroopPanels() {
     const troopsEl = document.getElementById("t12Troops");
