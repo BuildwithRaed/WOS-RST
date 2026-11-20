@@ -2892,5 +2892,13 @@
 "t:tl_later":"Nanti",
 "t:tl_later_sub":"hari belum diketahui",
 "t:tl_new_pet":"Pet baru",
-"t:tl_new_expert":"Ahli baru"
+"t:tl_new_expert":"Ahli baru",
+"t:marks_gems_trade":"Tukar Permata menjadi Mark Biasa",
+"t:marks_gems_trade_rate":"500 Permata = 1 Mark Biasa · permata dari Tas dan paket",
+"t:pca_mk_buy_as":"Beli mark sebagai",
+"t:pca_mk_adv":"Lanjutan",
+"t:pca_mk_com":"Biasa",
+"t:pca_mk_same":"Harga sama: 1 Lanjutan = {n} Biasa di paket ini ({list}).",
+"t:pca_mk_game":"pilih {m} di game",
+"t:pca_mk_or":"{a} atau {c}"
 }
