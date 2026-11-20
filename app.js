@@ -1531,6 +1531,12 @@ const T = {
   pgsw_my_packs_n: { en: "My packs ({n})" },
   mm_chip_research: { en: "Research" },
   mm_chip_refine: { en: "Refine" },
+  mrg_experts_title: { en: "Experts" },
+  mrg_pets_title: { en: "Pets" },
+  er_sig_paths: { en: "{n} paths" },
+  er_sig_path1: { en: "1 path" },
+  er_sig_general: { en: "{n} General" },
+  er_sig_from_gen: { en: "{n} from General" },
   mb_pages: { en: "{n} pages" },
   mb_page1: { en: "1 page" },
   ms_title: { en: "Menu style" },
@@ -19285,7 +19291,7 @@ function hdrSync(c) {
   if (!HDR_TITLE_SKIP.has(TAB) && NAV_PAGE_LABELS[TAB]) {
     const h = c.querySelector(".plx-head h2, .page-head h2");
     const tn = h && [...h.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
-    const want = PG_SW_PAIRS[TAB] === "market" ? t("mm_marketplace") : navLabel(TAB);
+    const want = PG_SW_PAIRS[TAB] === "market" ? t("mm_marketplace") : sideTitle(TAB, navLabel(TAB));
     if (tn && want && tn.textContent.trim() !== want) tn.textContent = want;
   }
   if (TAB === "chiefgear") {
@@ -24915,13 +24921,55 @@ function wireTroopSwipe(el, troops, current, onSelect) {
     if (next >= 0 && next < troops.length) onSelect(troops[next]);
   });
 }
-// For longer lists (pets, experts) a "3 / 10" counter reads better than a
-// row of 10 dots. Arrows either side step through them one at a time.
+// Pets / experts cards (carousel): the card follows a sideways finger / mouse drag and snaps to
+// the next / previous card past a threshold (or back when not); at the first / last card it only
+// gives a little. A vertical move is left to the page (touch-action pan-y), a second finger to
+// pinch zoom, a drag that starts on a control to the control. Property handlers (no stacking).
 function wireIndexSwipe(el, count, activeIndex, onNavigate) {
-  wireSwipeGesture(el, (dir) => {
-    const next = activeIndex + dir;
-    if (next >= 0 && next < count) onNavigate(next);
-  });
+  el.style.touchAction = "pan-y pinch-zoom";
+  const INTERACTIVE = "select, input, textarea, button, a, option, label, [contenteditable='true']";
+  let sx = null, sy = null, mode = null, ptype = "", moved = false;
+  const back = () => { el.style.transition = "transform .18s ease-out"; el.style.transform = ""; };
+  // A card that just came in slides in from the side it came from.
+  if (CRS_ENTER && el.animate) {
+    try { el.animate([{ transform: `translateX(${CRS_ENTER * (document.dir === "rtl" ? -24 : 24)}%)`, opacity: 0.35 }, { transform: "none", opacity: 1 }], { duration: 210, easing: "ease-out" }); } catch (e) { /* no animation */ }
+  }
+  CRS_ENTER = 0;
+  el.onpointerdown = (e) => {
+    sx = null;
+    if (e.target.closest && e.target.closest(INTERACTIVE)) return;
+    if (!e.isPrimary) return; // a second finger = a pinch
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    sx = e.clientX; sy = e.clientY; mode = null; ptype = e.pointerType; moved = false;
+    el.style.transition = "";
+  };
+  el.onpointermove = (e) => {
+    if (sx == null || !e.isPrimary) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (!mode) {
+      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.2) { mode = "x"; try { el.setPointerCapture(e.pointerId); } catch (er) { /* not capturable */ } }
+      else if (Math.abs(dy) > 8) { mode = "y"; sx = null; return; }
+      else return;
+    }
+    moved = true;
+    const end = (dx < 0 && activeIndex >= count - 1) || (dx > 0 && activeIndex <= 0);
+    el.style.transform = `translateX(${end ? dx * 0.25 : dx}px)`;
+  };
+  el.onpointerup = (e) => {
+    if (sx == null) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    sx = null;
+    if (mode !== "x") { if (moved) back(); return; }
+    const minX = ptype === "mouse" ? 40 : 60, dir = dx < 0 ? 1 : -1, next = activeIndex + dir;
+    if (Math.abs(dx) > minX && Math.abs(dx) > Math.abs(dy) * 1.5 && next >= 0 && next < count) {
+      el.style.transition = "transform .15s ease-in";
+      el.style.transform = `translateX(${dx < 0 ? "-" : ""}${el.offsetWidth + 24}px)`;
+      setTimeout(() => { el.style.transition = ""; el.style.transform = ""; CRS_ENTER = dir; onNavigate(next); }, 150);
+    } else back();
+  };
+  el.onpointercancel = () => { sx = null; if (moved) back(); };
+  // Stops a mouse drag across the card from highlighting all its text.
+  el.ondragstart = (e) => { if (!(e.target.closest && e.target.closest(INTERACTIVE))) e.preventDefault(); };
 }
 
 // Chief Charm = tile grid: one pinned troop
@@ -25674,6 +25722,7 @@ const BAR_SUMMARY_KEYS = new Set(["t12_research", "t11_helios", "research_center
 // Research pages show research speedups in their time box, not as a square.
 const BAR_TIME_KEYS = new Set(["t12_research", "t11_helios", "research_center"]);
 const BAR_SHOW_ALL = {}; // { calcKey: false } - item tiles hidden (they start shown)
+const BAR_EFF_HOOKS = {}; // calcKey -> redraw what reads BAR_EFF_OWNED on the page (Pets Level's card boxes)
 const BAR_EFF_OWNED = {}; // { calcKey: { item: amount } } what the Backpack boxes count (chests and hidden trades in)
 // "Hide boxes" is remembered per page on the person's account (owner, 20 Oct
 // 2026): calc_state "bar_hidden" = { calcKey: true }.
@@ -25850,7 +25899,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     }).filter((tr) => !tr.lab || tr.getQty > 0);
     hiddenTrades.forEach((tr) => { effOwned[tr.to] = (effOwned[tr.to] || 0) + tr.getQty; });
   }
-  const noteEff = () => { BAR_EFF_OWNED[calcKey || "chief_gear"] = effOwned; };
+  const noteEff = () => { BAR_EFF_OWNED[calcKey || "chief_gear"] = effOwned; if (BAR_EFF_HOOKS[calcKey || "chief_gear"]) { try { BAR_EFF_HOOKS[calcKey || "chief_gear"](); } catch (e) { console.warn("bar", e); } } };
   recomputeEffOwned();
   noteEff();
   // What the page's "can reach" marks spend; redrawn
@@ -30801,7 +30850,7 @@ async function renderExpertsResearchPage() {
 
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
-    title: t("experts_research_title"),
+    title: sideTitle(TAB, t("experts_research_title")),
     maxId: "expResearchMaxAllBtn",
     amountsId: "expResearchAmounts", needId: "expResearchSigils",
     statsHtml: `<div class="t12x-card plx-stats-top">
@@ -30974,6 +31023,14 @@ async function renderExpertsResearchPage() {
     const toGo = paths.filter((p) => (Number(saved[expert][p].desired) || 0) > (Number(saved[expert][p].current) || 0)).length;
     const need = Math.round(ER_SIG.need[expert] || 0), own = Math.round(ER_SIG.left[expert] || 0), gen = Math.round(ER_SIG.general || 0);
     const ER_SHORT = { ATK: "ATK", DEF: "DEF", DMG: "LETH", HP: "HP" };
+    // Sigils strip at the card's bottom (design H, owner 20 Nov 2026): the expert's own sigils
+    // you have / need (after Experts Level's share), what's short, paths to go, General Sigils left.
+    // General Sigils cover what the expert's own leave: short = need − own − General (✓ when covered).
+    const sigImg = EXPERT_INVENTORY_ICONS[`${expert} Sigils`] || "icons/item_icon_570000.png";
+    const ownShort = Math.max(0, need - own), sigShort = Math.max(0, need - own - gen);
+    const sigStrip = `<div class="er-sig" title="${esc(t("exp_sigils_of").replace("{name}", dataName(expert)))}"><img src="${esc(sigImg)}" alt="" /><span>${need > 0
+      ? `<b>${bidiNum(Math.min(own, need).toLocaleString())}</b> / ${bidiNum(need.toLocaleString())} · ${sigShort > 0 ? `<em class="bad">${bidiNum(sigShort.toLocaleString())} ${esc(t("bs_short_word"))}</em>` : ownShort > 0 ? `<em class="ok">&#10003; ${esc(t("er_sig_from_gen").replace("{n}", bidiNum(ownShort.toLocaleString())))}</em>` : `<em class="ok">&#10003;</em>`}`
+      : `<em class="ok">&#10003;</em>${own > 0 ? ` <b>${bidiNum(own.toLocaleString())}</b>` : ""}`}</span><i class="sp"></i><span>${toGo ? `${esc(toGo === 1 ? t("er_sig_path1") : t("er_sig_paths").replace("{n}", toGo))} · ` : ""}<img class="g" src="icons/item_icon_570000.png" alt="" title="${esc(t("material_general_sigils"))}" /> ${esc(t("er_sig_general").replace("{n}", bidiNum(gen.toLocaleString())))}</span></div>`;
     const val = (v, sel, tgt) => `<span class="exk-n${tgt ? " t" : ""}">${esc(v)}${sel}</span>`;
     // One row per path, all in the card: name, what the levels give, tappable "Now → Target"
     // (see-through selects over the numbers), bar now / target, the sigils it needs.
@@ -31007,11 +31064,9 @@ async function renderExpertsResearchPage() {
             ${expertBadgeHtml(expert) ? `<div class="exp-tags">${expertBadgeHtml(expert)}</div>` : ""}
           </div>
         </div>
-        <div class="exp-nbs one">
-          <div class="exp-nb"><img src="${esc(EXPERT_INVENTORY_ICONS[`${expert} Sigils`] || "icons/item_icon_570000.png")}" alt="" /><span><small>${esc(t("exp_sigils_of").replace("{name}", dataName(expert)))}${toGo ? ` · ${esc(toGo === 1 ? t("er_path_to_go_1") : t("er_paths_to_go").replace("{n}", toGo))}` : ""}</small><b class="${need > 0 ? (need > own + gen ? "bad" : "") : "ok"}">${need > 0 ? bidiNum(need.toLocaleString()) : "&#10003;"}</b><small>${esc(t("exp_have_n").replace("{n}", shortAmount(own)))}${gen ? ` · ${esc(t("exp_general_n").replace("{n}", shortAmount(gen)))}` : ""}</small></span></div>
-        </div>
         ${EXPERT_MAIN_STAT_TROOP[expert] ? `<div class="meta er-note">${esc(t("max_page_note"))}</div>` : ""}
         <div class="exp-skl-list">${paths.map(pathRow).join("")}</div>
+        ${sigStrip}
         <div class="exp-ft">
           <label class="exp-count" title="${esc(t("expert_count_tip"))}"><input type="checkbox" data-expresearchunlock="${esc(expert)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
           <button type="button" class="btn ghost exp-maxe" data-expresearchmax="${esc(expert)}">${esc(t("exp_max_one").replace("{name}", dataName(expert)))}</button>
@@ -31308,7 +31363,7 @@ async function renderExpertsPage() {
     ["tundra", "tundra_trade_tab", "exp_tundra_d", "expertsTundraHeader"],
   ];
   content.innerHTML = plxShellHtml({
-    title: t("expertspage_title"),
+    title: sideTitle(TAB, t("expertspage_title")),
     maxId: "expertsMaxAllBtn",
     // General speedups are a box in "Amounts from your Backpack" now, so this page has no Settings card.
     amountsId: "expertsAmounts", needId: "expertsSummary",
@@ -32042,7 +32097,7 @@ async function renderRefinePage() {
 
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
-    title: t("pets_refine_title"),
+    title: sideTitle(TAB, t("pets_refine_title")),
     maxId: "refineMaxAllBtn",
     settings: `<label class="t12x-check pr-gems" title="${esc(t("marks_pack_gems"))}"><span class="pr-gems-t"><b>${esc(t("marks_pack_gems_short"))}</b><small>${esc(t("marks_pack_gems_rate"))}</small></span><input type="checkbox" class="bset-sw" data-markspackgems ${PET_MARKS_STATE.packGems ? "checked" : ""} /></label>`,
     amountsId: "refineMarksBar", needId: "refineNeed",
@@ -32332,14 +32387,13 @@ async function renderRefinePage() {
     const unlocked = isPetUnlocked(pet);
     listEl.innerHTML = `
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:start;">
-          <div class="meta" style="font-size:10.5px; margin-bottom:8px;">${esc(refineTierDisplayName(tier))} ${esc(t("tier_suffix"))}</div>
-          <div style="display:flex; align-items:center; justify-content:flex-start; gap:8px; margin-bottom:12px; flex-wrap:nowrap;">
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; min-width:0; flex-wrap:nowrap;">
-              <input type="checkbox" data-petunlockrefine="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
-              ${petImage(pet) ? `<img src="${esc(petImage(pet))}" alt="" style="width:44px; height:44px; border-radius:10px; object-fit:cover; flex-shrink:0;" />` : ""}
-              <div class="name" style="font-size:12.5px; font-weight:700; color:${color}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(dataName(pet))}</div>${petIsUpcoming(pet) ? upcomingBadgeHtml() : ""}
-            </label>
-            <button class="btn ghost small" data-refinemaxpet="${esc(pet)}" style="flex-shrink:0; margin-left:auto;">${esc(t("max_button"))}</button>
+          <div class="pc-head pet-head">
+            ${petImage(pet) ? `<img src="${esc(petImage(pet))}" alt="" />` : ""}
+            <div class="pet-nm"><div class="name" style="color:${color};">${esc(dataName(pet))}</div><div class="pet-tags"><span class="meta">${esc(refineTierDisplayName(tier))} ${esc(t("tier_suffix"))}</span>${petIsUpcoming(pet) ? upcomingBadgeHtml() : ""}</div></div>
+            <div class="rf-tr">
+              <button type="button" class="btn ghost small" data-refinemaxpet="${esc(pet)}">${esc(t("max_button"))}</button>
+              <label class="exp-count" title="${esc(t("pet_count_tip"))}"><input type="checkbox" data-petunlockrefine="${esc(pet)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
+            </div>
           </div>
           ${STAT_KEYS.map(
             ({ key, label, maxKey }) => {
@@ -32432,7 +32486,7 @@ async function renderPetsDataPage() {
 
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
-    title: t("pets_level_title"),
+    title: sideTitle(TAB, t("pets_level_title")),
     amountsId: "petsMaterialsBar", needId: "petsNeed",
     maxId: "petsMaxAllBtn",
     statsHtml: `<div class="t12x-card plx-stats-top" id="petsTotals"></div>`,
@@ -32531,6 +32585,18 @@ async function renderPetsDataPage() {
 
   const listEl = document.getElementById("petsList");
   const petsCounterEl = document.getElementById("petsSwipeCounter");
+  function fillPetRes() {
+    const have = BAR_EFF_OWNED.pets;
+    listEl.querySelectorAll("[data-pcres]").forEach((b) => {
+      const st = b.querySelector("[data-pcst]"), need = Number(b.dataset.need) || 0;
+      if (!st) return;
+      if (!(need > 0)) { st.innerHTML = `<span style="color:var(--good);">&#10003;</span>`; return; }
+      if (!have) { st.textContent = ""; return; }
+      const short = Math.max(0, need - (Number(have[b.dataset.pcres]) || 0));
+      st.innerHTML = short > 0 ? `<span style="color:var(--danger);">&minus;${esc(shortAmount(Math.round(short)))}</span>` : `<span style="color:var(--good);">&#10003;</span>`;
+    });
+  }
+  BAR_EFF_HOOKS.pets = () => { if (listEl.isConnected) fillPetRes(); };
   let activePetIdx = pagePickIdx("pets", petNames, fresh, (pet) => { if (!isPetUnlocked(pet)) return false; const { from, to } = getState(pet); return to > from; });
   function renderList() {
     renderPickStrip(petsCounterEl, petNames.map((pt, i) => ({ label: dataName(pt), img: petImage(pt), color: PET_TROOP_COLORS_CYCLE[i % PET_TROOP_COLORS_CYCLE.length], dim: !isPetUnlocked(pt) })), activePetIdx, (next) => { activePetIdx = next; pagePickSet("pets", petNames[next]); renderList(); });
@@ -32580,7 +32646,10 @@ async function renderPetsDataPage() {
           <span class="pc-val${val > relMax ? " up" : ""}" data-petval="${role}">${esc(shortLbl(val))}<select data-pet${role}="${esc(pet)}" aria-label="${esc(t(role === "to" ? "target_label" : "current_label"))}">${opts}</select></span>
           <button type="button" data-petstep="${role}" data-d="1" aria-label="+" ${val >= maxI ? "disabled" : ""}>+</button>
         </div></div>`;
-    const chip = (icon, name, v) => `<span class="pc-chip" title="${esc(name)}"><img src="${esc(icon)}" alt="" />${Math.round(v).toLocaleString()}</span>`;
+    // Fixed A (owner, 20 Nov 2026): one row of 4 Backpack-style boxes (picture, "need N", red
+    // "−short" or ✓) against what the page's Backpack boxes count (BAR_EFF_OWNED.pets: Backpack,
+    // Pet Chests and trades in); filled by fillPetRes once the bar has worked them out.
+    const resBox = (item, icon, name, v) => `<div class="bp-tile bs-tile pc-rb" data-pcres="${item}" data-need="${Math.round(v)}" title="${esc(name)}"><img src="${esc(icon)}" alt="${esc(name)}" />${v > 0 ? `<span class="bs-need">${esc(t("bs_need").replace("{n}", shortAmount(Math.round(v))))}</span>` : `<span class="bs-need">${esc(name)}</span>`}<span class="bs-st" data-pcst></span></div>`;
 
     listEl.innerHTML = `
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:start;">
@@ -32599,14 +32668,15 @@ async function renderPetsDataPage() {
             ${step("from", from, -1, lastIdx, fromOpts)}
             ${step("to", to, Math.max(0, from), lastIdx, levelOpts(to))}
           </div>
-          ${done ? `<div class="pc-done">&#10003; ${esc(t("pet_done"))}</div>` : `<div class="pc-chips">
-            ${chip(PET_MATERIAL_ICONS.food, t("material_food"), needed.food)}
-            ${chip(PET_MATERIAL_ICONS.manual, t("material_manual"), needed.manual)}
-            ${chip(PET_MATERIAL_ICONS.potion, t("material_potion"), needed.potion)}
-            ${chip(PET_MATERIAL_ICONS.serum, t("material_serum"), needed.serum)}
+          ${done ? `<div class="pc-done">&#10003; ${esc(t("pet_done"))}</div>` : `<div class="pc-res">
+            ${resBox("Food", PET_MATERIAL_ICONS.food, t("material_food"), needed.food)}
+            ${resBox("Manual", PET_MATERIAL_ICONS.manual, t("material_manual"), needed.manual)}
+            ${resBox("Potion", PET_MATERIAL_ICONS.potion, t("material_potion"), needed.potion)}
+            ${resBox("Serum", PET_MATERIAL_ICONS.serum, t("material_serum"), needed.serum)}
           </div>`}
         </div>`;
     wireIndexSwipe(listEl, petNames.length, activePetIdx, (next) => { activePetIdx = next; pagePickSet("pets", petNames[next]); renderList(); });
+    fillPetRes();
 
     listEl.querySelectorAll("input[data-petunlock]").forEach((cb) => {
       cb.addEventListener("change", async () => {
@@ -33400,22 +33470,69 @@ function expertSigilTilesHtml(inv, experts, need) {
     </div>`;
   }).join("")}</div>`;
 }
-// Pet / expert switcher (owner picked B, 18 Nov 2026; replaces the picture strip):
-// a small "‹ 9 / 11 ›" tab on the card's top edge (arrows grey at the first / last)
-// and the previous / next one's picture peeking out at each side of the card
-// (tap = go there). The card itself still swipes (wireIndexSwipe).
-// items: [{ label, img, color, dim }]; the card is containerEl's next sibling.
+// Experts / Pets cards (owner picked concept 5, 20 Nov 2026): the cards slide sideways like a
+// carousel. The next / previous card's edge shows at each side (tap = go there), dots under the
+// card, the card follows the finger and snaps (wireIndexSwipe). On the card's top edge sits the
+// Level | Research (Experts) or Level | Refine (Pets) switch: both sides are one page, the side
+// shown is shared by every card (sideGo). items: [{ label, img, color, dim }]; the card is
+// containerEl's next sibling.
+const SIDE_PAIRS = [
+  { tabs: ["expertspage", "expertsresearchpage"], picks: ["experts", "experts_research"], labels: ["mm_chip_level", "mm_chip_research"], title: "mrg_experts_title" },
+  { tabs: ["petsdata", "refinepage"], picks: ["pets", "pets_refine"], labels: ["mm_chip_level", "mm_chip_refine"], title: "mrg_pets_title" },
+];
+function sidePairOf(tab) { return SIDE_PAIRS.find((p) => p.tabs.includes(tab)) || null; }
+// Both sides open to this person (a visitor with one side hidden gets no switch).
+function sidePairOpen(p) { return !!p && p.tabs.every((tb) => IS_OWNER || !isHiddenFromVisitors("page", tb)); }
+// The merged page's title: "Experts" / "Pets" on both sides.
+function sideTitle(tab, fallback) { const p = sidePairOf(tab); return p && sidePairOpen(p) ? t(p.title) : fallback; }
+function sideSwitchHtml(tab) {
+  const p = sidePairOf(tab);
+  if (!sidePairOpen(p)) return "";
+  return `<div class="pkw-tab crs-sw" role="tablist">${p.tabs.map((tb, i) => `<button type="button" role="tab" aria-selected="${tb === tab}" data-sidego="${tb}" class="${tb === tab ? "on" : ""}">${esc(t(p.labels[i]))}</button>`).join("")}</div>`;
+}
+// Flip the side: the same card stays (its pick is copied over), no new history step,
+// the page keeps its scroll place (drawn as the same page).
+function sideGo(tab) {
+  const p = sidePairOf(TAB);
+  if (!p || tab === TAB || !p.tabs.includes(tab)) return;
+  const from = PAGE_PICK[p.picks[p.tabs.indexOf(TAB)]];
+  if (from && from.name) PAGE_PICK[p.picks[p.tabs.indexOf(tab)]] = { name: from.name, user: true };
+  TAB = tab;
+  try { localStorage.setItem("last_tab", TAB); } catch (e) { /* storage blocked */ }
+  document.querySelectorAll("button[data-tab]").forEach((x) => x.classList.toggle("active", x.dataset.tab === TAB));
+  history.replaceState({ tab: TAB }, "", location.pathname + location.search);
+  LAST_RENDER_TAB = TAB;
+  render();
+}
+let CRS_ENTER = 0; // the next card slides in from this side (1 = from the end, -1 = from the start)
 function renderPickStrip(containerEl, items, activeIndex, onPick) {
-  containerEl.className = "pkw";
+  containerEl.className = "pkw crs";
   const n = items.length, pv = items[activeIndex - 1], nx = items[activeIndex + 1];
   const pic = (it) => it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy" />` : `<span class="pkw-ph" style="--tc:${it.color || "var(--ice)"};">${esc(String(it.label).trim().charAt(0))}</span>`;
   const peek = (it, i, side) => it ? `<button type="button" class="pkw-pk ${side}${it.dim ? " dim" : ""}" data-pick="${i}" title="${esc(it.label)}" aria-label="${esc(it.label)}">${pic(it)}</button>` : "";
-  const arrow = (it, i, side, ch) => `<button type="button" class="pkw-a ${side}" ${it ? `data-pick="${i}" title="${esc(it.label)}" aria-label="${esc(it.label)}"` : 'disabled aria-hidden="true"'}>${ch}</button>`;
-  containerEl.innerHTML = `${peek(pv, activeIndex - 1, "s")}${peek(nx, activeIndex + 1, "e")}<div class="pkw-tab">${arrow(pv, activeIndex - 1, "s", "&lsaquo;")}<span>${bidiNum(`${activeIndex + 1} / ${n}`)}</span>${arrow(nx, activeIndex + 1, "e", "&rsaquo;")}</div>`;
+  containerEl.innerHTML = `${peek(pv, activeIndex - 1, "s")}${peek(nx, activeIndex + 1, "e")}${sideSwitchHtml(TAB)}`;
+  const go = (i) => { if (i === activeIndex || i < 0 || i >= n) return; CRS_ENTER = i > activeIndex ? 1 : -1; onPick(i); };
   containerEl.onclick = (ev) => {
+    const sb = ev.target.closest("[data-sidego]");
+    if (sb) { sideGo(sb.dataset.sidego); return; }
     const b = ev.target.closest("[data-pick]");
-    if (b) onPick(Number(b.dataset.pick));
+    if (b) go(Number(b.dataset.pick));
   };
+  // Dots under the card (one per card, the shown one long).
+  const card = containerEl.nextElementSibling;
+  if (!card) return;
+  let dots = card.nextElementSibling;
+  if (!dots || !dots.classList.contains("crs-dots")) { dots = document.createElement("div"); dots.className = "crs-dots"; card.after(dots); }
+  dots.innerHTML = n > 1 ? items.map((it, i) => `<button type="button" data-pick="${i}" class="${i === activeIndex ? "on" : ""}${it.dim ? " dim" : ""}" aria-label="${esc(it.label)}" title="${esc(it.label)}"${i === activeIndex ? ' aria-current="true"' : ""}><i></i></button>`).join("") : "";
+  dots.onclick = (ev) => { const b = ev.target.closest("[data-pick]"); if (b) go(Number(b.dataset.pick)); };
+  // The side cards' edges are as tall as the card.
+  const fit = () => { containerEl.style.setProperty("--ch", card.offsetHeight + "px"); };
+  fit();
+  if (window.ResizeObserver) {
+    if (containerEl._crsRo) containerEl._crsRo.disconnect();
+    containerEl._crsRo = new ResizeObserver(fit);
+    containerEl._crsRo.observe(card);
+  }
 }
 // Research time box: time after research speed, and how much of it the
 // general + research speedups you own cover.
