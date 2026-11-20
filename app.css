@@ -5323,11 +5323,12 @@ span.mk.mk svg{flex:none}
   .xh-offw{ color:#f2c27a; font-weight:800; }
   .exr-tag{ display:inline-block; padding:1px 7px; border-radius:999px; font-size:10.5px; font-weight:800; color:#f2c27a; border:1px solid rgba(232,162,60,.55); background:rgba(232,162,60,.1); white-space:nowrap; }
   .exr-offc > :not(.exk-hd):not(.crs-sw){ opacity:.4; filter:grayscale(.6); }
-  .exr-offc > .exk-hd > :not(.exk-tr){ opacity:.4; filter:grayscale(.6); }
   .xh-cb[data-xhsrc]{ cursor:pointer; }
   /* Stat source pop-up (design B): a bottom sheet on phones, a centred window on PC. */
   .xs-ov{ align-items:flex-end; justify-content:center; }
   .modal-box.xs{ width:100%; max-width:560px; max-height:80vh; overflow:auto; overscroll-behavior:contain; margin:0; padding:8px 14px 14px; border-radius:18px 18px 0 0; text-align:start; color:var(--frost); }
+  .modal-box.xs:focus{ outline:none; }
+  @media (max-width: 700px){ .modal-overlay.xs-ov{ padding:0; } .modal-box.xs{ max-width:none; } }
   @media (min-width: 701px){ .xs-ov{ align-items:center; } .modal-box.xs{ border-radius:16px; } }
   .xs-grab{ width:40px; height:4px; border-radius:3px; background:rgba(255,255,255,.22); margin:0 auto 8px; }
   .xs-h{ display:flex; align-items:center; gap:8px; }

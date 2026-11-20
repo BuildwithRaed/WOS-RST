@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 118; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 119; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2263,7 +2263,6 @@ const T = {
   pet_advanced: { en: "Advanced" },
   pet_adv_short: { en: "Adv" },
   pet_done: { en: "Done · nothing needed" },
-  pet_count_tip: { en: "Ticked: this pet counts in the totals, Dashboard and Budgets." },
   material_food: { en: "Food" },
   material_manual: { en: "Manual" },
   material_potion: { en: "Potion" },
@@ -2294,7 +2293,6 @@ const T = {
   pack_reset_weekly: { en: "Weekly" },
   pack_reset_biweekly: { en: "Every 2 weeks" },
   pack_reset_monthly: { en: "Every 4 weeks" },
-  count_toward_dashboard: { en: "Count toward Dashboard" },
   t12_research_title: { en: "T12 Research" },
   t12_group_troop_unlock: { en: "Troop Unlock" },
   t12_group_skills1: { en: "Skills I" },
@@ -2339,7 +2337,6 @@ const T = {
   bs_min_unit: { en: "min" },
   bs_type_min: { en: "Type each amount in minutes (1h = 60 min)" },
   set_speed: { en: "Research Speed" },
-  set_count: { en: "Count" },
   tl_title: { en: "State Timeline" },
   tl_desc: { en: "What opens in your state, and when, from your state age." },
   tl_your_state: { en: "Your state" },
@@ -2403,7 +2400,6 @@ const T = {
   marks_no_estimate: { en: "No estimate yet for these stages (not counted in the total until a formula close to the real result is confirmed):" },
   expert_upcoming: { en: "Upcoming" },
   experts_sigils_summary_note: { en: "Change these on each expert's card" },
-  expert_count_tick: { en: "Count" },
   exr_count: { en: "Count research" },
   exp_sig_split: { en: "Level {lv} · Research {rs}" },
   exp_sig_gen_note: { en: "General Sigils cover what's short" },
@@ -2421,7 +2417,6 @@ const T = {
   xs_troop_only: { en: "{troop} only" },
   xs_research_off: { en: "Research is switched off (Count research), so it isn't counted." },
   xs_nothing: { en: "Nothing gives this stat yet." },
-  expert_count_tip: { en: "Ticked: this expert counts in the totals, Dashboard and Budgets." },
   piece_helmet: { en: "Helmet" },
   piece_watch: { en: "Watch" },
   piece_jacket: { en: "Jacket" },
@@ -30842,7 +30837,7 @@ async function rsCountSet(on) {
   EXPERTS_RESEARCH_UNLOCKED_GLOBAL = rsUnNorm(st);
   budgetInvalidate();
   // Budgets: the research needs follow at once, whichever side is shown.
-  try { await sideBgNeedsExperts("experts_research"); } catch (e) { /* the page records them when drawn */ }
+  await sideBgNeedsExperts("experts_research").catch(() => null); // else the page records them when drawn
   render();
 }
 function rsCountSwitchHtml(on) {
@@ -32765,8 +32760,7 @@ function plxShellHtml(o) {
     <div class="plx-head">
       <h2>${esc(o.title)}</h2>
       ${o.labBtn ? plxLabBtnHtml() : ""}
-      ${o.maxId ? `<button type="button" class="plx-maxbtn plx-max" id="${o.maxId}" title="${esc(t("max_everything"))}">${esc(t("max_button"))}</button>` : ""}
-      ${o.headExtra || ""}
+      ${o.maxId ? `<button type="button" class="plx-maxbtn plx-max" id="${o.maxId}" title="${esc(t("max_everything"))}">${esc(t("max_button"))}</button>` : ""}${o.headExtra || ""}
     </div>
     <div class="t12x g1">
       <aside class="t12x-side">
@@ -33429,9 +33423,6 @@ function expLevelNeedsFrom(lvIn, un, skillRows, affRows) {
 }
 // Expert sigil tiles (each expert's picture and the sigils you hold for them).
 // need: { key: { need, short } } adds the short / ✓ / — line.
-function expertSigilTilesHtml(inv, experts, need) {
-  return `<div class="bs-tiles plx-sig">${expertSigilTilesInner(inv, experts, need)}</div>`;
-}
 // Each box shows the "<Name> Sigils" item picture (General Sigils its own), not the portrait.
 function expertSigilTilesInner(inv, experts, need, tap) {
   return experts.map((e) => {
