@@ -5314,7 +5314,7 @@ span.mk.mk svg{flex:none}
     /* Both sides' Backpack boxes one size, so the card doesn't move when the side flips
        (Experts: the Research boxes as tall as Level's; Pets: Level's taller, bigger pictures). */
     .g1-top.xh-texp .g1-bp .bs-tiles > .bp-tile{ min-height:100px; }
-    .g1-top.xh-tpets .g1-bp .bs-tiles > .bp-tile{ min-height:88px; }
+    .g1-top.xh-tpets .g1-bp .bs-tiles > .bp-tile{ min-height:93px; }
     .g1-top.xh-tpets #petsMaterialsBar_rows .bs-tiles > .bp-tile img{ width:40px !important; height:40px !important; }
     .g1-top.xh-top .g1-bp .bs-tiles:not(.bs-slide){ padding-bottom:2px; } /* as tall as a sliding row */
   }

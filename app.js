@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 116; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 117; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -1636,7 +1636,6 @@ const T = {
   pk_picks_s: { en: "Pick options" },
   pk_close: { en: "Close" },
   plx_all_troops: { en: "All troops" },
-  plx_all: { en: "All" },
   t12x_target: { en: "Target" },
   t12x_node1: { en: "1 node" },
   t12x_max_pct: { en: "max {n}%" },
@@ -2097,7 +2096,6 @@ const T = {
   stars_of_5: { en: "/ 5 stars" },
   hs_no_heroes: { en: "No heroes here yet." },
   pets_level_title: { en: "Pets Level" },
-  pets_summed_desc: { en: "Summed across all 15 pets, based on current levels." },
   not_started: { en: "Not started" },
   max_suffix: { en: " (Max)" },
   upcoming_tag: { en: "Upcoming" },
@@ -2269,7 +2267,6 @@ const T = {
   material_serum: { en: "Serum" },
   troop_lancer_singular: { en: "Lancer" },
   pets_refine_title: { en: "Pets Refine" },
-  tier_suffix: { en: "tier" },
   max_button: { en: "Max" },
   rl_lab_btn: { en: "Lab" },
   rl_lab_go: { en: "Open the Research Lab (Refined FC)" },
@@ -2322,13 +2319,6 @@ const T = {
   t11_helios_title: { en: "T11 Research" },
   data_not_available_troop: { en: "Data not yet available for this troop type." },
   stats_data_not_available: { en: "Stats data not available yet." },
-  exp_all_d: { en: "every counted expert's level stat, plus Romulus's and Gareth's troop skills. Always on." },
-  exp_svs_d: { en: "only Valeria's Battle Concerto skill and Conqueror's Spirit talent, in the SvS Battle Phase." },
-  exp_foundry_d: { en: "only Fabian's Heightened Firepower skill and Craftsman of War talent, in Foundry Battle." },
-  exp_frost_d: { en: "only Kathy's Child of Frost talent, in Frostfire Mine." },
-  exp_tundra_d: { en: "only Ronne's Trade Dominion talent, on the Tundra Trade Route." },
-  exp_tabs_note: { en: "An event tab shows only that event's extra bonus; it comes on top of All." },
-  exp_ev_off: { en: "{name} isn't counted: tick Count on the expert's card." },
   foundry_title: { en: "Foundry" },
   svs_title: { en: "SvS" },
   frostfire_mine_title: { en: "Frostfire Mine" },
@@ -2338,7 +2328,6 @@ const T = {
   resource_affinity: { en: "Affinity" },
   resource_sigils: { en: "Sigils" },
   experts_research_title: { en: "Experts Research" },
-  experts_research_desc: { en: "Attack/Defense/Lethality/Health from Expert Research. Troop-specific experts are counted per troop below." },
   only_suffix: { en: "only" },
   max_page_note: { en: "Max 6% page 1, max 10% page 2 (per path)" },
   path_label: { en: "Path" },
@@ -2410,7 +2399,6 @@ const T = {
   contact_soon: { en: "Contact details will be added soon." },
   marks_no_estimate: { en: "No estimate yet for these stages (not counted in the total until a formula close to the real result is confirmed):" },
   expert_upcoming: { en: "Upcoming" },
-  experts_sigils_summary: { en: "Expert sigils" },
   experts_sigils_summary_note: { en: "Change these on each expert's card" },
   expert_count_tick: { en: "Count" },
   expert_count_tip: { en: "Ticked: this expert counts in the totals, Dashboard and Budgets." },
@@ -2899,7 +2887,6 @@ const T = {
   rf_mk_common: { en: "Common" },
   rf_mk_or_adv: { en: "or {n} Advanced" },
   rf_mk_calc: { en: "Calculator" },
-  rf_stats_info: { en: "Each box is the refine bonus of all your counted pets together for the troop picked above, out of the most they can reach now." },
   marks_desc: { en: "Refining is random, so this is the closest average formula: every missing 1% of a stat costs the Common Marks rate of the stage it's in. Tune the rates or the overall adjustment as your own results come in. These are the fewest marks that reach the target on average; your real count may differ." },
   marks_rates: { en: "Common Marks per 1% (by stage)" },
   marks_rates_note: { en: "Grey/Green/Blue: average over all stats. Purple/Orange: per 1% of one stat. Red uses Orange's rate until you set it." },
@@ -2920,15 +2907,11 @@ const T = {
   pca_mk_game: { en: "choose {m} in the game" },
   pca_mk_or: { en: "{a} or {c}" },
   g1_hide: { en: "Hide" },
-  er_paths_to_go: { en: "{n} paths to go" },
-  er_path_to_go_1: { en: "1 path to go" },
   er_gives: { en: "These levels give" },
   rc_settings: { en: "Roster settings" },
   rc_count_desc: { en: "Adds these 3 heroes' stats to the troop totals" },
   rc_maxgen: { en: "Max uses your highest Gen" },
   rc_maxgen_desc: { en: "{gen} for all heroes when working out the max" },
-  exp_have_n: { en: "have {n}" },
-  exp_general_n: { en: "+ {n} general" },
   exp_sigils_of: { en: "{name} Sigils" },
   exp_in_bar_title: { en: "Affinity already in {name}'s bar" },
   exp_max_one: { en: "Max {name}" },
@@ -3473,7 +3456,6 @@ const T = {
   pur_added_dates: { en: "Added on {n} dates" },
   set_info: { en: "What these settings do" },
   info_more: { en: "More about this" },
-  exp_sig_short: { en: "{n} short" },
   pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again." },
   pur_updating: { en: "Updating…" },
   sa_lock_line: { en: "{what} opens around day {day} — in about {n} days (≈ {date})." },
@@ -4838,6 +4820,17 @@ async function render() {
   // The first draw keeps the loading layout instead of "Loading…".
   if (!content.querySelector(":scope > .boot-ld")) content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
+    // Experts / Pets: entering the page picks its side (sideEntryTab).
+    if (!same && sidePairOf(TAB)) {
+      const tb = await sideEntryTab(TAB);
+      if (seq !== RENDER_SEQ) return;
+      if (tb !== TAB) {
+        TAB = tb;
+        try { localStorage.setItem("last_tab", TAB); } catch (e) { /* storage blocked */ }
+        document.querySelectorAll("button[data-tab]").forEach((x) => x.classList.toggle("active", x.dataset.tab === TAB));
+        history.replaceState({ tab: TAB }, "", location.pathname + location.search);
+      }
+    }
     // Visitor pages that follow Admin's visitor access: when the settings
     // didn't load (weak connection), stay on the page and try again instead of
     // sending the person to the Dashboard.
@@ -30997,7 +30990,6 @@ async function renderExpertsResearchPage() {
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
     title: sideTitle(TAB, t("experts_research_title")),
-    maxId: "expResearchMaxAllBtn",
     amountsId: "expResearchAmounts", needId: "expResearchSigils",
     statsHtml: xhCardHtml("exp"),
     mainHtml: `<div id="expResearchSwipeCounter"></div>
@@ -31250,16 +31242,6 @@ async function renderExpertsResearchPage() {
 
   renderTotals();
   renderGrid();
-  // Max / Reset (like Chief Gear): every counted expert's research paths, now and target.
-  wirePageMax({
-    btnId: "expResearchMaxAllBtn", key: "experts_research",
-    allMax: () => EXPERTS_IN_ORDER.filter(isResearchUnlocked).every((ex) => pathNumbersFor(ex).every((pn) => (Number(saved[ex][pn].current) || 0) >= pathTop(ex, pn))),
-    snap: () => Object.fromEntries(EXPERTS_IN_ORDER.map((ex) => [ex, saved[ex]])),
-    max: () => EXPERTS_IN_ORDER.filter(isResearchUnlocked).forEach((ex) => pathNumbersFor(ex).forEach((pn) => { const st = saved[ex][pn], v = Math.max(Number(st.current) || 0, pathTop(ex, pn)); st.current = v; st.desired = v; })),
-    reset: (kept) => EXPERTS_IN_ORDER.forEach((ex) => { if (kept && kept[ex]) saved[ex] = kept[ex]; }),
-    save: () => saveCalcState("experts_research", saved),
-    after: () => render(),
-  });
 }
 
 // Last per-expert sigil need saved by Experts Level, so it's only re-saved
@@ -31448,7 +31430,6 @@ async function renderExpertsPage() {
 
   content.innerHTML = plxShellHtml({
     title: sideTitle(TAB, t("expertspage_title")),
-    maxId: "expertsMaxAllBtn",
     // General speedups are a box in "Amounts from your Backpack" now, so this page has no Settings card.
     amountsId: "expertsAmounts", needId: "expertsSummary",
     statsHtml: xhCardHtml("exp"),
@@ -31462,21 +31443,6 @@ async function renderExpertsPage() {
 `;
   { const b = document.getElementById("expertsAmounts_buy"); (b.querySelector("[data-buybody]") || b).innerHTML = `<div id="expertsPacks"></div>`; }
 
-  // Max / Reset (like Chief Gear): every counted expert's level and skills, now and target.
-  wirePageMax({
-    btnId: "expertsMaxAllBtn", key: "experts",
-    allMax: () => EXPERTS_SHOWN.filter((e) => isExpertUnlocked(e.key)).every((e) => (Number(saved[e.key].current) || 0) >= heroMaxLevelValue(e.key) - 0.001 && e.skills.every((sk) => (Number(saved[e.key].skills[sk].current) || 0) >= skillMaxLevel(e.key, sk))),
-    snap: () => Object.fromEntries(EXPERTS_SHOWN.map((e) => [e.key, saved[e.key]])),
-    max: () => EXPERTS_SHOWN.filter((e) => isExpertUnlocked(e.key)).forEach((e) => {
-      const hs = saved[e.key], top = heroMaxLevelValue(e.key);
-      const v = (Number(hs.current) || 0) >= top - 0.001 ? hs.current : top;
-      hs.current = v; hs.desired = v;
-      e.skills.forEach((sk) => { const st = hs.skills[sk], m = skillMaxLevel(e.key, sk), w = Math.max(Number(st.current) || 0, m); st.current = w; st.desired = w; });
-    }),
-    reset: (kept) => EXPERTS_SHOWN.forEach((e) => { if (kept && kept[e.key]) saved[e.key] = kept[e.key]; }),
-    save: () => saveCalcState("experts", saved),
-    after: () => render(),
-  });
   const renderStatHeader = () => xhExpDraw(XD);
 
   const totalsEl = document.getElementById("expertsSummary");
@@ -32020,7 +31986,6 @@ async function renderRefinePage() {
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
     title: sideTitle(TAB, t("pets_refine_title")),
-    maxId: "refineMaxAllBtn",
     amountsId: "refineMarksBar", needId: "refineNeed",
     // One pinned troop switch: it picks which troop's LETH / HP boxes show.
     // Header: the troop switch with its
@@ -32373,16 +32338,6 @@ async function renderRefinePage() {
 
   renderTotals();
   renderList();
-  // Max / Reset (like Chief Gear): every counted pet's refine stats to the top released stage.
-  wirePageMax({
-    btnId: "refineMaxAllBtn", key: "pets_refine",
-    allMax: () => petNames.filter((pet) => isPetUnlocked(pet)).every((pet) => { const m = maxRow(pet), st = petState(pet); return STAT_KEYS.every(({ key, maxKey }) => (Number(st[key]) || 0) >= pct1(m[maxKey]) - 0.001); }),
-    snap: () => Object.fromEntries(petNames.map((pet) => [pet, PET_REFINE_TYPED_STATE[pet] == null ? null : PET_REFINE_TYPED_STATE[pet]])),
-    max: () => petNames.filter((pet) => isPetUnlocked(pet)).forEach((pet) => { const m = maxRow(pet), st = petState(pet); STAT_KEYS.forEach(({ key, maxKey }) => { st[key] = Math.max(Number(st[key]) || 0, pct1(m[maxKey])); }); }),
-    reset: (kept) => petNames.forEach((pet) => { if (!kept || !(pet in kept)) return; if (kept[pet] == null) delete PET_REFINE_TYPED_STATE[pet]; else PET_REFINE_TYPED_STATE[pet] = kept[pet]; }),
-    save: () => saveCalcState("pet_refine_typed", PET_REFINE_TYPED_STATE),
-    after: () => render(),
-  });
 }
 
 async function renderPetsDataPage() {
@@ -32394,7 +32349,6 @@ async function renderPetsDataPage() {
   content.innerHTML = plxShellHtml({
     title: sideTitle(TAB, t("pets_level_title")),
     amountsId: "petsMaterialsBar", needId: "petsNeed",
-    maxId: "petsMaxAllBtn",
     statsHtml: xhCardHtml("pets"),
     mainHtml: `<div id="petsSwipeCounter"></div>
     <div id="petsList"></div>`,
@@ -32407,7 +32361,6 @@ async function renderPetsDataPage() {
     const maxIdx = petMaxIdx(pet);
     return { from: -1, to: IS_OWNER ? maxIdx : -1 };
   }
-  const petsAllMax = () => petNames.every((pet) => getState(pet).from >= petMaxIdx(pet));
 
   function computeNeeded(pet) {
     const levels = PETS_NODES_CACHE[pet];
@@ -32438,7 +32391,6 @@ async function renderPetsDataPage() {
   }
 
   function renderTotals() {
-    maxBtnSync("petsMaxAllBtn", "pets", petsAllMax());
     const grand = { food: 0, manual: 0, potion: 0, serum: 0 };
     petNames.forEach((pet) => {
       if (!isPetUnlocked(pet)) return;
@@ -32644,22 +32596,6 @@ async function renderPetsDataPage() {
     });
   }
 
-  // Max / Reset like Chief Gear (maxBeforeLoad / maxBtnSync): every pet's level and target.
-  document.getElementById("petsMaxAllBtn").addEventListener("click", pageMaxClick({
-    key: "pets",
-    allMax: petsAllMax,
-    keep: () => ({ cur: jsonCopy(Object.fromEntries(petNames.map((pet) => [pet, PETS_STATE[pet] == null ? null : PETS_STATE[pet]]))) }),
-    max: () => petNames.forEach((pet) => {
-      const v = Math.max(getState(pet).from, petMaxIdx(pet));
-      PETS_STATE[pet] = { from: v, to: v };
-    }),
-    reset: (b) => petNames.forEach((pet) => { const v = b.cur && b.cur[pet]; if (v == null) delete PETS_STATE[pet]; else PETS_STATE[pet] = v; }),
-    done: () => {
-      savePetsState();
-      renderTotals();
-      renderList();
-    },
-  }));
 
   renderTotals();
   renderList();
@@ -33624,6 +33560,35 @@ function sideSwitchHtml(tab) {
   const p = sidePairOf(tab);
   if (!sidePairOpen(p)) return "";
   return `<div class="pkw-tab crs-sw" role="tablist">${p.tabs.map((tb, i) => `<button type="button" role="tab" aria-selected="${tb === tab}" data-sidego="${tb}" class="${tb === tab ? "on" : ""}">${esc(t(p.labels[i]))}</button>`).join("")}</div>`;
+}
+// Which side an Experts / Pets page opens on (owner, 20 Nov 2026): Level, unless every Level card
+// shown (counted or not) is already at its released max (Experts: level and every skill; Pets: level), then
+// Research / Refine. Used when the page is entered (Menu, link, last_tab, reload, the old tabs);
+// a flip during the visit (sideGo) keeps the side picked.
+async function sideEntryTab(tab) {
+  const p = sidePairOf(tab);
+  if (!p || !sidePairOpen(p)) return tab;
+  try {
+    let allMax = false;
+    if (p.picks[0] === "experts") {
+      const D = await xhExpData();
+      const kit = expertKit(D.SKILL ? Object.values(D.SKILL).flat() : [], Object.values(D.AFF).flat(), D.lv);
+      const shown = EXPERTS_LIST.filter((e) => !hiddenForVisitor("experts", e.key));
+      allMax = shown.length > 0 && shown.every((e) => {
+        const st = D.lv[e.key] || {};
+        let v = Number(st.current) || 0;
+        if (!D.lv.__advLevels && v > 0 && v === Math.floor(v) && kit.heroSigilLevel(e.key, v)) v += 0.1;
+        return v >= kit.heroMaxLevelValue(e.key) - 0.05 && e.skills.every((sk) => (Number(st.skills && st.skills[sk] && st.skills[sk].current) || 0) >= kit.skillMaxLevel(e.key, sk));
+      });
+    } else {
+      await ensurePetsData();
+      const pets = Object.keys(PETS_NODES_CACHE || {}).filter((pet) => !hiddenForVisitor("pets", pet));
+      allMax = pets.length > 0 && pets.every((pet) => { const s = PETS_STATE && PETS_STATE[pet]; return !!s && typeof s === "object" && Number(s.from) >= petMaxIdx(pet); });
+    }
+    return p.tabs[allMax ? 1 : 0];
+  } catch (e) {
+    return tab;
+  }
 }
 // Flip the side: the same card stays (its pick is copied over), no new history step,
 // the page keeps its scroll place (drawn as the same page).
