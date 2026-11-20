@@ -19258,12 +19258,13 @@ document.addEventListener("toggle", (e) => { if (e.target.matches && e.target.ma
 // window on phones (on PC the card stays in the side column).
 const plxPriceLabel = (calcKey) => `${esc(PACK_COST_SHOWN[calcKey] || t("pack_cost_title"))} &#8250;`;
 let REFINE_CALC_OPEN = null; // set by the Pet Refine page: opens its advanced calculator
+let REFINE_REFRESH = null; // set by the Pet Refine page: redraws its totals, Backpack and windows
 document.addEventListener("click", (e) => { if (e.target.closest("[data-rfcalcbtn]") && TAB === "refinepage" && REFINE_CALC_OPEN) REFINE_CALC_OPEN(); });
 function plxBuyBtnsHtml(calcKey) {
   // Chief Gear: its own sheet buttons (data-cgsheet), under its 🎒 Backpack line like the other pages
   if (calcKey === "chief_gear") return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-cgsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button>${visitorCan("packcost") ? `<button type="button" class="cg-bpbtn ice" data-cgsheet="packs" data-cgprice>${esc(PACK_COST_SHOWN.chief_gear || t("pack_cost_title"))} &#8250;</button>` : ""}</span>`;
   // Pet Refine: the advanced calculator beside Pack cost, where Trades sits on other pages
-  if (calcKey === "pets_refine") return `<span class="cg-bpb plx-bpb${petGemsTradeOn() ? " rf-3" : ""}"><button type="button" class="cg-bpbtn rf-calcbtn" data-rfcalcbtn>&#9881; ${esc(t("rf_mk_calc"))} &#8250;</button>${petGemsTradeOn() ? `<button type="button" class="cg-bpbtn" data-plxsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button>` : ""}<button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
+  if (calcKey === "pets_refine") return `<span class="cg-bpb plx-bpb rf-3"><button type="button" class="cg-bpbtn rf-calcbtn" data-rfcalcbtn>&#9881; ${esc(t("rf_mk_calc"))} &#8250;</button><button type="button" class="cg-bpbtn" data-plxsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
   return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-plxsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
 }
 document.addEventListener("click", (e) => {
@@ -21203,7 +21204,26 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   if (!containerEl) return;
   await ensureTradeRates();
   const rates = tradeRatesFor(calcKey).filter((r) => !r.hidden);
-  if (!rates.length) { containerEl.innerHTML = ""; return; }
+  // Pet Refine: the "Trade Gems for Common Marks" switch lives here (one switch for the
+  // Backpack's and the packs' gems), so the window shows even with it off.
+  const gemsSw = calcKey === "pets_refine" ? `<label class="trd-use trd-gems" title="${esc(t("marks_gems_trade"))}"><span>${esc(t("marks_gems_trade"))}<small>${esc(t("marks_gems_trade_rate"))}</small></span><span class="pc-switch"><input type="checkbox" data-markspackgems ${petGemsTradeOn() ? "checked" : ""} /><i></i></span></label>` : "";
+  const wireGems = () => {
+    const pg = containerEl.querySelector("[data-markspackgems]");
+    if (pg) pg.addEventListener("change", async () => {
+      const st = await ensurePetMarksState();
+      st.packGems = pg.checked;
+      PACK_PLAN_CACHE.clear();
+      budgetInvalidate();
+      saveCalcState("pet_refine_marks", st);
+      // The Backpack's gems change what's counted too: redraw the whole page part.
+      if (REFINE_REFRESH && TAB === "refinepage") REFINE_REFRESH(); else if (onChange) onChange();
+    });
+  };
+  if (!rates.length) {
+    containerEl.innerHTML = gemsSw ? `<div class="pc-card trd"><div class="pc-head trd-title"><b>&#8644; ${esc(t("trade_title"))}</b></div>${gemsSw}</div>` : "";
+    wireGems();
+    return;
+  }
   const nm = (n) => materialDisplayName(itemShortName(n)).replace(/\s*\((minutes|min)\)$/, "");
   // Calculator: short Fire Crystal names (FC, FCS, RFC) so it stays on one line.
   const cnm = (n) => ({ "Fire Crystal": "FC", "FC Shard": "FCS", "Refined FC": "RFC" }[n]) || nm(n);
@@ -21273,10 +21293,11 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
       <span class="trd-res" data-traderesult></span></div>`;
   containerEl.innerHTML = `<div class="pc-card trd">
     <div class="pc-head trd-title"><b>&#8644; ${esc(t("trade_title"))}</b></div>
-    ${switchHtml}${shortHtml}
+    ${gemsSw}${switchHtml}${shortHtml}
     ${doHtml}${rulesHtml}
     <div class="trd-lbl">${esc(t("trd_calc"))}</div>${calcHtml}
   </div>`;
+  wireGems();
   const applyCb = containerEl.querySelector("[data-tradeapply]");
   if (applyCb) applyCb.addEventListener("change", async (e) => {
     TRADE_APPLY[calcKey] = e.target.checked;
@@ -31982,7 +32003,6 @@ async function renderRefinePage() {
   content.innerHTML = plxShellHtml({
     title: t("pets_refine_title"),
     maxId: "refineMaxAllBtn",
-    settings: `<label class="t12x-check pr-gems" title="${esc(t("marks_gems_trade"))}"><span class="pr-gems-t"><b>${esc(t("marks_gems_trade"))}</b><small>${esc(t("marks_gems_trade_rate"))}</small></span><input type="checkbox" class="bset-sw" data-markspackgems ${PET_MARKS_STATE.packGems ? "checked" : ""} /></label>`,
     amountsId: "refineMarksBar", needId: "refineNeed",
     // One pinned troop switch: it picks which troop's LETH / HP boxes show.
     // Header: the troop switch with its
@@ -31991,14 +32011,6 @@ async function renderRefinePage() {
     mainHtml: `<div id="refineSwipeCounter"></div>
     <div id="refineList"></div>
     <div id="refineTotals" style="margin-top:12px;"></div>`,
-  });
-  const pg = content.querySelector("[data-markspackgems]");
-  if (pg) pg.addEventListener("change", () => {
-    PET_MARKS_STATE.packGems = pg.checked;
-    PACK_PLAN_CACHE.clear();
-    budgetInvalidate();
-    saveCalcState("pet_refine_marks", PET_MARKS_STATE);
-    renderTotals();
   });
 
   // The pinned troop switch's stat boxes (summed over every pet).
@@ -32131,6 +32143,7 @@ async function renderRefinePage() {
     refineStatsNow = { grand, grandMax };
     drawRefineStats();
     // "Marks to max · all pets" row (same numbers as the card at the bottom).
+    REFINE_REFRESH = () => { if (TAB === "refinepage") renderTotals(); };
     const mkEl = document.getElementById("refineMk");
     if (mkEl) {
       mkEl.innerHTML = `<img class="rf-mki" src="${esc(materialIconSrc("Common Marks") || "")}" alt="" />

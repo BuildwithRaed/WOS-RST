@@ -2473,7 +2473,9 @@ input,select,textarea{
   .pca-pr{ flex:none; font-size:14px; font-weight:800; white-space:nowrap; }
   .pca-pk .pc-lines{ margin:0 0 8px 50px; }
   .pca-tr{ display:flex; align-items:center; gap:6px; padding:4px 0; font-size:13px; }
-  .pca-tc{ margin:2px 0 10px; padding:4px 10px 6px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); }
+  .pca-tc{ margin:10px 0 0; padding:6px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); }
+  .pca-tc + .pca-h{ margin-top:0; }
+  .pca-tcb > .pca-tr:last-child{ padding-bottom:0; }
   .pca-tch{ display:flex; align-items:center; gap:6px; min-height:32px; font-size:13px; font-weight:800; }
   .pca-tch > span:first-child{ flex:none; white-space:nowrap; }
   .pca-tch .pca-tcn{ flex:1; min-width:0; color:var(--muted); font-size:12px; font-weight:600; line-height:1.3; }
@@ -3319,6 +3321,8 @@ input,select,textarea{
   .pc-switch input:checked + i::after{ transform:translateX(14px); }
   /* Trades window (design C): one card per item you get. */
   .trd .trd-title{ margin-bottom:4px; }
+  .trd-use small{ display:block; margin-top:2px; font-size:11.5px; color:var(--muted); }
+  .trd-gems > span:first-child{ color:var(--frost); }
   .trd-use{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:13px; color:var(--muted); padding:4px 0 8px; cursor:pointer; }
   .trd-short{ display:flex; flex-wrap:wrap; align-items:center; gap:5px; background:rgba(255,255,255,.04); border-radius:12px; padding:6px 8px; font-size:12.5px; }
   .trd-short.ok{ color:var(--good); font-weight:600; }
