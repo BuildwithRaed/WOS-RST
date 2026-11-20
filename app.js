@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 115; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 116; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -1517,8 +1517,6 @@ const T = {
   mb_home: { en: "Home" },
   mb_upgrade: { en: "Upgrade" },
   mb_plan: { en: "Plan" },
-  mb_packs: { en: "Packs" },
-  mb_more: { en: "More" },
   mb_bonus: { en: "Bonus" },
   mb_me: { en: "Me" },
   me_cmd_change: { en: "Commander name · ✎ to change" },
@@ -1535,13 +1533,9 @@ const T = {
   mb_page1: { en: "1 page" },
   ms_title: { en: "Menu style" },
   ms_hub: { en: "Hub" },
-  ms_hub_d: { en: "Groups + status" },
   ms_bar: { en: "Bottom bar" },
-  ms_bar_d: { en: "5 buttons below" },
   ms_to_bar: { en: "Switch to bottom bar" },
   ms_to_hub: { en: "Switch to hub" },
-  ms_note: { en: "Saved on your account. You can change it any time, here or at the bottom of the Menu." },
-  ms_pc_note: { en: "On a wide screen the bottom bar shows as the normal top menu." },
   mm_to_go: { en: "{n} to go" },
   mm_at_target: { en: "at target" },
   mm_day_gen: { en: "Day {d} · Gen {g}" },
