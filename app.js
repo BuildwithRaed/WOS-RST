@@ -7317,29 +7317,6 @@ const CDA_PAGES = [
     })));
     return { tracks, bar: "research_center", general: CDA_RT };
   } },
-  { key: "pets_refine", tab: "refinepage", unit: "cda_u_stats", async build() {
-    // Small steps of 0.5% per pet and stat, each priced in Common Marks at its stage's rate
-    // (with the page's adjustment), the way the page counts marks.
-    await Promise.all([ensurePetsData(), ensurePetMarksState()]);
-    const rates = PET_MARKS_STATE.rates, adj = 1 + (PET_MARKS_STATE.adjust || 0) / 100;
-    const pct1 = (raw) => Math.round(Number(raw) * 10000) / 100;
-    const KEYS = [["il", "infantry_lethality_pct", "Infantry", "Lethality"], ["ih", "infantry_health_pct", "Infantry", "Health"], ["ll", "lancer_lethality_pct", "Lancer", "Lethality"], ["lh", "lancer_health_pct", "Lancer", "Health"], ["ml", "marksman_lethality_pct", "Marksman", "Lethality"], ["mh", "marksman_health_pct", "Marksman", "Health"]];
-    const STEP = 0.5, tracks = [];
-    Object.keys(PET_REFINE_CACHE || {}).filter((pet) => !hiddenForVisitor("pets", pet) && isPetUnlocked(pet)).forEach((pet) => {
-      const rows = PET_REFINE_CACHE[pet] || [], top = rows[Math.max(0, releasedLastIdx("pet_refine_nodes", rows))] || {};
-      const s = (PET_REFINE_TYPED_STATE && PET_REFINE_TYPED_STATE[pet]) || {};
-      KEYS.forEach(([k, maxKey, troop, stat]) => {
-        const cap = pct1(top[maxKey]), cur = Math.min(Number(s[k]) || 0, cap);
-        const n = Math.max(0, Math.ceil((cap - cur) / STEP - 1e-6));
-        if (!n) return;
-        const val = (i) => Math.min(cap, cur + i * STEP);
-        const marks = (lo, hi) => { let m = 0, prev = 0; rows.forEach((r) => { const sm = pct1(r[maxKey]), a = Math.max(prev, lo), b = Math.min(sm, hi); if (b > a) m += (b - a) * (Number(rates[r.stage]) || 0); prev = Math.max(prev, sm); }); return m * adj; };
-        tracks.push({ id: `${pet}|${k}`, troop, bulk: true, from: 0, to: n, name: `${dataName(pet)} · ${troopDisplayName(troop)} ${tStatLabel(stat)}`, lab: (i) => `${Number(val(i).toFixed(2))}%`,
-          cost: (i) => ({ "Common Marks": marks(val(i - 1), val(i)) }), gain: (i) => ({ [stat]: val(i) }) });
-      });
-    });
-    return { tracks, bar: "pets_refine", pic: (tr) => petImage(tr.raw.split("|")[0]), step: (tr, lv) => `${tr.lab(tr.from)} → ${tr.lab(lv)}` };
-  } },
   { key: "experts", tab: "expertspage", unit: "rch_u_experts", async build() {
     // Levels (Affinity + the expert's Sigils, General Sigils for any expert) and skills
     // (Books + expert speedups, general speedups too). Banked EXP / Affinity come off first.
@@ -7892,7 +7869,6 @@ const MK_SLOTS = {
     return n ? { in: n.querySelector(".t12x-nm"), before: n.querySelector(".t12x-nm > .meta") } : {};
   },
   researchcenter: (tr) => { const n = mkQ(`.t12x-node[data-pxnode="${mkE(tr.raw)}"]`); return n ? { in: n.querySelector(".t12x-nm"), before: n.querySelector(".t12x-nm > .meta") } : {}; },
-  refinepage: (tr) => { const r = mkQ(`[data-refinerowfor="${mkE(tr.raw)}"]`); return r ? { in: r, before: r.querySelector("[data-refinepet]") && r.querySelector("[data-refinepet]").nextElementSibling } : {}; },
   expertspage: (tr) => {
     const p = String(tr.raw).split("|");
     const s = p[0] === "exp" ? mkQ(`[data-expcur="${mkE(p[1])}"]`) : mkQ(`[data-expskillcur="${mkE(`${p[1]}|${p.slice(2).join("|")}`)}"]`);
