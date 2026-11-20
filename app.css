@@ -3685,8 +3685,9 @@ input,select,textarea{
   .sg-pop-ft{ display:flex; justify-content:space-between; gap:8px; margin-top:7px; font-size:11.5px; color:var(--muted); }
   /* Islands: Mythic shards plan (Attack). */
   .isl-tbg{ position:absolute; top:3px; inset-inline-end:3px; z-index:3; font-size:11px; font-weight:800; line-height:1; padding:3px 4px; border-radius:6px; background:rgba(5,8,15,.82); border:1px solid rgba(124,196,255,.55); color:#7cc4ff; white-space:nowrap; pointer-events:none; }
-  .isl-tsh{ margin-top:4px; font-size:11px; letter-spacing:-.2px; max-width:100%; font-weight:800; color:#e0b25a; line-height:1.25; text-align:center; white-space:normal; overflow-wrap:anywhere; }
+  .isl-tsh{ margin-top:7px; font-size:11px; letter-spacing:-.2px; max-width:100%; font-weight:800; color:#e0b25a; line-height:1.25; text-align:center; white-space:normal; overflow-wrap:anywhere; }
   .isl-tsh i{ font-style:normal; }
+  .isl-tsh .isl-sti{ margin-inline-end:3px; }
   .isl-tsh .isl-free{ display:block; margin-top:1px; color:#7cc4ff; font-weight:700; }
   .isl-freebox{ margin-top:8px; padding:7px 10px; border-radius:10px; border:1px solid rgba(80,200,120,.35); background:rgba(80,200,120,.08); color:var(--frost); font-size:12.5px; line-height:1.45; }
   .isl-freebox b{ color:#7ee2a0; margin-inline-end:4px; }
@@ -4907,7 +4908,7 @@ input,select,textarea{
   .isl-pop .isl-mkset input{ width:100%; }
   .isl-pop .sg-pop-ft{ margin-top:6px; }
   .isl-pop .isl-mkck .bset-sw{ width:38px; height:22px; flex:0 0 38px; }
-  .sg-ans.g1-folded #islandShardPlan .isl-pl > :not(.isl-bp), .sg-ans.g1-folded #islandShardPlan .isl-bp > :not(.bs-foot), .sg-ans.g1-folded ~ #islMkWrap{ display:none !important; }
+  .sg-ans.g1-folded #islandShardPlan .isl-pl > :not(.isl-bp), .sg-ans.g1-folded #islandShardPlan .isl-bp > :not(.bs-foot), .sg-ans.g1-folded ~ #islMkWrap:not(.isl-mk-shown):not(:has(.cg-open)){ display:none !important; }
   /* Skin Gallery: Shining City skins (under the Globe Level row; folds with Hide) */
   .sg-ans.g1-folded #shSkins, .sg-ans.g1-folded ~ #shMkWrap{ display:none; }
   .shr{ display:flex; align-items:center; gap:9px; width:100%; min-height:44px; padding:5px 8px 5px 10px; margin-top:5px; border:1px solid rgba(224,178,90,.45); border-radius:12px; background:var(--panel-2); color:var(--frost); box-sizing:border-box; font:inherit; text-align:start; }

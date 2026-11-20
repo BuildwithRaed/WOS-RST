@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 114; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 115; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2602,6 +2602,8 @@ const T = {
   b3_not_counted: { en: "not in this budget" },
   b3_nothing: { en: "nothing planned" },
   b3_tick: { en: "Count in this budget" },
+  b3_tile_research_center: { en: "Research" },
+  b3_tile_hero_shards: { en: "Heroes" },
   b3_ring_tip: { en: "You already have {p}% of what this page needs (Backpack + trades)" },
   b3_missing: { en: "{n} pages not in the plan yet" },
   b3_week: { en: "This week {v}" },
@@ -19147,6 +19149,7 @@ document.addEventListener("click", (e) => {
   const b = e.target.closest && e.target.closest("[data-g1fold]");
   if (!b) return;
   const key = b.dataset.g1fold;
+  document.querySelectorAll(".isl-mk-shown").forEach((x) => x.classList.remove("isl-mk-shown"));
   BAR_SHOW_ALL[key] = BAR_SHOW_ALL[key] === false;
   saveBarHidden();
   g1FoldSync();
@@ -23560,11 +23563,11 @@ function budgetGoalShort(g) {
   return last ? `${g.mini && g.opt.grpLabel ? g.opt.grpLabel : packPageLabel(g.page)} ${last}` : packPageLabel(g.page);
 }
 function budgetGoalIcon(g, pages) {
-  if (g.rest) return { src: g.page ? QUICK_ICONS[(BUDGET_PAGES.find((x) => x.key === g.page) || {}).tab] || goalPageIcon((pages || []).find((x) => x.calcKey === g.page)) || "" : "", face: false };
+  if (g.rest) return { src: g.page ? budgetPagePic(g.page) || goalPageIcon((pages || []).find((x) => x.calcKey === g.page)) || "" : "", face: false };
   if (g.up) return { src: g.up.img || QUICK_ICONS[(BUDGET_PAGES.find((x) => x.key === g.page) || {}).tab] || "", face: !!g.up.face };
   const hero = budgetGoalHero(g), pg = (pages || []).find((x) => x.calcKey === g.page);
   if (hero) return { src: hero.image_url || HERO_IMG_BY_NAME[hero.name] || goalPageIcon(pg), face: true };
-  return { src: QUICK_ICONS[(BUDGET_PAGES.find((x) => x.key === g.page) || {}).tab] || goalPageIcon(pg), face: false };
+  return { src: budgetPagePic(g.page) || goalPageIcon(pg), face: false };
 }
 // Which goal a pack is bought for: the first goal in order that needs what
 // it gives (or what trades into it: Mystery Points → widgets, General shards
@@ -23895,6 +23898,14 @@ function wireBudgetGoals(box) {
   }));
 }
 // A picture for a page: its first needed item's.
+// A Budgets page's picture: its Menu page's quick picture; Hero shards & widgets (whose page is
+// the Backpack, an emoji there) the Mythic General Hero Shard.
+// Shorter names on the Budgets page tiles only (full name in the tile's title / aria-label).
+const B3_TILE_SHORT = { research_center: "b3_tile_research_center", hero_shards: "b3_tile_hero_shards" };
+function budgetPagePic(key) {
+  const tab = (BUDGET_PAGES.find((x) => x.key === key) || {}).tab;
+  return QUICK_ICONS[tab] || (key === "hero_shards" ? BP_SHARD_ICONS["Mythic General Hero Shard"] : "");
+}
 function goalPageIcon(pg) {
   for (const n of Object.keys((pg && pg.needFull) || {})) { const ic = itemRegIcon(n) || bpIcon({ name: n.replace(/ \(minutes\)$/, "") }); if (ic) return ic; }
   return "";
@@ -24608,7 +24619,7 @@ async function renderBudgetsPage(opts = {}) {
   // Each page as a tile: picture, name, tick, its price, when it's done (by
   // the target / after it) and a ring = how much of what it needs you
   // already have (Backpack + trades). Tap → its details in a sheet.
-  const pageIcon = (x) => (x.pg.sh && x.pg.sh.img) || QUICK_ICONS[BUDGET_PAGES[x.i].tab] || goalPageIcon(x.pg);
+  const pageIcon = (x) => (x.pg.sh && x.pg.sh.img) || budgetPagePic(BUDGET_PAGES[x.i].key) || goalPageIcon(x.pg);
   const datedSegs = datedLead ? budgetGoalSegs(datedSetup.goals, pagesRaw) : null; // (what each goal still needs: a page with nothing left has no date)
   const timing = (x) => {
     const k = x.pg.calcKey;
@@ -24649,7 +24660,7 @@ async function renderBudgetsPage(opts = {}) {
     const k = x.pg.calcKey, ic = pageIcon(x), nothing = isNothing(x);
     const [cls, sub] = nothing ? ["mu", k === "hero_gear" ? BUDGET_HG_SETS.map(gearSetDisplayName).join(" · ") : ""] : timing(x);
     return `<div class="b3-tile b3-pt${x.inc ? "" : " off"}" data-b3page="${esc(k)}" role="button" tabindex="0" aria-label="${esc(x.label)}">
-      <div class="b3-pt-h">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<b>${esc(x.label)}</b><label class="b3-tk" title="${esc(t("b3_tick"))}"><input type="checkbox" data-budgetinc="${esc(k)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" /></label></div>
+      <div class="b3-pt-h">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<b${B3_TILE_SHORT[k] ? ` title="${esc(x.label)}"` : ""}>${esc(B3_TILE_SHORT[k] ? t(B3_TILE_SHORT[k]) : x.label)}</b><label class="b3-tk" title="${esc(t("b3_tick"))}"><input type="checkbox" data-budgetinc="${esc(k)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" /></label></div>
       ${nothing ? `<div class="b3-pt-p nothing">&#10003; ${esc(t("b3_nothing"))}</div>` : `<div class="b3-pt-p">${x.right}</div>`}
       <div class="b3-pt-m ${cls}">${esc(sub)}</div>${nothing ? ringHtml(100, true) : x.inc ? ringHtml(covered(x.pg), false) : ""}</div>`;
   };
@@ -27913,7 +27924,7 @@ async function renderIslandGallery() {
     }
     if (!tracked(s) || lvOf(s) >= maxOf(s) || tgtOf(s) <= lvOf(s)) return { badge: "", line: "" };
     const kind = srcOf(s).kind;
-    const st = storeOf(s) ? `<span class="nw">&#128230;${storeOf(s)} &middot;</span> ` : "";
+    const st = storeOf(s) ? `<span class="nw"><span class="isl-sti">&#128230;</span>${storeOf(s)} &middot;</span> ` : "";
     const tail = ""; // no finish date on the cards (owner, 9 Nov 2026); the pop-up still has it
     const line = kind === "none" ? ""
       : marksOf(s) || tomesOf(s) ? `<span class="isl-tsh mk two">${needOf(s) ? `<span class="nw">${st}${bidiNum(needOf(s).toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true">${tail} +</span>` : st}${[marksOf(s) ? ` <span class="nw"><img class="isl-mki" src="icons/mark-of-revival.png" alt="" /> ${bidiNum(marksOf(s) >= 10000 ? islK(marksOf(s)) : marksOf(s).toLocaleString())}</span>` : "", tomesOf(s) ? ` <span class="nw"><img class="isl-mki" src="icons/glorious-tome.png" alt="" /> ${bidiNum(tomesOf(s) >= 10000 ? islK(tomesOf(s)) : tomesOf(s).toLocaleString())}</span>` : ""].filter(Boolean).join(" +")}</span>`
@@ -28128,7 +28139,13 @@ async function renderIslandGallery() {
   function islOpenPacks() {
     if (ISL_POP) ISL_POP.close();
     if (window.matchMedia("(max-width: 900px)").matches) islPacksTo(true);
-    else { const c = document.getElementById("islMkBuy"); if (c) c.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    else {
+      // PC: the card sits under the folded top card, hidden while folded; the price
+      // button still shows it (until the next Hide / Show).
+      const w = document.getElementById("islMkWrap"), c = document.getElementById("islMkBuy");
+      if (w) w.classList.add("isl-mk-shown");
+      if (c) c.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }
   {
     const w = document.getElementById("islMkWrap");

@@ -2901,5 +2901,7 @@
 "t:pca_mk_com":"普通",
 "t:pca_mk_same":"价格相同：此礼包中 1 高级 = {n} 普通（{list}）。",
 "t:pca_mk_game":"在游戏中选择{m}",
-"t:pca_mk_or":"{a} 或 {c}"
+"t:pca_mk_or":"{a} 或 {c}",
+"t:b3_tile_research_center":"研究",
+"t:b3_tile_hero_shards":"英雄"
 }

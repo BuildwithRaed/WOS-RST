@@ -2900,5 +2900,7 @@
 "t:pca_mk_com":"普通",
 "t:pca_mk_same":"價格相同：此禮包中 1 高級 = {n} 普通（{list}）。",
 "t:pca_mk_game":"在遊戲中選擇{m}",
-"t:pca_mk_or":"{a} 或 {c}"
+"t:pca_mk_or":"{a} 或 {c}",
+"t:b3_tile_research_center":"研究",
+"t:b3_tile_hero_shards":"英雄"
 }

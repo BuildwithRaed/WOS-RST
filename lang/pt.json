@@ -2900,5 +2900,7 @@
 "t:pca_mk_com":"Comuns",
 "t:pca_mk_same":"Mesmo preço: 1 Avançada = {n} Comuns neste pacote ({list}).",
 "t:pca_mk_game":"escolha {m} no jogo",
-"t:pca_mk_or":"{a} ou {c}"
+"t:pca_mk_or":"{a} ou {c}",
+"t:b3_tile_research_center":"Pesquisa",
+"t:b3_tile_hero_shards":"Heróis"
 }

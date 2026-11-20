@@ -2901,5 +2901,7 @@
 "t:pca_mk_com":"Gewöhnlich",
 "t:pca_mk_same":"Gleicher Preis: 1 Fortgeschrittene = {n} Gewöhnliche in diesem Paket ({list}).",
 "t:pca_mk_game":"im Spiel {m} wählen",
-"t:pca_mk_or":"{a} oder {c}"
+"t:pca_mk_or":"{a} oder {c}",
+"t:b3_tile_research_center":"Forschung",
+"t:b3_tile_hero_shards":"Helden"
 }
