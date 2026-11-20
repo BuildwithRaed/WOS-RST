@@ -3515,7 +3515,12 @@ input,select,textarea{
   .bs-aff-it .bs-mark{ top:0; inset-inline-start:4px; }
   .bs-aff .bs-st{ -webkit-line-clamp:1; }
   .bs-aff.bs-spd{ grid-column:span 2; }
-  .bs-tiles.bs-slide > .bs-aff.bs-spd{ flex-basis:calc(((100% - (var(--bscols, 4) - 1) * 6px) / (var(--bscols, 4) + .35)) * 2 + 6px) !important; }
+  /* Speedups (owner, 20 Nov 2026): the sliding row ends exactly at General Sigils' right edge
+     (row − Affinity (1.5 boxes + 3 px) − Books − General Sigils − 3 gaps), at least 100 px; the
+     research pages use the same width, so the box looks the same everywhere. */
+  .bs-tiles.bs-slide > .bs-aff.bs-spd{ flex-basis:max(100px, calc(100% - ((100% - (var(--bscols, 4) - 1) * 6px) / (var(--bscols, 4) + .35)) * 3.5 - 21px)) !important; }
+  .bs-aff.bs-spd .bs-aff-items{ gap:0; justify-content:space-evenly; }
+  .bs-aff.bs-spd .bs-st{ -webkit-line-clamp:2; white-space:normal; }
   .bsg .bs-nb{ text-align:center; }
   .bsg-rows{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
   .bsg-row{ padding:8px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.03); }
@@ -5306,6 +5311,51 @@ span.mk.mk svg{flex:none}
   .xh-evt td.n small{ display:block; font-weight:600; color:var(--muted); font-size:10.5px; }
   .xh-evt td.ok{ color:var(--good); font-weight:700; }
   .xh-evt td.a{ font-size:11px; letter-spacing:-.02em; color:#f2c27a; font-weight:800; background:rgba(232,162,60,.12); }
+  /* Experts: "Count research" switch in the page title row (owner, 20 Nov 2026). Off = amber box,
+     research struck through in the header, research cards dimmed with a "Not counted" tag. */
+  .exr-sw{ display:inline-flex; align-items:center; gap:8px; margin-inline-start:auto; height:34px; padding:0 6px 0 11px; border:1px solid var(--line); border-radius:10px; background:rgba(255,255,255,.04); font:inherit; font-size:12.5px; font-weight:700; color:var(--frost); white-space:nowrap; cursor:pointer; }
+  .exr-sw.off{ border-color:rgba(232,162,60,.55); background:rgba(232,162,60,.08); color:#f2c27a; }
+  .exr-t{ position:relative; display:inline-block; width:38px; height:22px; border-radius:99px; background:rgba(255,255,255,.12); border:1px solid var(--line); flex:none; }
+  .exr-t::after{ content:""; position:absolute; top:2px; inset-inline-start:2px; width:16px; height:16px; border-radius:50%; background:#c9d4df; }
+  .exr-t.on{ background:var(--good); border-color:var(--good); }
+  .exr-t.on::after{ inset-inline-start:18px; background:#fff; }
+  .xh-off{ opacity:.45; text-decoration:line-through; }
+  .xh-offw{ color:#f2c27a; font-weight:800; }
+  .exr-tag{ display:inline-block; padding:1px 7px; border-radius:999px; font-size:10.5px; font-weight:800; color:#f2c27a; border:1px solid rgba(232,162,60,.55); background:rgba(232,162,60,.1); white-space:nowrap; }
+  .exr-offc > :not(.exk-hd):not(.crs-sw){ opacity:.4; filter:grayscale(.6); }
+  .exr-offc > .exk-hd > :not(.exk-tr){ opacity:.4; filter:grayscale(.6); }
+  .xh-cb[data-xhsrc]{ cursor:pointer; }
+  /* Stat source pop-up (design B): a bottom sheet on phones, a centred window on PC. */
+  .xs-ov{ align-items:flex-end; justify-content:center; }
+  .modal-box.xs{ width:100%; max-width:560px; max-height:80vh; overflow:auto; overscroll-behavior:contain; margin:0; padding:8px 14px 14px; border-radius:18px 18px 0 0; text-align:start; color:var(--frost); }
+  @media (min-width: 701px){ .xs-ov{ align-items:center; } .modal-box.xs{ border-radius:16px; } }
+  .xs-grab{ width:40px; height:4px; border-radius:3px; background:rgba(255,255,255,.22); margin:0 auto 8px; }
+  .xs-h{ display:flex; align-items:center; gap:8px; }
+  .xs-h b{ flex:1; font-size:16px; }
+  .xs-x{ width:32px; height:32px; flex:none; border-radius:9px; border:1px solid var(--line); background:none; color:var(--muted); font:inherit; cursor:pointer; }
+  .xs-tot{ display:flex; align-items:baseline; gap:6px; margin:6px 0 4px; }
+  .xs-tot b{ font-size:22px; }
+  .xs-tot small{ color:var(--muted); font-size:12.5px; }
+  .xs-split{ display:flex; height:7px; border-radius:9px; background:rgba(255,255,255,.07); overflow:hidden; }
+  .xs-split i{ display:block; height:100%; }
+  .xs-leg{ display:flex; gap:14px; font-size:11.5px; color:var(--muted); margin:6px 0 8px; }
+  .xs-leg span::before{ content:""; display:inline-block; width:9px; height:9px; border-radius:3px; margin-inline-end:5px; background:var(--c); vertical-align:-1px; }
+  .xs-sec{ display:flex; align-items:center; gap:6px; margin:10px 0 2px; font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+  .xs-sec i{ width:9px; height:9px; border-radius:3px; flex:none; }
+  .xs-sec em{ margin-inline-start:auto; font-style:normal; letter-spacing:0; text-transform:none; color:var(--frost); font-weight:700; }
+  .xs-sec.off em, .xs-rows.off{ opacity:.5; }
+  .xs-note{ font-size:12px; color:var(--muted); margin:2px 0 4px; }
+  .xs-r{ display:grid; grid-template-columns:30px minmax(0, 1fr) auto; gap:2px 9px; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,.05); }
+  .xs-r img{ width:30px; height:30px; border-radius:8px; object-fit:cover; grid-row:span 2; }
+  .xs-r .n{ font-size:13px; font-weight:700; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .xs-r .n small{ font-weight:600; color:var(--muted); font-size:11.5px; }
+  .xs-r .v{ font-size:13px; font-weight:800; white-space:nowrap; text-align:end; }
+  .xs-r .v small{ color:var(--muted); font-weight:600; font-size:11.5px; }
+  .xs-r .b{ grid-column:2 / 4; display:flex; align-items:center; gap:8px; }
+  .xs-r .bar{ flex:1; height:4px; border-radius:9px; background:rgba(255,255,255,.08); overflow:hidden; }
+  .xs-r .bar i{ display:block; height:100%; }
+  .xs-r .l{ font-size:11.5px; font-weight:700; color:#f2c27a; white-space:nowrap; }
+  .xs-r .l.ok{ color:var(--good); }
   /* Pets card header: Max + Count at the top right, like the expert cards */
   .pet-head .exk-tr{ margin-inline-start:auto; }
   .pet-head .exp-stl{ margin-top:2px; }
