@@ -2602,6 +2602,8 @@ const T = {
   b3_not_counted: { en: "not in this budget" },
   b3_nothing: { en: "nothing planned" },
   b3_tick: { en: "Count in this budget" },
+  b3_tile_research_center: { en: "Research" },
+  b3_tile_hero_shards: { en: "Heroes" },
   b3_ring_tip: { en: "You already have {p}% of what this page needs (Backpack + trades)" },
   b3_missing: { en: "{n} pages not in the plan yet" },
   b3_week: { en: "This week {v}" },
@@ -23811,6 +23813,8 @@ function wireBudgetGoals(box) {
 // A picture for a page: its first needed item's.
 // A Budgets page's picture: its Menu page's quick picture; Hero shards & widgets (whose page is
 // the Backpack, an emoji there) the Mythic General Hero Shard.
+// Shorter names on the Budgets page tiles only (full name in the tile's title / aria-label).
+const B3_TILE_SHORT = { research_center: "b3_tile_research_center", hero_shards: "b3_tile_hero_shards" };
 function budgetPagePic(key) {
   const tab = (BUDGET_PAGES.find((x) => x.key === key) || {}).tab;
   return QUICK_ICONS[tab] || (key === "hero_shards" ? BP_SHARD_ICONS["Mythic General Hero Shard"] : "");
@@ -24569,7 +24573,7 @@ async function renderBudgetsPage(opts = {}) {
     const k = x.pg.calcKey, ic = pageIcon(x), nothing = isNothing(x);
     const [cls, sub] = nothing ? ["mu", k === "hero_gear" ? BUDGET_HG_SETS.map(gearSetDisplayName).join(" · ") : ""] : timing(x);
     return `<div class="b3-tile b3-pt${x.inc ? "" : " off"}" data-b3page="${esc(k)}" role="button" tabindex="0" aria-label="${esc(x.label)}">
-      <div class="b3-pt-h">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<b>${esc(x.label)}</b><label class="b3-tk" title="${esc(t("b3_tick"))}"><input type="checkbox" data-budgetinc="${esc(k)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" /></label></div>
+      <div class="b3-pt-h">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<b${B3_TILE_SHORT[k] ? ` title="${esc(x.label)}"` : ""}>${esc(B3_TILE_SHORT[k] ? t(B3_TILE_SHORT[k]) : x.label)}</b><label class="b3-tk" title="${esc(t("b3_tick"))}"><input type="checkbox" data-budgetinc="${esc(k)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" /></label></div>
       ${nothing ? `<div class="b3-pt-p nothing">&#10003; ${esc(t("b3_nothing"))}</div>` : `<div class="b3-pt-p">${x.right}</div>`}
       <div class="b3-pt-m ${cls}">${esc(sub)}</div>${nothing ? ringHtml(100, true) : x.inc ? ringHtml(covered(x.pg), false) : ""}</div>`;
   };
