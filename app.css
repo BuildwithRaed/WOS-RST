@@ -1714,6 +1714,7 @@
   .pur-pk-row.on{ background:rgba(124,196,255,.07); }
   .pur-pk-pr{ flex:none; font-size:12.5px; font-weight:700; text-align:end; white-space:nowrap; }
   .pur-pk-none{ padding:14px 4px; }
+  .pur-pk-ngnote{ margin:10px 0 8px; padding:8px 10px; border:1px dashed rgba(124,196,255,.45); border-radius:10px; color:var(--muted); font-size:12.5px; }
   /* Will buy pop-up: the plan's part (blue edge) and what is added to it (gold edge). */
   .pur-op-h{ display:flex; align-items:center; gap:8px; margin:10px 0 6px; font-size:12.5px; font-weight:800; }
   .pur-op-h::after{ content:""; flex:1; height:1px; background:currentColor; opacity:.35; }

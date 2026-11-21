@@ -3693,7 +3693,8 @@ const T = {
   pur_add_title: { en: "Add a pack" },
   pur_pack: { en: "Pack" },
   pur_pk_title: { en: "Choose a pack" },
-  pur_pk_search: { en: "Search a pack or an item (e.g. Steel)" },
+  pur_pk_search: { en: "Search packs or items" },
+  pur_pk_ng_later: { en: "Hero packs for later Gens show when their Gen is next" },
   pur_pk_tab_on: { en: "On now" },
   pur_pk_tab_soon: { en: "Coming" },
   pur_pk_tab_all: { en: "All" },
@@ -10975,7 +10976,7 @@ async function renderPurchasesPage() {
         return null;
       };
       const nSteps = (n) => (n === 1 ? t("pur_ms_1step") : t("pur_ms_nsteps").replace("{n}", n));
-      const givesHtml = (g) => Object.entries(g || {}).filter(([n, v]) => n !== "Gems" && v > 0).map(([n, v]) => { const ic = itemIc(n); return `<span title="${esc(materialDisplayName(n))}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n))}</i>`}${esc(shortAmount(v))}</span>`; }).join("");
+      const givesHtml = (g) => Object.entries(g || {}).filter(([n, v]) => n !== "Gems" && v > 0 && shortAmount(v) !== "0").map(([n, v]) => { const ic = itemIc(n); return `<span title="${esc(materialDisplayName(n))}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n))}</i>`}${esc(shortAmount(v))}</span>`; }).join("");
       const openVer = (vi, keep) => {
       const { r, s0 } = vers[vi], tb = sugTable(r);
       if (!tb) return;
@@ -11347,7 +11348,10 @@ async function renderPurchasesPage() {
   const pickBtn = content.querySelector("[data-purpick]");
   if (pickBtn) pickBtn.addEventListener("click", () => {
     const sel = content.querySelector('[data-purf="table"]');
-    const infos = buyable.map(purPackInfo), plans = purPlanTables();
+    // Per-hero copies of New Gen packs only up to the next Gen (heroes already out + the next ones).
+    const curGen = newGenGen();
+    const keepNg = (tb) => { const m = /^ng-[sw]-(\d+)-/.exec(String(tb.id)); return !m || !curGen || Number(m[1]) <= curGen + 1; };
+    const infos = buyable.filter(keepNg).map(purPackInfo), plans = purPlanTables(), ngHidden = buyable.length - infos.length;
     infos.forEach((i) => { i.plan = plans.has(i.id); });
     infos.sort((a, b) => (b.plan ? 1 : 0) - (a.plan ? 1 : 0) || a.name.localeCompare(b.name, pkLoc));
     let modal = document.getElementById("purPickModal");
@@ -11358,7 +11362,8 @@ async function renderPurchasesPage() {
     const match = (i) => !q || i.words.includes(q);
     const listHtml = () => {
       const tab = PUR_PICK_TAB, list = infos.filter((i) => match(i) && inTab(i, tab));
-      return list.length ? list.map((i) => `<button type="button" class="pur-pk-row${i.id === String(PUR_FORM.table) ? " on" : ""}" data-ppkid="${esc(i.id)}"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${esc(i.name)}</b><small>${i.plan ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span>` : ""}${pkStatus(i, tab)}</small></span><span class="pur-pk-pr">${esc(i.price)}</span></button>`).join("") : `<div class="meta pur-pk-none">${esc(t("pur_pk_none"))}</div>`;
+      const ngNote = ngHidden ? `<div class="pur-pk-ngnote">${esc(t("pur_pk_ng_later"))}</div>` : "";
+      return (list.length ? list.map((i) => `<button type="button" class="pur-pk-row${i.id === String(PUR_FORM.table) ? " on" : ""}" data-ppkid="${esc(i.id)}"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${esc(i.name)}</b><small>${i.plan ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span>` : ""}${pkStatus(i, tab)}</small></span><span class="pur-pk-pr">${esc(i.price)}</span></button>`).join("") : `<div class="meta pur-pk-none">${esc(t("pur_pk_none"))}</div>`) + ngNote;
     };
     const segHtml = () => ["on", "soon", "all"].map((k) => `<button type="button" data-ppktab="${k}" class="${PUR_PICK_TAB === k ? "on" : ""}" aria-pressed="${PUR_PICK_TAB === k}">${esc(t("pur_pk_tab_" + k))} · ${infos.filter((i) => match(i) && inTab(i, k)).length}</button>`).join("");
     const fill = () => {
