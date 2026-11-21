@@ -1316,7 +1316,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 122; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 123; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -9743,7 +9743,7 @@ let PUR_SUG_KEEP = null; // My Purchases: the suggestions box's height / scroll 
 // My Purchases (A2): the Add a pack sheet open over the page ("add"), kept across its redraws.
 let PUR_SHEET = null;
 // The pack picker's All tab: category groups folded (kept for the visit and in this browser).
-const PUR_PICK_FOLD = new Set((() => { try { const v = JSON.parse(localStorage.getItem("pur_pick_fold") || "[]"); return Array.isArray(v) ? v.map(String) : []; } catch (e) { return []; } })());
+const PUR_PICK_FOLD = new Set((() => { try { const v = JSON.parse(localStorage.getItem("pur_pick_fold") || "[]"); return Array.isArray(v) ? v.map(String) : []; } catch { return []; } })());
 let PUR_PICK_TAB = "on"; // Add a pack: the pack picker's tab ("on" / "soon" / "all"), kept for the visit
 // My Purchases lists = O1: one switch Next weeks | Coming | Bought
 // under the checklist, the chosen list on the page (kept in this browser).
@@ -10015,7 +10015,7 @@ async function renderPurchasesPage() {
   // window (search, On now / Coming / All, planned packs first then A–Z). A
   // pick sets the hidden select above and fires its change, as before.
   const pkLoc = LANG === "en" ? undefined : LANG;
-  const pkDay = (off) => { try { return new Date(packStartOfToday().getTime() + off * 86400000).toLocaleDateString(pkLoc, { day: "numeric", month: "short", timeZone: "UTC" }); } catch (e) { return ""; } };
+  const pkDay = (off) => { try { return new Date(packStartOfToday().getTime() + off * 86400000).toLocaleDateString(pkLoc, { day: "numeric", month: "short", timeZone: "UTC" }); } catch { return ""; } };
   const purPackInfo = (tb) => {
     const link = packLinkFor(tb.id), cols = packEffectiveCols(tb), pc = link.priceCol || 0;
     let icon = "";
@@ -11405,7 +11405,7 @@ async function renderPurchasesPage() {
         const l = modal.querySelector(".pur-pk-list"), top = l.scrollTop;
         if (gh) { const g = gh.dataset.ppkgrp; if (PUR_PICK_FOLD.has(g)) PUR_PICK_FOLD.delete(g); else PUR_PICK_FOLD.add(g); }
         else { const gs = catOrder.filter((g) => infos.some((i) => (catOrder.includes(i.cat) ? i.cat : "") === g)); if (gs.every((g) => PUR_PICK_FOLD.has(g))) PUR_PICK_FOLD.clear(); else gs.forEach((g) => PUR_PICK_FOLD.add(g)); }
-        try { localStorage.setItem("pur_pick_fold", JSON.stringify([...PUR_PICK_FOLD])); } catch (e) { /* blocked */ }
+        try { localStorage.setItem("pur_pick_fold", JSON.stringify([...PUR_PICK_FOLD])); } catch { /* blocked */ }
         l.innerHTML = listHtml(); l.scrollTop = top;
         return;
       }
