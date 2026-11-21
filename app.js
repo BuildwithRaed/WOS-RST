@@ -3397,7 +3397,7 @@ const T = {
   pur_tbl_btn: { en: "Pick from table" },
   pur_tbl_empty: { en: "This pack has no prices yet." },
   pur_tbl_price: { en: "Price" },
-  pur_tbl_hint_rows: { en: "Use − / + on each row you'll buy, then Add." },
+  pur_tbl_hint_rows: { en: "Use ▲ / ▼ on each row you'll buy, then Add. Hold a picture for its name." },
   pur_tbl_hint_ladder: { en: "Bought in order: tick the last tier you'll buy (all tiers before it are included)." },
   pur_tbl_hint_opt: { en: "Choose what you take in each row." },
   pur_tbl_items_n: { en: "Your {n} items" },
@@ -3692,6 +3692,20 @@ const T = {
   pur_desc: { en: "Add the packs you bought or plan to buy. Budgets and the planner pages count them." },
   pur_add_title: { en: "Add a pack" },
   pur_pack: { en: "Pack" },
+  pur_pk_title: { en: "Choose a pack" },
+  pur_pk_search: { en: "Search a pack or an item (e.g. Steel)" },
+  pur_pk_tab_on: { en: "On now" },
+  pur_pk_tab_soon: { en: "Coming" },
+  pur_pk_tab_all: { en: "All" },
+  pur_pk_note_on: { en: "Packs you can buy today, ★ = in your plan" },
+  pur_pk_note_soon: { en: "Packs that come back later, ★ = in your plan" },
+  pur_pk_note_all: { en: "Every pack, ★ = in your plan" },
+  pur_pk_plan: { en: "plan" },
+  pur_pk_on_now: { en: "on now" },
+  pur_pk_next: { en: "next {date}" },
+  pur_pk_stacks: { en: "any time · stacks" },
+  pur_pk_change: { en: "Change" },
+  pur_pk_none: { en: "No pack found." },
   pur_tier: { en: "Tier" },
   pur_upto: { en: "Tiers 1–{tier} ({price})" },
   pur_tiers_upto: { en: "Tiers 1–{tier}" },
@@ -3707,6 +3721,24 @@ const T = {
   pur_none_bought: { en: "No bought packs yet." },
   pur_mark_bought: { en: "Bought" },
   pur_cnt_will: { en: "How many will you buy?" },
+  pur_cnt_extra: { en: "+{n} extra" },
+  pur_op_plan_pick: { en: "The plan's pick" },
+  pur_op_plan_steps: { en: "The plan's steps ({n})" },
+  pur_op_plan_card: { en: "The plan's card" },
+  pur_op_other: { en: "Other prices in this pack" },
+  pur_op_other_d: { en: "Each price up to its own limit this run, minus what's bought or planned." },
+  pur_op_next: { en: "Next steps in this pack" },
+  pur_op_next_d: { en: "Bought in order: tick a step to buy up to it." },
+  pur_op_cards: { en: "Other cards in this pack" },
+  pur_op_cards_d: { en: "Each price up to its own limit this run, minus what's bought or planned. The items show the first price you can add." },
+  pur_op_tag_plan: { en: "plan" },
+  pur_op_tag_extra: { en: "extra · Budgets plans with it" },
+  pur_op_tag_extra1: { en: "extra" },
+  pur_op_tag_step: { en: "extra step" },
+  pur_op_upto: { en: "up to {n}" },
+  pur_op_none_left: { en: "none left this run" },
+  pur_op_sum: { en: "plan {a} + extra {b}" },
+  pur_op_note: { en: "{n} extra · Budgets plans the rest again with it" },
   pur_cnt_plan: { en: "Plan: {n} · fewer is fine, Budgets plans the rest again" },
   pur_cnt_plan_more: { en: "Plan: {n} · more is fine, Budgets plans with the extra" },
   pur_cnt_max: { en: "Max {n}" },
@@ -9529,6 +9561,45 @@ function purPackName(title, tables) {
   const c = cats.find((g) => String(title || "").startsWith(g + " · "));
   return c ? String(title).slice(c.length + 3) : String(title || "");
 }
+// Item pictures for pack columns (the Packs editor heads and My Purchases' pack table).
+function pkItemIcon(name) {
+  if (!name) return "";
+  if (itemRegIcon(name)) return itemRegIcon(name);
+  if (String(name).toLowerCase() === "gems") return MATERIAL_ICONS.gems;
+  return bpIcon({ name }) || materialIconSrc(name) || "";
+}
+// Speedups of one type share a picture: D3 adds the
+// game's tile colour for the size as a ring and the time as a badge.
+function pkSpeedTime(name) {
+  const m = /speedup\s*(\d+)\s*(m|h)\b/i.exec(String(name || ""));
+  return m ? m[1] + m[2].toLowerCase() : "";
+}
+function pkTimeRing(tm) {
+  const c = (SCAN_SIZE_COLORS.find(([z]) => z === tm) || [null, [155, 161, 164]])[1];
+  return `rgb(${c.join(",")})`;
+}
+// The item's picture (with ring + time for speedups), or "" when it has none.
+function pkIconHtml(name) {
+  const icon = pkItemIcon(name);
+  if (!icon) return "";
+  const tm = pkSpeedTime(name);
+  return tm ? `<span class="pk-tmw" style="--ring:${pkTimeRing(tm)}"><img src="${esc(icon)}" alt="" loading="lazy" /><u class="pk-tm">${esc(tm)}</u></span>` : `<img src="${esc(icon)}" alt="" loading="lazy" />`;
+}
+// Amounts of 1,000+ short (5K, 1.2K, 12K, 1.2M) so pack table columns stay narrow.
+function purShortAmt(n) {
+  const a = Math.abs(n), fx = (v) => (v < 10 ? (Math.round(v * 10) / 10) : Math.round(v)).toString().replace(/\.0$/, "");
+  if (a >= 1e6) return fx(n / 1e6) + "M";
+  if (a >= 1e3) return fx(n / 1e3) + "K";
+  return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+// A pack column's head: the item's picture only (speedups with their size ring
+// and time badge; a hero's shards / widgets with the face), full name in the title.
+function purColHeadHtml(name, label) {
+  const tm = pkSpeedTime(name), icon = pkItemIcon(name);
+  const hm = /^(.+) (Shards|Widgets)$/.exec(String(name || "")), hImg = hm && !heroOwnShardIcon(name) && HERO_IMG_BY_NAME[hm[1]];
+  const pic = icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />${tm ? `<u class="pk-tm">${esc(tm)}</u>` : ""}` : `<b>${esc(String(label || name || "?").slice(0, 3))}</b>`;
+  return `<span class="pur-t-hi${tm ? " ring" : ""}"${tm ? ` style="--ring:${pkTimeRing(tm)}"` : ""} title="${esc(label || name)}" aria-label="${esc(label || name)}">${pic}${hImg ? `<img class="pk-hface" src="${esc(hImg)}" alt="" loading="lazy" />` : ""}</span>`;
+}
 function purTablePopup(tb, opts) {
   const link = packLinkFor(tb.id);
   const cols = packEffectiveCols(tb);
@@ -9611,15 +9682,16 @@ function purTablePopup(tb, opts) {
     // The tick / − + column comes first so it stays in view on phones.
     const head = choiceType
       ? `<tr><th></th><th>${esc(t("pur_tbl_price"))}</th><th>${esc(mode === "pick" ? t("pur_tbl_items_n").replace("{n}", link.pickCols) : t("pur_choice"))}</th></tr>`
-      : `<tr><th></th><th>${esc(t("pur_tbl_price"))}</th>${showCols.map((ci) => `<th>${esc(colName(ci))}</th>`).join("")}</tr>`;
+      : `<tr><th></th><th class="pur-t-pr">${esc(t("pur_tbl_price"))}</th>${showCols.map((ci) => `<th>${purColHeadHtml(cols[ci] || String(tb.columns[ci] || ""), colName(ci))}</th>`).join("")}</tr>`;
     const body = R.map((r, i) => {
       const on = ladder ? i <= S.upTo : S.counts[i] > 0;
       const ctl = ladder ? `<button type="button" class="pur-t-tick${on ? " on" : ""}" data-tup="${i}" aria-pressed="${on}">${on ? "&#10003;" : ""}</button>`
-        : `<span class="pur-t-step"><button type="button" data-tct="${i}|-1">&minus;</button><i>${S.counts[i] || 0}</i><button type="button" data-tct="${i}|1" ${r.max && (S.counts[i] || 0) >= r.max ? "disabled" : ""}>+</button></span>`;
-      const pr = `<td class="pur-t-pr">${esc(money(r.price))}${r.max ? ` <span class="meta">${bidiNum("×" + r.max)}</span>` : ""}</td>`;
+        : `<span class="pur-t-n3"><button type="button" data-tct="${i}|1" aria-label="+" ${r.max && (S.counts[i] || 0) >= r.max ? "disabled" : ""}>&#9650;</button><i>${S.counts[i] || 0}</i><button type="button" data-tct="${i}|-1" aria-label="&minus;" ${(S.counts[i] || 0) <= 0 ? "disabled" : ""}>&#9660;</button></span>`;
+      const pr = `<td class="pur-t-pr">${esc(money(r.price))}${r.max ? `${choiceType ? " " : "<br>"}<span class="meta">${bidiNum("×" + r.max)}</span>` : ""}</td>`;
       if (choiceType) return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${pr}<td class="pur-t-pk"><div class="pur-t-picks3">${S.sel[i].map((sel, k) => `<select class="pur-t-sel${sel < 0 ? " unset" : ""}" data-tsel="${i}|${k}" aria-label="${esc(t("pur_tbl_item_n").replace("{n}", k + 1))}"><option value="-1" ${sel < 0 ? "selected" : ""} disabled>${esc(t("pur_tbl_pick"))}</option>${r.opts.map((o, oi) => `<option value="${oi}" ${oi === sel ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`).join("")}</div></td></tr>`;
       const cells = (tb.rows[r.ri] || {}).cells || [];
-      return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${pr}${showCols.map((ci) => `<td>${esc(String(cells[ci] == null ? "" : cells[ci]))}</td>`).join("")}</tr>`;
+      const cell = (ci) => { const raw = String(cells[ci] == null ? "" : cells[ci]).trim(), q = packParseNum(raw); if (!raw) return `<td><span class="pur-t-e">&ndash;</span></td>`; return q >= 1000 ? `<td title="${esc(raw)}">${esc(purShortAmt(q))}</td>` : `<td>${esc(raw)}</td>`; };
+      return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${pr}${showCols.map(cell).join("")}</tr>`;
     }).join("");
     const hint = t(ladder ? "pur_tbl_hint_ladder" : "pur_tbl_hint_rows") + (mode === "pick" ? " " + t("pur_tbl_hint_pick").replace("{n}", link.pickCols) : choiceType ? " " + t("pur_tbl_hint_opt") : "");
     // A tap redraws the pop-up: its table keeps its scroll.
@@ -9627,7 +9699,7 @@ function purTablePopup(tb, opts) {
     modal.innerHTML = `<div class="modal-box pur-t-box">
       <h2>${esc(name)}</h2>
       <div class="meta" style="font-size:11.5px; margin-bottom:8px;">${esc(hint)}</div>
-      <div class="pur-t-wrap"><table class="pur-t">${head}${body}</table></div>
+      <div class="pur-t-wrap"><table class="pur-t${choiceType ? "" : " pur-t-c"}"${choiceType ? "" : ` style="min-width:${88 + 30 * showCols.length}px"`}>${choiceType ? "" : `<colgroup><col style="width:32px"><col style="width:56px">${showCols.map(() => "<col>").join("")}</colgroup>`}${head}${body}</table></div>
       ${miss ? `<div class="pur-t-miss">${esc(t("pur_tbl_missing").replace("{n}", miss))}</div>` : ""}
       <div class="pur-m-foot"><span><b>${esc(money(total))}</b> <span class="meta">${ls.length ? esc(ls.map((l) => (l.count > 1 ? bidiNum(l.count + "×") + " " : "") + l.label).join(" · ")) : esc(t("pur_tbl_nothing"))}</span></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-tclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-tadd ${ls.length && !miss ? "" : "disabled"}>+ ${esc(t("pur_add_btn"))}</button></span></div>
     </div>`;
@@ -9667,6 +9739,7 @@ let PUR_FORM = (() => { try { const v = JSON.parse(sessionStorage.getItem("pur_f
 let PUR_SUG_KEEP = null; // My Purchases: the suggestions box's height / scroll before a redraw
 // My Purchases (A2): the Add a pack sheet open over the page ("add"), kept across its redraws.
 let PUR_SHEET = null;
+let PUR_PICK_TAB = "on"; // Add a pack: the pack picker's tab ("on" / "soon" / "all"), kept for the visit
 // My Purchases lists = O1: one switch Next weeks | Coming | Bought
 // under the checklist, the chosen list on the page (kept in this browser).
 // Box 1: the week strip moved into the This week box,
@@ -9932,11 +10005,50 @@ async function renderPurchasesPage() {
   const groups = [];
   buyable.forEach((tb) => { const g = packLinkFor(tb.id).group || t("packs_title"); let e = groups.find((x) => x.g === g); if (!e) { e = { g, items: [] }; groups.push(e); } e.items.push(tb); });
   const packOpts = groups.map(({ g, items }) => `<optgroup label="${esc(g)}">${items.map((tb) => `<option value="${esc(String(tb.id))}" ${String(tb.id) === String(PUR_FORM.table) ? "selected" : ""}>${esc(setLead(tb) ? setName(tb) : (tb.title || ""))}</option>`).join("")}</optgroup>`).join("");
+  // Add a pack = P4: the Pack box is a button with the picked pack (picture,
+  // name, ★ plan / on now, its price on a second line); it opens a picker
+  // window (search, On now / Coming / All, planned packs first then A–Z). A
+  // pick sets the hidden select above and fires its change, as before.
+  const pkLoc = LANG === "en" ? undefined : LANG;
+  const pkDay = (off) => { try { return new Date(packStartOfToday().getTime() + off * 86400000).toLocaleDateString(pkLoc, { day: "numeric", month: "short", timeZone: "UTC" }); } catch (e) { return ""; } };
+  const purPackInfo = (tb) => {
+    const link = packLinkFor(tb.id), cols = packEffectiveCols(tb), pc = link.priceCol || 0;
+    let icon = "";
+    for (let ci = 0; ci < (tb.columns || []).length && !icon; ci++) {
+      if (ci === pc) continue;
+      const n = cols[ci] || String(tb.columns[ci] || "").trim();
+      if (!n || /^gems$/i.test(n) || packIsNonResourceColumn(n)) continue;
+      icon = pkIconHtml(n) || (/^hero shards?$/i.test(n) ? pkIconHtml("Mythic General Hero Shard") : /^hero widgets?$/i.test(n) ? `<img src="${esc(HERO_ITEM_ICON.widget)}" alt="" loading="lazy" />` : "");
+    }
+    const prices = packOffersFor(tb, true).map((o) => o.price).filter((x) => x > 0);
+    let price = "—";
+    if (prices.length) { const lo = Math.min(...prices), hi = Math.max(...prices), plain = (x) => String(x).replace(/[⁦-⁩]/g, ""); price = plain(packFmtMoney(lo, link.currency)); if (hi > lo) price += "–" + plain(packFmtMoney(hi, link.currency)).replace(/^[^\d]*/, "").replace(/[^\d.,]*$/, ""); }
+    const r = link.reset, st = packStackInfo(r);
+    let on = false, next = null;
+    if (st || r === "unlimited" || r === "once" || r === 1) on = true;
+    else if (typeof r === "number" && r > 0) { const offs = packResetOffsets(r, link.resetDay, 400, link.window); on = offs[0] === 0; const nx = offs.find((o) => o > 0); if (nx != null) next = nx; }
+    if (link.trigger) { on = false; next = null; }
+    if (link.firstBuy) on = !vipFirstBuyDone();
+    const name = setLead(tb) ? setName(tb) : (tb.title || "");
+    const words = [name, tb.title || "", ...(tb.columns || []).map((c, ci) => (ci === pc ? "" : `${cols[ci] || c} ${materialDisplayName(cols[ci] || c) || ""}`))].join(" ").toLowerCase();
+    return { id: String(tb.id), name, cat: link.group || "", icon, price, on, next, stack: !!st, words };
+  };
+  const purPlanTables = () => {
+    const out = new Set(), plan = PUR_SUG_SHOWN && PUR_SUG_SHOWN.plan;
+    const rows = [].concat(plan && plan.rows ? plan.rows : [], plan && plan.targetPlan && plan.targetPlan.rows ? plan.targetPlan.rows : []).filter((x) => x.count > 0);
+    rows.forEach((x) => (x.tables || []).forEach((id) => { const tb = byId.get(String(id)); const lead = tb && setLead(tb); out.add(String(lead ? lead.id : id)); }));
+    return out;
+  };
+  const pkStatus = (i, tab) => (i.on ? (i.stack ? esc(t("pur_pk_stacks")) : tab === "on" ? esc(i.cat) : `<span class="pur-pk-on">&#9679; ${esc(t("pur_pk_on_now"))}</span>`) : i.next != null ? `${esc(t("pur_pk_next").replace("{date}", pkDay(i.next)))}${tab === "soon" ? "" : ` · ${esc(i.cat)}`}` : esc(i.cat));
+  const purPickedHtml = (tb) => {
+    const i = purPackInfo(tb), star = purPlanTables().has(i.id);
+    return `<button type="button" class="pur-pk-pick" data-purpick aria-haspopup="dialog"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${esc(i.name)}</b><small>${star ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span>` : ""}${pkStatus(i, "all")}</small><small class="pur-pk-pp">${esc(i.price)}</small></span><span class="pur-pk-chg">${esc(t("pur_pk_change"))} &rsaquo;</span></button>`;
+  };
   const tierOpts = formTb ? formOffers.map((o) => `<option value="${o.row}" ${o.row === PUR_FORM.row ? "selected" : ""}>${esc(tierLabel(formTb, o.row))}</option>`).join("") : "";
   const formFor = formTb ? packUsedForNames(formTb) : [];
   const addCard = `
     ${buyable.length ? `<div class="pur-form">
-      <label class="pur-f pur-f-wide"><span class="meta">${esc(t("pur_pack"))}</span><select data-purf="table">${packOpts}</select></label>
+      <div class="pur-f pur-f-wide"><span class="meta">${esc(t("pur_pack"))}</span><select data-purf="table" hidden aria-hidden="true" tabindex="-1">${packOpts}</select>${formTb ? purPickedHtml(formTb) : ""}</div>
       ${formChoice
         ? `<div class="pur-f pur-f-wide"><span class="meta">${esc(t("pur_choice"))}</span><button type="button" class="btn" data-purtable>&#128203; ${esc(t("pur_tbl_choose"))}</button></div>`
         : `<label class="pur-f"><span class="meta">${esc(t("pur_tier"))}</span><select data-purf="row">${tierOpts}</select></label>`}
@@ -10890,10 +11002,19 @@ async function renderPurchasesPage() {
           const st = M.steps[k], g = {};
           pp[k].forEach((j) => Object.entries(st.opts[j].gives).forEach(([n, v]) => { g[n] = (g[n] || 0) + v; }));
           const asPlan = k === M.planRowK && pp[k].join() === M.planPicks[k].join();
-          return { row: st.row, label: asPlan ? r.label : `${packFmtMoney(st.price, r.currency)} · ${pickText(k)}`, price: st.price, local: local(st.price), gives: asPlan ? r.gives : g };
+          return { row: st.row, label: asPlan ? r.label : `${packFmtMoney(st.price, r.currency)} · ${pickText(k)}`, price: st.price, local: local(st.price), gives: asPlan ? r.gives : g, ...(M.planSet[k] ? {} : { isExtra: true }) };
         });
         const m = sel;
         if (!m) return [];
+        // Steps past the plan's (its own steps unchanged): the plan's part as
+        // planned, then the next steps as their own purchase ("extra").
+        if (ordered && m > M.planK && (isPL ? pp0.join() === M.planPP.join() : pick.slice(0, M.planK).every((j, k) => j === M.planPick[k]))) {
+          const ex = M.steps.slice(M.planK, m).map((st, k0) => { const k = M.planK + k0; return { price: st.price, row: st.row, tag: isPL ? "" : st.opts[pick[k]].tag, gives: isPL ? plGives(k) : st.opts[pick[k]].gives }; });
+          const g = {}; ex.forEach((st) => Object.entries(st.gives).forEach(([n, v]) => { g[n] = (g[n] || 0) + v; }));
+          const label = M.kind === "plain" ? ex.map((st) => packFmtMoney(st.price, r.currency)).join(" · ") : isPL ? `${ex.map((st) => packFmtMoney(st.price, r.currency)).join(" · ")} · ${t("pk_each_step")}: ${plText()}` : ex.map((st) => `${packFmtMoney(st.price, r.currency)} ${st.tag}`).join(" · ");
+          const part = { row: M.kind === "plain" ? ex[ex.length - 1].row : m - 1, from: M.kind === "plain" ? ex[0].row : M.planK, label, price: Math.round(ex.reduce((a, st) => a + st.price, 0) * 100) / 100, local: ex.reduce((a, st) => a + local(st.price), 0), gives: g, plain: M.kind === "plain", isExtra: true };
+          return partsOf(M.planK).concat([part]);
+        }
         const same = m === M.planK && (isPL ? pp0.join() === M.planPP.join() : pick.slice(0, m).every((j, k) => j === M.planPick[k]));
         const ch = M.steps.slice(0, m).map((st, k) => ({ price: st.price, row: st.row, tag: isPL ? "" : st.opts[pick[k]].tag, gives: isPL ? plGives(k) : st.opts[pick[k]].gives }));
         const g = {}; ch.forEach((st) => Object.entries(st.gives).forEach(([n, v]) => { g[n] = (g[n] || 0) + v; }));
@@ -10914,16 +11035,27 @@ async function renderPurchasesPage() {
       const slotsHtml = (key, opts, sel) => `<span class="pur-slots">${sel.map((sj, p) => { const o = opts[sj]; return `<button type="button" class="pur-slot${openSlot === key + "|" + p ? " open" : ""}" data-pmslot="${key}|${p}" title="${esc(o.tag)}">${picOf(o)}<small>${esc(shortAmount(o.q))}</small></button>`; }).join("")}</span>`;
       const stripHtml = (key, opts, sel) => { const m = /^(.*)\|(\d+)$/.exec(openSlot); if (!m || m[1] !== key) return ""; const p = Number(m[2]); return `<div class="pur-slot-strip">${opts.map((o, oj) => (o.q > 0 ? `<button type="button" class="pur-slot${oj === sel[p] ? " on" : ""}" data-pmslotopt="${key}|${p}|${oj}" title="${esc(o.tag)}">${picOf(o)}<small>${esc(shortAmount(o.q))}</small></button>` : "")).join("")}</div>`; };
       const plHtml = isPL ? `<div class="pur-ms-plpick"><div class="pur-ms-l"><span class="meta">${esc(t("pur_ms_each_items").replace("{n}", M.n))}</span>${slotsHtml("all", M.steps[0].opts, pp0)}</div>${stripHtml("all", M.steps[0].opts, pp0)}</div>` : "";
+      // The plan's part (blue edge, "plan") and what is added to it (gold
+      // edge, "extra · Budgets plans with it"): next steps of a ladder, other
+      // prices of an "any price" pack.
+      const isPlanK = (k) => (isPick ? !!M.planSet[k] : k < M.planK);
+      const opTag = (k, on) => (isPlanK(k) ? (on ? `<span class="pur-op-tag plan">${esc(t("pur_op_tag_plan"))}</span>` : "") : on ? `<span class="pur-op-tag extra">${esc(t("pur_op_tag_extra"))}</span>` : ordered ? `<span class="pur-op-tag step">${esc(t("pur_op_tag_step"))}</span>` : "");
+      const opHead = (k) => {
+        if (!M || isPick) return "";
+        if (k === 0) return `<div class="pur-op-h ice"><span>${esc(M.kind === "card" ? t("pur_op_plan_card") : t("pur_op_plan_steps").replace("{n}", M.planK === 1 ? "1" : `1–${M.planK}`))}</span></div>`;
+        return ordered && k === M.planK ? `<div class="pur-op-h gold"><span>${esc(t("pur_op_next"))}</span></div><div class="meta pur-op-d">${esc(t("pur_op_next_d"))}</div>` : "";
+      };
       const stepsHtml = M ? `${plHtml}${s0.length > 1 && M.kind !== "card" ? `<div class="pur-ms-head"><span class="meta">${esc(t("pur_ms_setall"))}</span>${differ ? `<span class="pur-ms-differ">${esc(t("pur_ms_differ"))}</span>` : ""}</div>` : ""}<div class="pur-ms">${M.steps.map((st, k) => {
         const on = isPick ? tset[k] : k < kk, j = isPick || isPL ? 0 : pick[k], swt = !isPick && !isPL && st.opts.length > 1;
-        const items = isPL ? `<div class="pur-ms-g">${givesHtml(plGives(k))}</div>` : isPick
+        const tag = opTag(k, on);
+        const items = isPL ? `<div class="pur-ms-g">${givesHtml(plGives(k))}${tag}</div>` : isPick
           ? (on ? stripHtml(String(k), st.opts, pp[k]) : "")
-          : `<div class="pur-ms-g">${givesHtml(st.opts[j].gives)}</div>`;
-        return `<div class="pur-ms-row${on ? " on" : ""}${M.kind === "card" ? " card" : ""}"><div class="pur-ms-l">
+          : `<div class="pur-ms-g">${givesHtml(st.opts[j].gives)}${swt ? tag : ""}</div>`;
+        return `${opHead(k)}<div class="pur-ms-row${on ? " on" : ""}${M.kind === "card" ? " card" : ""}${isPlanK(k) ? " op-plan" : on ? " op-extra" : ""}"><div class="pur-ms-l">
           <button type="button" class="pur-ms-tick" data-pmtick="${k}" aria-pressed="${on}">${on ? "&#10003;" : ""}</button>
           ${M.kind === "card" || isPick ? "" : `<b class="pur-ms-n">${k + 1}</b>`}<b class="pur-ms-pr">${esc(fmtL(local(st.price)))}</b>
           ${swt ? `<span class="pur-ms-sw">${st.opts.map((o, oj) => `<button type="button" data-pmopt="${k}|${oj}" class="${oj === j ? "on" : ""}">${esc(o.tag)}</button>`).join("")}</span>` : ""}
-          ${isPick && !on ? `<span class="meta pur-ms-pickn">${esc(t("pur_ms_pickn").replace("{n}", M.n))}</span>` : ""}${isPick && on ? slotsHtml(String(k), st.opts, pp[k]) : ""}</div>
+          ${isPick && !on ? `<span class="meta pur-ms-pickn">${esc(t("pur_ms_pickn").replace("{n}", M.n))}</span>` : ""}${isPick && on ? slotsHtml(String(k), st.opts, pp[k]) : ""}${swt || isPL ? "" : tag}</div>
           ${items}</div>`;
       }).join("")}</div>${M.kind !== "card" ? `<div class="meta" style="font-size:10.5px; margin:-4px 0 8px;">${esc(t(isPick ? "pur_ms_any" : "pur_ms_order"))}</div>` : ""}` : "";
       const notes = [];
@@ -10954,21 +11086,84 @@ async function renderPurchasesPage() {
       const cntOf = (d) => (cnt[d] != null ? cnt[d] : s0[d].count);
       const maxes = s0.map((x, d) => purGameMax(r, tb, s0, d));
       const cntNote = (d) => t(cntOf(d) > s0[d].count ? "pur_cnt_plan_more" : "pur_cnt_plan").replace("{n}", s0[d].count);
-      const cntHtml = (d) => (s0[d].count > 1 ? `<div class="pur-cnt" data-pmcnt="${d}"><span class="pur-cnt-l">${esc(t("pur_cnt_will"))}</span>${purStepHtml("pmstep", cntOf(d), maxes[d])}<button type="button" class="pur-cnt-max" data-pmcmax${cntOf(d) >= maxes[d] ? " disabled" : ""}>${esc(t("pur_cnt_max").replace("{n}", maxes[d]))}</button><small class="pur-cnt-note">${esc(cntNote(d))}</small></div>` : "");
+      // Stacking cards: "How many" always (also when the plan buys 1), up to the stack limit.
+      const stackSt = packStackInfo(packLinkForBase(tb.id).reset);
+      const cntPill = (d) => (cntOf(d) > s0[d].count ? esc(t("pur_cnt_extra").replace("{n}", cntOf(d) - s0[d].count)) : "");
+      const cntHtml = (d) => (s0[d].count > 1 || stackSt ? `<div class="pur-cnt" data-pmcnt="${d}"><span class="pur-cnt-l">${esc(t("pur_cnt_will"))}</span>${purStepHtml("pmstep", cntOf(d), maxes[d])}<button type="button" class="pur-cnt-max" data-pmcmax${cntOf(d) >= maxes[d] ? " disabled" : ""}>${esc(t("pur_cnt_max").replace("{n}", maxes[d]))}</button><small class="pur-cnt-note"><span class="pur-op-tag extra" data-pmxpill${cntPill(d) ? "" : " hidden"}>${cntPill(d)}</span> <span data-pmcntnote>${esc(cntNote(d))}</span></small></div>` : "");
+      // "Other prices in this pack": the pack's other rows (plain packs) or
+      // other cards (pick-one sets like the Benefit Card), each up to its own
+      // limit for that run minus what is bought / planned (the planner's
+      // groups after My Purchases, packGroupsFor). Each pick is bought on
+      // every ticked date and saved as its own purchase ("extra").
+      const ex = keep && keep.ex ? { ...keep.ex } : {};
+      const opKind = !M ? (!stackSt && plainPack(tb) && !packLinkFor(tb.id).sequential && r.row != null && !Array.isArray(r.steps) ? "rows" : "") : M.kind === "card" ? "cards" : "";
+      const OP = [];
+      if (opKind) {
+        const pgs = packGroupsFor(tables, "__purchases").filter((g) => !g.ladder && (g.tables || []).includes(String(tb.id)));
+        const gOf = (row) => pgs.find((g) => g.offers.some((o) => o.row === row)) || null;
+        if (opKind === "rows") packOffersFor(tb, true).forEach((o) => { if (o.row !== r.row && Object.keys(o.gives || {}).length && gOf(o.row)) OP.push({ key: "r" + o.row, row: o.row, price: o.price, gives: o.gives, g: gOf(o.row), planRow: r.row }); });
+        else {
+          const tbs = (r.tables || []).map((id) => byId.get(String(id))).filter(Boolean);
+          const tags = tbs.length && packLinkFor(tbs[0].id).linkSet ? packLinkSetTags(tbs) : tbs.map(packOptionTag);
+          tbs.forEach((x, j) => packOffersFor(x, true).forEach((o) => {
+            if (!Object.keys(o.gives || {}).length || !gOf(o.row)) return;
+            OP.push({ key: `c${j}|${o.row}`, card: j, tag: tags[j], row: o.row, price: o.price, gives: o.gives, g: gOf(o.row), planRow: r.row });
+          }));
+        }
+      }
+      const runAt = (g, off) => { if (typeof g.reset === "number" && g.reset > 0 && g.reset < PACK_ONE_TIME_DAYS) return packResetOffsets(g.reset, g.resetDay, PACK_HORIZON_DAYS, g.window).filter((x) => x <= off).pop(); return "all"; };
+      const roomAt = (g, off) => { if (g.reset === "unlimited") return 99; const at = runAt(g, off); if (at === undefined) return 0; const used = at === "all" ? g.used || 0 : (g.usedAt || {})[at] || 0; return (g.perCycle || 1) - used; };
+      const planCard = M && M.kind === "card" ? (kk > 0 ? pick[0] : -1) : null;
+      const isPlanItem = (it) => (opKind === "cards" ? it.card === planCard && it.row === it.planRow : false);
+      // What is still free for an item: the lowest over the pack's dates (dates in one run share it).
+      const opMax = (it) => {
+        let best = 99;
+        s0.forEach((x, d) => {
+          const at = runAt(it.g, x.off), same = s0.filter((y) => runAt(it.g, y.off) === at);
+          const planUse = it.g.offers.some((o) => o.row === it.planRow) && (opKind === "rows" || planCard != null && planCard >= 0) ? same.reduce((a, y) => a + (cnt[s0.indexOf(y)] != null ? cnt[s0.indexOf(y)] : y.count), 0) : 0;
+          const others = OP.filter((o2) => o2 !== it && o2.g === it.g).reduce((a, o2) => a + (ex[o2.key] || 0), 0) * same.length;
+          best = Math.min(best, Math.floor((roomAt(it.g, x.off) - planUse - others) / Math.max(1, same.length)));
+        });
+        return Math.max(0, Math.min(99, best));
+      };
+      const exParts = () => OP.filter((it) => (ex[it.key] || 0) > 0 && !isPlanItem(it)).map((it) => ({ row: it.row, label: opKind === "cards" ? `${packFmtMoney(it.price, r.currency)} · ${it.tag}` : packFmtMoney(it.price, r.currency), price: it.price, local: local(it.price), gives: it.gives, count: ex[it.key], isExtra: true }));
+      const exLocal = () => exParts().reduce((a, p) => a + p.local * p.count, 0);
+      const opHtml = () => {
+        if (!OP.length) return "";
+        if (opKind === "rows") return `<div class="pur-op-h gold"><span>${esc(t("pur_op_other"))}</span></div><div class="meta pur-op-d">${esc(t("pur_op_other_d"))}</div><div class="pur-op-list">${OP.map((it) => {
+          const n = ex[it.key] || 0, mx = Math.max(n, opMax(it));
+          return `<div class="pur-op${n ? " on" : ""}" data-pmexi="${esc(it.key)}"><div class="pur-ms-l"><b class="pur-ms-pr">${esc(fmtL(local(it.price)))}</b>${mx > 0 ? `${purStepHtml("pmex", n, mx, 0)}<span class="meta pur-op-up">${esc(t("pur_op_upto").replace("{n}", mx))}</span>` : `<span class="meta pur-op-up">${esc(t("pur_op_none_left"))}</span>`}${n ? `<span class="pur-op-tag extra">${esc(t("pur_op_tag_extra"))}</span>` : ""}</div><div class="pur-ms-g">${givesHtml(it.gives)}</div></div>`;
+        }).join("")}</div>`;
+        const cards = [...new Set(OP.map((it) => it.card))];
+        return `<div class="pur-op-h gold"><span>${esc(t("pur_op_cards"))}</span></div><div class="meta pur-op-d">${esc(t("pur_op_cards_d"))}</div><div class="pur-op-list">${cards.map((j) => {
+          const its = OP.filter((it) => it.card === j), onIt = its.find((it) => ex[it.key] > 0 && !isPlanItem(it));
+          const shown = onIt || its.find((it) => !isPlanItem(it)) || its[0];
+          return `<div class="pur-op card${onIt ? " on" : ""}"><div class="pur-ms-l"><b class="pur-op-cn">${esc(its[0].tag)}</b><span class="pur-op-chips">${its.map((it) => { const pl = isPlanItem(it), on = !pl && ex[it.key] > 0, dis = pl || (!on && opMax(it) < 1); return `<button type="button" data-pmexc="${esc(it.key)}" class="${on ? "on" : ""}${pl ? " pl" : ""}" aria-pressed="${on}"${dis ? " disabled" : ""}>${esc(fmtL(local(it.price)))}</button>`; }).join("")}</span>${onIt ? `<span class="pur-op-tag extra">${esc(t("pur_op_tag_extra1"))}</span>` : ""}</div><div class="pur-ms-g">${givesHtml(shown.gives)}</div></div>`;
+        }).join("")}</div>`;
+      };
+      const planBox = M ? "" : `<div class="pur-op-h ice"><span>${esc(t("pur_op_plan_pick"))}</span></div><div class="pur-op plan"><div class="pur-ms-l"><b class="pur-ms-pr">${esc(fmtN(1))}</b>${r.label !== fmtN(1) ? `<span class="meta pur-op-lb">${esc(r.label)}</span>` : ""}<span class="pur-op-tag plan">${esc(t("pur_op_tag_plan"))}</span></div><div class="pur-ms-g">${givesHtml(r.gives)}</div></div>`;
+      // A date's price with what is added to it.
+      const baseLocal = () => packConvert(r.price, r.currency).n;
+      const dayPrice = (d) => { const xl = exLocal(); if (!xl) return fmtN(cntOf(d), selOf(d)); return fmtL((M ? localOf(selOf(d)) : baseLocal()) * cntOf(d) + xl); };
       modal.innerHTML = `<div class="modal-box pur-modal">
-        <div class="pur-m-head"><h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2>${closeXHtml("data-pmclose")}</div>${verHtml}${stepsHtml}${noteHtml}${M ? "" : `<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== fmtN(1) ? `${esc(r.label)} · ` : ""}${esc(fmtN(1))} ${esc(t("pur_each"))}</div>`}
+        <div class="pur-m-head"><h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2>${closeXHtml("data-pmclose")}</div>${verHtml}${stepsHtml}${noteHtml}${planBox}${opHtml()}
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
-        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}${dayCtl(k) && x.count === 1 ? "<span></span>" : `<span class="meta" data-pmx>${bidiNum("× " + cntOf(k))}</span>`}<b data-pmpr>${esc(fmtN(cntOf(k), selOf(k)))}</b></label>${cntHtml(k)}${dayMenu(k)}`).join("")}</div>
-        <div class="pur-m-foot"><span data-pmsum></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-pmclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-pmadd>+ ${esc(t("pur_will_buy"))}</button></span></div>
+        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}${dayCtl(k) && x.count === 1 ? "<span></span>" : `<span class="meta" data-pmx>${bidiNum("× " + cntOf(k))}</span>`}<b data-pmpr>${esc(dayPrice(k))}</b></label>${cntHtml(k)}${dayMenu(k)}`).join("")}</div>
+        <div class="pur-m-foot"><span data-pmsum></span><div class="pur-op-sum" data-pmexsum hidden></div><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-pmclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-pmadd>+ ${esc(t("pur_will_buy"))}</button></span></div>
       </div>`;
       modal.style.display = "flex";
       modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-pmclose]")) close(); };
       const boxes = [...modal.querySelectorAll("[data-pmday]")];
       const pickedIdx = () => boxes.filter((c) => c.checked).map((c) => Number(c.dataset.pmday));
       const sync = () => {
-        const ix = pickedIdx(), tot = ix.reduce((a, d) => a + (M ? localOf(selOf(d)) : r.price) * cntOf(d), 0);
+        const ix = pickedIdx(), xl = exLocal(), tot = ix.reduce((a, d) => a + (M ? localOf(selOf(d)) : xl ? baseLocal() : r.price) * cntOf(d) + xl, 0);
         const empty = ix.some((d) => (M ? !partsOf(selOf(d)).length : false));
-        modal.querySelector("[data-pmsum]").innerHTML = `<b>${esc(M ? fmtL(tot) : packFmtMoney(tot, r.currency))}</b> <span class="meta">${ordered && !differ ? esc(nSteps(kk)) + " · " : ""}${esc(t("pur_sug_n_of").replace("{n}", ix.length).replace("{m}", s0.length))}</span>`;
+        // Plan + extra: what the plan picked and what was added to it.
+        const exTot = ix.reduce((a, d) => a + (M ? partsOf(selOf(d)).filter((p) => p.isExtra).reduce((b, p) => b + p.local, 0) * cntOf(d) : 0) + xl, 0);
+        const exN = (M && isPick ? tset.filter((on, k) => on && !M.planSet[k]).length : M && ordered && kk > M.planK && partsOf(kk).length > 1 ? kk - M.planK : 0) + exParts().reduce((a, p) => a + p.count, 0) + ix.reduce((a, d) => a + Math.max(0, cntOf(d) - s0[d].count), 0);
+        modal.querySelector("[data-pmsum]").innerHTML = `<b>${esc(M || xl ? fmtL(tot) : packFmtMoney(tot, r.currency))}</b> <span class="meta">${exTot > 0 ? esc(t("pur_op_sum").replace("{a}", fmtL(tot - exTot)).replace("{b}", fmtL(exTot))) : `${ordered && !differ ? esc(nSteps(kk)) + " · " : ""}${esc(t("pur_sug_n_of").replace("{n}", ix.length).replace("{m}", s0.length))}`}</span>`;
+        const es = modal.querySelector("[data-pmexsum]");
+        es.hidden = !exN; es.textContent = exN ? t("pur_op_note").replace("{n}", exN) : "";
         modal.querySelector("[data-pmadd]").disabled = !ix.length || empty;
         const all = modal.querySelector("[data-pmall]"); if (all) all.textContent = ix.length === s0.length ? t("pur_sug_pick_none") : t("pur_sug_pick_all");
       };
@@ -10982,8 +11177,9 @@ async function renderPurchasesPage() {
           row.querySelector('[data-pmstep="-1"]').disabled = cnt[d] <= 1;
           row.querySelector('[data-pmstep="1"]').disabled = cnt[d] >= max;
           row.querySelector("[data-pmcmax]").disabled = cnt[d] >= max;
-          row.querySelector(".pur-cnt-note").textContent = cntNote(d);
-          if (lab) { const x = lab.querySelector("[data-pmx]"); if (x) x.textContent = bidiNum("× " + cnt[d]); lab.querySelector("[data-pmpr]").textContent = fmtN(cnt[d], selOf(d)); }
+          row.querySelector("[data-pmcntnote]").textContent = cntNote(d);
+          const pill = row.querySelector("[data-pmxpill]"); if (pill) { pill.textContent = cntPill(d); pill.hidden = !cntPill(d); }
+          if (lab) { const x = lab.querySelector("[data-pmx]"); if (x) x.textContent = bidiNum("× " + cnt[d]); lab.querySelector("[data-pmpr]").textContent = dayPrice(d); }
           if (boxes[d] && !boxes[d].checked) boxes[d].checked = true;
           sync();
         };
@@ -11000,18 +11196,31 @@ async function renderPurchasesPage() {
         // steps: an option pack saves its steps as the choice; a plain ladder
         // saves the last step bought (from where its run starts).
         const adds = [];
-        ix.forEach((d) => partsOf(selOf(d)).forEach((p) => adds.push({ id: "p" + Date.now().toString(36) + d + "_" + adds.length + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: p.row, ...(r.from != null ? { from: r.from } : {}), ...(p.extra > 0 ? { extra: p.extra } : {}), count: cntOf(d), date: dayOf(Math.max(0, s0[d].off)), status: "planned", plan: vers.length > 1 ? vers[vi].key : planTag(i0), ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: p.label, price: p.price, gives: p.gives } }) })));
+        // What was added to the plan's part (next steps, other prices / cards)
+        // is its own purchase, tagged "extra".
+        ix.forEach((d) => partsOf(selOf(d)).concat(exParts()).forEach((p) => adds.push({ id: "p" + Date.now().toString(36) + d + "_" + adds.length + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: p.row, ...(p.from != null ? { from: p.from } : r.from != null && !p.isExtra ? { from: r.from } : {}), ...(p.extra > 0 ? { extra: p.extra } : {}), count: p.count != null ? p.count : cntOf(d), date: dayOf(Math.max(0, s0[d].off)), status: "planned", plan: p.isExtra ? "extra" : vers.length > 1 ? vers[vi].key : planTag(i0), ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: p.label, price: p.price, gives: p.gives } }) })));
         if (!adds.length) return;
         PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
         savePackPurchases();
         // The plan's own pack, step and choice on some of its dates: the rest stays as planned.
         const ri = rows.indexOf(r), base = r.row != null ? r.row : 0;
-        if (ri >= 0 && ri < nFollow && ix.every((d) => { const ps = partsOf(selOf(d)); return cntOf(d) === s0[d].count && ps.length === 1 && ps[0].label === r.label && ps[0].row === base; })) takeAsPlanned(ix.map((d) => ({ i: ri, off: s0[d].off, count: s0[d].count })));
+        if (ri >= 0 && ri < nFollow && !exParts().length && ix.every((d) => { const ps = partsOf(selOf(d)); return cntOf(d) === s0[d].count && ps.length === 1 && ps[0].label === r.label && ps[0].row === base; })) takeAsPlanned(ix.map((d) => ({ i: ri, off: s0[d].off, count: s0[d].count })));
         close();
         toast(ix.length > 1 ? t("pur_added_dates").replace("{n}", ix.length) : t("pur_added"));
         redraw();
       });
-      const state = (patch) => ({ kk, tset, pick, pp, pp0, dsel, openDay, openSlot, cnt, days: new Set(pickedIdx()), ...patch });
+      const state = (patch) => ({ kk, tset, pick, pp, pp0, dsel, openDay, openSlot, cnt, ex, days: new Set(pickedIdx()), ...patch });
+      // Other prices: ▲ / ▼ per row, a tap per card price.
+      modal.querySelectorAll("[data-pmexi]").forEach((row) => row.querySelectorAll("[data-pmex]").forEach((b) => b.addEventListener("click", () => {
+        const k = row.dataset.pmexi, it = OP.find((o) => o.key === k);
+        if (!it) return;
+        const n = Math.max(0, Math.min(Math.max(ex[k] || 0, opMax(it)), (ex[k] || 0) + Number(b.dataset.pmex)));
+        openVer(vi, state({ ex: { ...ex, [k]: n } }));
+      })));
+      modal.querySelectorAll("[data-pmexc]").forEach((b) => b.addEventListener("click", () => {
+        const k = b.dataset.pmexc;
+        openVer(vi, state({ ex: { ...ex, [k]: ex[k] > 0 ? 0 : 1 } }));
+      }));
       modal.querySelectorAll("[data-pmver]").forEach((v) => v.addEventListener("click", () => openVer(Number(v.dataset.pmver))));
       // Set all dates. Bought in order: ticking a step ticks the ones before
       // it; unticking one unticks the ones after it. Any price: each on its own.
@@ -11134,6 +11343,42 @@ async function renderPurchasesPage() {
         redraw();
       },
     });
+  });
+  const pickBtn = content.querySelector("[data-purpick]");
+  if (pickBtn) pickBtn.addEventListener("click", () => {
+    const sel = content.querySelector('[data-purf="table"]');
+    const infos = buyable.map(purPackInfo), plans = purPlanTables();
+    infos.forEach((i) => { i.plan = plans.has(i.id); });
+    infos.sort((a, b) => (b.plan ? 1 : 0) - (a.plan ? 1 : 0) || a.name.localeCompare(b.name, pkLoc));
+    let modal = document.getElementById("purPickModal");
+    if (!modal) { modal = document.createElement("div"); modal.id = "purPickModal"; modal.className = "modal-overlay pur-pk-ov"; document.body.appendChild(modal); }
+    let q = "";
+    const close = () => { modal.style.display = "none"; };
+    const inTab = (i, tab) => (tab === "on" ? i.on : tab === "soon" ? !i.on && i.next != null : true);
+    const match = (i) => !q || i.words.includes(q);
+    const listHtml = () => {
+      const tab = PUR_PICK_TAB, list = infos.filter((i) => match(i) && inTab(i, tab));
+      return list.length ? list.map((i) => `<button type="button" class="pur-pk-row${i.id === String(PUR_FORM.table) ? " on" : ""}" data-ppkid="${esc(i.id)}"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${esc(i.name)}</b><small>${i.plan ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span>` : ""}${pkStatus(i, tab)}</small></span><span class="pur-pk-pr">${esc(i.price)}</span></button>`).join("") : `<div class="meta pur-pk-none">${esc(t("pur_pk_none"))}</div>`;
+    };
+    const segHtml = () => ["on", "soon", "all"].map((k) => `<button type="button" data-ppktab="${k}" class="${PUR_PICK_TAB === k ? "on" : ""}" aria-pressed="${PUR_PICK_TAB === k}">${esc(t("pur_pk_tab_" + k))} · ${infos.filter((i) => match(i) && inTab(i, k)).length}</button>`).join("");
+    const fill = () => {
+      modal.querySelector(".pur-pk-seg").innerHTML = segHtml();
+      modal.querySelector(".pur-pk-note").textContent = t("pur_pk_note_" + PUR_PICK_TAB);
+      const l = modal.querySelector(".pur-pk-list"); l.innerHTML = listHtml(); l.scrollTop = 0;
+    };
+    modal.innerHTML = `<div class="modal-box pur-pk-box"><div class="pur-m-head"><h2>${esc(t("pur_pk_title"))}</h2>${closeXHtml("data-ppkclose")}</div>
+      <label class="pur-pk-search"><span aria-hidden="true">&#128269;</span><input type="search" data-ppkq placeholder="${esc(t("pur_pk_search"))}" aria-label="${esc(t("pur_pk_search"))}" autocomplete="off" /></label>
+      <div class="pur-pk-seg" role="group"></div><div class="meta pur-pk-note"></div><div class="pur-pk-list"></div></div>`;
+    modal.style.display = "flex";
+    fill();
+    modal.onclick = (ev) => {
+      if (ev.target === modal || ev.target.closest("[data-ppkclose]")) { close(); return; }
+      const tb2 = ev.target.closest("[data-ppktab]");
+      if (tb2) { PUR_PICK_TAB = tb2.dataset.ppktab; fill(); return; }
+      const row = ev.target.closest("[data-ppkid]");
+      if (row && sel) { close(); if (sel.value !== row.dataset.ppkid) { sel.value = row.dataset.ppkid; sel.dispatchEvent(new Event("change", { bubbles: true })); } }
+    };
+    modal.querySelector("[data-ppkq]").addEventListener("input", (ev) => { q = String(ev.target.value || "").trim().toLowerCase(); fill(); });
   });
   // The phone reloaded the page while the pack table was open: open it again.
   try { const d = JSON.parse(sessionStorage.getItem("pur_tbl_draft") || "null"); if (d && tblBtn && formTb && d.table === String(formTb.id) && !document.querySelector("#purTblModal[style*='flex']")) tblBtn.click(); } catch (e) { /* none */ }
@@ -12517,29 +12762,6 @@ async function renderPacksPage() {
   // dropdown stays hidden underneath and does the work.
   function pkColItem(tb, ci) {
     return packEffectiveCols(tb)[ci] || String(tb.columns[ci] || "").trim();
-  }
-  function pkItemIcon(name) {
-    if (!name) return "";
-    if (itemRegIcon(name)) return itemRegIcon(name);
-    if (String(name).toLowerCase() === "gems") return MATERIAL_ICONS.gems;
-    return bpIcon({ name }) || materialIconSrc(name) || "";
-  }
-  // Speedups of one type share a picture: D3 adds the
-  // game's tile colour for the size as a ring and the time as a badge.
-  function pkSpeedTime(name) {
-    const m = /speedup\s*(\d+)\s*(m|h)\b/i.exec(String(name || ""));
-    return m ? m[1] + m[2].toLowerCase() : "";
-  }
-  function pkTimeRing(tm) {
-    const c = (SCAN_SIZE_COLORS.find(([z]) => z === tm) || [null, [155, 161, 164]])[1];
-    return `rgb(${c.join(",")})`;
-  }
-  // The item's picture (with ring + time for speedups), or "" when it has none.
-  function pkIconHtml(name) {
-    const icon = pkItemIcon(name);
-    if (!icon) return "";
-    const tm = pkSpeedTime(name);
-    return tm ? `<span class="pk-tmw" style="--ring:${pkTimeRing(tm)}"><img src="${esc(icon)}" alt="" loading="lazy" /><u class="pk-tm">${esc(tm)}</u></span>` : `<img src="${esc(icon)}" alt="" loading="lazy" />`;
   }
   function pkHeadHtml(tb, ci) {
     const link = packLinkFor(tb.id);
