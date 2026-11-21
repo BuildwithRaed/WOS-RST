@@ -31665,16 +31665,17 @@ async function renderExpertsPage() {
     const val = (v, sel, tgt) => `<span class="exk-n${tgt ? " t" : ""}">${esc(v)}${sel}</span>`;
     const vals = (a, selA, b, selB) => `<span class="exk-v">${val(a, selA)}<span class="a" aria-hidden="true">&rarr;</span>${val(b, selB, true)}</span>`;
     const needBox = (kind, img, alt, need, short) => `<button type="button" class="exk-b" data-expbox="${kind}" title="${esc(alt)}"><img src="${esc(img)}" alt="${esc(alt)}" /><span>${need > 0
-      ? `<b>${num(need)}</b>${short > 0 ? `<em>${num(short)} ${esc(t("bs_short_word"))}</em>` : `<em class="ok">&#10003;</em>`}`
+      ? `<b>${num(need)}</b>${short > 0 ? `<em title="${esc(`${num(short)} ${t("bs_short_word")}`)}">&minus;${num(short)}</em>` : `<em class="ok">&#10003;</em>`}`
       : `<small>${esc(alt)}</small><i>&#10003; ${esc(t("exp_done_word"))}</i>`}</span></button>`.replace('class="exk-b"', `class="exk-b${need > 0 ? "" : " done"}"`);
     const sigImg = EXPERT_INVENTORY_ICONS[`${hero} Sigils`] || "icons/item_icon_570000.png";
     // M3 (owner, 10 Nov 2026): a maxed level (at its released max, no higher target) is one green
     // line, never folded (owner, 18 Nov 2026); tapping it opens the level list.
     const lvShow = di === ci && (Number(s.current) || 0) >= heroMaxLevelValue(hero) - 0.05;
     const noNeed = affNeed <= 0 && sigil <= 0;
-    const levelHtml = lvShow ? "" : `<div class="exk-r exk-lvr">
-        <div class="exk-b exk-lv"><small>${esc(t("exp_level_word"))}</small>${vals(lvLab(s.current), `<select data-expcur="${esc(hero)}" aria-label="${esc(t("current_label"))}">${heroLevelOpts(hero, s.current)}</select>`, lvLab(pos[di]), `<select data-expdes="${esc(hero)}" aria-label="${esc(t("target_label"))}">${heroLevelOpts(hero, s.desired)}</select>`)}</div>
-        ${noNeed ? (lvShow ? "" : `<div class="exk-nn">${esc(t("exp_nothing_needed"))}</div>`) : `<div class="exk-g2">
+    // L2 halves (owner, 20 Nov 2026): one slim box, the level on line 1, Compass / Sigils as two halves on line 2.
+    const levelHtml = lvShow ? "" : `<div class="exk-r exk-lvr exk-lv2">
+        <div class="exk-lv2-r1"><small>${esc(t("exp_level_word"))}</small>${vals(lvLab(s.current), `<select data-expcur="${esc(hero)}" aria-label="${esc(t("current_label"))}">${heroLevelOpts(hero, s.current)}</select>`, lvLab(pos[di]), `<select data-expdes="${esc(hero)}" aria-label="${esc(t("target_label"))}">${heroLevelOpts(hero, s.desired)}</select>`)}</div>
+        ${noNeed ? (lvShow ? "" : `<div class="exk-nn">${esc(t("exp_nothing_needed"))}</div>`) : `<div class="exk-g2 exk-lv2-r2">
           ${needBox("aff", EXPERT_INVENTORY_ICONS.Affinity, t("resource_affinity"), affNeed, affShort)}
           ${needBox("sig", sigImg, t("exp_sigils_of").replace("{name}", dataName(hero)), sigil, sigShort)}
         </div>`}
