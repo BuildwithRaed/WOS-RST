@@ -1315,7 +1315,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 120; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 121; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -1855,10 +1855,24 @@ const T = {
   backpack_all_added: { en: "All heroes of this kind are added." },
   backpack_no_match: { en: "No items match your search." },
   troops_stats_title: { en: "Troops Stats" },
-  current_upper: { en: "CURRENT" },
-  target_upper: { en: "TARGET" },
   target_label: { en: "Target" },
   set_all_short: { en: "Set all" },
+  sal_n: { en: "{n} pieces" },
+  sal_n_ch: { en: "{n} charms" },
+  sal_all_troops: { en: "all troops" },
+  sal_each_own: { en: "each piece's own" },
+  sal_each_own_ch: { en: "each charm's own" },
+  sal_each_short: { en: "each own" },
+  sal_keep: { en: "Keep each piece" },
+  sal_keep_ch: { en: "Keep each charm" },
+  sal_keep_tgt: { en: "Keep each target" },
+  sal_note_now: { en: "Ticked pieces get exactly this Now, also if it is lower than theirs. Target is pulled up to Now if needed." },
+  sal_note_now_ch: { en: "Ticked charms get exactly this Now, also if it is lower than theirs. Target is pulled up to Now if needed." },
+  sal_sum_none: { en: "Nothing changes yet. Tap a Now or Target level." },
+  sal_apply: { en: "Apply to {n} pieces" },
+  sal_apply_ch: { en: "Apply to {n} charms" },
+  sal_pcs_now: { en: "Pieces now: {list}" },
+  hg_enh_hint: { en: "Drag or tap a bar · tap a number to jump · − / + one level" },
   set_all_to: { en: "Set all to:" },
   max_everything: { en: "Max everything" },
   islandgallery_title: { en: "Islands" },
@@ -3498,7 +3512,6 @@ const T = {
   hg_next_ms: { en: "Next milestone: {piece} gives {gain}." },
   hg_tap_col: { en: "Tap a piece to change it." },
   hg_needs_this: { en: "Needs for this piece" },
-  hg_max_piece: { en: "Max this piece" },
   cg_trades: { en: "Trades" },
   cgw_needs: { en: "This piece needs" },
   cgw_have: { en: "have {n}" },
@@ -6483,12 +6496,6 @@ async function renderGearLevelingGroup(target) {
     save: () => saveCalcState(activeStorageKey, activeState),
     after: () => render(),
   });
-  const optsByTrack = {};
-  GEAR_LEVELING_TABLES.forEach((t) => {
-    const open = heroTrackCapIdx(t);
-    // (an upcoming row counted by "Count upcoming" keeps its tag)
-    optsByTrack[t] = HERO_GEAR_TABLES_CACHE[t].map((r, i) => { const up = i > open || isUpcomingRow("progression_rows", r); return `<option value="${i}"${up ? ' class="opt-up"' : ""}>${esc(rowLabel(r))}${esc(upcomingTag(up))}</option>`; }).join("");
-  });
 
   // One icon per troop type and piece: icons/hero-gear-<troop>-<piece>.png
   const HERO_GEAR_ICONS = { Goggles: "goggles", Gloves: "gloves", Belt: "belt", Boots: "boots" };
@@ -6500,14 +6507,45 @@ async function renderGearLevelingGroup(target) {
   const lab = (tb, i) => { const r = rowsOf(tb)[i]; return r ? String(rowLabel(r)).replace(/^Lv\.?\s*/, "") : String(i); };
   // Enhance rows with a milestone (120 / 160 / 200) and what each one gives this piece.
   const msIdx = rowsOf(EN).map((r, i) => (parseStatPct(r.stat2) != null ? i : -1)).filter((i) => i >= 0);
-  const msGain = (piece, i) => {
+  const msGainRaw = (piece, i) => {
     const a = heroGearMilestones(rowsOf(EN), i, piece), b = heroGearMilestones(rowsOf(EN), i - 1, piece);
     const atk = a.Attack - b.Attack, def = a.Defense - b.Defense;
-    return bidiNum(`+${Number((atk > 0 ? atk : def).toFixed(1))}% ${atk > 0 ? "ATK" : "DEF"}`);
+    return { pct: `+${Number((atk > 0 ? atk : def).toFixed(1))}%`, stat: atk > 0 ? "ATK" : "DEF" };
+  };
+  const msGain = (piece, i) => { const g = msGainRaw(piece, i); return bidiNum(`${g.pct} ${g.stat}`); };
+  // Gold flags over the Enhance bar: each milestone and what it gives (the stat only
+  // when every piece listed gets the same one).
+  const msFlags = (pieces, from) => msIdx.map((i) => {
+    const gs = pieces.map((pc) => msGainRaw(pc, i)), same = gs.every((g) => g.pct === gs[0].pct && g.stat === gs[0].stat);
+    return { v: i, ok: from != null && i <= from, txt: gs.length && same ? `${bidiNum(gs[0].pct)}<br>${gs[0].stat}` : gs.length && gs.every((g) => g.pct === gs[0].pct) ? bidiNum(gs[0].pct) : "" };
+  });
+  const ENH_T = enhTicks(lastIdx(EN));
+  // Mastery as the game's whole levels (0 … 20) plus a stage row for the sub-levels (17.1 …).
+  const mMajor = (i) => Math.floor(parseFloat(lab(MF, i)) || 0);
+  const M_GROUPS = new Map();
+  rowsOf(MF).forEach((r, i) => { const k = mMajor(i); if (!M_GROUPS.has(k)) M_GROUPS.set(k, []); M_GROUPS.get(k).push(i); });
+  const mIsUp = (i) => i > heroTrackReleasedIdx(MF) || heroIdxUpcoming(MF, i);
+  const hgMastRows = (role, sel, lo, attr, rowAttr, counts) => {
+    const sm = sel == null ? null : mMajor(sel);
+    let prevN = null;
+    const btns = [...M_GROUPS.keys()].map((k) => {
+      const g = M_GROUPS.get(k), off = role === "to" && g[g.length - 1] < lo, up = mIsUp(Math.max(g[0], lo));
+      const sep = prevN != null && prevN !== g.length ? `<i class="chw-sep"></i>` : "";
+      prevN = g.length;
+      let n = 0; if (counts) g.forEach((i) => { n += counts.get(i) || 0; });
+      return `${sep}<button type="button" class="cgw-c hw-m${k === sm ? " on" : ""}${up ? " up" : ""}" ${attr(role, "m", k)}${off ? " disabled" : ""}${up ? ` title="${esc(t("upcoming_tag"))}"` : ""}>${k}${salCnt(n)}</button>`;
+    }).join("");
+    const g = sel == null ? [] : M_GROUPS.get(sm) || [];
+    const stg = g.length > 1 ? `<div class="cgw-dots"><span class="cgw-dl">${esc(t("cgw_stage"))}</span>${g.map((i, j) => `<button type="button" class="cgw-d${i === sel ? " on" : ""}${mIsUp(i) ? " up" : ""}" ${attr(role, "i", i)}${role === "to" && i < lo ? " disabled" : ""}>.${j}</button>`).join("")}</div>` : "";
+    return `<div class="cgw-tiers" ${rowAttr}>${btns}</div>${stg}`;
+  };
+  const hgMastResolve = (kind, val, lo) => {
+    if (kind === "i") { const v = Number(val); return v >= lo ? v : null; }
+    const g = M_GROUPS.get(Number(val)) || [];
+    const v = g.find((i) => i >= lo);
+    return v == null ? null : v;
   };
   const cur = (troop, piece, tb) => { const st = activeState[troop][piece][tb], from = Number(st.from) || 0; return { from, to: Math.max(from, Number(st.to ?? from) || 0) }; };
-  // The real level dropdowns (same data attributes as before), shown in the sheet.
-  const chipHtml = (troop, piece, t, role) => `<select class="lvchip${role === "to" ? " tgt" : ""}" data-troop="${esc(troop)}" data-piece="${esc(piece)}" data-track="${esc(t)}" data-role="${role}" aria-label="${esc(role === "to" ? tgtLbl : nowLbl)} · ${esc(trackDisplayName(t))}">${optsByTrack[t]}</select>`;
 
   // One cell of the table: "now→target" + a small bar (Enhance: milestone dots).
   const cellHtml = (troop, piece, tb) => {
@@ -6534,41 +6572,22 @@ async function renderGearLevelingGroup(target) {
   const tracksEl = document.getElementById("heroGearTracks");
   function drawPieces() {
     if (!tracksEl.isConnected) return;
-    const troop = heroGearActiveTroop, open = !!SETALL_OPEN.hero;
+    const troop = heroGearActiveTroop;
     const heads = HERO_GEAR_PIECE_NAMES.map((pc) => `<button type="button" class="hg-ph" data-hgpc="${esc(pc)}"><img src="${heroGearIcon(troop, pc)}" alt="" loading="lazy" /><span>${esc(pieceDisplayName(pc))}</span></button>`).join("");
     const row = (tb, label) => `<div class="hg-rl"><b>${esc(label)}</b><small>${bidiNum(`${esc(lab(tb, 0))} – ${esc(lab(tb, heroTrackCapIdx(tb)))}`)}</small></div>${HERO_GEAR_PIECE_NAMES.map((pc) => cellHtml(troop, pc, tb)).join("")}`;
-    tracksEl.innerHTML = `<div class="sa-wrap${open ? " open" : ""}" data-sakey="hero">
-        <div class="sa-head"><b class="hg-pt">${esc(t("hg_pieces"))}</b><button type="button" class="sa-btn" data-satoggle aria-expanded="${open}">${esc(t("set_all_short"))} <span class="sa-car">${open ? "&#9652;" : "&#9662;"}</span></button></div>
-        <div class="sa-box">${GEAR_LEVELING_TABLES.map((tb) => `<div class="sa-row">
-          <span class="sa-lbl">${esc(trackDisplayName(tb))}</span>
-          <select data-hgsetall="${esc(tb)}" data-role="from" aria-label="${esc(nowLbl)}"><option value="">${esc(nowLbl)}…</option>${optsByTrack[tb]}</select>
-          <span class="sa-arrow">&rarr;</span>
-          <select data-hgsetall="${esc(tb)}" data-role="to" aria-label="${esc(tgtLbl)}"><option value="">${esc(tgtLbl)}…</option>${optsByTrack[tb]}</select>
-        </div>`).join("")}</div></div>
+    tracksEl.innerHTML = `<div class="sa-head"><b class="hg-pt">${esc(t("hg_pieces"))}</b>${setAllBtnHtml("data-hgsa")}</div>
       <div class="hg-tbl"><span></span>${heads}${row(MF, t("hg_mastery"))}${row(EN, t("hg_enhance"))}</div>
       <div class="hg-next">${nextHtml(troop)}</div>`;
-    // "Set all" for this troop: shows the level when all 4 pieces are on it.
-    tracksEl.querySelectorAll("select[data-hgsetall]").forEach((sel) => {
-      const vals = new Set(HERO_GEAR_PIECE_NAMES.map((pc) => String(activeState[troop][pc][sel.dataset.hgsetall][sel.dataset.role])));
-      sel.value = vals.size === 1 ? [...vals][0] : "";
-      if (sel.selectedIndex < 0) sel.value = "";
-      sel.addEventListener("change", () => {
-        if (sel.value === "") return;
-        const track = sel.dataset.hgsetall, role = sel.dataset.role, v = Number(sel.value);
-        HERO_GEAR_PIECE_NAMES.forEach((pc) => {
-          const st = activeState[troop][pc][track];
-          st[role] = v;
-          if (role === "from" && (st.to ?? 0) < v) st.to = v; // the target is never below now
-        });
-        changed();
-      });
-    });
   }
-  tracksEl.addEventListener("click", (e) => { const b = e.target.closest("[data-hgpc]"); if (b) openHgSheet(b.dataset.hgpc); });
+  tracksEl.addEventListener("click", (e) => {
+    if (e.target.closest("[data-hgsa]")) { openHgSetAll(); return; }
+    const b = e.target.closest("[data-hgpc]"); if (b) openHgSheet(b.dataset.hgpc);
+  });
 
   // A level change from the sheet / table: save (not awaited), redraw the table,
   // the sheet and the totals (the Backpack boxes, stats and "can reach" follow).
   let sheetPiece = null;
+  const HG_ENH_MEM = { last: "to" }; // the Enhance row touched last (a tapped tick number moves it)
   function changed() {
     saveCalcState(activeStorageKey, activeState);
     drawPieces();
@@ -6590,18 +6609,15 @@ async function renderGearLevelingGroup(target) {
     if (!m || !sheetPiece) return;
     const troop = heroGearActiveTroop, piece = sheetPiece, k = HERO_GEAR_PIECE_NAMES.indexOf(piece);
     const nav = (d) => `<button type="button" class="ch-nav" data-gsnav="${d}" ${k + d < 0 || k + d >= HERO_GEAR_PIECE_NAMES.length ? "disabled" : ""} aria-label="${d < 0 ? "‹" : "›"}">${d < 0 ? "&#8249;" : "&#8250;"}</button>`;
-    const stepper = (tb, role) => {
-      const { from, to } = cur(troop, piece, tb), v = role === "to" ? to : from, lo = role === "to" ? from : 0;
-      return `<div class="gs-row hg-srow"><span class="gs-l">${esc(role === "to" ? tgtLbl : nowLbl)}</span><div class="gs-stp${role === "to" ? " tgt" : ""}">
-        <button type="button" data-hgstep="${esc(tb)}|${role}|-1" aria-label="−" ${v <= lo ? "disabled" : ""}>&minus;</button>
-        <b class="${v > heroTrackReleasedIdx(tb) || heroIdxUpcoming(tb, v) ? "up" : ""}"><span data-hgsv="${esc(tb)}|${role}">${esc(lab(tb, v))}</span>${chipHtml(troop, piece, tb, role)}</b>
-        <button type="button" data-hgstep="${esc(tb)}|${role}|1" aria-label="+" ${v >= lastIdx(tb) ? "disabled" : ""}>+</button></div></div>`;
-    };
-    const sec = (tb) => {
-      const { from, to } = cur(troop, piece, tb);
-      const chips = tb === EN ? `<div class="hg-msr">${msIdx.map((i) => `<span class="hg-msc ${i <= from ? "r" : i <= to ? "t" : "g"}">${i <= from ? "&#10003; " : ""}E ${esc(lab(EN, i))} · ${msGain(piece, i)}</span>`).join("")}</div>` : "";
-      return `<div class="ch-sec hg-ssec"><div class="ch-sec-h"><b>${esc(trackDisplayName(tb))}</b></div>${stepper(tb, "from")}${stepper(tb, "to")}${chips}</div>`;
-    };
+    const upCls = (tb, v) => (v > heroTrackReleasedIdx(tb) || heroIdxUpcoming(tb, v) ? ' class="up"' : "");
+    // Mastery (H1): Now and Target as level buttons + stage row.
+    const mc = cur(troop, piece, MF), ec = cur(troop, piece, EN), eLast = lastIdx(EN);
+    const mRow = (role, sel, lo) => `<div class="m3-row${role === "to" ? " tgt" : ""}"><div class="hw-subh"><span>${esc(role === "to" ? tgtLbl : nowLbl)}</span><b${upCls(MF, sel)}>${esc(lab(MF, sel))}</b></div>${hgMastRows(role, sel, lo, (r, k, v) => `data-hgm="${r}|${k}|${v}"`, `data-hgmrow="${role}"`)}</div>`;
+    const mastSec = `<div class="ch-sec hw-tr"><div class="ch-sec-h"><b>${esc(trackDisplayName(MF))}</b><span class="hw-tv">${esc(lab(MF, mc.from))} &rarr; <i${upCls(MF, mc.to)}>${esc(lab(MF, mc.to))}</i></span></div>${mRow("from", mc.from, 0)}${mRow("to", mc.to, mc.from)}</div>`;
+    // Enhance (T1): a bar per Now / Target with − / +, tick numbers, milestone flags.
+    const enhSec = `<div class="ch-sec hw-tr e5 t1" data-hgenh><div class="ch-sec-h"><b>${esc(trackDisplayName(EN))}</b><span class="hw-tv" data-egv>${esc(lab(EN, ec.from))} &rarr; <i>${esc(lab(EN, ec.to))}</i></span></div>
+      ${enhGridHtml({ T: ENH_T, labOf: (i) => lab(EN, i), flags: msFlags([piece], ec.from), hint: t("hg_enh_hint"),
+        rows: [{ role: "from", label: nowLbl, val: ec.from, lo: 0, hi: eLast }, { role: "to", label: tgtLbl, val: ec.to, base: ec.from, lo: ec.from, hi: eLast }] })}</div>`;
     const need = {};
     const cols = [["mithril", "Mithril"], ["mythic_gear", "Mythic Gear"], ["xp_component", "XP Component"], ["essence_stones", "Essence Stones"]];
     GEAR_LEVELING_TABLES.forEach((tb) => {
@@ -6622,49 +6638,106 @@ async function renderGearLevelingGroup(target) {
       }).join("") : `<div class="cgw-nb ok"><span>&#10003;</span><small class="g">${esc(t("gs_nothing"))}</small></div>`;
       return `<div class="cgw-nh">${esc(t("hg_needs_this"))}</div><div class="cgw-nd" style="grid-template-columns:repeat(${needs.length ? Math.max(needs.length, 2) : 1}, minmax(0, 1fr));">${body}</div>`;
     };
-    const atMax = GEAR_LEVELING_TABLES.every((tb) => cur(troop, piece, tb).to >= Math.max(cur(troop, piece, tb).from, heroTrackCapIdx(tb)));
     m.innerHTML = `<div class="modal-box adm-sheet gs-box ch-sheet hg-sh" role="dialog" aria-modal="true">
       <div class="gs-head">${nav(-1)}<img class="hg-sh-pic" src="${heroGearIcon(troop, piece)}" alt="" /><div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(piece))} · ${esc(troopDisplayName(troop))}</b></div>
         ${nav(1)}${closeXHtml("data-gsclose")}</div>
       <div class="plx-piecestat hgc-stat" data-hgstat="${esc(troop)}|${esc(piece)}"></div>
-      ${GEAR_LEVELING_TABLES.map(sec).join("")}
+      ${mastSec}${enhSec}
       ${mkCanHtml("herogearcalc", `${troop}|${piece}`)}
       ${needsBoxes()}
-      <div class="gs-foot ch-foot"><button type="button" class="btn ghost" data-hgpmax ${atMax ? "disabled" : ""}>${esc(t("hg_max_piece"))}</button><button type="button" class="btn" data-gsclose>${esc(t("gs_done"))}</button></div>
+      <div class="gs-foot hg-foot1"><button type="button" class="btn" data-gsclose>${esc(t("gs_done"))}</button></div>
     </div>`;
-    m.querySelectorAll("select.lvchip[data-troop]").forEach((c) => { const v = cur(c.dataset.troop, c.dataset.piece, c.dataset.track); c.value = String(c.dataset.role === "to" ? v.to : v.from); });
-    // − / +: one level a tap; holding moves on by itself (the numbers follow
-    // while held, saved and redrawn when let go).
-    const stepOnce = (tb, role, d) => {
-      const st = activeState[troop][piece][tb];
-      if (!setLv(troop, piece, tb, role, (role === "to" ? Math.max(st.from || 0, st.to ?? 0) : st.from || 0) + d)) return false;
-      const v = cur(troop, piece, tb);
-      m.querySelectorAll(`[data-hgsv^="${window.CSS.escape(tb)}|"]`).forEach((s) => { s.textContent = lab(tb, s.dataset.hgsv.endsWith("|to") ? v.to : v.from); });
-      return true;
-    };
-    wireHoldStep(m.querySelectorAll("[data-hgstep]"), (b) => { const [tb, role, d] = b.dataset.hgstep.split("|"); return stepOnce(tb, role, Number(d)); }, changed);
+    m.querySelectorAll("[data-hgmrow]").forEach((x) => {
+      const on = x.querySelector(".on");
+      if (on) x.scrollLeft = Math.max(0, on.offsetLeft - x.offsetLeft - x.clientWidth / 2 + on.offsetWidth / 2);
+    });
+    // Enhance bars: drag / tap / − + paint at once, save when let go.
+    const grid = m.querySelector("[data-hgenh] [data-eg]"), tv = m.querySelector("[data-egv]");
+    let snap = null;
+    const st = () => activeState[troop][piece][EN];
+    wireEnhGrid(grid, {
+      T: ENH_T, mem: HG_ENH_MEM,
+      val: (role) => cur(troop, piece, EN)[role],
+      start: (role) => cur(troop, piece, EN)[role],
+      clamp: (role, v) => Math.max(role === "to" ? cur(troop, piece, EN).from : 0, Math.min(eLast, v)),
+      live: (role, v) => {
+        if (!snap) snap = { from: st().from, to: st().to };
+        setLv(troop, piece, EN, role, v);
+        const c = cur(troop, piece, EN);
+        enhPaint(grid, ENH_T, c, (i) => lab(EN, i));
+        if (tv) tv.innerHTML = `${esc(lab(EN, c.from))} &rarr; <i>${esc(lab(EN, c.to))}</i>`;
+      },
+      commit: () => { const a = snap; snap = null; if (a && (a.from !== st().from || a.to !== st().to)) changed(); else drawSheet(); },
+      cancel: () => { if (snap) { st().from = snap.from; st().to = snap.to; } snap = null; drawSheet(); },
+    });
     fillHeroGearPieceStats();
   }
   function openHgSheet(piece) {
     const m = gearSheetEl();
     sheetPiece = piece;
+    HG_ENH_MEM.last = "to";
     m.onclick = (ev) => {
       if (ev.target === m || ev.target.closest("[data-gsclose]")) { sheetPiece = null; closeGearSheet(); return; }
       const nv = ev.target.closest("[data-gsnav]");
       if (nv && !nv.disabled) { const k = HERO_GEAR_PIECE_NAMES.indexOf(sheetPiece) + Number(nv.dataset.gsnav); if (HERO_GEAR_PIECE_NAMES[k]) { sheetPiece = HERO_GEAR_PIECE_NAMES[k]; drawSheet(); } return; }
-      if (ev.target.closest("[data-hgpmax]")) {
-        GEAR_LEVELING_TABLES.forEach((tb) => { const st = activeState[heroGearActiveTroop][sheetPiece][tb]; st.to = Math.max(Number(st.from) || 0, heroTrackCapIdx(tb)); });
-        changed();
+      const mb = ev.target.closest("[data-hgm]");
+      if (mb && !mb.disabled) {
+        const [role, kind, val] = mb.dataset.hgm.split("|"), c = cur(heroGearActiveTroop, sheetPiece, MF);
+        if (kind === "m" && mMajor(c[role]) === Number(val)) return; // its own level: keep the stage
+        const v = hgMastResolve(kind, val, role === "to" ? c.from : 0);
+        if (v != null && setLv(heroGearActiveTroop, sheetPiece, MF, role, v)) changed();
       }
     };
-    m.onchange = (ev) => {
-      const c = ev.target.closest && ev.target.closest("select.lvchip[data-troop]");
-      if (!c) return;
-      if (setLv(c.dataset.troop, c.dataset.piece, c.dataset.track, c.dataset.role, Number(c.value))) changed();
-      else drawSheet();
-    };
-    drawSheet();
+    m.onchange = null;
+    m.onpointerdown = m.onpointermove = m.onpointerup = m.onpointercancel = null;
     m.style.display = "flex";
+    drawSheet();
+  }
+
+  // Set all for the troop on screen (its 4 pieces): Mastery buttons + stage, Enhance bar.
+  function openHgSetAll() {
+    const troop = heroGearActiveTroop, ids = HERO_GEAR_PIECE_NAMES, eLast = lastIdx(EN);
+    const enhHtml = (role, sel, lo, api) => {
+      const isT = role === "to", ghosts = sel == null ? api.ghosts("e", role) : [];
+      const cnt = new Map(); ghosts.forEach((v) => cnt.set(v, (cnt.get(v) || 0) + 1));
+      const note = sel == null && cnt.size ? esc(t("sal_pcs_now").replace("{list}", [...cnt].sort((a, b) => a[0] - b[0]).map(([v, n]) => `${lab(EN, v)} ×${n}`).join(" · "))) : "";
+      const nowSel = api.sel("e", "from");
+      return `<div data-salenh="${role}">${enhGridHtml({ T: ENH_T, labOf: (i) => lab(EN, i), flags: msFlags(api.ticked(), isT ? nowSel : sel), note,
+        rows: [{ role, label: isT ? tgtLbl : nowLbl, val: sel, base: isT ? nowSel : null, lo, hi: eLast, ghosts }] })}</div>`;
+    };
+    openSetAllSheet({
+      title: `${t("set_all_short")} · ${troopDisplayName(troop)} · ${t("sal_n").replace("{n}", ids.length)}`,
+      meta: `${navLabel("herogearcalc")} · ${gearSetDisplayName(heroGearActiveSet)}`,
+      word: "pieces", ids, cls: "hw",
+      name: (pc) => pieceDisplayName(pc),
+      pic: (pc) => `<img class="sal-pp" src="${heroGearIcon(troop, pc)}" alt="" loading="lazy" />`,
+      tracks: [
+        { key: "m", label: trackDisplayName(MF), pfx: "M ", lab: (i) => lab(MF, i), cur: (pc) => cur(troop, pc, MF),
+          html: (role, sel, lo, counts) => hgMastRows(role, sel, lo, (r, k, v) => `data-salp="m|${r}|${k}|${v}"`, `data-salrow="m|${role}"`, counts),
+          pick: (role, kind, val, sel, lo) => hgMastResolve(kind, val, role === "to" ? lo : 0) },
+        { key: "e", label: trackDisplayName(EN), pfx: "E ", lab: (i) => lab(EN, i), cur: (pc) => cur(troop, pc, EN),
+          html: (role, sel, lo, counts, api) => enhHtml(role, sel, lo, api),
+          pick: () => null,
+          wire: (box, api) => ["from", "to"].forEach((role) => {
+            const grid = box.querySelector(`[data-salenh="${role}"] [data-eg]`);
+            if (!grid) return;
+            let tmp = null;
+            wireEnhGrid(grid, {
+              T: ENH_T, mem: { last: role },
+              val: () => (tmp != null ? tmp : api.sel("e", role)),
+              start: () => { const g = api.ghosts("e", role); return g.length ? Math.min(...g) : 0; },
+              clamp: (r, v) => Math.max(api.lo("e", r), Math.min(eLast, v)),
+              live: (r, v) => { tmp = v; const nowSel = api.sel("e", "from"); enhPaint(grid, ENH_T, r === "to" ? { to: v, from: nowSel == null ? undefined : nowSel } : { from: v }, (i) => lab(EN, i)); },
+              commit: () => { const v = tmp; tmp = null; if (v != null && v !== api.sel("e", role)) api.set("e", role, v); else api.redraw(); },
+              cancel: () => { tmp = null; api.redraw(); },
+            });
+          }) },
+      ],
+      apply: (list) => {
+        list.forEach(({ id, lv }) => [[MF, "m"], [EN, "e"]].forEach(([tb, k]) => { const st = activeState[troop][id][tb]; st.from = lv[k].from; st.to = lv[k].to; }));
+        changed();
+      },
+    });
   }
 
   // The troop switch shows that troop's stats, pieces and "Can do now".
@@ -15925,24 +15998,241 @@ function navLabel(tab) {
   return e[LANG] || e.en || tab;
 }
 // The level cap as a line in the Settings card (new planner layout).
-// "Set all" (Chief Gear, Charms, Heroes Gears): a small "⇅ Set all ▾" button
-// next to the troop name opens the Now → Target dropdowns. Open / closed is kept per page for the visit.
-const SETALL_OPEN = {};
-function setAllWrapHtml(key, headHtml, rowsHtml) {
-  const open = !!SETALL_OPEN[key];
-  return `<div class="sa-wrap${open ? " open" : ""}" data-sakey="${esc(key)}">
-    <div class="sa-head">${headHtml}<button type="button" class="sa-btn" data-satoggle aria-expanded="${open}">&#8645; ${esc(t("set_all_short"))} <span class="sa-car">${open ? "&#9652;" : "&#9662;"}</span></button></div>
-    <div class="sa-box">${rowsHtml}</div></div>`;
+// ---- "Set all" window (Chief Gear, Chief Charm, Heroes Gears) ----
+// The page's "⇅ Set all" button opens a bottom sheet: the pieces as ticked
+// pictures (now → target), then NOW and TARGET with the same pickers as the
+// page's piece window. Now starts on "Keep each piece" (green counts = pieces at
+// that level now); a picked Now is set exactly on the ticked pieces (also lower),
+// a picked Target too, and the target is never below Now. Apply saves through
+// the page's own save; Cancel / ✕ / the dim edge / Esc change nothing.
+function setAllBtnHtml(attr) {
+  return `<button type="button" class="sa-btn sal-btn" ${attr}>&#8645; ${esc(t("set_all_short"))}</button>`;
 }
-document.addEventListener("click", (ev) => {
-  const b = ev.target.closest && ev.target.closest("[data-satoggle]");
-  if (!b) return;
-  const w = b.closest(".sa-wrap"); if (!w) return;
-  const open = !w.classList.contains("open");
-  w.classList.toggle("open", open); SETALL_OPEN[w.dataset.sakey] = open;
-  b.setAttribute("aria-expanded", String(open));
-  const car = b.querySelector(".sa-car"); if (car) car.innerHTML = open ? "&#9652;" : "&#9662;";
-});
+const salCnt = (n) => (n ? `<i class="sal-n">${n}</i>` : "");
+// o: { title, meta, word ("pieces" | "charms"), ids, name(id), pic(id), cls, tracks, apply(list) }
+// track: { key, label?, pfx?, lab(i), cur(id) -> { from, to }, html(role, sel, lo, counts) (buttons
+//   carry data-salp="<key>|<role>|<kind>|<val>"), pick(role, kind, val, sel, lo) -> index | null,
+//   wire?(box, api) for controls of its own (the Enhance bar) }
+function openSetAllSheet(o) {
+  const m = gearSheetEl();
+  const S = { tick: new Set(o.ids), sel: {} };
+  o.tracks.forEach((tr) => { S.sel[tr.key] = { from: null, to: null }; });
+  const trOf = (k) => o.tracks.find((tr) => tr.key === k);
+  const res = (id, tr) => {
+    const c = tr.cur(id), s = S.sel[tr.key];
+    if (!S.tick.has(id)) return c;
+    const from = s.from ?? c.from;
+    return { from, to: Math.max(from, s.to ?? c.to) };
+  };
+  const ticked = () => o.ids.filter((id) => S.tick.has(id));
+  const line = (id, role, fn) => o.tracks.map((tr) => `${tr.pfx || ""}${tr.lab(fn(id, tr)[role])}`).join(" · ");
+  const changedIds = () => ticked().filter((id) => o.tracks.some((tr) => { const a = tr.cur(id), b = res(id, tr); return a.from !== b.from || a.to !== b.to; }));
+  // The target shown: the one picked, else the one every ticked piece shares.
+  const shownTo = (tr) => {
+    const s = S.sel[tr.key];
+    if (s.to != null) return Math.max(s.to, s.from ?? -1);
+    const v = ticked().map((id) => res(id, tr).to);
+    return v.length && v.every((x) => x === v[0]) ? v[0] : null;
+  };
+  const counts = (tr, role) => { const c = new Map(); ticked().forEach((id) => { const v = tr.cur(id)[role]; c.set(v, (c.get(v) || 0) + 1); }); return c; };
+  const kw = o.word === "charms" ? "charm" : "piece";
+  const sumHtml = () => {
+    const ch = changedIds();
+    if (!ch.length) return esc(t("sal_sum_none"));
+    const groups = new Map();
+    ch.forEach((id) => {
+      const cur = (x, tr) => tr.cur(x);
+      const parts = [];
+      const a = line(id, "from", cur), b = line(id, "from", res), c = line(id, "to", cur), d = line(id, "to", res);
+      if (a !== b) parts.push(`${esc(t("t12x_now").toLowerCase())} ${esc(a)} &rarr; <b>${esc(b)}</b>`);
+      if (c !== d) parts.push(`${esc(t("t12x_target").toLowerCase())} ${esc(c)} &rarr; <b>${esc(d)}</b>`);
+      const k = parts.join(", ");
+      groups.set(k, (groups.get(k) || []).concat(id));
+    });
+    return [...groups].map(([k, ids]) => `<b>${ids.map((id) => esc(o.name(id))).join(", ")}</b>: ${k}`).join("<br>");
+  };
+  const draw = () => {
+    const keep = {}, first = !m.querySelector(".sal-sheet");
+    m.querySelectorAll("[data-salrow]").forEach((x) => { keep[x.dataset.salrow] = x.scrollLeft; });
+    const box0 = m.querySelector(".modal-box"), top = box0 && !first ? box0.scrollTop : 0;
+    const n = o.ids.length, tk = ticked();
+    const pcs = `<div class="sal-pcs" style="--n:${n};">${o.ids.map((id) => {
+      const on = S.tick.has(id), chg = on && line(id, "from", (x, tr) => tr.cur(x)) !== line(id, "from", res);
+      return `<button type="button" class="sal-pc${on ? "" : " off"}" data-saltick="${esc(id)}" aria-pressed="${on}" aria-label="${esc(o.name(id))}"><i class="sal-tk${on ? " on" : ""}">${on ? "&#10003;" : ""}</i>${o.pic(id)}<b>${esc(o.name(id))}</b><small${chg ? ' class="chg"' : ""}>${esc(line(id, "from", res))}</small><em>&rarr; ${esc(line(id, "to", res))}</em></button>`;
+    }).join("")}</div>`;
+    const multi = o.tracks.length > 1;
+    const sec = (role) => {
+      const isT = role === "to", anySel = o.tracks.some((tr) => S.sel[tr.key][role] != null);
+      const val = (tr) => (isT ? shownTo(tr) : S.sel[tr.key].from);
+      const own = t(o.word === "charms" ? "sal_each_own_ch" : "sal_each_own");
+      const lbl = o.tracks.every((tr) => val(tr) == null) ? own
+        : o.tracks.map((tr) => `${tr.pfx || ""}${val(tr) == null ? t("sal_each_short") : tr.lab(val(tr))}`).join(" · ");
+      const keepB = !isT || anySel ? `<button type="button" class="sal-keep${anySel ? "" : " on"}" data-salkeep="${role}">${anySel ? "" : "&#10003; "}${esc(t(isT ? "sal_keep_tgt" : kw === "charm" ? "sal_keep_ch" : "sal_keep"))}</button>` : "";
+      const body = o.tracks.map((tr) => {
+        const s = S.sel[tr.key], lo = isT ? (s.from ?? 0) : 0;
+        const inner = tr.html(role, val(tr), lo, isT ? null : counts(tr, "from"), api);
+        return multi ? `<div class="sal-sub"><div class="sal-subh"><span>${esc(tr.label)}</span><b>${val(tr) == null ? "&mdash;" : esc(tr.lab(val(tr)))}</b></div>${inner}</div>` : inner;
+      }).join("");
+      const note = !isT && anySel ? `<div class="sal-note">${esc(t(kw === "charm" ? "sal_note_now_ch" : "sal_note_now"))}</div>` : "";
+      return `<div class="ch-sec cgw-blk${isT ? " tgt" : ""}"><div class="ch-sec-h"><b>${esc(t(isT ? "t12x_target" : "t12x_now"))}</b><span class="cgw-v">${esc(lbl)}</span><i class="cgw-sp"></i>${keepB}</div>${body}${note}</div>`;
+    };
+    const word = (k) => t(o.word === "charms" ? k + "_ch" : k).replace("{n}", tk.length);
+    m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw sal-sheet ${o.cls || ""}" role="dialog" aria-modal="true" aria-label="${esc(o.title)}">
+      <div class="cgw-top" data-cgwgrab><div class="cgw-grab" title="${esc(t("cgw_swipe"))}"></div>
+      <div class="gs-head"><span class="sal-ic">&#8645;</span><div style="flex:1; min-width:0;"><b>${esc(o.title)}</b><div class="meta">${esc(o.meta)}</div></div>${closeXHtml("data-salclose", "rfa-x sal-x")}</div></div>
+      ${pcs}${sec("from")}${sec("to")}
+      <div class="sal-sum">${sumHtml()}</div>
+      <div class="gs-foot ch-foot"><button type="button" class="btn ghost" data-salclose>${esc(t("cancel"))}</button><button type="button" class="btn" data-salapply${changedIds().length ? "" : " disabled"}>${esc(word("sal_apply"))}</button></div>
+    </div>`;
+    const box = m.querySelector(".modal-box");
+    if (top) box.scrollTop = top;
+    m.querySelectorAll("[data-salrow]").forEach((x) => {
+      if (!first && keep[x.dataset.salrow] != null) { x.scrollLeft = keep[x.dataset.salrow]; return; }
+      const on = x.querySelector(".on") || (x.querySelector(".sal-n") || {}).parentElement;
+      if (on) x.scrollLeft = Math.max(0, on.offsetLeft - x.offsetLeft - x.clientWidth / 2 + on.offsetWidth / 2);
+    });
+    o.tracks.forEach((tr) => { if (tr.wire) tr.wire(box, api); });
+  };
+  const api = {
+    sel: (key, role) => (role === "to" ? shownTo(trOf(key)) : S.sel[key].from),
+    lo: (key, role) => (role === "to" ? (S.sel[key].from ?? 0) : 0),
+    ghosts: (key, role) => ticked().map((id) => res(id, trOf(key))[role]),
+    ticked: () => ticked(),
+    set: (key, role, v) => { const s = S.sel[key]; if (role === "to" && s.from != null && v < s.from) v = s.from; s[role] = v; draw(); },
+    redraw: () => draw(),
+  };
+  const close = () => closeGearSheet();
+  m.onclick = (ev) => {
+    if (sw.dragged) { sw.dragged = false; return; }
+    if (ev.target === m || ev.target.closest("[data-salclose]")) { close(); return; }
+    const tkb = ev.target.closest("[data-saltick]");
+    if (tkb) { const id = tkb.dataset.saltick; if (S.tick.has(id)) S.tick.delete(id); else S.tick.add(id); draw(); return; }
+    const kb = ev.target.closest("[data-salkeep]");
+    if (kb) { o.tracks.forEach((tr) => { S.sel[tr.key][kb.dataset.salkeep] = null; }); draw(); return; }
+    const p = ev.target.closest("[data-salp]");
+    if (p && !p.disabled) {
+      const [key, role, kind, val] = p.dataset.salp.split("|"), tr = trOf(key);
+      if (!tr) return;
+      const v = tr.pick(role, kind, val, api.sel(key, role), api.lo(key, role));
+      if (v == null) return;
+      api.set(key, role, v);
+      return;
+    }
+    if (ev.target.closest("[data-salapply]")) {
+      const list = changedIds().map((id) => ({ id, lv: Object.fromEntries(o.tracks.map((tr) => [tr.key, res(id, tr)])) }));
+      if (!list.length) return;
+      close();
+      o.apply(list);
+    }
+  };
+  m.onchange = null;
+  const sw = wireSheetSwipe(m);
+  m.style.display = "flex";
+  draw();
+}
+
+// ---- Heroes Gears Enhance bar (design T1) ----
+// One row per Now / Target: label + value, − [bar with one handle] +; a shared
+// row of tick numbers (0 · 100 · 120 … 200, evenly spaced) and gold flags for the
+// milestones. Drag a handle or tap a bar = that row level by level, a tick number
+// = jump (the row touched last, Target first), − / + = one level.
+function enhTicks(last) {
+  if (last > 100) { const a = [0, 100]; for (let v = 120; v < last; v += 20) a.push(v); a.push(last); return a; }
+  return [0, Math.round(last / 2), last].filter((v, i, a) => a.indexOf(v) === i);
+}
+function enhPct(T, v) {
+  if (v <= T[0]) return 0;
+  for (let i = 0; i < T.length - 1; i++) if (v <= T[i + 1]) return ((i + (v - T[i]) / (T[i + 1] - T[i])) / (T.length - 1)) * 100;
+  return 100;
+}
+function enhAt(T, f) {
+  f = Math.max(0, Math.min(1, f));
+  const s = f * (T.length - 1), i = Math.min(T.length - 2, Math.floor(s));
+  return Math.round(T[i] + (s - i) * (T[i + 1] - T[i]));
+}
+// Fill / handle positions of one row ("from": green fill to the value; "to": the
+// Now part faint, then blue to the value).
+function enhRowStyle(T, role, val, base) {
+  const p = (v) => `${enhPct(T, v).toFixed(2)}%`;
+  if (val == null) return { n: "width:0", b: "width:0", t: "width:0", h: "display:none" };
+  const b0 = base == null ? 0 : Math.min(base, val);
+  return role === "from"
+    ? { n: `width:${p(val)}`, h: `left:${p(val)}` }
+    : { b: `width:${p(b0)}`, t: `left:${p(b0)};width:calc(${p(val)} - ${p(b0)})`, h: `left:${p(val)}` };
+}
+// o: { T, rows: [{ role, label, val, base, lo, hi, ghosts }], flags: [{ v, txt, ok }], labOf, hint, note }
+function enhGridHtml(o) {
+  const p = (v) => `${enhPct(o.T, v).toFixed(2)}%`;
+  const notch = o.flags.map((f) => `<i class="eb-n" style="left:${p(f.v)};"></i>`).join("");
+  const row = (r) => {
+    const st = enhRowStyle(o.T, r.role, r.val, r.base), isT = r.role === "to";
+    const fills = isT ? `<i class="hw-f e4-base" data-egf="b" style="${st.b}"></i><i class="hw-f t" data-egf="t" style="${st.t}"></i>` : `<i class="hw-f n" data-egf="n" style="${st.n}"></i>`;
+    const ghosts = r.val == null ? [...new Set(r.ghosts || [])].map((v) => `<span class="hw-th ghost${isT ? " t" : ""}" style="left:${p(v)};"></span>`).join("") : "";
+    const v = r.val;
+    return `<div class="e5-l${isT ? " tgt" : ""}">${esc(r.label)}<b data-egl="${r.role}">${v == null ? "&mdash;" : esc(o.labOf(v))}</b></div>
+      <button type="button" class="e4-pm" data-egpm="${r.role}|-1" aria-label="&minus;"${v != null && v <= r.lo ? " disabled" : ""}>&minus;</button>
+      <div class="e4-in" data-egbar="${r.role}"><div class="hw-tr2">${fills}${notch}${ghosts}<span class="hw-th ${isT ? "t" : "n"}" data-egh style="${st.h}"></span></div></div>
+      <button type="button" class="e4-pm" data-egpm="${r.role}|1" aria-label="+"${v != null && v >= r.hi ? " disabled" : ""}>+</button>`;
+  };
+  const vals = {}; o.rows.forEach((r) => { vals[r.role] = r.val; });
+  const lo = vals.from ?? -1, hi = vals.to ?? -1;
+  const fl = o.flags.map((f) => `<span class="hw-fl${f.ok ? " ok" : ""}" style="left:${p(f.v)};">${f.txt}</span>`).join("");
+  const msv = new Set(o.flags.map((f) => f.v));
+  const tk = o.T.map((v) => `<button type="button" class="hw-tk${v <= lo ? " d" : v <= hi ? " t" : ""}${msv.has(v) ? " ms" : ""}" data-egtk="${v}" style="left:${p(v)};">${esc(o.labOf(v))}</button>`).join("");
+  return `<div class="e5-g" data-eg>
+    <div></div><div></div><div class="e4-in"><div class="hw-fls">${fl}</div></div><div></div>
+    ${o.rows.map(row).join("")}
+    <div></div><div></div><div class="e4-in"><div class="hw-tks">${tk}</div></div><div></div></div>${o.note ? `<div class="sal-note">${o.note}</div>` : ""}${o.hint ? `<div class="e4-hint">${esc(o.hint)}</div>` : ""}`;
+}
+// Paints a grid for new values while a handle is dragged / − + held (no redraw).
+function enhPaint(grid, T, vals, labOf) {
+  grid.querySelectorAll("[data-egbar]").forEach((bar) => {
+    const role = bar.dataset.egbar, v = vals[role];
+    if (v === undefined) return;
+    const st = enhRowStyle(T, role, v, vals.from);
+    bar.querySelectorAll("[data-egf]").forEach((f) => { f.style.cssText = st[f.dataset.egf] || ""; });
+    const h = bar.querySelector("[data-egh]"); if (h) h.style.cssText = st.h;
+    bar.querySelectorAll(".hw-th.ghost").forEach((g) => { g.style.display = v == null ? "" : "none"; });
+    const l = grid.querySelector(`[data-egl="${role}"]`); if (l) l.textContent = v == null ? "—" : labOf(v);
+  });
+  const lo = vals.from ?? -1, hi = vals.to ?? -1;
+  grid.querySelectorAll("[data-egtk]").forEach((b) => { const v = Number(b.dataset.egtk); b.classList.toggle("d", v <= lo); b.classList.toggle("t", v > lo && v <= hi); });
+}
+// ctl: { T, mem: { last }, val(role), start(role), clamp(role, v), live(role, v), commit(), cancel() }
+function wireEnhGrid(grid, ctl) {
+  const rows = [...grid.querySelectorAll("[data-egbar]")];
+  if (rows.length === 1) ctl.mem.last = rows[0].dataset.egbar;
+  rows.forEach((bar) => {
+    bar.onpointerdown = (e) => {
+      if (!e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) return;
+      const role = bar.dataset.egbar, tr = bar.querySelector(".hw-tr2");
+      ctl.mem.last = role;
+      const at = (x) => { const r = tr.getBoundingClientRect(); return ctl.clamp(role, enhAt(ctl.T, (x - r.left) / Math.max(1, r.width))); };
+      try { bar.setPointerCapture(e.pointerId); } catch (err) { /* old browsers */ }
+      bar.classList.add("drag");
+      ctl.live(role, at(e.clientX));
+      const end = (ok) => {
+        bar.onpointermove = bar.onpointerup = bar.onpointercancel = null;
+        bar.classList.remove("drag");
+        if (ok) ctl.commit(); else ctl.cancel();
+      };
+      bar.onpointermove = (ev) => ctl.live(role, at(ev.clientX));
+      bar.onpointerup = () => end(true);
+      bar.onpointercancel = () => end(false);
+    };
+  });
+  grid.querySelectorAll("[data-egtk]").forEach((b) => {
+    b.onclick = () => { const role = ctl.mem.last || "to"; ctl.live(role, ctl.clamp(role, Number(b.dataset.egtk))); ctl.commit(); };
+  });
+  wireHoldStep(grid.querySelectorAll("[data-egpm]"), (b) => {
+    const [role, d] = b.dataset.egpm.split("|");
+    ctl.mem.last = role;
+    const cur = ctl.val(role), nv = ctl.clamp(role, cur == null ? ctl.start(role) : cur + Number(d));
+    if (nv === cur) return false;
+    ctl.live(role, nv);
+    return true;
+  }, () => ctl.commit());
+}
 
 // Renders the 3-troop-type x 2-piece x 3-charm-slot calculator,
 // each slot with its own current\u2192target level pair.
@@ -25222,11 +25512,7 @@ async function renderCharmsCalc() {
     const toGo = flat.filter((c) => { const st = CHARM_CALC_STATE[c.piece.key][c.slot]; return CHARM_LEVELS.indexOf(String(st.target)) > CHARM_LEVELS.indexOf(String(st.current)); }).length;
     rowsEl.innerHTML = `
         <div class="panel">
-          ${setAllWrapHtml("charm", `<div class="name" style="font-size:15px; font-weight:700; color:${TROOP_COLORS[troop]};">${esc(troopDisplayName(troop))} <span class="meta" style="font-size:12px; font-weight:500;">· ${esc(t("charm_to_go").replace("{n}", toGo))}</span></div>`, `<div class="sa-row">
-                <select data-troopsetall="${esc(troop)}" data-role="current" aria-label="${esc(t("current_upper"))}"><option value="">${esc(t("current_upper"))}…</option>${levelOptions()}</select>
-                <span class="sa-arrow">&rarr;</span>
-                <select data-troopsetall="${esc(troop)}" data-role="target" aria-label="${esc(t("target_upper"))}"><option value="">${esc(t("target_upper"))}…</option>${levelOptions()}</select>
-              </div>`)}
+          <div class="sa-head"><div class="name" style="font-size:15px; font-weight:700; color:${TROOP_COLORS[troop]};">${esc(troopDisplayName(troop))} <span class="meta" style="font-size:12px; font-weight:500;">· ${esc(t("charm_to_go").replace("{n}", toGo))}</span></div>${setAllBtnHtml("data-chsa")}</div>
           ${CHARM_PIECES.filter((p) => p.troop === troop).map((p) => {
             const mine = flat.map((c, i) => [c, i]).filter(([c]) => c.piece === p);
             const left = mine.filter(([c]) => { const st = CHARM_CALC_STATE[p.key][c.slot]; return CHARM_LEVELS.indexOf(String(st.target)) > CHARM_LEVELS.indexOf(String(st.current)); }).length;
@@ -25235,22 +25521,7 @@ async function renderCharmsCalc() {
           }).join("")}
           <p class="meta ch-hint">${esc(t("charm_tiles_hint"))}</p>
         </div>`;
-    // "Set all" shows the level when every charm of this troop is on it.
-    rowsEl.querySelectorAll("[data-troopsetall]").forEach((sel) => {
-      const vals = new Set(CHARM_PIECES.filter((p) => p.troop === sel.dataset.troopsetall).flatMap((p) => CHARM_CALC_STATE[p.key].map((slot) => String(slot[sel.dataset.role]))));
-      sel.value = vals.size === 1 ? [...vals][0] : "";
-      if (sel.selectedIndex < 0) sel.value = "";
-      sel.addEventListener("change", () => {
-        if (!sel.value) return;
-        const role = sel.dataset.role;
-        CHARM_PIECES.filter((p) => p.troop === sel.dataset.troopsetall).forEach((p) => {
-          CHARM_CALC_STATE[p.key].forEach((slot) => { slot[role] = sel.value; });
-        });
-        saveCalcState("charm", CHARM_CALC_STATE);
-        renderTroopSections();
-        updateCharmTotals();
-      });
-    });
+    rowsEl.querySelector("[data-chsa]").addEventListener("click", openCharmSetAll);
     rowsEl.querySelectorAll("[data-chtile]").forEach((b) => b.addEventListener("click", () => openCharmSheet(Number(b.dataset.chtile))));
   }
 
@@ -25264,28 +25535,10 @@ async function renderCharmsCalc() {
     const big = (v) => (Math.abs(v) < 1e6 ? Math.round(v).toLocaleString() : shortAmount(v));
     const small = (v) => (Math.abs(v) < 1e5 ? Math.round(v).toLocaleString() : shortAmount(v));
     const block = (role, sel, ci, cap, groups, troop) => {
-      const majors = [...groups.keys()].filter((k) => role === "current" || k > 0);
-      const cm = charmMajor(CHARM_LEVELS[ci]), sm = charmMajor(CHARM_LEVELS[sel]);
-      const lo = role === "target" ? ci : 0;
-      let prevN = null;
-      const chips = majors.map((k) => {
-        const g = groups.get(k), first = g[0], up = first > cap || charmIdxUpcoming(first), off = role === "target" && k < cm;
-        // A thin line between runs of levels with a different number of stages (1–3 · 4–10 · 11–15 · 16–17 · 18).
-        const sep = k > 0 && prevN != null && prevN !== g.length ? `<i class="chw-sep"></i>` : "";
-        if (k > 0) prevN = g.length;
-        return `${sep}<button type="button" class="chw-c${k === sm ? " on" : ""}${up ? " up" : ""}" data-chw="${role}|l|${k}"${off ? " disabled" : ""}${up ? ` title="${esc(t("upcoming_tag"))}"` : ""}><span class="ch-pic${k > 0 ? "" : " none"}"><img src="${charmIconSrc(troop, k)}" alt="" loading="lazy" /></span><b>${k > 0 ? k : "0"}</b></button>`;
-      }).join("");
-      const g = groups.get(sm) || [sel];
-      const stages = g.length > 1 ? `<div class="chw-sl">${esc(t("chw_stage_of").replace("{n}", sm))}</div><div class="chw-dots">${g.map((i, j) => {
-        const done = i < ci || (role === "current" && i < sel);
-        return `<button type="button" class="cgw-d${i === sel ? " on" : done ? " done" : ""}${i > cap ? " up" : ""}" data-chw="${role}|i|${i}"${i < lo ? " disabled" : ""}>.${j}</button>`;
-      }).join("")}</div>` : "";
-      const tag = sel > cap ? `<span class="cgw-up">${esc(t("chw_not_open"))}</span>` : "";
-      const mx = Math.max(ci, cap);
-      const maxBtn = role === "target" ? `<button type="button" class="plx-maxbtn plx-max cgw-max" data-chwmax${sel === mx ? " disabled" : ""}>${esc(t("max_button"))}</button>` : "";
       const lab = sel > 0 || role === "target" ? `${esc(t("charm_lv"))} ${esc(CHARM_LEVELS[sel])}` : "0";
-      return `<div class="ch-sec cgw-blk${role === "target" ? " tgt" : ""}"><div class="ch-sec-h"><b>${esc(t(role === "target" ? "t12x_target" : "t12x_now"))}</b><span class="cgw-v${sel > cap ? " up" : ""}">${lab}</span>${tag}<i class="cgw-sp"></i>${maxBtn}</div>
-        <div class="chw-lvs" data-chwrow="${role}">${chips}</div>${stages}</div>`;
+      const tag = sel > cap ? `<span class="cgw-up">${esc(t("chw_not_open"))}</span>` : "";
+      return `<div class="ch-sec cgw-blk${role === "target" ? " tgt" : ""}"><div class="ch-sec-h"><b>${esc(t(role === "target" ? "t12x_target" : "t12x_now"))}</b><span class="cgw-v${sel > cap ? " up" : ""}">${lab}</span>${tag}<i class="cgw-sp"></i></div>
+        ${chPickRows({ role, isT: role === "target", sel, lo: ci, cap, groups, troop, attr: (r, k, v) => `data-chw="${r}|${k}|${v}"`, row: `data-chwrow="${role}"` })}</div>`;
     };
     const needsHtml = (ci, ti) => {
       const have = BAR_EFF_OWNED.charm || {};
@@ -25349,16 +25602,41 @@ async function renderCharmsCalc() {
       if (ev.target === m) { closeGearSheet(); return; }
       const b = ev.target.closest("[data-chw]");
       if (b && !b.disabled) { const [role, kind, val] = b.dataset.chw.split("|"); pick(role, kind, val); return; }
-      if (ev.target.closest("[data-chwmax]")) {
-        const c = charmFlat(plxTroopOf("charm"))[n], st = CHARM_CALC_STATE[c.piece.key][c.slot];
-        const ci = Math.max(0, CHARM_LEVELS.indexOf(String(st.current)));
-        st.target = CHARM_LEVELS[Math.max(ci, charmCapIdx())];
-        changed();
-      }
     };
     const sw = wireSheetSwipe(m);
     m.style.display = "flex";
     draw();
+  }
+
+  // Set all for the troop on screen (its 6 charms): the same level pictures and stages.
+  function openCharmSetAll() {
+    const troop = plxTroopOf("charm"), flat = charmFlat(troop), cap = charmCapIdx(), groups = charmStageGroups();
+    const ids = flat.map((c) => `${c.piece.key}|${c.slot}`);
+    const of = (id) => { const [k, sl] = id.split("|"); return { c: flat.find((x) => x.piece.key === k && x.slot === Number(sl)), st: CHARM_CALC_STATE[k][Number(sl)] }; };
+    openSetAllSheet({
+      title: `${t("set_all_short")} · ${troopDisplayName(troop)} · ${t("sal_n_ch").replace("{n}", ids.length)}`,
+      meta: `${navLabel("charmscalc")} · ${[...new Set(flat.map((c) => pieceDisplayName(c.piece.name)))].join(" + ")}`,
+      word: "charms", ids,
+      name: (id) => { const { c } = of(id); return `${pieceDisplayName(c.piece.name)} ${c.slot + 1}`; },
+      pic: (id) => { const { c } = of(id); return charmPicHtml(c, 0, ""); },
+      tracks: [{
+        key: "ch", lab: (i) => String(CHARM_LEVELS[i]),
+        cur: (id) => { const { st } = of(id); const ci = Math.max(0, CHARM_LEVELS.indexOf(String(st.current))); return { from: ci, to: Math.max(ci, CHARM_LEVELS.indexOf(String(st.target))) }; },
+        html: (role, sel, lo, counts) => chPickRows({ role, isT: role === "to", sel, lo, cap, groups, troop, counts, attr: (r, k, v) => `data-salp="ch|${r}|${k}|${v}"`, row: `data-salrow="ch|${role}"` }),
+        pick: (role, kind, val, sel, lo) => {
+          if (kind === "i") return Number(val);
+          const mj = Number(val), g = groups.get(mj) || [];
+          if (!g.length) return null;
+          return role === "to" && charmMajor(CHARM_LEVELS[lo]) === mj ? lo : g[0];
+        },
+      }],
+      apply: (list) => {
+        list.forEach(({ id, lv }) => { const { st } = of(id); st.current = CHARM_LEVELS[lv.ch.from]; st.target = CHARM_LEVELS[lv.ch.to]; });
+        saveCalcState("charm", CHARM_CALC_STATE);
+        renderTroopSections();
+        updateCharmTotals();
+      },
+    });
   }
 
   wirePlxTroopSwitch(content, "charm", () => { renderTroopSections(); updateCharmCurrentStats(); });
@@ -25374,6 +25652,30 @@ async function renderCharmsCalc() {
     save: () => saveCalcState("charm", CHARM_CALC_STATE),
     after: () => { renderTroopSections(); updateCharmTotals(); },
   });
+}
+// The level pictures and the "Stage of Lv N" row of a Chief Charm picker (the piece
+// window and Set all). o: { role, isT, sel (index or null = none picked), lo, cap, groups,
+// troop, attr(role, kind, val) → data attribute, row (attribute of the scrolling row),
+// counts (Map index → pieces there now, shown as green numbers per level) }.
+function chPickRows(o) {
+  const { role, isT, sel, lo, cap, groups, troop } = o;
+  const majors = [...groups.keys()].filter((k) => !isT || k > 0);
+  const cm = charmMajor(CHARM_LEVELS[lo]), sm = sel == null ? null : charmMajor(CHARM_LEVELS[sel]);
+  const cnt = (k) => { if (!o.counts) return ""; let n = 0; (groups.get(k) || []).forEach((i) => { n += o.counts.get(i) || 0; }); return salCnt(n); };
+  let prevN = null;
+  const chips = majors.map((k) => {
+    const g = groups.get(k), first = g[0], up = first > cap || charmIdxUpcoming(first), off = isT && k < cm;
+    // A thin line between runs of levels with a different number of stages (1–3 · 4–10 · 11–15 · 16–17 · 18).
+    const sep = k > 0 && prevN != null && prevN !== g.length ? `<i class="chw-sep"></i>` : "";
+    if (k > 0) prevN = g.length;
+    return `${sep}<button type="button" class="chw-c${k === sm ? " on" : ""}${up ? " up" : ""}" ${o.attr(role, "l", k)}${off ? " disabled" : ""}${up ? ` title="${esc(t("upcoming_tag"))}"` : ""}><span class="ch-pic${k > 0 ? "" : " none"}"><img src="${charmIconSrc(troop, k)}" alt="" loading="lazy" /></span><b>${k > 0 ? k : "0"}</b>${cnt(k)}</button>`;
+  }).join("");
+  const g = sel == null ? [] : groups.get(sm) || [sel];
+  const stages = g.length > 1 ? `<div class="chw-sl">${esc(t("chw_stage_of").replace("{n}", sm))}</div><div class="chw-dots">${g.map((i, j) => {
+    const done = i < lo || (!isT && i < sel);
+    return `<button type="button" class="cgw-d${i === sel ? " on" : done ? " done" : ""}${i > cap ? " up" : ""}" ${o.attr(role, "i", i)}${isT && i < lo ? " disabled" : ""}>.${j}</button>`;
+  }).join("")}</div>` : "";
+  return `<div class="chw-lvs" ${o.row}>${chips}</div>${stages}`;
 }
 // One sheet element for the Chief Charm / Chief Gear pop-ups (closed by render()).
 function gearSheetEl() {
@@ -25623,7 +25925,6 @@ async function renderChiefGearCalc() {
 
   const TROOP_COLORS = { Lancer: "var(--ice)", Infantry: "#7ee6a8", Marksman: "#f0a3c4" };
   const rowsEl = document.getElementById("gearRows");
-  const optsHtml = () => { const cap = chiefGearCapIdx(); return rows.map((r, i) => { const up = i > cap || isUpcomingRow("progression_rows", r); return `<option value="${i}"${up ? ' class="opt-up"' : ""}>${esc(chiefGearRowLabel(r))}${esc(upcomingTag(up))}</option>`; }).join(""); };
   const pieceOf = (key) => CHIEF_GEAR_PIECES.find((p) => p.key === key);
   // The pieces in 3 troop columns, read row by row (also the order of ‹ › in the sheet).
   const COLS = ["Infantry", "Lancer", "Marksman"];
@@ -25648,34 +25949,12 @@ async function renderChiefGearCalc() {
   };
   PACK_COST_HOOKS.chief_gear();
   function renderPieces() {
-    const open = !!SETALL_OPEN.chief;
     rowsEl.innerHTML = `
         <div class="panel cg-pcs">
           <div class="cg-ph"><b>${esc(t("cg_pieces"))}</b>
-            <button type="button" class="sa-btn" data-cgsa aria-expanded="${open}">${esc(t("set_all_short"))} <span class="sa-car">${open ? "&#9652;" : "&#9662;"}</span></button></div>
-          <div class="sa-row cg-sabox"${open ? "" : " hidden"}>
-            <select data-cgsetall data-role="from" aria-label="${esc(t("current_upper"))}"><option value="">${esc(t("current_upper"))}…</option>${optsHtml()}</select>
-            <span class="sa-arrow">&rarr;</span>
-            <select data-cgsetall data-role="to" aria-label="${esc(t("target_upper"))}"><option value="">${esc(t("target_upper"))}…</option>${optsHtml()}</select>
-          </div>
+            ${setAllBtnHtml("data-cgsa")}</div>
           <div class="cg-grid">${COLS.map((tr) => `<div class="cg-th" style="--tc:${TROOP_COLORS[tr]};">${esc(troopDisplayName(tr))}</div>`).join("")}${ORDER.map((k) => pieceHtml(pieceOf(k))).join("")}</div>
         </div>`;
-    // "Set all" shows the level when all 6 pieces are on it.
-    rowsEl.querySelectorAll("[data-cgsetall]").forEach((sel) => {
-      const vals = new Set(CHIEF_GEAR_PIECES.map((p) => String(CHIEF_GEAR_STATE[p.key][sel.dataset.role])));
-      sel.value = vals.size === 1 ? [...vals][0] : "";
-      if (sel.selectedIndex < 0) sel.value = "";
-      sel.addEventListener("change", () => {
-        if (sel.value === "") return;
-        const role = sel.dataset.role, v = Number(sel.value);
-        CHIEF_GEAR_PIECES.forEach((p) => {
-          const st = CHIEF_GEAR_STATE[p.key];
-          st[role] = v;
-          if (role === "from" && (st.to ?? 0) < v) st.to = v;
-        });
-        changed();
-      });
-    });
     syncMaxBtn();
   }
   // Max, or Reset once every piece is at max (greyed when there is nothing
@@ -25690,7 +25969,7 @@ async function renderChiefGearCalc() {
   }
   rowsEl.addEventListener("click", (e) => {
     const sa = e.target.closest("[data-cgsa]");
-    if (sa) { SETALL_OPEN.chief = !SETALL_OPEN.chief; renderPieces(); return; }
+    if (sa) { openCgSetAll(); return; }
     const slot = e.target.closest("[data-cgslot]");
     if (slot) openGearSheet(slot.dataset.cgslot);
   });
@@ -25735,45 +26014,91 @@ async function renderChiefGearCalc() {
     b.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse" && !pinned) show(false); });
   }
 
+  // The tiers in row order (each a run of rows), worked out from the rows themselves.
+  const tiers = [];
+  rows.forEach((r, i) => { const tk = String(r.tier ?? ""), g = tiers[tiers.length - 1]; if (!g || g.tier !== tk) tiers.push({ tier: tk, first: i, last: i }); else g.last = i; });
+  const tierAt = (i) => tiers.findIndex((g) => i >= g.first && i <= g.last);
+  const tierName = (tk) => String(CHIEF_GEAR_TIER_SHORT[tk] || tk || "").replace(/^(Red|Legendary) (?=T\d)/, "");
+  const tierCls = (tk) => { const l = chiefGearLook(tk); return l === "uncommon" ? "green" : l === "rare" ? "blue" : l === "epic" ? "purple" : l === "mythic" ? "gold" : "red"; };
+  const lvName = (r) => (r ? `${tierName(r.tier)}${r.stars != null ? ` ★${r.stars}` : ""}${r.stars != null && r.stage != null ? `.${r.stage}` : ""}` : "");
+  const idxs = (g) => { const a = []; for (let i = g.first; i <= g.last; i++) a.push(i); return a; };
+  const sameStar = (a, b) => String(rows[a].stars) === String(rows[b].stars);
+  // Tier / star / stage chips of a picker (the piece window and Set all). sel null =
+  // nothing picked (tiers only); counts (Map row → pieces there now) = green numbers.
+  const cgPickRows = (role, sel, lo, cap, attr, rowAttr, counts) => {
+    const ti = sel == null ? -1 : tierAt(sel), g = tiers[ti], r = sel == null ? null : rows[sel];
+    const isUp = (i) => i > cap || isUpcomingRow("progression_rows", rows[i]);
+    const up = (i) => (isUp(i) ? " up" : "");
+    const tierChips = tiers.map((x, k) => {
+      const off = x.last < lo, first = Math.max(x.first, lo);
+      let n = 0; if (counts) idxs(x).forEach((i) => { n += counts.get(i) || 0; });
+      return `<button type="button" class="cgw-c ${tierCls(x.tier)}${k === ti ? " on" : ""}${up(first)}" ${attr(role, "t", k)}${off ? " disabled" : ""}${isUp(first) ? ` title="${esc(t("upcoming_tag"))}"` : ""}>${esc(tierName(x.tier))}${salCnt(n)}</button>`;
+    }).join("");
+    if (!r) return `<div class="cgw-tiers" ${rowAttr}>${tierChips}</div>`;
+    const inTier = idxs(g);
+    const stars = [...new Set(inTier.map((i) => rows[i].stars).filter((s) => s != null).map(String))];
+    const starRow = stars.length ? `<div class="cgw-stars" style="--n:${stars.length};">${stars.map((s) => {
+      const ok = inTier.filter((i) => String(rows[i].stars) === s && i >= lo);
+      return `<button type="button" class="cgw-c${String(r.stars) === s ? " on" : ""}${ok.length ? up(ok[0]) : ""}" ${attr(role, "s", s)}${ok.length ? "" : " disabled"}>&#9733;${esc(s)}</button>`;
+    }).join("")}</div>` : "";
+    const stg = r.stars != null ? inTier.filter((i) => sameStar(i, sel) && rows[i].stage != null) : [];
+    const stageRow = stg.length > 1 ? `<div class="cgw-dots"><span class="cgw-dl">${esc(t("cgw_stage"))}</span>${stg.map((i) => `<button type="button" class="cgw-d${i === sel ? " on" : ""}${up(i)}" ${attr(role, "i", i)}${i < lo ? " disabled" : ""}>.${esc(String(rows[i].stage))}</button>`).join("")}</div>` : "";
+    return `<div class="cgw-tiers" ${rowAttr}>${tierChips}</div>${starRow}${stageRow}`;
+  };
+  // A tier takes its first level that is valid for the block (Target keeps its
+  // star / stage when the new tier has it); a star keeps the stage when it can.
+  const cgResolve = (role, kind, val, cur, lo) => {
+    const r0 = cur == null ? null : rows[cur];
+    let v = null;
+    if (kind === "i") v = Number(val);
+    else if (kind === "t") {
+      const ok = idxs(tiers[Number(val)]).filter((i) => i >= lo);
+      if (!ok.length) return null;
+      v = role === "to" && r0 ? (ok.find((i) => String(rows[i].stars) === String(r0.stars) && String(rows[i].stage) === String(r0.stage)) ?? ok[0]) : ok[0];
+    } else if (kind === "s") {
+      if (cur == null) return null;
+      const ok = idxs(tiers[tierAt(cur)]).filter((i) => String(rows[i].stars) === String(val) && i >= lo);
+      if (!ok.length) return null;
+      v = ok.find((i) => String(rows[i].stage) === String(r0.stage)) ?? ok[0];
+    }
+    return v == null || v < lo ? null : v;
+  };
+  // Set all: every piece (all troops), the same tier / star / stage pickers.
+  function openCgSetAll() {
+    const cap = chiefGearCapIdx();
+    openSetAllSheet({
+      title: `${t("set_all_short")} · ${t("sal_n").replace("{n}", ORDER.length)}`,
+      meta: `${navLabel("chiefgear")} · ${t("sal_all_troops")}`,
+      word: "pieces", ids: ORDER,
+      name: (k) => pieceDisplayName(pieceOf(k).name),
+      pic: (k) => `<span class="cg-pic sm"><img src="${chiefGearIcon(k, Math.min(CHIEF_GEAR_STATE[k].from, rows.length - 1))}" alt="" loading="lazy" /></span>`,
+      tracks: [{
+        key: "cg", lab: (i) => lvName(rows[i]).replace(/\.0$/, ""),
+        cur: (k) => { const st = CHIEF_GEAR_STATE[k], from = Math.min(st.from, rows.length - 1); return { from, to: Math.min(Math.max(from, st.to ?? from), rows.length - 1) }; },
+        html: (role, sel, lo, counts) => cgPickRows(role, sel, lo, cap, (r, k, v) => `data-salp="cg|${r}|${k}|${v}"`, `data-salrow="cg|${role}"`, counts),
+        pick: (role, kind, val, sel, lo) => cgResolve(role, kind, val, sel, lo),
+      }],
+      apply: (list) => {
+        list.forEach(({ id, lv }) => { const st = CHIEF_GEAR_STATE[id]; st.from = lv.cg.from; st.to = lv.cg.to; });
+        changed();
+      },
+    });
+  }
+
   // One piece's window: Now and Target as tier / star / stage chips, then what
   // this piece needs (Now → Target) against the Backpack. No buttons: swipe it
   // down, tap the dim page or Esc to close. Every tap saves and redraws the page.
   function openGearSheet(key) {
     const m = gearSheetEl();
     const MATS = [["hardened_alloy", "Hardened Alloy"], ["polishing_solution", "Polishing Solution"], ["design_plan", "Design Plan"], ["amber", "Amber"]];
-    // The tiers in row order (each a run of rows), worked out from the rows themselves.
-    const tiers = [];
-    rows.forEach((r, i) => { const tk = String(r.tier ?? ""), g = tiers[tiers.length - 1]; if (!g || g.tier !== tk) tiers.push({ tier: tk, first: i, last: i }); else g.last = i; });
-    const tierAt = (i) => tiers.findIndex((g) => i >= g.first && i <= g.last);
-    const tierName = (tk) => String(CHIEF_GEAR_TIER_SHORT[tk] || tk || "").replace(/^(Red|Legendary) (?=T\d)/, "");
-    const tierCls = (tk) => { const l = chiefGearLook(tk); return l === "uncommon" ? "green" : l === "rare" ? "blue" : l === "epic" ? "purple" : l === "mythic" ? "gold" : "red"; };
-    const lvName = (r) => (r ? `${tierName(r.tier)}${r.stars != null ? ` ★${r.stars}` : ""}${r.stars != null && r.stage != null ? `.${r.stage}` : ""}` : "");
-    const idxs = (g) => { const a = []; for (let i = g.first; i <= g.last; i++) a.push(i); return a; };
-    const sameStar = (a, b) => String(rows[a].stars) === String(rows[b].stars);
     const pct = (i) => parseStatPct(rows[i]?.stat) || 0;
     const big = (v) => (Math.abs(v) < 1e6 ? Math.round(v).toLocaleString() : shortAmount(v));
     const small = (v) => (Math.abs(v) < 1e5 ? Math.round(v).toLocaleString() : shortAmount(v));
     const block = (role, sel, lo, cap) => {
-      const ti = tierAt(sel), g = tiers[ti], r = rows[sel];
       const isUp = (i) => i > cap || isUpcomingRow("progression_rows", rows[i]);
-      const up = (i) => (isUp(i) ? " up" : "");
-      const tierChips = tiers.map((x, k) => {
-        const off = x.last < lo, first = Math.max(x.first, lo);
-        return `<button type="button" class="cgw-c ${tierCls(x.tier)}${k === ti ? " on" : ""}${up(first)}" data-cgw="${role}|t|${k}"${off ? " disabled" : ""}${isUp(first) ? ` title="${esc(t("upcoming_tag"))}"` : ""}>${esc(tierName(x.tier))}</button>`;
-      }).join("");
-      const inTier = idxs(g);
-      const stars = [...new Set(inTier.map((i) => rows[i].stars).filter((s) => s != null).map(String))];
-      const starRow = stars.length ? `<div class="cgw-stars" style="--n:${stars.length};">${stars.map((s) => {
-        const ok = inTier.filter((i) => String(rows[i].stars) === s && i >= lo);
-        return `<button type="button" class="cgw-c${String(r.stars) === s ? " on" : ""}${ok.length ? up(ok[0]) : ""}" data-cgw="${role}|s|${s}"${ok.length ? "" : " disabled"}>&#9733;${esc(s)}</button>`;
-      }).join("")}</div>` : "";
-      const stg = r.stars != null ? inTier.filter((i) => sameStar(i, sel) && rows[i].stage != null) : [];
-      const stageRow = stg.length > 1 ? `<div class="cgw-dots"><span class="cgw-dl">${esc(t("cgw_stage"))}</span>${stg.map((i) => `<button type="button" class="cgw-d${i === sel ? " on" : ""}${up(i)}" data-cgw="${role}|i|${i}"${i < lo ? " disabled" : ""}>.${esc(String(rows[i].stage))}</button>`).join("")}</div>` : "";
       const tag = role === "to" && isUp(sel) ? `<span class="cgw-up">${esc(t("upcoming_tag"))}</span>` : "";
-      const mx = Math.max(lo, cap);
-      const maxBtn = role === "to" ? `<button type="button" class="plx-maxbtn plx-max cgw-max" data-cgwmax${sel === mx ? " disabled" : ""}>${esc(t("max_button"))}</button>` : "";
-      return `<div class="ch-sec cgw-blk${role === "to" ? " tgt" : ""}"><div class="ch-sec-h"><b>${esc(t(role === "to" ? "t12x_target" : "t12x_now"))}</b><span class="cgw-v${sel > cap ? " up" : ""}">${esc(lvName(r))}</span>${tag}<i class="cgw-sp"></i>${maxBtn}</div>
-        <div class="cgw-tiers" data-cgwrow="${role}">${tierChips}</div>${starRow}${stageRow}</div>`;
+      return `<div class="ch-sec cgw-blk${role === "to" ? " tgt" : ""}"><div class="ch-sec-h"><b>${esc(t(role === "to" ? "t12x_target" : "t12x_now"))}</b><span class="cgw-v${sel > cap ? " up" : ""}">${esc(lvName(rows[sel]))}</span>${tag}<i class="cgw-sp"></i></div>
+        ${cgPickRows(role, sel, lo, cap, (r, k, v) => `data-cgw="${r}|${k}|${v}"`, `data-cgwrow="${role}"`)}</div>`;
     };
     const needsHtml = (from, to) => {
       const have = BAR_EFF_OWNED.chief_gear || {};
@@ -25805,23 +26130,10 @@ async function renderChiefGearCalc() {
         if (on) x.scrollLeft = Math.max(0, on.offsetLeft - x.offsetLeft - x.clientWidth / 2 + on.offsetWidth / 2);
       });
     };
-    // Picking: a tier takes its first level that is valid for the block (Target keeps
-    // its star / stage when the new tier has it); a star keeps the stage when it can.
     const pick = (role, kind, val) => {
       const st = CHIEF_GEAR_STATE[key], from = st.from, cur = role === "from" ? from : Math.max(from, st.to ?? from), lo = role === "from" ? 0 : from;
-      const r0 = rows[cur];
-      let v = null;
-      if (kind === "i") v = Number(val);
-      else if (kind === "t") {
-        const ok = idxs(tiers[Number(val)]).filter((i) => i >= lo);
-        if (!ok.length) return;
-        v = role === "to" ? (ok.find((i) => String(rows[i].stars) === String(r0.stars) && String(rows[i].stage) === String(r0.stage)) ?? ok[0]) : ok[0];
-      } else if (kind === "s") {
-        const ok = idxs(tiers[tierAt(cur)]).filter((i) => String(rows[i].stars) === String(val) && i >= lo);
-        if (!ok.length) return;
-        v = ok.find((i) => String(rows[i].stage) === String(r0.stage)) ?? ok[0];
-      }
-      if (v == null || v < lo) return;
+      const v = cgResolve(role, kind, val, cur, lo);
+      if (v == null) return;
       st[role] = v;
       if (role === "from" && (st.to ?? 0) < v) st.to = v; // the target is never below now
       changed(); draw();
@@ -25831,11 +26143,6 @@ async function renderChiefGearCalc() {
       if (ev.target === m) { closeGearSheet(); return; }
       const c = ev.target.closest("[data-cgw]");
       if (c && !c.disabled) { const [role, kind, val] = c.dataset.cgw.split("|"); pick(role, kind, val); return; }
-      if (ev.target.closest("[data-cgwmax]")) {
-        const st = CHIEF_GEAR_STATE[key];
-        st.to = Math.max(st.from, chiefGearCapIdx());
-        changed(); draw();
-      }
     };
     const sw = wireSheetSwipe(m);
     m.style.display = "flex";
