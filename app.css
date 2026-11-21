@@ -4940,6 +4940,19 @@ input,select,textarea{
   .exk-b.done small{ font-size:11.5px; color:var(--muted); font-weight:700; }
   .exk-b.done i{ font-style:normal; font-size:12.5px; font-weight:800; color:var(--good); }
   .exk-nn{ margin-top:8px; font-size:12.5px; color:var(--muted); }
+  .exk-r.exk-lv2{ border:1px solid var(--line); border-radius:12px; background:var(--panel-2); padding:7px 8px; margin:10px 0 4px; }
+  .exk-lv2-r1{ display:flex; align-items:center; gap:8px; }
+  .exk-lv2-r1 small{ flex:1; font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .exk-lv2-r1 .exk-n{ height:calc(28px); min-width:40px; font-size:14.5px; }
+  .exk-lv2 .exk-nn{ margin-top:6px; }
+  .exk-g2.exk-lv2-r2{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:6px; margin-top:6px; }
+  .exk-lv2-r2 .exk-b{ height:calc(34px); width:100%; overflow:hidden; padding:0 6px 0 5px; border-radius:9px; gap:4px; justify-content:flex-start; }
+  .exk-lv2-r2 .exk-b img{ width:18px; height:calc(18px); flex:0 0 18px; }
+  .exk-lv2-r2 .exk-b > span{ flex:1; flex-direction:row; align-items:baseline; justify-content:space-between; gap:4px; min-width:0; overflow:hidden; }
+  .exk-lv2-r2 .exk-b b{ font-size:12.5px; flex:none; }
+  .exk-lv2-r2 .exk-b em{ flex:none; font-size:11.5px; letter-spacing:-.2px; margin-inline-start:auto; }
+  @media (max-width:380px){ .exk-r.exk-lv2{ padding:7px 6px; } .exk-g2.exk-lv2-r2{ gap:5px; } .exk-lv2-r2 .exk-b{ gap:3px; padding:0 4px; } .exk-lv2-r2 .exk-b img{ width:16px; height:calc(16px); flex:0 0 16px; } .exk-lv2-r2 .exk-b b{ font-size:12px; } .exk-lv2-r2 .exk-b em{ font-size:11px; } }
+  .exk-lv2-r2 .exk-b.done small{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .exk-m3box{ display:flex; flex-direction:column; gap:8px; padding:10px 0 2px; border-top:1px solid var(--line); }
   .exk-m3{ display:flex; align-items:center; gap:10px; width:100%; padding:9px 12px; border:1px solid rgba(76,209,138,.28); border-radius:12px; background:rgba(76,209,138,.06); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
   .exk-m3-t{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; }
