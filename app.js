@@ -3694,6 +3694,8 @@ const T = {
   pur_pack: { en: "Pack" },
   pur_pk_title: { en: "Choose a pack" },
   pur_pk_search: { en: "Search packs or items" },
+  pur_pk_hide_all: { en: "Hide all" },
+  pur_pk_show_all: { en: "Show all" },
   pur_pk_ng_later: { en: "Hero packs for later Gens show when their Gen is next" },
   pur_pk_tab_on: { en: "On now" },
   pur_pk_tab_soon: { en: "Coming" },
@@ -9740,6 +9742,8 @@ let PUR_FORM = (() => { try { const v = JSON.parse(sessionStorage.getItem("pur_f
 let PUR_SUG_KEEP = null; // My Purchases: the suggestions box's height / scroll before a redraw
 // My Purchases (A2): the Add a pack sheet open over the page ("add"), kept across its redraws.
 let PUR_SHEET = null;
+// The pack picker's All tab: category groups folded (kept for the visit and in this browser).
+const PUR_PICK_FOLD = new Set((() => { try { const v = JSON.parse(localStorage.getItem("pur_pick_fold") || "[]"); return Array.isArray(v) ? v.map(String) : []; } catch (e) { return []; } })());
 let PUR_PICK_TAB = "on"; // Add a pack: the pack picker's tab ("on" / "soon" / "all"), kept for the visit
 // My Purchases lists = O1: one switch Next weeks | Coming | Bought
 // under the checklist, the chosen list on the page (kept in this browser).
@@ -11373,7 +11377,12 @@ async function renderPurchasesPage() {
       const tab = PUR_PICK_TAB, list = infos.filter((i) => match(i) && inTab(i, tab));
       if (tab === "all" && list.length) {
         const ngNote = ngHidden ? `<div class="pur-pk-ngnote">${esc(t("pur_pk_ng_later"))}</div>` : "";
-        return catOrder.map((g) => { const its = list.filter((i) => (catOrder.includes(i.cat) ? i.cat : "") === g); return its.length ? `<div class="pur-pk-gh">${esc(g || t("packs_filter_none"))} <small>${its.length}</small></div>${its.map((i) => rowHtml(i, "allg")).join("")}` : ""; }).join("") + ngNote;
+        // Each heading folds its group (kept for the visit and in this browser); searching opens every group with matches.
+        const groups = catOrder.map((g) => ({ g, its: list.filter((i) => (catOrder.includes(i.cat) ? i.cat : "") === g) })).filter((x) => x.its.length);
+        const folded = (g) => !q && PUR_PICK_FOLD.has(g);
+        const allShut = groups.every((x) => folded(x.g));
+        const bar = q ? "" : `<div class="pur-pk-allbar"><button type="button" data-ppkall>${esc(t(allShut ? "pur_pk_show_all" : "pur_pk_hide_all"))}</button></div>`;
+        return bar + groups.map(({ g, its }) => { const f = folded(g); return `<button type="button" class="pur-pk-gh" data-ppkgrp="${esc(g)}" aria-expanded="${!f}"><span>${esc(g || t("packs_filter_none"))} <small>${its.length}</small></span><i aria-hidden="true">${f ? "&#9656;" : "&#9662;"}</i></button>${f ? "" : its.map((i) => rowHtml(i, "allg")).join("")}`; }).join("") + ngNote;
       }
       const ngNote = ngHidden ? `<div class="pur-pk-ngnote">${esc(t("pur_pk_ng_later"))}</div>` : "";
       return (list.length ? list.map((i) => rowHtml(i, tab)).join("") : `<div class="meta pur-pk-none">${esc(t("pur_pk_none"))}</div>`) + ngNote;
@@ -11391,6 +11400,15 @@ async function renderPurchasesPage() {
     fill();
     modal.onclick = (ev) => {
       if (ev.target === modal || ev.target.closest("[data-ppkclose]")) { close(); return; }
+      const gh = ev.target.closest("[data-ppkgrp]"), ab = ev.target.closest("[data-ppkall]");
+      if (gh || ab) {
+        const l = modal.querySelector(".pur-pk-list"), top = l.scrollTop;
+        if (gh) { const g = gh.dataset.ppkgrp; if (PUR_PICK_FOLD.has(g)) PUR_PICK_FOLD.delete(g); else PUR_PICK_FOLD.add(g); }
+        else { const gs = catOrder.filter((g) => infos.some((i) => (catOrder.includes(i.cat) ? i.cat : "") === g)); if (gs.every((g) => PUR_PICK_FOLD.has(g))) PUR_PICK_FOLD.clear(); else gs.forEach((g) => PUR_PICK_FOLD.add(g)); }
+        try { localStorage.setItem("pur_pick_fold", JSON.stringify([...PUR_PICK_FOLD])); } catch (e) { /* blocked */ }
+        l.innerHTML = listHtml(); l.scrollTop = top;
+        return;
+      }
       const tb2 = ev.target.closest("[data-ppktab]");
       if (tb2) { PUR_PICK_TAB = tb2.dataset.ppktab; fill(); return; }
       const row = ev.target.closest("[data-ppkid]");
