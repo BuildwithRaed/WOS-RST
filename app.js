@@ -245,7 +245,8 @@ async function loadCalcState(calcName) {
     // still on its way land first, so this doesn't read the older version.
     const q = CALC_SAVE_QUEUE[calcName];
     if (q && q.running) await q.running;
-    const [row] = await sb(`calc_state?user_id=eq.${USER_ID}&calc_name=eq.${encodeURIComponent(calcName)}&select=state`);
+    const [row] = await sb(`calc_state?user_id=eq.${USER_ID}&calc_name=eq.${encodeURIComponent(calcName)}&select=state,updated_at`);
+    if (row && row.updated_at) CALC_STATE_UPDATED[calcName] = row.updated_at;
     return row ? row.state : null;
   } catch (err) {
     return null;
@@ -11031,7 +11032,7 @@ async function renderPurchasesPage() {
   content.querySelectorAll("[data-purmon]").forEach((d) => { const sm = d.querySelector("summary"); if (sm) sm.addEventListener("click", () => PUR_MON.set(d.dataset.purmon, !d.open)); });
   // Weekly cards: reward days left → the plan (same as the old "My pack dates" box).
   const wcSave = () => {
-    Object.keys(MY_CARDS_ACTIVE).forEach((k) => { if (!packActiveDays(k)) delete MY_CARDS_ACTIVE[k]; });
+    Object.keys(MY_CARDS_ACTIVE).forEach((k) => { if (!packActiveDaysSaved(MY_CARDS_ACTIVE[k])) delete MY_CARDS_ACTIVE[k]; });
     PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear();
     if (typeof budgetInvalidate === "function") budgetInvalidate();
     PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
@@ -11040,7 +11041,7 @@ async function renderPurchasesPage() {
   };
   content.querySelectorAll("[data-wcdays]").forEach((inp) => inp.addEventListener("change", () => {
     const n = Math.max(0, Math.floor(Number(inp.value) || 0));
-    if (n) MY_CARDS_ACTIVE[inp.dataset.wcdays] = { d: n }; else delete MY_CARDS_ACTIVE[inp.dataset.wcdays];
+    if (n) MY_CARDS_ACTIVE[inp.dataset.wcdays] = packActiveEntry(n); else delete MY_CARDS_ACTIVE[inp.dataset.wcdays];
     wcSave();
   }));
   const wcReset = content.querySelector("[data-wcresetall]");
@@ -14084,7 +14085,7 @@ async function renderPacksPage() {
         // Stacking cards start today: no start date box any more; a saved one is kept but not used.
         if (ownStart) { if (packValidDay(ownStart.value)) MY_PACK_DATES[key] = ownStart.value; else delete MY_PACK_DATES[key]; }
         const n = Math.max(0, Math.floor(Number(ownActive && ownActive.value) || 0));
-        if (n) MY_CARDS_ACTIVE[key] = { d: n }; else delete MY_CARDS_ACTIVE[key];
+        if (n) MY_CARDS_ACTIVE[key] = packActiveEntry(n); else delete MY_CARDS_ACTIVE[key];
         PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear();
         if (typeof budgetInvalidate === "function") budgetInvalidate();
         const note = box.querySelector("[data-ownnote]"); if (note) note.textContent = packActiveNoteText(id);
@@ -16309,7 +16310,7 @@ async function ensurePackLinksNow() {
   PACK_PURCHASES = purchases && typeof purchases === "object" ? { list: Array.isArray(purchases.list) ? purchases.list.filter((x) => x && x.table != null) : [], newGen: purchases.newGen && typeof purchases.newGen === "object" ? purchases.newGen : {} } : { list: [], newGen: {} };
   MY_PACKS = myPacks && Array.isArray(myPacks.tables) ? myPacks.tables.filter((x) => x && typeof x.id === "string" && x.id.startsWith("my-")) : [];
   MY_PACK_DATES = mine && typeof mine === "object" ? mine : {};
-  MY_CARDS_ACTIVE = active && typeof active === "object" ? active : {};
+  MY_CARDS_ACTIVE = packCardsActiveStamp(active && typeof active === "object" ? { ...active } : {});
   PACK_LINKS = links || {};
   return PACK_LINKS;
 }
@@ -17119,7 +17120,7 @@ async function saveMyPacks() {
   if (typeof budgetInvalidate === "function") budgetInvalidate();
   saveCalcState("my_packs", { tables: MY_PACKS });
 }
-// Weekly cards a visitor already bought whose 7-day rewards are still coming ({ tableId: n }).
+// Weekly cards a visitor already bought whose rewards are still coming ({ tableId: { d, on } }).
 let MY_CARDS_ACTIVE = {};
 // Packs each person left out of Budgets (Packs card tick): calc_state
 // "pack_budget_off" = { tableId: true }. Budgets, the pages' shared plan and
@@ -17130,12 +17131,37 @@ function packInBudgets(id) {
   const ng = String(id).startsWith("ng-") ? NG_HERO_LINKS[String(id)] : null;
   return !PACK_BUDGET_OFF[String(ng && ng.tpl ? ng.tpl : id)];
 }
-// Days of rewards still coming from cards already bought ({ d: days }; an old
-// plain number was a count of 7-day purchases).
-function packActiveDays(id) {
-  const v = MY_CARDS_ACTIVE[String(id)];
+// Days of rewards still coming from cards already bought ({ d: days, on:
+// "yyyy-mm-dd" = the game's UTC day it was typed }; an old plain number was a
+// count of 7-day purchases). They count down: days left now = d − days since
+// "on". Entries saved before "on" existed count from the day my_cards_active
+// was last saved (stamped on load, packCardsActiveStamp), else from today.
+function packActiveDaysSaved(v) {
   const d = v && typeof v === "object" ? Math.floor(Number(v.d) || 0) : Math.floor(Number(v) || 0) * 7;
   return d > 0 ? d : 0;
+}
+function packActiveDays(id) {
+  const v = MY_CARDS_ACTIVE[String(id)];
+  const d = packActiveDaysSaved(v);
+  if (!d) return 0;
+  const on = v && typeof v === "object" ? packParseDay(v.on) : null;
+  const gone = on ? Math.max(0, Math.round((packStartOfToday().getTime() - on.getTime()) / 86400000)) : 0;
+  return Math.max(0, d - gone);
+}
+// A card's entry as typed today.
+function packActiveEntry(n) { return { d: n, on: packDayKey(packStartOfToday()) }; }
+// Old entries without a day get the day my_cards_active was last saved, so a
+// later save doesn't restart their count from that new save's day.
+function packCardsActiveStamp(map) {
+  const u = CALC_STATE_UPDATED && CALC_STATE_UPDATED.my_cards_active ? new Date(CALC_STATE_UPDATED.my_cards_active) : null;
+  const day = u && !Number.isNaN(u.getTime()) ? packDayKey(u) : packDayKey(packStartOfToday());
+  Object.keys(map).forEach((k) => {
+    const v = map[k];
+    if (v && typeof v === "object" && packValidDay(v.on)) return;
+    const d = packActiveDaysSaved(v);
+    if (d) map[k] = { d, on: day };
+  });
+  return map;
 }
 function packLinkFor(tableId, own) {
   const out = packLinkForBase(tableId, own);
