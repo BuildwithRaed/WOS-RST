@@ -10040,7 +10040,7 @@ async function renderPurchasesPage() {
     rows.forEach((x) => (x.tables || []).forEach((id) => { const tb = byId.get(String(id)); const lead = tb && setLead(tb); out.add(String(lead ? lead.id : id)); }));
     return out;
   };
-  const pkStatus = (i, tab) => (i.on ? (i.stack ? esc(t("pur_pk_stacks")) : tab === "on" ? esc(i.cat) : `<span class="pur-pk-on">&#9679; ${esc(t("pur_pk_on_now"))}</span>`) : i.next != null ? `${esc(t("pur_pk_next").replace("{date}", pkDay(i.next)))}${tab === "soon" ? "" : ` · ${esc(i.cat)}`}` : esc(i.cat));
+  const pkStatus = (i, tab) => (i.on ? (i.stack ? esc(t("pur_pk_stacks")) : tab === "on" ? esc(i.cat) : `<span class="pur-pk-on">&#9679; ${esc(t("pur_pk_on_now"))}</span>`) : i.next != null ? `${esc(t("pur_pk_next").replace("{date}", pkDay(i.next)))}${tab === "soon" || tab === "allg" ? "" : ` · ${esc(i.cat)}`}` : tab === "allg" ? "" : esc(i.cat));
   const purPickedHtml = (tb) => {
     const i = purPackInfo(tb), star = purPlanTables().has(i.id);
     return `<button type="button" class="pur-pk-pick" data-purpick aria-haspopup="dialog"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${esc(i.name)}</b><small>${star ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span>` : ""}${pkStatus(i, "all")}</small><small class="pur-pk-pp">${esc(i.price)}</small></span><span class="pur-pk-chg">${esc(t("pur_pk_change"))} &rsaquo;</span></button>`;
@@ -11360,10 +11360,23 @@ async function renderPurchasesPage() {
     const close = () => { modal.style.display = "none"; };
     const inTab = (i, tab) => (tab === "on" ? i.on : tab === "soon" ? !i.on && i.next != null : true);
     const match = (i) => !q || i.words.includes(q);
+    // All: grouped by category in the Packs page's order (saved order first,
+    // then first appearance; "Not assigned" last).
+    const catOrder = (() => {
+      const seen = [];
+      tables.forEach((tb) => { const g = String(packLinkFor(tb.id).group || ""); if (g && !seen.includes(g)) seen.push(g); });
+      const saved = PACK_LINKS && PACK_LINKS.__order && Array.isArray(PACK_LINKS.__order.categories) ? PACK_LINKS.__order.categories : [];
+      return [...saved.filter((g) => seen.includes(g)), ...seen.filter((g) => !saved.includes(g)), ""];
+    })();
+    const rowHtml = (i, tab) => `<button type="button" class="pur-pk-row${i.id === String(PUR_FORM.table) ? " on" : ""}" data-ppkid="${esc(i.id)}"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${esc(i.name)}</b><small>${i.plan ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span>` : ""}${pkStatus(i, tab)}</small></span><span class="pur-pk-pr">${esc(i.price)}</span></button>`;
     const listHtml = () => {
       const tab = PUR_PICK_TAB, list = infos.filter((i) => match(i) && inTab(i, tab));
+      if (tab === "all" && list.length) {
+        const ngNote = ngHidden ? `<div class="pur-pk-ngnote">${esc(t("pur_pk_ng_later"))}</div>` : "";
+        return catOrder.map((g) => { const its = list.filter((i) => (catOrder.includes(i.cat) ? i.cat : "") === g); return its.length ? `<div class="pur-pk-gh">${esc(g || t("packs_filter_none"))} <small>${its.length}</small></div>${its.map((i) => rowHtml(i, "allg")).join("")}` : ""; }).join("") + ngNote;
+      }
       const ngNote = ngHidden ? `<div class="pur-pk-ngnote">${esc(t("pur_pk_ng_later"))}</div>` : "";
-      return (list.length ? list.map((i) => `<button type="button" class="pur-pk-row${i.id === String(PUR_FORM.table) ? " on" : ""}" data-ppkid="${esc(i.id)}"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${esc(i.name)}</b><small>${i.plan ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span>` : ""}${pkStatus(i, tab)}</small></span><span class="pur-pk-pr">${esc(i.price)}</span></button>`).join("") : `<div class="meta pur-pk-none">${esc(t("pur_pk_none"))}</div>`) + ngNote;
+      return (list.length ? list.map((i) => rowHtml(i, tab)).join("") : `<div class="meta pur-pk-none">${esc(t("pur_pk_none"))}</div>`) + ngNote;
     };
     const segHtml = () => ["on", "soon", "all"].map((k) => `<button type="button" data-ppktab="${k}" class="${PUR_PICK_TAB === k ? "on" : ""}" aria-pressed="${PUR_PICK_TAB === k}">${esc(t("pur_pk_tab_" + k))} · ${infos.filter((i) => match(i) && inTab(i, k)).length}</button>`).join("");
     const fill = () => {
