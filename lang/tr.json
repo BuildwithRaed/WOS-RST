@@ -781,6 +781,7 @@
 "t:pur_mark_bought":"Alındı",
 "t:pur_cnt_will":"Kaç tane alacaksın?",
 "t:pur_cnt_plan":"Plan: {n} · daha az da olur, Bütçeler kalanını yeniden planlar",
+"t:pur_cnt_plan_more":"Plan: {n} · daha fazlası olur, Bütçeler fazlasıyla planlar",
 "t:pur_cnt_max":"En fazla {n}",
 "t:pur_bs_title":"Alındı olarak işaretle",
 "t:pur_bs_planned":"Planlanan: {n} · tanesi {price}",

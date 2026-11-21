@@ -782,6 +782,7 @@
  "t:pur_mark_bought": "Acheté",
  "t:pur_cnt_will": "Combien en achèterez-vous ?",
  "t:pur_cnt_plan": "Plan : {n} · moins, c'est possible, Budgets replanifie le reste",
+ "t:pur_cnt_plan_more": "Plan : {n} · plus, c'est possible, Budgets planifie avec le surplus",
  "t:pur_cnt_max": "Max {n}",
  "t:pur_bs_title": "Marquer comme acheté",
  "t:pur_bs_planned": "Prévu : {n} · {price} l'unité",

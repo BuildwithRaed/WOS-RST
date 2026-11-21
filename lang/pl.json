@@ -782,6 +782,7 @@
  "t:pur_mark_bought": "Kupione",
  "t:pur_cnt_will": "Ile kupisz?",
  "t:pur_cnt_plan": "Plan: {n} · mniej też może być, Budżety zaplanują resztę od nowa",
+ "t:pur_cnt_plan_more": "Plan: {n} · więcej też może być, Budżety zaplanują z nadwyżką",
  "t:pur_cnt_max": "Maks. {n}",
  "t:pur_bs_title": "Oznacz jako kupione",
  "t:pur_bs_planned": "Zaplanowano: {n} · {price} za sztukę",

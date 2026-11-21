@@ -781,6 +781,7 @@
 "t:pur_mark_bought":"Đã mua",
 "t:pur_cnt_will":"Bạn sẽ mua bao nhiêu?",
 "t:pur_cnt_plan":"Kế hoạch: {n} · ít hơn cũng được, Ngân sách sẽ lập lại phần còn lại",
+"t:pur_cnt_plan_more":"Kế hoạch: {n} · nhiều hơn cũng được, Ngân sách sẽ lập kế hoạch với phần thêm",
 "t:pur_cnt_max":"Tối đa {n}",
 "t:pur_bs_title":"Đánh dấu đã mua",
 "t:pur_bs_planned":"Dự kiến: {n} · {price} mỗi gói",

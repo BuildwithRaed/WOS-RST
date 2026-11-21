@@ -782,6 +782,7 @@
  "t:pur_mark_bought": "Comprato",
  "t:pur_cnt_will": "Quanti ne comprerai?",
  "t:pur_cnt_plan": "Piano: {n} · anche meno va bene, Budget ripianifica il resto",
+ "t:pur_cnt_plan_more": "Piano: {n} · anche di più va bene, Budget pianifica con gli extra",
  "t:pur_cnt_max": "Max {n}",
  "t:pur_bs_title": "Segna come comprato",
  "t:pur_bs_planned": "Previsti: {n} · {price} l'uno",

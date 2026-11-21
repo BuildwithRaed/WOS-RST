@@ -781,6 +781,7 @@
 "t:pur_mark_bought":"구매함",
 "t:pur_cnt_will":"몇 개 구매할까요?",
 "t:pur_cnt_plan":"계획: {n} · 더 적어도 괜찮아요, 나머지는 예산에서 다시 계획해요",
+"t:pur_cnt_plan_more":"계획: {n} · 더 많아도 괜찮아요, 예산이 추가분을 반영해 계획해요",
 "t:pur_cnt_max":"최대 {n}",
 "t:pur_bs_title":"구매함으로 표시",
 "t:pur_bs_planned":"계획: {n} · 개당 {price}",
