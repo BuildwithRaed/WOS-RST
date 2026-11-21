@@ -781,6 +781,7 @@
 "t:pur_mark_bought":"已購買",
 "t:pur_cnt_will":"你要買幾個？",
 "t:pur_cnt_plan":"計畫：{n} · 少買也可以，預算會重新規劃其餘部分",
+"t:pur_cnt_plan_more":"計畫：{n} · 多買也可以，預算會按多出的部分規劃",
 "t:pur_cnt_max":"最多 {n}",
 "t:pur_bs_title":"標記為已購買",
 "t:pur_bs_planned":"計畫：{n} · 每個 {price}",

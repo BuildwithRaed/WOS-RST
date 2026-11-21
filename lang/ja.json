@@ -782,6 +782,7 @@
  "t:pur_mark_bought": "購入済み",
  "t:pur_cnt_will": "いくつ購入しますか？",
  "t:pur_cnt_plan": "プラン: {n} · 少なくてもOK、残りは予算で再計画します",
+ "t:pur_cnt_plan_more": "プラン: {n} · 多くてもOK、予算は追加分を含めて計画します",
  "t:pur_cnt_max": "最大 {n}",
  "t:pur_bs_title": "購入済みにする",
  "t:pur_bs_planned": "予定: {n} · 1個 {price}",

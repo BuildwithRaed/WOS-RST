@@ -782,6 +782,7 @@
  "t:pur_mark_bought": "已购买",
  "t:pur_cnt_will": "你要买几个？",
  "t:pur_cnt_plan": "计划：{n} · 少买也可以，预算会重新规划其余部分",
+ "t:pur_cnt_plan_more": "计划：{n} · 多买也可以，预算会按多出的部分规划",
  "t:pur_cnt_max": "最多 {n}",
  "t:pur_bs_title": "标记为已购买",
  "t:pur_bs_planned": "计划：{n} · 每个 {price}",

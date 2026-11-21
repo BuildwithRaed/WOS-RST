@@ -1316,7 +1316,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 121; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 122; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3708,6 +3708,7 @@ const T = {
   pur_mark_bought: { en: "Bought" },
   pur_cnt_will: { en: "How many will you buy?" },
   pur_cnt_plan: { en: "Plan: {n} · fewer is fine, Budgets plans the rest again" },
+  pur_cnt_plan_more: { en: "Plan: {n} · more is fine, Budgets plans with the extra" },
   pur_cnt_max: { en: "Max {n}" },
   pur_bs_title: { en: "Mark as bought" },
   pur_bs_planned: { en: "Planned: {n} · {price} each" },
@@ -9207,6 +9208,38 @@ function purTriggerWaiting(p) {
   const trig = packTriggerOf(packLinkFor(p.table));
   return !!trig && packTriggerRowStatus(trig, Number(p.row) || 0).state !== "done";
 }
+// How many of a plan row's pack the game lets you buy on date s0[d] (the
+// Will buy pop-up's "How many"), not the plan's count. Stacking cards: the
+// room left in the stack that day ((cap − reward days still running) ÷ card
+// days), after the days left now (Weekly cards) and the cards planned before
+// it (My Purchases and the pop-up's earlier dates). Other packs: their limit
+// for that run minus what is bought / planned in it. Never below 1 or the plan.
+function purGameMax(r, tb, s0, d) {
+  const plan = Math.max(1, Number(s0[d].count) || 1), id = String(tb.id), off = Number(s0[d].off) || 0;
+  const base = packLinkForBase(tb.id), st = packStackInfo(base.reset);
+  const todayKey = packDayKey(packStartOfToday()), dayKey = (o) => packDayKey(new Date(packStartOfToday().getTime() + o * 86400000));
+  let n;
+  if (st) {
+    const at = dayKey(off);
+    const cards = (PACK_PURCHASES.list || []).filter((p) => String(p.table) === id && (purPlannedCounts(p) || (p.status === "bought" && p.date >= todayKey)) && p.date <= at).map((p) => ({ off: Math.max(0, Math.round((packParseDay(p.date) - packStartOfToday()) / 86400000)), n: Math.max(1, Math.floor(Number(p.count) || 1)) }));
+    s0.forEach((x, k) => { if (k !== d && (Number(x.off) || 0) < off) cards.push({ off: Math.max(0, Number(x.off) || 0), n: Math.max(1, Number(x.count) || 1) }); });
+    cards.sort((a, b) => a.off - b.off);
+    let end = IS_OWNER || base.visitorDate ? Math.min(packActiveDays(tb.id), st.cap) : 0;
+    cards.forEach((c) => { end = Math.max(end, c.off) + c.n * st.days; });
+    n = Math.floor((st.cap - Math.max(0, end - off)) / st.days);
+  } else if (typeof r.reset === "number" && r.reset > 0) {
+    const offs = packResetOffsets(r.reset, r.resetDay, PACK_HORIZON_DAYS, r.window);
+    const runOf = (o) => offs.filter((x) => x <= o).pop();
+    const at = runOf(off), usedAt = r.usedAt || { 0: r.usedNow || 0 };
+    const others = s0.reduce((a, x, k) => a + (k !== d && runOf(Number(x.off) || 0) === at ? Number(x.count) || 0 : 0), 0);
+    n = (r.perCycle || 1) - ((at != null && usedAt[at]) || 0) - others;
+  } else if (r.reset === "once") {
+    const used = (PACK_PURCHASES.list || []).filter((p) => String(p.table) === id && (r.row == null || p.row == null || Number(p.row) === Number(r.row)) && packPurchaseUsesLimit(p, base)).reduce((a, p) => a + Math.max(1, Math.floor(Number(p.count) || 1)), 0);
+    n = (r.perCycle || 1) - used - s0.reduce((a, x, k) => a + (k !== d ? Number(x.count) || 0 : 0), 0);
+  } else n = 99;
+  if (!Number.isFinite(n)) n = 99;
+  return Math.max(1, plan, Math.floor(n));
+}
 function purPlannedCounts(p) {
   return p.status === "planned" && packValidDay(p.date) && (p.date >= packDayKey(packStartOfToday()) || purTriggerWaiting(p));
 }
@@ -10916,10 +10949,12 @@ async function renderPurchasesPage() {
       };
       const dayMenu = (d) => (isPick && openDay === d ? `<div class="pur-dmenu">${M.steps.map((st, k) => `<label><input type="checkbox" data-pmdt="${d}|${k}" ${selOf(d)[k] ? "checked" : ""} /> ${esc(fmtL(local(st.price)))}<span class="meta">${tset[k] ? esc(pickText(k)) : ""}</span></label>`).join("")}<div class="meta" style="font-size:10.5px;">${esc(t("pur_ms_items_above"))}</div></div>` : "");
       const daysOn = keep && keep.days ? keep.days : null;
-      // How many on each date: 1 … the plan's count.
+      // How many on each date: 1 … what the game allows that date (purGameMax).
       const cnt = keep && keep.cnt ? keep.cnt : {};
       const cntOf = (d) => (cnt[d] != null ? cnt[d] : s0[d].count);
-      const cntHtml = (d) => (s0[d].count > 1 ? `<div class="pur-cnt" data-pmcnt="${d}"><span class="pur-cnt-l">${esc(t("pur_cnt_will"))}</span>${purStepHtml("pmstep", cntOf(d), s0[d].count)}<button type="button" class="pur-cnt-max" data-pmcmax${cntOf(d) >= s0[d].count ? " disabled" : ""}>${esc(t("pur_cnt_max").replace("{n}", s0[d].count))}</button><small class="pur-cnt-note">${esc(t("pur_cnt_plan").replace("{n}", s0[d].count))}</small></div>` : "");
+      const maxes = s0.map((x, d) => purGameMax(r, tb, s0, d));
+      const cntNote = (d) => t(cntOf(d) > s0[d].count ? "pur_cnt_plan_more" : "pur_cnt_plan").replace("{n}", s0[d].count);
+      const cntHtml = (d) => (s0[d].count > 1 ? `<div class="pur-cnt" data-pmcnt="${d}"><span class="pur-cnt-l">${esc(t("pur_cnt_will"))}</span>${purStepHtml("pmstep", cntOf(d), maxes[d])}<button type="button" class="pur-cnt-max" data-pmcmax${cntOf(d) >= maxes[d] ? " disabled" : ""}>${esc(t("pur_cnt_max").replace("{n}", maxes[d]))}</button><small class="pur-cnt-note">${esc(cntNote(d))}</small></div>` : "");
       modal.innerHTML = `<div class="modal-box pur-modal">
         <div class="pur-m-head"><h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2>${closeXHtml("data-pmclose")}</div>${verHtml}${stepsHtml}${noteHtml}${M ? "" : `<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== fmtN(1) ? `${esc(r.label)} · ` : ""}${esc(fmtN(1))} ${esc(t("pur_each"))}</div>`}
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
@@ -10940,13 +10975,14 @@ async function renderPurchasesPage() {
       boxes.forEach((c) => c.addEventListener("change", sync));
       // − / + / Max on a date: the number, its price and the total change in place.
       modal.querySelectorAll("[data-pmcnt]").forEach((row) => {
-        const d = Number(row.dataset.pmcnt), max = s0[d].count, lab = boxes[d] && boxes[d].closest("label");
+        const d = Number(row.dataset.pmcnt), max = maxes[d], lab = boxes[d] && boxes[d].closest("label");
         const set = (n) => {
           cnt[d] = Math.max(1, Math.min(max, n));
           row.querySelector("[data-pmstep-n]").textContent = cnt[d];
           row.querySelector('[data-pmstep="-1"]').disabled = cnt[d] <= 1;
           row.querySelector('[data-pmstep="1"]').disabled = cnt[d] >= max;
           row.querySelector("[data-pmcmax]").disabled = cnt[d] >= max;
+          row.querySelector(".pur-cnt-note").textContent = cntNote(d);
           if (lab) { const x = lab.querySelector("[data-pmx]"); if (x) x.textContent = bidiNum("× " + cnt[d]); lab.querySelector("[data-pmpr]").textContent = fmtN(cnt[d], selOf(d)); }
           if (boxes[d] && !boxes[d].checked) boxes[d].checked = true;
           sync();

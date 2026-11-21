@@ -781,6 +781,7 @@
 "t:pur_mark_bought":"Dibeli",
 "t:pur_cnt_will":"Berapa yang akan kamu beli?",
 "t:pur_cnt_plan":"Rencana: {n} · lebih sedikit tidak apa-apa, Anggaran merencanakan sisanya lagi",
+"t:pur_cnt_plan_more":"Rencana: {n} · lebih banyak tidak apa-apa, Anggaran merencanakan dengan tambahannya",
 "t:pur_cnt_max":"Maks {n}",
 "t:pur_bs_title":"Tandai sudah dibeli",
 "t:pur_bs_planned":"Direncanakan: {n} · {price} per buah",
