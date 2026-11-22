@@ -3605,6 +3605,14 @@ const T = {
   cda_path: { en: "Path {n}" },
   adv_title: { en: "Best upgrades" },
   adv_desc: { en: "The next upgrade of every piece, charm, research, expert, island building and Shining City skin you can still get, ranked by what 1% costs. Prices are the items' value in USD from your packs (not your Backpack); 1% = one troop's stat, so an all-troops upgrade counts 3 times. Priority counts each troop + stat by its place in your upgrade order (1st ×1.5 down to 12th ×0.5)." },
+  adv_p_title: { en: "Priority first" },
+  adv_p_desc: { en: "Troop unlocks and march size come before any % upgrade: unlocks first, then march size, cheapest per +100 first. Costs at your pack values." },
+  adv_p_t12: { en: "Needed for T12 troops" },
+  adv_p_t11: { en: "Needed for T11 troops" },
+  adv_p_march: { en: "+{n} march" },
+  adv_p_per: { en: "{v} per +100 march" },
+  adv_p_train: { en: "−{n}% training cost" },
+  adv_p_done: { en: "March size and troop unlocks done" },
   adv_best_next: { en: "Best next" },
   adv_then: { en: "Then" },
   adv_per_1: { en: "per 1%" },
@@ -7979,7 +7987,7 @@ function advPageHtml(steps) {
       ${shown.length > N ? purMoreBtnHtml("data-advmore", ADV_MORE, shown.length - N) : ""}
       <p class="pca-sb" style="margin:10px 0 0;">${esc(t("adv_legend"))}</p>
     </div>`;
-  return `<div class="page-head"><div><h2>${esc(t("adv_title"))}</h2><p class="desc">${esc(t("adv_desc"))}</p></div></div>${answer}${typesCard}${advGapHtml()}${settings}${listCard}`;
+  return `<div class="page-head"><div><h2>${esc(t("adv_title"))}</h2><p class="desc">${esc(t("adv_desc"))}</p></div></div>${advPriorityHtml(ADV_PRIO)}${answer}${typesCard}${advGapHtml()}${settings}${listCard}`;
 }
 function advDraw() {
   const content = document.getElementById("content");
@@ -7989,10 +7997,64 @@ function advDraw() {
 async function renderBestUpgradesPage() {
   const seq = RENDER_SEQ, content = document.getElementById("content");
   await ensureUpgradeOrder();
-  const steps = await advSteps();
+  const [steps, prio] = await Promise.all([advSteps(), advPriority().catch((e) => { console.warn("best upgrades: priority", e); return []; })]);
   if (seq !== RENDER_SEQ) return;
+  ADV_PRIO = prio;
   content.innerHTML = advPageHtml(steps);
 }
+// ---- "Priority first": troop unlocks and march size, before any % upgrade ----
+// The next step of every node not done yet that unlocks troops (T12 Troop Unlock slots,
+// T11 Helios <troop> Unlock) or adds Troops Deployment Capacity (Research Center
+// Regimental Expansion I–VI, T11 Flame Squad); T11's Helios <troop> Training is part of its unlock path. Capacity
+// numbers (cumulative at each level) are the owner's game values. Unlocks first, then
+// capacity by $ per +100 march.
+const ADV_MARCH_RC = {
+  "Regimental Expansion I": [320, 640, 1000], "Regimental Expansion II": [320, 640, 1400], "Regimental Expansion III": [620, 1200, 1800, 2800],
+  "Regimental Expansion IV": [990, 1900, 2900, 3900, 5600], "Regimental Expansion V": [1200, 2400, 3600, 4800, 6000, 8000],
+  "Regimental Expansion VI": [2000, 4000, 6000, 8000, 10000, 13400],
+};
+const ADV_MARCH_T11 = { "Flame Squad": [200, 400, 600, 800, 1000], Training: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] };
+async function advPriority() {
+  await Promise.all([ensureRCData(), ensureT11StateData(), ensureT12NodesData(), ensureT12StateData(), ensureResearchSpeedData()]);
+  const cost = (items) => Object.entries(items).reduce((s, [n, q]) => s + (Number(q) || 0) * advVal(n), 0), RT = "Research Speedups (minutes)";
+  const rowCost = (r) => cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 });
+  const unl = [], cap = [];
+  // T12 Troop Unlock slots: needed for T12 troops.
+  T12_TROOPS.forEach((troop) => T12_ITEM_DEFS.filter((d) => d.group === "Troop Unlock").forEach((d) => {
+    const now = Number(((T12_STATE || {})[troop] || {})[d.key]) || 0;
+    if (now >= d.max) return;
+    const r = (T12_NODES_CACHE[d.tier] || {})[now + 1] || {};
+    unl.push({ tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1}`, sub: t("adv_p_t12"), usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }) });
+  }));
+  // T11: Helios <troop> Unlock (XI troops), Flame Squad and Helios <troop> Training (capacity).
+  T11_TROOPS.forEach((troop) => Object.entries((T11_NODES_CACHE || {})[troop] || {}).forEach(([track, rows0]) => {
+    const rows = rows0.slice().sort((x, y) => Number(x.level) - Number(y.level)), now = Number(((T11_STATE || {})[troop] || {})[track]) || 0;
+    if (now >= rows.length) return;
+    const r = rows.find((x) => Number(x.level) === now + 1) || {}, usd = rowCost(r), lab = `${dataName(track)} Lv ${now} \u2192 ${now + 1}`;
+    if (/^Helios .* Unlock$/.test(track)) unl.push({ tab: "t11helios", img: QUICK_ICONS.t11helios, name: `${troopDisplayName(troop)} \u00b7 ${lab}`, sub: t("adv_p_t11"), usd, t11: 1 });
+    // Helios <troop> Training is part of the T11 unlock path: listed (and ranked) as an unlock,
+    // with its +capacity on the line.
+    if (/^Helios .* Training$/.test(track)) { const m = ADV_MARCH_T11.Training, add = (m[now] || 0) - (m[now - 1] || 0); unl.push({ tab: "t11helios", img: QUICK_ICONS.t11helios, name: `${troopDisplayName(troop)} \u00b7 ${lab} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, sub: `${t("adv_p_t11")} \u00b7 ${t("adv_p_train").replace("{n}", 5)}`, usd, t11: 2 }); }
+    if (track === "Flame Squad") { const m = ADV_MARCH_T11["Flame Squad"], add = (m[now] || 0) - (m[now - 1] || 0); cap.push({ tab: "t11helios", img: QUICK_ICONS.t11helios, name: `${troopDisplayName(troop)} \u00b7 ${lab} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, add, usd, extra: "" }); }
+  }));
+  // Research Center: Regimental Expansion I–VI.
+  Object.entries(ADV_MARCH_RC).forEach(([track, m]) => {
+    const rows = (RC_NODES_CACHE[track] || []).slice().sort((x, y) => Number(x.level) - Number(y.level)), now = Number((RC_STATE || {})[track]) || 0, top = Math.max(rows.length, m.length);
+    if (now >= top) return;
+    const r = rows.find((x) => Number(x.level) === now + 1) || {}, add = (m[now] || 0) - (m[now - 1] || 0);
+    cap.push({ tab: "researchcenter", img: QUICK_ICONS.researchcenter, name: `${dataName(track)} Lv ${now} \u2192 ${now + 1} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, add, usd: rowCost(r), extra: "" });
+  });
+  unl.sort((x, y) => (x.t11 || 0) - (y.t11 || 0));
+  cap.forEach((x) => { x.per = x.add > 0 ? (x.usd / x.add) * 100 : Infinity; x.sub = [t("adv_p_per").replace("{v}", `$${x.per.toFixed(2)}`), x.extra].filter(Boolean).join(" \u00b7 "); });
+  cap.sort((x, y) => x.per - y.per);
+  return unl.concat(cap);
+}
+function advPriorityHtml(list) {
+  const row = (x) => `<details class="pca-pk"><summary data-advopen="${x.tab}">${advPic(x.img)}<span class="pca-mid"><span class="pca-nm">${esc(x.name)}</span><span class="pca-sb">${esc(x.sub)}</span></span><b class="pca-pr">${advMoney(x.usd)}</b></summary></details>`;
+  return `<div class="panel" data-advprio><div class="t12x-title">${esc(t("adv_p_title"))}</div><p class="desc">${esc(t("adv_p_desc"))}</p>
+    ${list.length ? list.map(row).join("") : `<p class="pca-note ok">&#10003; ${esc(t("adv_p_done"))}</p>`}</div>`;
+}
+let ADV_PRIO = [];
 // ---- Sheets ----
 function advFind(id) {
   const R = ADV_LAST && ADV_LAST.R;
