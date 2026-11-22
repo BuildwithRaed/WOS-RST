@@ -3605,15 +3605,20 @@ const T = {
   cda_path: { en: "Path {n}" },
   adv_title: { en: "Best upgrades" },
   adv_desc: { en: "The next upgrade of every piece, charm, research, expert, island building and Shining City skin you can still get, ranked by what 1% costs. Prices are the items' value in USD from your packs (not your Backpack); 1% = one troop's stat, so an all-troops upgrade counts 3 times. Priority counts each troop + stat by its place in your upgrade order (1st ×1.5 down to 12th ×0.5)." },
-  adv_p_title: { en: "Priority first" },
-  adv_p_desc: { en: "Troop unlocks and march size come before any % upgrade: unlocks first, then march size, cheapest per +100 first. Costs at your pack values." },
   adv_p_t12: { en: "Needed for T12 troops" },
   adv_p_t11: { en: "Needed for T11 troops" },
   adv_p_t12skill: { en: "Part of T12 troops" },
   adv_p_march: { en: "+{n} march" },
   adv_p_per: { en: "{v} per +100 march" },
   adv_p_train: { en: "−{n}% training cost" },
-  adv_p_done: { en: "March size and troop unlocks done" },
+  adv_p_done: { en: "Troop unlocks and march capacity done" },
+  adv_p_per100: { en: "per +100 march" },
+  adv_p_cost: { en: "cost" },
+  adv_p_list_h: { en: "Troop unlocks · march capacity" },
+  adv_p_pct_h: { en: "Then by cost per 1%" },
+  adv_ord_unlocks: { en: "Troop unlocks" },
+  adv_ord_march: { en: "March capacity" },
+  adv_ord_first: { en: "always first" },
   adv_best_next: { en: "Best next" },
   adv_then: { en: "Then" },
   adv_per_1: { en: "per 1%" },
@@ -7733,7 +7738,7 @@ async function advStepsT12(out) {
         const d = defOf(k);
         if (!d || cur(k) >= need) return;
         if (d.stat) waits.add(`${tT12Group(d.group)} \u00b7 ${tT12Label(d.label)} ${need}`);
-        else if (ADV_T12_PRIO.includes(k)) waits.add(`${tT12Group(d.group)} ${need} (${t("adv_p_title")})`);
+        else if (ADV_T12_PRIO.includes(k)) waits.add(`${tT12Group(d.group)} ${need} (${t("adv_p_list_h")})`);
         else pre[k] = need;
       }));
       steps.push({ def, b, e, nth, items, pre, waits: [...waits] });
@@ -8047,8 +8052,12 @@ let ADV_MORE = false;  // "Show N more" opened (for the visit)
 function advPageHtml(steps) {
   const R = advRank(steps), shown = ADV_SET.page === "all" ? R.buy : R.buy.filter((r) => r.type === ADV_SET.page);
   ADV_LAST = { steps, R };
-  const best = R.buy[0], then = R.buy.slice(1, 4);
-  const answer = best ? `<div class="panel">
+  const P = ADV_PRIO || [], best = R.buy[0], then = R.buy.slice(1, 4);
+  const answer = P.length ? `<div class="panel">
+      <div class="pca-h">${esc(t("adv_best_next"))}</div>
+      <div class="pca-sum" data-advopen="${P[0].tab}" role="button" tabindex="0" style="cursor:pointer; margin-top:4px;">${advPic(P[0].img)}<span class="pca-mid"><span class="pca-nm">${esc(P[0].name)}</span><span class="pca-sb">${esc(P[0].sub)}</span></span><span style="text-align:end;"><b class="pca-big">${bidiNum(P[0].per != null ? `$${P[0].per.toFixed(2)}` : advMoney(P[0].usd))}</b><small class="meta">${esc(P[0].per != null ? t("adv_p_per100") : t("adv_p_cost"))}</small></span></div>
+      <div class="pca-h">${esc(t("adv_then"))}</div>${P.slice(1, 4).map(advPrioRowHtml).join("")}${P.length < 4 ? R.buy.slice(0, 4 - P.length).map((r) => advRowHtml(r, { rank: true })).join("") : ""}
+    </div>` : best ? `<div class="panel">
       <div class="pca-h">${esc(t("adv_best_next"))}</div>
       <div class="pca-sum" data-advrow="${esc(best.id)}" role="button" tabindex="0" style="cursor:pointer; margin-top:4px;">${advPic(best.img, best.page)}<span class="pca-mid"><span class="pca-nm">${esc(best.name)}</span><span class="pca-sb">${esc([best.sub || "", advGivesText(best.gain), advMoney(best.usd) + (best.members && best.members.length > 1 ? ` ${t("adv_each")}` : "")].filter(Boolean).join(" · "))}</span></span><span style="text-align:end;"><b class="pca-big" style="color:var(--good);">${bidiNum(`$${advPer(best).toFixed(2)}`)}</b><small class="meta">${esc(t("adv_per_1"))}</small></span></div>
       ${then.length ? `<div class="pca-h">${esc(t("adv_then"))}</div>${then.map((r) => advRowHtml(r, { rank: true })).join("")}` : ""}
@@ -8063,11 +8072,12 @@ function advPageHtml(steps) {
       <div class="t12x-title">${esc(t("adv_ranked"))} <small class="meta" style="font-weight:600; text-transform:none; letter-spacing:0;">· ${esc(t(shown.length === 1 ? "adv_n_up1" : "adv_n_ups").replace("{n}", shown.length))}</small></div>
       <p class="desc">${esc(t("adv_ranked_desc"))}</p>
       ${chips}
+      ${ADV_SET.page === "all" ? (P.length ? `<div class="pca-h">${esc(t("adv_p_list_h"))}</div>${P.map(advPrioRowHtml).join("")}<div class="pca-h">${esc(t("adv_p_pct_h"))}</div>` : `<p class="pca-note ok" style="margin:0 0 6px;">&#10003; ${esc(t("adv_p_done"))}</p>`) : ""}
       ${list.map((r) => advRowHtml(r, { rank: true, page: ADV_SET.page === "all" })).join("") || `<div class="meta">${esc(t("adv_nothing"))}</div>`}
       ${shown.length > N ? purMoreBtnHtml("data-advmore", ADV_MORE, shown.length - N) : ""}
       <p class="pca-sb" style="margin:10px 0 0;">${esc(t("adv_legend"))}</p>
     </div>`;
-  return `<div class="page-head"><div><h2>${esc(t("adv_title"))}</h2><p class="desc">${esc(t("adv_desc"))}</p></div></div>${advPriorityHtml(ADV_PRIO)}${answer}${typesCard}${advGapHtml()}${settings}${listCard}`;
+  return `<div class="page-head"><div><h2>${esc(t("adv_title"))}</h2><p class="desc">${esc(t("adv_desc"))}</p></div></div>${answer}${typesCard}${advGapHtml()}${settings}${listCard}`;
 }
 function advDraw() {
   const content = document.getElementById("content");
@@ -8147,10 +8157,10 @@ async function advPriority() {
   cap.sort((x, y) => x.per - y.per);
   return unl.concat(cap);
 }
-function advPriorityHtml(list) {
-  const row = (x) => `<details class="pca-pk"><summary data-advopen="${x.tab}">${advPic(x.img)}<span class="pca-mid"><span class="pca-nm">${esc(x.name)}</span><span class="pca-sb">${esc(x.sub)}</span></span><b class="pca-pr">${advMoney(x.usd)}</b></summary></details>`;
-  return `<div class="panel" data-advprio><div class="t12x-title">${esc(t("adv_p_title"))}</div><p class="desc">${esc(t("adv_p_desc"))}</p>
-    ${list.length ? list.map(row).join("") : `<p class="pca-note ok">&#10003; ${esc(t("adv_p_done"))}</p>`}</div>`;
+// A "Priority first" step as a list row: its own $ (and $ per +100 march), no $/1% pill.
+function advPrioPill(x) { return `<span class="pur-cmp pur-cmp-both">${x.per != null && Number.isFinite(x.per) ? `${bidiNum(`$${x.per.toFixed(2)}`)} / +100` : bidiNum(advMoney(x.usd))}</span>`; }
+function advPrioRowHtml(x) {
+  return `<details class="pca-pk"><summary data-advopen="${x.tab}">${advPic(x.img)}<span class="pca-mid"><span class="pca-nm">${esc(x.name)}</span><span class="pca-sb">${esc([x.per != null ? x.extra : x.sub, x.per != null ? advMoney(x.usd) : ""].filter(Boolean).join(" \u00b7 "))}</span></span><b class="pca-pr">${advPrioPill(x)}</b></summary></details>`;
 }
 let ADV_PRIO = [];
 // ---- Sheets ----
@@ -9293,6 +9303,7 @@ function cdaOrderSheet(opts = {}) {
     m.innerHTML = `<div class="modal-box adm-sheet cando-box" role="dialog" aria-modal="true" aria-label="${esc(t("cando_order"))}">
       <div class="cando-hd"><b>${esc(t("cando_order"))}</b>${closeXHtml("data-cdx")}</div>
       <div class="cando-oh"><span class="meta cando-desc">${esc(t("cando_drag_hint"))}</span><span class="cando-ob">${arrangeBtnHtml("upgrade_order")}<button type="button" class="btn ghost small" data-cdreset>${esc(t("rch_order_reset"))}</button></span></div>
+      ${opts.weights ? `<div class="cando-ord" style="margin-bottom:6px;">${[["adv_ord_unlocks", "T12 Troop Unlock · Troop Skill · T11 Helios + Training"], ["adv_ord_march", "Solar Supremacy · Regimental Expansion · Flame Squad"]].map(([k, sub]) => `<div class="rch-ord-row"><b>&#128274;</b><span>${esc(t(k))}<small class="meta" style="display:block; font-weight:400;">${esc(sub)}</small></span><small class="meta">${esc(t("adv_ord_first"))}</small></div>`).join("")}</div>` : ""}
       <div class="cando-ord"${arrangeHostAttr("upgrade_order")}>${UPGRADE_ORDER.rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-cdrow="${i}" data-cdkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>${opts.weights ? `<small class="meta">&times;${(1.5 - i / 11).toFixed(2)}</small>` : ""}${dsHandleHtml("data-cddrag")}</div>`).join("")}</div>
       <div class="cando-foot"><button type="button" class="btn cando-done" data-cdx>${esc(t("gs_done"))}</button></div>
     </div>`;
