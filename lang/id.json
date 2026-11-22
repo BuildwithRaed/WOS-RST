@@ -2968,5 +2968,7 @@
 "t:pur_op_upto":"sampai {n}",
 "t:pur_op_none_left":"tidak ada sisa di putaran ini",
 "t:pur_op_sum":"rencana {a} + tambahan {b}",
-"t:pur_op_note":"{n} tambahan · Anggaran akan merencanakan sisanya lagi"
+"t:pur_op_note":"{n} tambahan · Anggaran akan merencanakan sisanya lagi",
+"t:b3_pages":"Halaman",
+"t:b3_arrange_hint":"Tahan ⋮⋮ lalu seret · centang kembali setelah Selesai"
 }

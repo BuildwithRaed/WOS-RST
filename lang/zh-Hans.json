@@ -2970,5 +2970,7 @@
 "t:pur_op_upto":"最多 {n}",
 "t:pur_op_none_left":"本轮已无剩余",
 "t:pur_op_sum":"计划 {a} + 额外 {b}",
-"t:pur_op_note":"{n} 额外 · 预算会重新规划其余部分"
+"t:pur_op_note":"{n} 额外 · 预算会重新规划其余部分",
+"t:b3_pages":"页面",
+"t:b3_arrange_hint":"按住 ⋮⋮ 拖动 · 点完成后勾选框会恢复"
 }

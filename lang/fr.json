@@ -2970,5 +2970,7 @@
 "t:pur_op_upto":"jusqu'à {n}",
 "t:pur_op_none_left":"plus rien pour cette période",
 "t:pur_op_sum":"plan {a} + en plus {b}",
-"t:pur_op_note":"{n} en plus · Budgets va replanifier le reste avec"
+"t:pur_op_note":"{n} en plus · Budgets va replanifier le reste avec",
+"t:b3_pages":"Pages",
+"t:b3_arrange_hint":"Maintenez ⋮⋮ et faites glisser · les cases reviennent avec Terminé"
 }

@@ -2970,5 +2970,7 @@
 "t:pur_op_upto":"fino a {n}",
 "t:pur_op_none_left":"nessuno rimasto in questo giro",
 "t:pur_op_sum":"piano {a} + extra {b}",
-"t:pur_op_note":"{n} extra · Budget ripianificherà il resto con questo"
+"t:pur_op_note":"{n} extra · Budget ripianificherà il resto con questo",
+"t:b3_pages":"Pagine",
+"t:b3_arrange_hint":"Tieni premuto ⋮⋮ e trascina · le spunte tornano con Fatto"
 }
