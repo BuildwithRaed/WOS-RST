@@ -3625,6 +3625,8 @@ const T = {
   adv_n_trs: { en: "{n} tracks" },
   adv_n_tr1: { en: "1 track" },
   adv_n_steps: { en: "{n} steps" },
+  adv_buy_name: { en: "{name} · buy" },
+  adv_tomes_price: { en: "{n} Tomes ({v})" },
   adv_n_step1: { en: "1 step" },
   adv_avg: { en: "avg" },
   adv_to_target: { en: "to your target" },
@@ -7965,14 +7967,15 @@ async function advStepsMore(out) {
 async function advStepsSkins(out) {
   // Only City Skins the Shining City event still sells (shiningPickable: the allow list, never a
   // Globe Level skin) and the person doesn't own; each costs rule skinTomes Glorious Tomes.
-  const rows = await keptRows("skins", skinGalleryPath());
+  const [rows, own] = await Promise.all([keptRows("skins", skinGalleryPath()), IS_OWNER ? null : loadCalcState("shining_skins").catch(() => null)]);
+  const picked = new Set(shiningPicked(shiningSkinsListOf(own), rows || []).map((s) => String(s.id)));
   const gainOf = (r) => { const g = {}; ADV_SLOTS.forEach(([tk, vk]) => { const bs = cdaBonusStat(r[tk]); if (bs && r[vk] != null) advGain(g, bs.troop, [bs.stat], Number(r[vk]) || 0); }); return g; };
   const globe = advIsGlobe;
   rows.forEach((r) => {
     if (r.owned || r.category !== SHINING_SKIN_CAT || globe(r.name) || !shiningPickable(r.name)) return;
     const g = gainOf(r);
     if (!Object.values(g).some((v) => v > 1e-9)) return;
-    out.push({ id: `sk|${r.id}`, track: `sk|${r.id}`, nth: 0, page: "skins", type: "shining", base: `${dataName(r.category)}: ${dataName(r.name)}`, la: "\u2014", lb: t("cda_owned"), hi: 1, tgt: 1, cat: r.category, name: `${dataName(r.category)}: ${dataName(r.name)}`, img: r.image_url || "",
+    out.push({ id: `sk|${r.id}`, track: `sk|${r.id}`, nth: 0, page: "skins", type: "shining", base: `${dataName(r.category)}: ${dataName(r.name)}`, la: "", lb: "", hi: 1, tgt: picked.has(String(r.id)) ? 1 : 0, single: true, tomes: shiningTomesPer(), cat: r.category, name: `${dataName(r.category)}: ${dataName(r.name)}`, img: r.image_url || "",
       items: { "Glorious Tome": shiningTomesPer() }, gain: g, kind: "buy", note: t("adv_n_shining") });
   });
 }
@@ -8036,15 +8039,15 @@ function advRank(steps) {
     list.sort((x, y) => x.nth - y.nth);
     const first = list[0], top = list[list.length - 1].hi, tg = first.tgt != null ? first.tgt : top;
     if (first.nth !== 0) return;
-    const st = list.filter((s) => s.hi <= tg).map(score);
+    const st = list.filter((s) => s.hi <= tg && s.hi > (first.single ? 0 : -Infinity)).map(score);
     if (!st.length) return;
     const g = {}, usd = st.reduce((s, x) => s + x.usd, 0);
     st.forEach((x) => Object.entries(x.gain).forEach(([k, v]) => { g[k] = (g[k] || 0) + v; }));
     const gs = st.reduce((s, x) => s + x.g, 0), wg = st.reduce((s, x) => s + x.wg, 0);
     if (!(gs > 1e-9)) return;
     const from = first.hi - 1, lastHi = st[st.length - 1].hi;
-    tracks.push({ id: `tt|${first.track}`, track: first.track, page: first.page, type: first.type, img: first.img, base: first.base || first.name, la: first.la, lb: st[st.length - 1].lb,
-      name: first.base ? `${first.base} ${first.la} \u2192 ${st[st.length - 1].lb}` : first.name, steps: st, n: st.length, usd, gain: g, g: gs, wg, pp: usd / gs, wpp: wg > 0 ? usd / wg : Infinity,
+    tracks.push({ id: `tt|${first.track}`, track: first.track, page: first.page, type: first.type, img: first.img, single: !!first.single, tomes: first.tomes, base: first.base || first.name, la: first.la, lb: st[st.length - 1].lb,
+      name: first.single ? t("adv_buy_name").replace("{name}", first.base) : first.base ? `${first.base} ${first.la} \u2192 ${st[st.length - 1].lb}` : first.name, steps: st, n: st.length, usd, gain: g, g: gs, wg, pp: usd / gs, wpp: wg > 0 ? usd / wg : Infinity,
       bar: { now: top > 0 ? Math.max(0, Math.min(1, (from + 1 - (list[0].hi - list[0].nth - 1) * 0) / (top + 1))) : 0, from, to: lastHi, top } });
   });
   tracks.sort((x, y) => x[key] - y[key] || x.usd - y.usd);
@@ -8066,7 +8069,11 @@ function advGivesText(gain) {
 const advPic = (src, page) => { const s = src || (page ? QUICK_ICONS[advPageOf(page).tab] : ""); return `<span class="pca-pic">${s ? `<img src="${esc(s)}" alt="" loading="lazy" />` : ""}</span>`; };
 function advRowHtml(r, o = {}) {
   const pg = advPageOf(r.page), per = advPer(r, o.key);
-  const sub = [o.rank ? `#${r.rank}` : "", r.sub || "", o.page ? advTypeName(r.type) : "", `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`, advMoney(r.usd) + (r.members && r.members.length > 1 ? ` ${t("adv_each")}` : "")].filter(Boolean).join(" · ");
+  if (r.page === "skins") {
+    const grp = r.members && r.members.length > 1, price = t("adv_tomes_price").replace("{n}", (r.tomes || 0).toLocaleString("en-US")).replace("{v}", advMoney(r.usd));
+    r = { ...r, name: grp ? r.name : t("adv_buy_name").replace("{name}", r.base || r.name), usdTxt: grp ? `${price} ${t("adv_each")}` : price };
+  }
+  const sub = [o.rank ? `#${r.rank}` : "", r.sub || "", o.page ? advTypeName(r.type) : "", `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`, r.usdTxt || advMoney(r.usd) + (r.members && r.members.length > 1 ? ` ${t("adv_each")}` : "")].filter(Boolean).join(" · ");
   return `<details class="pca-pk"><summary data-advrow="${esc(r.id)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span></span>${Number.isFinite(per) ? `<b class="pca-pr">${advPillHtml(per)}</b>` : ""}</summary></details>`;
 }
 // The Dashboard's numbers (now / max per troop + stat), kept when the Dashboard draws.
@@ -8210,8 +8217,11 @@ async function advPriority() {
 // target) and the average $ per 1% pill.
 function advTrackRowHtml(r, showPage) {
   const b = r.bar, w = (x) => Math.max(0, Math.min(100, (x / Math.max(1, b.top)) * 100));
-  const sub = [`#${r.rank}`, showPage ? advTypeName(r.type) : "", `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`, advMoney(r.usd), t(r.n === 1 ? "adv_n_step1" : "adv_n_steps").replace("{n}", r.n)].filter(Boolean).join(" \u00b7 ");
-  return `<details class="pca-pk"><summary data-advtrack="${esc(r.track)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span><span style="display:flex; align-items:center; gap:6px;"><span class="pc-bar" style="flex:1; margin-top:0;"><i style="width:${w(b.from)}%;"></i><i style="width:${w(b.to) - w(b.from)}%;"></i></span><small class="meta">&rarr; ${esc(r.lb)}</small></span></span><b class="pca-pr">${advPillHtml(advPer(r), t("adv_avg"))}</b></summary></details>`;
+  const one = r.single || r.n === 1, g = `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`;
+  const price = r.single && r.tomes ? t("adv_tomes_price").replace("{n}", r.tomes.toLocaleString("en-US")).replace("{v}", advMoney(r.usd)) : advMoney(r.usd);
+  const sub = [`#${r.rank}`, showPage ? advTypeName(r.type) : "", g, price, one ? "" : t("adv_n_steps").replace("{n}", r.n)].filter(Boolean).join(" \u00b7 ");
+  const bar = one ? "" : `<span style="display:flex; align-items:center; gap:6px;"><span class="pc-bar" style="flex:1; margin-top:0;"><i style="width:${w(b.from)}%;"></i><i style="width:${w(b.to) - w(b.from)}%;"></i></span><small class="meta">&rarr; ${esc(r.lb)}</small></span>`;
+  return `<details class="pca-pk"><summary data-advtrack="${esc(r.track)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span>${bar}</span><b class="pca-pr">${advPillHtml(advPer(r), one ? "" : t("adv_avg"))}</b></summary></details>`;
 }
 // To target sheet: totals, then every step with its own $ and $ per 1%; long middles fold.
 let ADV_TT_ALL = false;
