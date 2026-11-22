@@ -3604,7 +3604,7 @@ const T = {
   cda_u_skins: { en: "skins" },
   cda_path: { en: "Path {n}" },
   adv_title: { en: "Best upgrades" },
-  adv_desc: { en: "Every upgrade still open on Chief Gear, Chief Charm, T12, Experts, Islands and the Skin Gallery, from now to max, ranked by what 1% costs. Prices are the items' value in USD (not your Backpack); 1% = one troop's stat, so an all-troops upgrade counts 3 times. Priority counts each troop + stat by its place in your upgrade order (1st ×1.5 down to 12th ×0.5)." },
+  adv_desc: { en: "The next upgrade of every piece, charm, research, expert, island building and Shining City skin you can still get, ranked by what 1% costs. Prices are the items' value in USD from your packs (not your Backpack); 1% = one troop's stat, so an all-troops upgrade counts 3 times. Priority counts each troop + stat by its place in your upgrade order (1st ×1.5 down to 12th ×0.5)." },
   adv_best_next: { en: "Best next" },
   adv_then: { en: "Then" },
   adv_per_1: { en: "per 1%" },
@@ -3615,12 +3615,6 @@ const T = {
   adv_gap_desc: { en: "Your Dashboard's numbers: now, max and what is left (the amber number) for each stat." },
   adv_gap_none: { en: "Open the Dashboard once to see how far each troop is from max." },
   adv_open_dash: { en: "Open Dashboard" },
-  adv_value: { en: "Value" },
-  adv_value_sub: { en: "price of each item" },
-  adv_b_avg: { en: "Average" },
-  adv_b_com: { en: "Community list" },
-  adv_b_tor: { en: "List B" },
-  adv_b_own: { en: "Your packs" },
   adv_sort: { en: "Sort by" },
   adv_prio: { en: "Priority" },
   adv_pure: { en: "Pure value" },
@@ -3628,16 +3622,16 @@ const T = {
   adv_sort_pure_sub: { en: "every stat the same" },
   adv_ranked: { en: "Ranked by cost per 1%" },
   adv_n_ups: { en: "{n} upgrades" },
+  adv_n_up1: { en: "1 upgrade" },
   adv_ranked_desc: { en: "Each row is one step: what it costs, what it adds, and the price of 1%. Tap a row for what it gives and the items it needs." },
   adv_all: { en: "All" },
-  adv_other: { en: "Event only · no price" },
   adv_legend: { en: "Green under $5 · amber $5–20 · red over $20, per 1% on one troop." },
-  adv_event_only: { en: "event only" },
-  adv_no_price: { en: "no price" },
   adv_group: { en: "{cat} ×{n}" },
   adv_group_sub: { en: "{name} +{n} more" },
   adv_all_troops: { en: "all troops" },
-  adv_charms_to: { en: "{troop} charms ({n}) → {lv}" },
+  adv_charm_step: { en: "{troop} {piece} charm {n} · {a} → {b}" },
+  adv_order: { en: "Order" },
+  adv_after_this: { en: "After this: {name} at {v} per 1%." },
   adv_exp_level: { en: "{name} level {a} → {b}" },
   adv_exp_skill: { en: "{name} · {skill} {a} → {b}" },
   adv_isl_bld: { en: "{name} Lv {a} → {b} ({n} copies)" },
@@ -3651,26 +3645,47 @@ const T = {
   adv_n_exp: { en: "EXP paid with expert speedups (1 EXP = 1 s)" },
   adv_n_troop_only: { en: "{troop} only" },
   adv_n_store: { en: "{n} copies from your Storehouse" },
-  adv_n_event: { en: "playable event building" },
-  adv_n_ranked: { en: "ranked event building" },
-  adv_n_sphere: { en: "replaces the Frost Sphere you have: only the difference counts" },
-  adv_n_globe: { en: "Globe Level (event only)" },
-  adv_n_mvp: { en: "ranked event (MVP)" },
-  adv_n_shining: { en: "Shining City (event, Glorious Tomes)" },
-  adv_n_uncounted: { en: "you set it \"not counted\"" },
-  adv_n_not_max: { en: "not in your Dashboard max" },
+  adv_n_shining: { en: "Shining City: bought with Glorious Tomes" },
+  adv_n_copy_from: { en: "a copy = {n} {item}" },
+  adv_valued_from: { en: "valued from {pack}" },
+  adv_t_skills: { en: "Experts Skills" },
+  adv_t_light: { en: "Lighthouses" },
+  adv_t_shining: { en: "Shining City skins" },
+  adv_types: { en: "Value by type" },
+  adv_types_desc: { en: "What 1% typically costs for each kind of upgrade: a reference for events and offers." },
+  adv_types_sub: { en: "Every step of each table, not only yours" },
+  adv_open: { en: "Open" },
+  adv_r_range: { en: "{a}–{b} per 1%" },
+  adv_r_one: { en: "{a} per 1%" },
+  adv_r_cg: { en: "each star step, all tiers; ATK + DEF of one troop" },
+  adv_r_charm: { en: "each stage; LETH + HP of one troop" },
+  adv_r_t12: { en: "each level of the stat nodes, research time included" },
+  adv_r_exl: { en: "each level and Advance, every expert; all troops" },
+  adv_r_exs: { en: "each level of skills with a troop stat; EXP as expert speedups" },
+  adv_r_exr: { en: "each path level, every expert" },
+  adv_r_pets: { en: "each level, every pet; ATK + DEF all troops" },
+  adv_r_isl_copy_t: { en: "Island building ($10 a copy)" },
+  adv_r_isl_copy: { en: "a level = +1% all troops; Lv 2–10 copies" },
+  adv_r_isl_shard_t: { en: "Island building (shards)" },
+  adv_r_isl_shard: { en: "{n} Mythic Island Shards a copy" },
+  adv_r_isl_mark_t: { en: "Island building (Mark of Revival shop)" },
+  adv_r_isl_mark: { en: "{n} Marks a copy" },
+  adv_r_isl_tome_t: { en: "Island building (Shining City)" },
+  adv_r_isl_tome: { en: "{n} Glorious Tomes a copy" },
+  adv_r_light: { en: "Contracts per level; +1% LETH + HP all troops" },
+  adv_r_prestige_t: { en: "Prestige Appearance (Royal North + Winter Bloom profile)" },
+  adv_r_prestige: { en: "{n} × Emblem of Exquisiteness Pack, lifetime limit 10; gems and 8h speedups taken off, its gold item and chest not counted" },
+  adv_r_shining: { en: "{n} Glorious Tomes a skin" },
+  adv_r_skin: { en: "${v} each; its own bonus" },
+  adv_ts_note: { en: "Plain value: 1% on one troop = 1, an all-troops upgrade counts 3 times. The pill is the typical value: the whole table\'s cost ÷ its whole gain. A reference only: some kinds here aren't in your list." },
   adv_rank_of: { en: "rank #{n} of {m}" },
   adv_cost: { en: "Cost" },
   adv_gives: { en: "Gives" },
-  adv_event_note: { en: "Only from an event: it can't be bought, so it isn't ranked." },
-  adv_noprice_note: { en: "No price is set for this kind of item, so it isn't ranked." },
   adv_what_gives: { en: "What it gives" },
   adv_sheet_prio: { en: "With your upgrade order: {w} per weighted 1% (plain: {v} per 1%)." },
   adv_sheet_pure: { en: "Plain value: {v} per 1%, every troop and stat the same." },
   adv_items: { en: "Items needed" },
   adv_members: { en: "Same price and bonus" },
-  adv_price_copy: { en: "Building copies at ${v} each" },
-  adv_price_skin: { en: "Price" },
   adv_open_page: { en: "Open page" },
   adv_page_best: { en: "Best on {page}" },
   adv_ranked_against: { en: "ranked against all {n} upgrades" },
@@ -7493,13 +7508,10 @@ function reachPlan(tracks, have, mode, rows, conv, opts) {
 // (USD), and its gain = what it adds to every troop and stat (1% on one troop = 1).
 // Ranked by $ per 1%; with "Priority" each troop + stat counts by its place in the
 // person's upgrade order (calc_state upgrade_order): rank 1 ×1.5 down to rank 12 ×0.5.
-// Values per item, 4 bases. "Your packs" (default): each item from one chosen step of
-// the owner's pack tables (ADV_PACK_SPECS), read live: (step price − gems × 0.00016 −
-// the other items' value) ÷ amount; some items are linked to another one (Amber = 10
-// Design Plans …); an item with no pack falls back to the average. The others: the
-// community list, list B, and the average of the site's weekly packs (best step split
-// over everything it gives, round 1), the community list and list B. Missing in the
-// community list → list B's value.
+// Values per item: each item from one chosen step of the owner's pack tables
+// (ADV_PACK_SPECS), read live: (step price − gems × 0.00016 − the other items' value) ÷
+// amount; some items are linked to another one (Amber = 10 Design Plans …). An item with
+// no pack falls back to the built-in list below (the mean of its three values).
 const ADV_VALUES = {
   "Hardened Alloy": { site: 0.06924 / 1000, com: null, tor: 0.09579 / 1000 },
   "Polishing Solution": { site: 0.01106, com: 0.01, tor: 0.00958 },
@@ -7518,11 +7530,13 @@ const ADV_VALUES = {
   "General Sigils": { site: 0.3116, com: 0.438, tor: 0.412 },
   "Books of Knowledge": { site: 0.004642, com: 0.0063, tor: 0.00485 },
   "Construction Contract": { site: 1.237, com: null, tor: 2.27 },
+  "Mark of Revival": { site: 0.05, com: 0.05, tor: null },
+  "Glorious Tome": { site: 0.025, com: 0.025, tor: null },
+  "Mythic Island Shards": { site: null, com: 1.0, tor: null },
+  "Lucky Gear Chest": { site: null, com: null, tor: 0.118 },
+  "XP 100": { site: 0.07561, com: 0.075, tor: 0.072 },
+  Food: { site: null, com: 0.00033, tor: 0.00032 }, Manual: { site: null, com: 0.04, tor: 0.038 }, Potion: { site: null, com: 0.14, tor: 0.132 }, Serum: { site: null, com: 0.28, tor: 0.265 },
 };
-// Fixed prices in USD (the owner's): skins by category, one island building copy.
-// One place, so they can be made editable later.
-const ADV_FIXED_PRICES = { "City Skin": 240, Frame: 5, "Teleport Skin": 35, islandCopy: 10 };
-const ADV_BASES = ["own", "avg", "com", "tor"];
 // "Your packs": table title, step price (USD), and either the whole row ("also" = other
 // items of the row counted as so much of this item) or one choice slot × 3 ("slot").
 const ADV_PACK_SPECS = [
@@ -7537,11 +7551,21 @@ const ADV_PACK_SPECS = [
   { item: "Design Plan", title: "Dawn Market: Chief Gears", price: 4.99 },
   { item: "Steel", title: "Wishfull", price: 9.99, slot: "Steel" },
   { item: "Construction Contract", title: "Accessory Construction Contract", price: 4.99 },
+  { item: "Lucky Gear Chest", title: "Wishfull", price: 9.99, slot: "Lucky Gear Chest" },
+  { item: "XP 100", title: "Custom Armament Chest", price: 99.99, slot: "XP 100" },
+  { item: "Mark of Revival", title: "Daybreak Island Supply", price: 4.99 },
+  { item: "Pet Chest", title: "Custom Pet Chest", price: 99.99, slot: "Pet Chest" },
+  { item: "Food", title: "Custom Pet Chest", price: 99.99, slot: "Food" },
+  // Glorious Tomes: no regular pack; the Shining City Pack step with the most Tomes, gems ~0.
+  { item: "Glorious Tome", title: "Shining City Pack", most: true, noGems: true, also: () => ({ "Lucky Glorious Tome Chest": Number(chestGives("Lucky Glorious Tome Chest")["Glorious Tome"]) || 20 }) },
+  // Mythic Island Shards: the Myriad Bazaar step with the most shards.
+  { item: "Mythic Island Shards", title: "Myriad Bazzar: Heroes Gears", most: true },
 ];
 // Items valued from another one: [item, from, × factor].
 const ADV_PACK_LINKS = [
   ["Research Speedups (minutes)", "Speedups (minutes)", 1], ["Charm Designs", "Charm Guides", 1], ["Hardened Alloy", "Polishing Solution", 0.01],
   ["Amber", "Design Plan", 10], ["FC Shard", "Fire Crystal", 1 / 1.3], ["Refined FC", "Fire Crystal", 18.56], ["Fiery Heart", "Sail of Conquest", 0.1],
+  ["Manual", "Pet Chest", 1 / 7], ["Potion", "Pet Chest", 1 / 2], ["Serum", "Pet Chest", 1],
 ];
 const ADV_GEM_USD = 0.00016;
 // A pack column as an item + how many of it one count is (speedups in minutes).
@@ -7554,29 +7578,33 @@ function advColItem(h) {
   return { k: advItemKey(s), m: 1 };
 }
 let ADV_OWN = null, ADV_OWN_P = null;
+const ADV_OWN_FROM = {}; // item -> "pack $price" it was valued from
 function advOwnValues() {
   if (ADV_OWN_P) return ADV_OWN_P;
   ADV_OWN_P = packTablesRows().then((tables) => {
-    const V = {}, val = (k) => (V[k] != null ? V[k] : advVal(k, "avg")), links = () => ADV_PACK_LINKS.forEach(([k, f, x]) => { if (V[f] != null) V[k] = V[f] * x; });
+    const V = {}, val = (k) => (V[k] != null ? V[k] : advListVal(k)), links = () => ADV_PACK_LINKS.forEach(([k, f, x]) => { if (V[f] != null) V[k] = V[f] * x; });
     ADV_PACK_SPECS.forEach((sp) => {
       const tb = (tables || []).find((x) => String(x.title || "").trim() === sp.title);
       if (!tb) return;
       const cols = tb.columns || [], pc = Math.max(0, cols.findIndex((c) => String(c).trim() === "$"));
-      const row = (tb.rows || []).find((r) => Math.abs(packParseNum(((r && r.cells) || [])[pc]) - sp.price) < 0.005);
+      const also = typeof sp.also === "function" ? sp.also() : sp.also;
+      const qtyOf = (r) => cols.reduce((s, c, ci) => { const k = advColItem(c).k; return s + (k === sp.item ? 1 : also && also[k] != null ? also[k] : 0) * (packParseNum(((r && r.cells) || [])[ci]) || 0); }, 0);
+      const row = sp.most ? (tb.rows || []).filter((r) => qtyOf(r) > 0).sort((x, y) => qtyOf(y) - qtyOf(x))[0] : (tb.rows || []).find((r) => Math.abs(packParseNum(((r && r.cells) || [])[pc]) - sp.price) < 0.005);
       if (!row) return;
-      let amt = 0, rest = sp.price;
+      const price = packParseNum(row.cells[pc]);
+      let amt = 0, rest = price;
       cols.forEach((c, ci) => {
         if (ci === pc) return;
         const q = packParseNum(row.cells[ci]);
         if (!(q > 0)) return;
         const it = advColItem(c);
-        if (it.k === "Gems") { rest -= q * ADV_GEM_USD; return; }
+        if (it.k === "Gems") { if (!sp.noGems) rest -= q * ADV_GEM_USD; return; }
         if (sp.slot) { if (String(c).trim() === sp.slot) amt += q * 3 * it.m; return; }
         if (it.k === sp.item) amt += q * it.m;
-        else if (sp.also && sp.also[it.k] != null) amt += q * it.m * sp.also[it.k];
+        else if (also && also[it.k] != null) amt += q * it.m * also[it.k];
         else rest -= q * it.m * val(it.k);
       });
-      if (amt > 0 && rest > 0) { V[sp.item] = rest / amt; links(); }
+      if (amt > 0 && rest > 0) { V[sp.item] = rest / amt; ADV_OWN_FROM[sp.item] = `${sp.title} $${price}`; links(); }
     });
     if (V["Sail of Conquest"] != null) V.Affinity = V["Sail of Conquest"] / (Number(AFFINITY_ITEM_VALUE["Sail of Conquest"]) || 1000);
     ADV_OWN = V;
@@ -7591,7 +7619,17 @@ const ADV_PAGES = [
   { key: "experts", tab: "expertspage" }, { key: "experts_research", tab: "expertsresearchpage" },
   { key: "islands", tab: "islandgallery" }, { key: "skins", tab: "skingallery" },
 ];
+// Upgrade types ("Value by type", list chips): name, menu picture's page.
+const ADV_TYPES = [
+  { key: "chief_gear", tab: "chiefgear", label: "chiefgear" }, { key: "charm", tab: "charmscalc", label: "charmscalc" }, { key: "t12", tab: "t12research", label: "t12research" },
+  { key: "exp_level", tab: "expertspage", label: "expertspage" }, { key: "exp_skill", tab: "expertspage", text: "adv_t_skills" }, { key: "exp_research", tab: "expertsresearchpage", label: "expertsresearchpage" },
+  { key: "islands", tab: "islandgallery", label: "islandgallery" }, { key: "lighthouse", tab: "islandgallery", text: "adv_t_light" }, { key: "shining", tab: "skingallery", text: "adv_t_shining" },
+];
+const advTypeOf = (k) => ADV_TYPES.find((x) => x.key === k) || ADV_TYPES[0];
+const advTypeName = (k) => { const x = advTypeOf(k); return x.text ? t(x.text) : navLabel(x.label); };
 const ADV_CARD_TABS = Object.fromEntries(ADV_PAGES.map((p) => [p.tab, p.key]));
+// Globe Level skins (every level's City Skin and extras) are never in the advisor.
+const advIsGlobe = (n) => (typeof ALL_GLOBE_WIRED_NAMES_GLOBAL !== "undefined" && ALL_GLOBE_WIRED_NAMES_GLOBAL.has(n)) || GLOBE_LEVELS.some((g) => g.city === n || (g.extra || []).includes(n));
 const advPageOf = (key) => ADV_PAGES.find((p) => p.key === key) || ADV_PAGES[0];
 function advItemKey(n) {
   if (/ Sigils$/.test(n)) return "General Sigils";
@@ -7599,13 +7637,14 @@ function advItemKey(n) {
   if (n === "General Accessory Construction Contract") return "Construction Contract";
   return n;
 }
-function advVal(n, basis) {
-  if (basis === "own") { const o = ADV_OWN && ADV_OWN[advItemKey(n)]; return o != null ? o : advVal(n, "avg"); }
+// An item's value: from the owner's packs, else the built-in list (the mean of its values).
+function advListVal(n) {
   const v = ADV_VALUES[advItemKey(n)];
   if (!v) return 0;
-  if (basis === "avg") { const xs = [v.site, v.com, v.tor].filter((x) => x != null); return xs.length ? xs.reduce((a, x) => a + x, 0) / xs.length : 0; }
-  return v[basis] != null ? v[basis] : v.tor != null ? v.tor : v.site || 0;
+  const xs = [v.site, v.com, v.tor].filter((x) => x != null);
+  return xs.length ? xs.reduce((a, x) => a + x, 0) / xs.length : 0;
 }
+function advVal(n) { const o = ADV_OWN && ADV_OWN[advItemKey(n)]; return o != null ? o : advListVal(n); }
 // "Troop|Stat" → value; troop "all" = the 3 troops.
 function advGain(g, troop, stats, v) {
   if (!(v > 1e-9)) return g;
@@ -7614,6 +7653,11 @@ function advGain(g, troop, stats, v) {
 }
 const advAddItems = (a, b, f = 1) => { Object.entries(b || {}).forEach(([k, v]) => { if (Number(v) > 0) a[k] = (a[k] || 0) + Number(v) * f; }); return a; };
 // ---- Steps, one builder per page ----
+// Every row is the NEXT single upgrade of one track (a piece's next star row, a charm's
+// next stage, one research / expert / skill / island level). Each track also lists every
+// later step (nth 1, 2 …): the one after is shown in the row's sheet, all of them add up
+// in "Value by type".
+const advEach = (from, top, fn) => { for (let k = 0; from + k < top; k++) fn(from + k, from + k + 1, k); };
 async function advStepsChiefGear(out) {
   const rows = await loadChiefGearRows();
   if (!rows.length) return;
@@ -7624,61 +7668,39 @@ async function advStepsChiefGear(out) {
   const stat = (i) => parseStatPct(rows[i] && rows[i].stat) || 0;
   const base = {};
   CHIEF_GEAR_PIECES.forEach((p) => { base[p.key] = { from: Math.min(CHIEF_GEAR_STATE[p.key].from, cap) }; });
-  CHIEF_GEAR_PIECES.forEach((p) => {
-    let lo = base[p.key].from;
-    starts.filter((i) => i > lo && i < cap).concat([cap]).forEach((hi) => {
-      if (hi <= lo) return;
-      const items = {};
-      for (let i = lo + 1; i <= hi; i++) cols.forEach(([c, n]) => { const v = Number(rows[i][c]) || 0; if (v) items[n] = (items[n] || 0) + v; });
-      const g = advGain({}, p.troop, ["Attack", "Defense"], stat(hi) - stat(lo));
-      // Set bonuses when this step reaches a new tier: the 3-piece one (DEF, all troops)
-      // goes to the piece cheapest to bring there; the 6-piece one (ATK, all troops) is
-      // shared by every piece still below that tier.
-      const atLo = { ...base, [p.key]: { from: lo } }, b0 = computeChiefGearSetBonus(atLo), notes = [];
-      if (tierNo(lo) < tierNo(hi)) {
-        const first = starts[tierNo(hi) - 1], raise = (k) => computeChiefGearSetBonus({ ...atLo, [k]: { from: first } });
-        const short = CHIEF_GEAR_PIECES.filter((q) => tierNo(atLo[q.key].from) < tierNo(hi));
-        const costTo = (q) => { let c = 0; for (let i = atLo[q.key].from + 1; i <= first; i++) cols.forEach(([col, n]) => { c += (Number(rows[i][col]) || 0) * advVal(n, "avg"); }); return c; };
-        const c3 = short.filter((q) => raise(q.key).threeBonus > b0.threeBonus).sort((x, y) => costTo(x) - costTo(y));
-        if (c3.length && c3[0].key === p.key) { const d = raise(p.key).threeBonus - b0.threeBonus; advGain(g, "all", ["Defense"], d); notes.push(t("adv_n_set3").replace("{v}", d)); }
-        const lift = {};
-        CHIEF_GEAR_PIECES.forEach((q) => { lift[q.key] = { from: short.includes(q) ? first : atLo[q.key].from }; });
-        const d6 = computeChiefGearSetBonus(lift).sixBonus - b0.sixBonus;
-        if (d6 > 0) { advGain(g, "all", ["Attack"], d6 / short.length); notes.push(short.length > 1 ? t("adv_n_set6_share").split("{n}").join(short.length).replace("{v}", d6) : t("adv_n_set6").replace("{v}", d6)); }
-      }
-      out.push({ id: `cg|${p.key}|${hi}`, page: "chief_gear", name: `${troopDisplayName(p.troop)} ${pieceDisplayName(p.name)} ${cgBadge(rows[lo])} → ${cgBadge(rows[hi])}`,
-        img: chiefGearIcon(p.key, lo), items, gain: g, kind: "buy", note: notes.join(" · ") });
-      lo = hi;
-    });
-  });
+  CHIEF_GEAR_PIECES.forEach((p) => advEach(base[p.key].from, cap, (lo, hi, nth) => {
+    const items = {};
+    cols.forEach(([c, n]) => { const v = Number(rows[hi][c]) || 0; if (v) items[n] = v; });
+    const g = advGain({}, p.troop, ["Attack", "Defense"], stat(hi) - stat(lo));
+    // Set bonuses on the step that reaches a new tier: the 3-piece one (DEF, all troops)
+    // goes to the piece cheapest to bring there; the 6-piece one (ATK, all troops) is
+    // shared by every piece still below that tier.
+    const atLo = { ...base, [p.key]: { from: lo } }, b0 = computeChiefGearSetBonus(atLo), notes = [];
+    if (tierNo(lo) < tierNo(hi)) {
+      const first = starts[tierNo(hi) - 1], raise = (k) => computeChiefGearSetBonus({ ...atLo, [k]: { from: first } });
+      const short = CHIEF_GEAR_PIECES.filter((q) => tierNo(atLo[q.key].from) < tierNo(hi));
+      const costTo = (q) => { let c = 0; for (let i = atLo[q.key].from + 1; i <= first; i++) cols.forEach(([col, n]) => { c += (Number(rows[i][col]) || 0) * advVal(n); }); return c; };
+      const c3 = short.filter((q) => raise(q.key).threeBonus > b0.threeBonus).sort((x, y) => costTo(x) - costTo(y));
+      if (c3.length && c3[0].key === p.key) { const d = raise(p.key).threeBonus - b0.threeBonus; advGain(g, "all", ["Defense"], d); notes.push(t("adv_n_set3").replace("{v}", d)); }
+      const lift = {};
+      CHIEF_GEAR_PIECES.forEach((q) => { lift[q.key] = { from: short.includes(q) ? first : atLo[q.key].from }; });
+      const d6 = computeChiefGearSetBonus(lift).sixBonus - b0.sixBonus;
+      if (d6 > 0) { advGain(g, "all", ["Attack"], d6 / short.length); notes.push(short.length > 1 ? t("adv_n_set6_share").split("{n}").join(short.length).replace("{v}", d6) : t("adv_n_set6").replace("{v}", d6)); }
+    }
+    out.push({ id: `cg|${p.key}|${hi}`, track: `cg|${p.key}`, nth, page: "chief_gear", type: "chief_gear", name: `${troopDisplayName(p.troop)} ${pieceDisplayName(p.name)} ${cgBadge(rows[lo])} → ${cgBadge(rows[hi])}`,
+      img: chiefGearIcon(p.key, lo), items, gain: g, kind: "buy", note: notes.join(" · ") });
+  }));
 }
 async function advStepsCharm(out) {
   await Promise.all([ensureCharmData(), ensureCharmLevelsData()]);
   const cap = charmCapIdx(), L = CHARM_LEVELS.map(String);
-  const majors = L.map((l, i) => ({ l, i })).filter((x) => x.i > 0 && x.i <= cap && !x.l.includes("."));
-  const cum = (l) => CHARM_CUMULATIVE[l] || [0, 0, 0];
-  PLX_TROOPS.forEach((troop) => {
-    const slots = [];
-    CHARM_PIECES.filter((p) => reachTroopKey(p.troop) === troop).forEach((p) => (CHARM_CALC_STATE[p.key] || []).forEach((s) => slots.push(Math.max(0, L.indexOf(String(s.current))))));
-    if (!slots.length) return;
-    let prev = 0;
-    majors.forEach((m) => {
-      const items = {}, n = [];
-      let ds = 0;
-      slots.forEach((c) => {
-        const s = Math.max(c, prev);
-        if (s >= m.i) return;
-        n.push(1);
-        const a = cum(L[s]), b = cum(m.l);
-        advAddItems(items, { "Charm Guides": b[0] - a[0], "Charm Designs": b[1] - a[1], "Jewel Secrets": b[2] - a[2] });
-        ds += charmStatAt(m.l) - charmStatAt(L[s]);
-      });
-      prev = m.i;
-      if (!n.length) return;
-      out.push({ id: `ch|${troop}|${m.l}`, page: "charm", name: t("adv_charms_to").replace("{troop}", troopDisplayName(troop)).replace("{n}", n.length).replace("{lv}", m.l),
-        img: charmIconSrc(troop, m.l), items, gain: advGain({}, troop, ["Lethality", "Health"], ds), kind: "buy", note: "" });
-    });
-  });
+  CHARM_PIECES.forEach((p) => (CHARM_CALC_STATE[p.key] || []).forEach((s, slot) => advEach(Math.max(0, L.indexOf(String(s.current))), cap, (lo, hi, nth) => {
+    const c = CHARM_STEP_COST[L[hi]] || [0, 0, 0];
+    out.push({ id: `ch|${p.key}|${slot}|${L[hi]}`, track: `ch|${p.key}|${slot}`, nth, page: "charm", type: "charm",
+      name: t("adv_charm_step").replace("{troop}", troopDisplayName(p.troop)).replace("{piece}", pieceDisplayName(p.name)).replace("{n}", slot + 1).replace("{a}", L[lo]).replace("{b}", L[hi]),
+      img: charmIconSrc(p.troop, L[hi]), items: { "Charm Guides": c[0], "Charm Designs": c[1], "Jewel Secrets": c[2] },
+      gain: advGain({}, p.troop, ["Lethality", "Health"], charmStatAt(L[hi]) - charmStatAt(L[lo])), kind: "buy", note: "" });
+  })));
 }
 async function advStepsT12(out) {
   await Promise.all([ensureT12NodesData(), ensureT12StateData(), ensureResearchSpeedData()]);
@@ -7686,38 +7708,29 @@ async function advStepsT12(out) {
   const costOf = (def, lv) => { const r = (T12_NODES_CACHE[def.tier] || {})[lv] || {}; return { Steel: Number(r.steel) || 0, "Refined FC": Number(r.refined_fc) || 0, "FC Shard": Number(r.fc_shard) || 0, "Research Speedups (minutes)": applyResearchPct(Number(r.time_hours) || 0) * 60 }; };
   T12_TROOPS.forEach((troop) => {
     const st = (T12_STATE && T12_STATE[troop]) || {}, cur = (k) => Number(st[k]) || 0;
-    const bands = [];
-    T12_ITEM_DEFS.filter((d) => d.stat).forEach((def) => {
-      const top = t12Rel(def);
-      let b = cur(def.key), first = true;
-      while (b < top) {
-        const e = Math.min(top, (Math.floor(b / 10) + 1) * 10), items = {}, pre = {}, waits = new Set();
-        for (let lv = b + 1; lv <= e; lv++) {
-          advAddItems(items, costOf(def, lv));
-          (researchNeedsOf("t12", lockNodes, def.key, lv, (k) => k) || []).forEach((req) => (req[0] || []).forEach(([k, need]) => {
-            const d = defOf(k);
-            if (!d || cur(k) >= need) return;
-            if (d.stat) waits.add(`${tT12Group(d.group)} · ${tT12Label(d.label)} ${need}`);
-            else pre[k] = Math.max(pre[k] || 0, need);
-          }));
-        }
-        bands.push({ def, b, e, items, pre, first, waits: [...waits] });
-        first = false;
-        b = e;
-      }
-    });
-    // Research with no stat of its own that a band waits for (Solar Supremacy, Troop Skill …):
-    // its cost is shared by the first bands that need it.
+    const steps = [];
+    T12_ITEM_DEFS.filter((d) => d.stat).forEach((def) => advEach(cur(def.key), t12Rel(def), (b, e, nth) => {
+      const items = advAddItems({}, costOf(def, e)), pre = {}, waits = new Set();
+      (researchNeedsOf("t12", lockNodes, def.key, e, (k) => k) || []).forEach((req) => (req[0] || []).forEach(([k, need]) => {
+        const d = defOf(k);
+        if (!d || cur(k) >= need) return;
+        if (d.stat) waits.add(`${tT12Group(d.group)} · ${tT12Label(d.label)} ${need}`);
+        else pre[k] = need;
+      }));
+      steps.push({ def, b, e, nth, items, pre, waits: [...waits] });
+    }));
+    // Research with no stat of its own that a step waits for (Solar Supremacy, Troop Skill …):
+    // its cost is shared by the next steps that need it.
     const preNodes = {};
-    bands.forEach((x) => Object.entries(x.pre).forEach(([k, lv]) => { if (!preNodes[k]) preNodes[k] = { lv: 0, who: [] }; preNodes[k].lv = Math.max(preNodes[k].lv, lv); if (!preNodes[k].who.some((y) => y.def === x.def)) preNodes[k].who.push(x); }));
+    steps.forEach((x) => Object.entries(x.pre).forEach(([k, lv]) => { if (!preNodes[k]) preNodes[k] = { lv: 0, who: [] }; preNodes[k].lv = Math.max(preNodes[k].lv, lv); if (!preNodes[k].who.some((y) => y.def === x.def)) preNodes[k].who.push(x); }));
     Object.entries(preNodes).forEach(([k, p]) => {
       const d = defOf(k), c = {};
       for (let lv = cur(k) + 1; lv <= p.lv; lv++) advAddItems(c, costOf(d, lv));
-      p.who.forEach((x) => { advAddItems(x.items, c, 1 / p.who.length); x.note = (x.note ? `${x.note} · ` : "") + t("adv_n_pre").replace("{n}", p.who.length).replace("{what}", `${tT12Group(d.group)} ${cur(k)} → ${p.lv}`); });
+      p.who.forEach((x) => { advAddItems(x.items, c, 1 / p.who.length); x.note = t("adv_n_pre").replace("{n}", p.who.length).replace("{what}", `${tT12Group(d.group)} ${cur(k)} → ${p.lv}`); });
     });
-    bands.forEach((x) => {
+    steps.forEach((x) => {
       const notes = [x.note, x.waits.length ? t("adv_n_waits").replace("{what}", x.waits.join(", ")) : ""].filter(Boolean);
-      out.push({ id: `t12|${troop}|${x.def.key}|${x.e}`, page: "t12", name: `${troopDisplayName(troop)} ${tT12Group(x.def.group)} · ${tT12Label(x.def.label)} ${x.b} → ${x.e}`,
+      out.push({ id: `t12|${troop}|${x.def.key}|${x.e}`, track: `t12|${troop}|${x.def.key}`, nth: x.nth, page: "t12", type: "t12", name: `${troopDisplayName(troop)} ${tT12Group(x.def.group)} · ${tT12Label(x.def.label)} ${x.b} → ${x.e}`,
         img: QUICK_ICONS.t12research, items: x.items, gain: advGain({}, troop, [x.def.stat], (x.e - x.b) * (x.def.pct || 1)), kind: "buy", note: notes.join(" · ") });
     });
   });
@@ -7726,46 +7739,42 @@ async function advStepsExperts(out) {
   const [, , loaded, unl, skillRows, affinityRows] = await Promise.all([ensureExpertsRosterGlobal(), ensureUiVisibility(), loadCalcState("experts"), loadCalcState("experts_unlocked"), loadExpertNodes("skill"), loadExpertNodes("affinity")]);
   const saved = JSON.parse(JSON.stringify(renameExpertSkills(loaded || {}))), kit = expertKit(skillRows, affinityRows, saved), unlocked = unl || {};
   const types = (s) => String(s || "").split(",").map((k) => k.trim()).filter((k) => ADV_STATS.includes(k));
+  const lab = (x) => (x % 1 ? x.toFixed(1) : String(x));
   EXPERTS_LIST.filter((e) => !hiddenForVisitor("experts", e.key)).forEach((e) => {
     const hero = e.key, hs = saved[hero] || { current: 0, skills: {} }, name = e.name || dataName(hero), SIG = `${hero} Sigils`;
     const off = !unlockedFor("experts", hero, unlocked[hero]) ? t("adv_n_not_counted") : "";
-    // Levels: chunks end at every 10 and every Advance (N.1).
+    // Levels: one level a step; an Advance (N.1) is its own step.
     let curLv = Number(hs.current) || 0;
     if (!saved.__advLevels && curLv > 0 && curLv === Math.floor(curLv) && kit.heroSigilLevel(hero, curLv)) curLv += 0.1;
     const pos = [];
     for (let n = 0; n <= kit.heroTopLevel(hero); n++) { pos.push(n); if (n > 0 && kit.heroSigilLevel(hero, n)) pos.push(n + 0.1); }
     const idxOf = (v) => { const k = pos.findIndex((x) => Math.abs(x - (Number(v) || 0)) < 0.05); return k < 0 ? 0 : k; };
-    const from = idxOf(curLv), to = idxOf(kit.heroMaxLevelValue(hero)), rows = kit.AFFINITY_CACHE[hero] || [];
+    const rows = kit.AFFINITY_CACHE[hero] || [];
     const statAt = (v) => { const x = expertLevelStat(rows, v), o = {}; if (x && x.row) types(x.row.stat_type).forEach((k) => { o[k] = x.v; }); return o; };
-    let lo = from, banked = kit.heroAffinityHave(hero);
-    for (let j = from + 1; j <= to; j++) {
-      const v = pos[j];
-      if (!(j === to || Math.abs(v % 10) < 0.01 || Math.abs((v % 1) - 0.1) < 0.01)) continue;
-      const c = kit.heroCost(hero, pos[lo], v), a = Math.max(0, c.affinity - banked);
+    let banked = kit.heroAffinityHave(hero);
+    advEach(idxOf(curLv), idxOf(kit.heroMaxLevelValue(hero)), (lo, hi, nth) => {
+      const c = kit.heroCost(hero, pos[lo], pos[hi]), a = Math.max(0, c.affinity - banked);
       banked = Math.max(0, banked - c.affinity);
-      const s0 = statAt(pos[lo]), s1 = statAt(v), g = {};
+      const s0 = statAt(pos[lo]), s1 = statAt(pos[hi]), g = {};
       ADV_STATS.forEach((k) => advGain(g, "all", [k], (s1[k] || 0) - (s0[k] || 0)));
-      const lab = (x) => (x % 1 ? x.toFixed(1) : String(x));
-      out.push({ id: `exl|${hero}|${lab(v)}`, page: "experts", name: t("adv_exp_level").replace("{name}", name).replace("{a}", lab(pos[lo])).replace("{b}", lab(v)),
+      out.push({ id: `exl|${hero}|${lab(pos[hi])}`, track: `exl|${hero}`, nth, page: "experts", type: "exp_level", name: t("adv_exp_level").replace("{name}", name).replace("{a}", lab(pos[lo])).replace("{b}", lab(pos[hi])),
         img: e.img || "", items: { Affinity: a, [SIG]: c.sigil }, gain: g, kind: "buy", note: off });
-      lo = j;
-    }
-    // Skills with a troop stat, 5 levels a step; EXP paid with expert speedups (1 EXP = 1 s).
+    });
+    // Skills with a troop stat, one level a step; EXP paid with expert speedups (1 EXP = 1 s).
     (e.skills || []).forEach((sk) => {
-      const srows = kit.SKILL_CACHE[`${hero}|${sk}`] || [], typed = srows.find((r) => types(r.stat_type).length);
-      if (!typed) return;
-      const st = (hs.skills || {})[sk] || { current: 0 }, max = kit.skillMaxLevel(hero, sk);
+      const srows = kit.SKILL_CACHE[`${hero}|${sk}`] || [];
+      if (!srows.some((r) => types(r.stat_type).length)) return;
+      const st = (hs.skills || {})[sk] || { current: 0 };
       const vAt = (lv) => { let m = null; srows.forEach((r) => { if (r.level <= lv) m = r; }); return m && types(m.stat_type).length ? { v: Number(m.stat_value) || 0, k: types(m.stat_type) } : { v: 0, k: [] }; };
-      let b = Number(st.current) || 0, xp = kit.skillExpHave(st);
-      while (b < max) {
-        const e2 = Math.min(max, (Math.floor(b / 5) + 1) * 5), c = kit.skillCost(hero, sk, b, e2), exp = Math.max(0, c.exp - xp);
+      let xp = kit.skillExpHave(st);
+      advEach(Number(st.current) || 0, kit.skillMaxLevel(hero, sk), (b, e2, nth) => {
+        const c = kit.skillCost(hero, sk, b, e2), exp = Math.max(0, c.exp - xp);
         xp = Math.max(0, xp - c.exp);
         const g = {}, A = vAt(b), B = vAt(e2);
         B.k.forEach((k) => advGain(g, "all", [k], B.v - (A.k.includes(k) ? A.v : 0)));
-        out.push({ id: `exs|${hero}|${sk}|${e2}`, page: "experts", name: t("adv_exp_skill").replace("{name}", name).replace("{skill}", dataName(sk)).replace("{a}", b).replace("{b}", e2),
+        out.push({ id: `exs|${hero}|${sk}|${e2}`, track: `exs|${hero}|${sk}`, nth, page: "experts", type: "exp_skill", name: t("adv_exp_skill").replace("{name}", name).replace("{skill}", dataName(sk)).replace("{a}", b).replace("{b}", e2),
           img: e.img || "", items: { "Books of Knowledge": c.book, "Expert Speedups (minutes)": exp / 60 }, gain: g, kind: "buy", note: [t("adv_n_exp"), off].filter(Boolean).join(" · ") });
-        b = e2;
-      }
+      });
     });
   });
 }
@@ -7778,14 +7787,14 @@ async function advStepsExpertsResearch(out) {
     expertsResearchPathNumbersGlobal(expert).forEach((p) => {
       const prow = ((EXPERTS_RESEARCH_NODES_GLOBAL[expert] || {})[p] || []).slice().sort((a, b) => Number(a.level) - Number(b.level));
       const ri = releasedLastIdx("expert_research_nodes", prow), top = ri >= prow.length - 1 ? 200 : ri < 0 ? 0 : Number(prow[ri].level) || 0;
-      const from = Math.max(0, Number(((saved[expert] || {})[p] || {}).current) || 0);
-      if (!(top > from)) return;
-      const g = {};
-      Object.entries(expertsResearchPathCostGlobal(expert, p, from, top)).forEach(([k, v]) => { if (RAW[k]) advGain(g, troop ? reachTroopKey(troop) : "all", [RAW[k]], v); });
       const pname = (prow.find((r) => r.path_name) || {}).path_name;
-      out.push({ id: `exr|${expert}|${p}`, page: "experts_research", name: `${dataName(expert)} · ${pname ? dataName(pname) : t("cda_path").replace("{n}", p)} ${from} → ${top}`,
-        img: imgOf(expert), items: { [`${expert} Sigils`]: expertPathSigils(prow, from, top) }, gain: g, kind: "buy",
-        note: [troop ? t("adv_n_troop_only").replace("{troop}", troopDisplayName(reachTroopKey(troop))) : "", off].filter(Boolean).join(" · ") });
+      advEach(Math.max(0, Number(((saved[expert] || {})[p] || {}).current) || 0), top, (lo, hi, nth) => {
+        const g = {};
+        Object.entries(expertsResearchPathCostGlobal(expert, p, lo, hi)).forEach(([k, v]) => { if (RAW[k]) advGain(g, troop ? reachTroopKey(troop) : "all", [RAW[k]], v); });
+        out.push({ id: `exr|${expert}|${p}|${hi}`, track: `exr|${expert}|${p}`, nth, page: "experts_research", type: "exp_research", name: `${dataName(expert)} · ${pname ? dataName(pname) : t("cda_path").replace("{n}", p)} ${lo} → ${hi}`,
+          img: imgOf(expert), items: { [`${expert} Sigils`]: expertPathSigils(prow, lo, hi) }, gain: g, kind: "buy",
+          note: [troop ? t("adv_n_troop_only").replace("{troop}", troopDisplayName(reachTroopKey(troop))) : "", off].filter(Boolean).join(" · ") });
+      });
     });
   });
 }
@@ -7810,52 +7819,46 @@ async function advStepsIslands(out) {
     const mx = Number(s.max_level ?? 10) || 10;
     if (s.category === ISL_LIGHT_CAT) {
       const rec = light[s.id], cur = rec && rec.now != null ? Number(rec.now) || 0 : Number(s.current_level) || 0;
-      [[cur, Math.min(mx, cur + 3)], [Math.min(mx, cur + 3), mx]].forEach(([lo, hi]) => {
-        if (hi <= lo) return;
+      advEach(cur, mx, (lo, hi, nth) => {
         const ct = islLightCost(lo, hi).ct;
-        out.push({ id: `isl|${s.id}|${hi}`, page: "islands", name: t("adv_isl_light").replace("{name}", dataName(s.name)).replace("{a}", lo).replace("{b}", hi).replace("{n}", ct),
+        out.push({ id: `isl|${s.id}|${hi}`, track: `isl|${s.id}`, nth, page: "islands", type: "lighthouse", name: t("adv_isl_light").replace("{name}", dataName(s.name)).replace("{a}", lo).replace("{b}", hi).replace("{n}", ct),
           img: s.image_url || "", items: { "Construction Contract": ct }, gain: gainOf(s, lo, hi, mx, true), kind: "buy", note: "" });
       });
       return;
     }
-    if (!islCatTracked(s.category) || s.category === ISL_SHOP_CAT || ISL_SKIP_NAMES.includes(s.name) || !s.owned) return;
-    const cur = Number(s.current_level) || 0;
-    if (cur >= mx) return;
-    const src = islSource(s.name, islIsMythic(s)), ev = src.kind === "event" || src.kind === "ranked";
+    // Buildings the Islands planner can still get copies for: Mythic shard buildings (Mythic
+    // Island Shards), and those in the person's Mark of Revival / Shining City shops; each copy
+    // from its cheapest source. Event / ranked buildings and the Islands Guide are left out.
+    if (!islCatTracked(s.category) || s.category === ISL_SHOP_CAT || ISL_SKIP_NAMES.includes(s.name) || !s.owned || !islIsMythic(s)) return;
+    const src = islSource(s.name, true);
+    if (src.kind !== "shop") return;
+    const pick = islShopPickable(s), per = Number(ISL_RULES.perCopy) || 10;
+    const ways = [{ k: "Mythic Island Shards", n: per }];
+    if (pick && src.marks) ways.push({ k: "Mark of Revival", n: src.markPrice });
+    if (pick && src.shining) ways.push({ k: "Glorious Tome", n: Number(ISL_RULES.tomePrice) || 600 });
+    const way = ways.sort((x, y) => x.n * advVal(x.k) - y.n * advVal(y.k))[0];
     let free = Math.max(0, Math.floor(Number(store[s.id]) || 0));
-    [[cur, Math.min(mx, cur + 2)], [Math.min(mx, cur + 2), mx]].forEach(([lo, hi]) => {
-      if (hi <= lo) return;
-      let copies = 0;
-      for (let l = lo + 1; l <= hi; l++) copies += islCopiesAt(l, src.each);
-      const pay = Math.max(0, copies - free), used = copies - pay;
+    advEach(Number(s.current_level) || 0, mx, (lo, hi, nth) => {
+      const copies = islCopiesAt(hi, src.each), pay = Math.max(0, copies - free), used = copies - pay;
       free = Math.max(0, free - copies);
-      out.push({ id: `isl|${s.id}|${hi}`, page: "islands", name: t("adv_isl_bld").replace("{name}", dataName(s.name)).replace("{a}", lo).replace("{b}", hi).replace("{n}", copies),
-        img: s.image_url || "", items: {}, fixed: ADV_FIXED_PRICES.islandCopy * pay, gain: gainOf(s, lo, hi, mx, false), kind: ev ? "event" : "buy",
-        note: [used ? t("adv_n_store").replace("{n}", used) : "", ev ? t(src.kind === "ranked" ? "adv_n_ranked" : "adv_n_event") : ""].filter(Boolean).join(" · ") });
+      out.push({ id: `isl|${s.id}|${hi}`, track: `isl|${s.id}`, nth, page: "islands", type: "islands", name: t("adv_isl_bld").replace("{name}", dataName(s.name)).replace("{a}", lo).replace("{b}", hi).replace("{n}", copies),
+        img: s.image_url || "", items: pay ? { [way.k]: pay * way.n } : {}, gain: gainOf(s, lo, hi, mx, false), kind: "buy",
+        note: [t("adv_n_copy_from").replace("{n}", way.n).replace("{item}", materialDisplayName(way.k)), used ? t("adv_n_store").replace("{n}", used) : ""].filter(Boolean).join(" \u00b7 ") });
     });
   });
 }
 async function advStepsSkins(out) {
-  const [rows, unc, cats] = await Promise.all([keptRows("skins", skinGalleryPath()), ensureGalleryUncounted(), islandCatRows()]);
-  const islandCats = new Set(cats.map((c) => c.category).concat([ISL_LIGHT_CAT, ISL_SHOP_CAT]));
-  const globeCity = new Set(GLOBE_LEVELS.map((g) => g.city)), shining = new Set(shiningSkinsAllow() || shiningSkinsDefault());
+  // Only City Skins the Shining City event still sells (shiningPickable: the allow list, never a
+  // Globe Level skin) and the person doesn't own; each costs rule skinTomes Glorious Tomes.
+  const rows = await keptRows("skins", skinGalleryPath());
   const gainOf = (r) => { const g = {}; ADV_SLOTS.forEach(([tk, vk]) => { const bs = cdaBonusStat(r[tk]); if (bs && r[vk] != null) advGain(g, bs.troop, [bs.stat], Number(r[vk]) || 0); }); return g; };
-  // A higher Frost Sphere replaces the one you have: only the difference counts.
-  const sphere = {};
-  rows.filter((r) => r.owned && globeCity.has(r.name)).forEach((r) => Object.entries(gainOf(r)).forEach(([k, v]) => { sphere[k] = Math.max(sphere[k] || 0, v); }));
+  const globe = advIsGlobe;
   rows.forEach((r) => {
-    if (r.owned || islandCats.has(r.category)) return;
-    const g = gainOf(r), notes = [];
-    if (globeCity.has(r.name)) { Object.keys(g).forEach((k) => { g[k] = Math.max(0, g[k] - (sphere[k] || 0)); }); if (Object.keys(sphere).length) notes.push(t("adv_n_sphere")); }
+    if (r.owned || r.category !== SHINING_SKIN_CAT || globe(r.name) || !shiningPickable(r.name)) return;
+    const g = gainOf(r);
     if (!Object.values(g).some((v) => v > 1e-9)) return;
-    const globe = typeof ALL_GLOBE_WIRED_NAMES_GLOBAL !== "undefined" && ALL_GLOBE_WIRED_NAMES_GLOBAL.has(r.name);
-    const ev = globe || r.category === "MVP" || (r.category === SHINING_SKIN_CAT && shining.has(r.name));
-    if (globe) notes.push(t("adv_n_globe")); else if (r.category === "MVP") notes.push(t("adv_n_mvp")); else if (ev) notes.push(t("adv_n_shining"));
-    if (unc.has(String(r.id))) notes.push(t("adv_n_uncounted"));
-    if (r.count_in_max == null) notes.push(t("adv_n_not_max"));
-    const price = ADV_FIXED_PRICES[r.category];
-    out.push({ id: `sk|${r.id}`, page: "skins", cat: r.category, name: `${dataName(r.category)}: ${dataName(r.name)}`, img: r.image_url || "",
-      items: {}, fixed: price || 0, gain: g, kind: ev ? "event" : price ? "buy" : "noprice", note: notes.join(" · ") });
+    out.push({ id: `sk|${r.id}`, track: `sk|${r.id}`, nth: 0, page: "skins", type: "shining", cat: r.category, name: `${dataName(r.category)}: ${dataName(r.name)}`, img: r.image_url || "",
+      items: { "Glorious Tome": shiningTomesPer() }, gain: g, kind: "buy", note: t("adv_n_shining") });
   });
 }
 // The steps, worked out once per visit; any save (calc_state) or skins change starts again.
@@ -7874,26 +7877,27 @@ function advSteps() {
   return p;
 }
 // Settings, kept in this browser: value basis and sort.
-let ADV_SET = (() => { try { const v = JSON.parse(localStorage.getItem("adv_set") || "{}"); return { basis: ADV_BASES.includes(v.basis) ? v.basis : "own", mode: v.mode === "pure" ? "pure" : "prio", page: "all" }; } catch (e) { return { basis: "own", mode: "prio", page: "all" }; } })();
-function advSaveSet() { try { localStorage.setItem("adv_set", JSON.stringify({ basis: ADV_SET.basis, mode: ADV_SET.mode })); } catch (e) { /* not kept */ } }
+let ADV_SET = (() => { try { const v = JSON.parse(localStorage.getItem("adv_set") || "{}"); return { mode: v.mode === "pure" ? "pure" : "prio", page: "all" }; } catch (e) { return { mode: "prio", page: "all" }; } })();
+function advSaveSet() { try { localStorage.setItem("adv_set", JSON.stringify({ mode: ADV_SET.mode })); } catch (e) { /* not kept */ } }
 function advWeights() {
   const W = {};
   (UPGRADE_ORDER.rows || UPGRADE_ORDER_DEFAULT).forEach(([tr, st], i) => { W[`${reachTroopKey(tr)}|${st}`] = 1.5 - i / 11; });
   return W;
 }
-const advUsd = (s, basis) => (s.fixed || 0) + Object.entries(s.items || {}).reduce((a, [n, q]) => a + (Number(q) || 0) * advVal(n, basis), 0);
+const advUsd = (s) => (s.fixed || 0) + Object.entries(s.items || {}).reduce((a, [n, q]) => a + (Number(q) || 0) * advVal(n), 0);
 // Scored and ranked: { buy: [rows by the chosen sort, with rank], other: [event / no price] }.
 // Skins of one category with the same price and gain are one row ("Frame ×5").
 function advRank(steps) {
-  const W = advWeights(), basis = ADV_SET.basis;
+  const W = advWeights();
   const score = (s) => {
     const g = Object.values(s.gain).reduce((a, v) => a + v, 0), wg = Object.entries(s.gain).reduce((a, [k, v]) => a + v * (W[k] || 1), 0);
-    const usd = advUsd(s, basis);
+    const usd = advUsd(s);
     return { ...s, usd, g, wg, pp: g > 0 ? usd / g : Infinity, wpp: wg > 0 ? usd / wg : Infinity };
   };
-  const all = steps.map(score).filter((s) => s.g > 1e-9), grp = new Map(), buy = [], other = [];
+  const next = new Map();
+  steps.filter((s) => s.nth === 1).map(score).forEach((s) => next.set(s.track, s));
+  const all = steps.filter((s) => !s.nth).map(score).filter((s) => s.g > 1e-9), grp = new Map(), buy = [];
   all.forEach((s) => {
-    if (s.kind !== "buy") { other.push(s); return; }
     if (s.page === "skins") {
       const key = `${s.cat}|${s.usd}|${Object.keys(s.gain).sort().map((k) => `${k}:${Math.round(s.gain[k] * 1000)}`).join(",")}`;
       const g = grp.get(key);
@@ -7908,8 +7912,8 @@ function advRank(steps) {
   const key = ADV_SET.mode === "pure" ? "pp" : "wpp";
   buy.sort((a, b) => a[key] - b[key] || a.usd - b.usd);
   buy.forEach((r, i) => { r.rank = i + 1; });
-  other.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "event" ? -1 : 1) || (a.usd / a.g || 0) - (b.usd / b.g || 0));
-  return { buy, other, key };
+  const types = ADV_TYPES.filter((ty) => buy.some((r) => r.type === ty.key));
+  return { buy, key, next, types };
 }
 // ---- Look ----
 const advMoney = (v) => `$${v >= 100 ? Math.round(v).toLocaleString("en-US") : v.toFixed(2)}`;
@@ -7926,8 +7930,8 @@ function advGivesText(gain) {
 const advPic = (src, page) => { const s = src || (page ? QUICK_ICONS[advPageOf(page).tab] : ""); return `<span class="pca-pic">${s ? `<img src="${esc(s)}" alt="" loading="lazy" />` : ""}</span>`; };
 function advRowHtml(r, o = {}) {
   const pg = advPageOf(r.page), per = advPer(r, o.key);
-  const sub = [o.rank ? `#${r.rank}` : "", r.sub || "", o.page ? navLabel(pg.tab) : "", `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`, r.kind === "buy" ? advMoney(r.usd) + (r.members && r.members.length > 1 ? ` ${t("adv_each")}` : "") : t(r.kind === "event" ? "adv_event_only" : "adv_no_price")].filter(Boolean).join(" · ");
-  return `<details class="pca-pk"${r.kind !== "buy" ? ' style="opacity:.55;"' : ""}><summary data-advrow="${esc(r.id)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span></span>${r.kind === "buy" && Number.isFinite(per) ? `<b class="pca-pr">${advPillHtml(per)}</b>` : ""}</summary></details>`;
+  const sub = [o.rank ? `#${r.rank}` : "", r.sub || "", o.page ? advTypeName(r.type) : "", `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`, advMoney(r.usd) + (r.members && r.members.length > 1 ? ` ${t("adv_each")}` : "")].filter(Boolean).join(" · ");
+  return `<details class="pca-pk"><summary data-advrow="${esc(r.id)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span></span>${Number.isFinite(per) ? `<b class="pca-pr">${advPillHtml(per)}</b>` : ""}</summary></details>`;
 }
 // The Dashboard's numbers (now / max per troop + stat), kept when the Dashboard draws.
 let ADV_GAP = null;
@@ -7953,8 +7957,7 @@ function advGapHtml() {
 let ADV_LAST = null;   // { steps, ranked } shown on the page
 let ADV_MORE = false;  // "Show N more" opened (for the visit)
 function advPageHtml(steps) {
-  const R = advRank(steps), shown = ADV_SET.page === "all" ? R.buy : R.buy.filter((r) => r.page === ADV_SET.page);
-  const other = ADV_SET.page === "all" ? R.other : R.other.filter((r) => r.page === ADV_SET.page);
+  const R = advRank(steps), shown = ADV_SET.page === "all" ? R.buy : R.buy.filter((r) => r.type === ADV_SET.page);
   ADV_LAST = { steps, R };
   const best = R.buy[0], then = R.buy.slice(1, 4);
   const answer = best ? `<div class="panel">
@@ -7962,23 +7965,21 @@ function advPageHtml(steps) {
       <div class="pca-sum" data-advrow="${esc(best.id)}" role="button" tabindex="0" style="cursor:pointer; margin-top:4px;">${advPic(best.img, best.page)}<span class="pca-mid"><span class="pca-nm">${esc(best.name)}</span><span class="pca-sb">${esc([best.sub || "", advGivesText(best.gain), advMoney(best.usd) + (best.members && best.members.length > 1 ? ` ${t("adv_each")}` : "")].filter(Boolean).join(" · "))}</span></span><span style="text-align:end;"><b class="pca-big" style="color:var(--good);">${bidiNum(`$${advPer(best).toFixed(2)}`)}</b><small class="meta">${esc(t("adv_per_1"))}</small></span></div>
       ${then.length ? `<div class="pca-h">${esc(t("adv_then"))}</div>${then.map((r) => advRowHtml(r, { rank: true })).join("")}` : ""}
     </div>` : `<div class="panel"><div class="empty">${esc(t("adv_nothing"))}</div></div>`;
-  const pagesHere = ADV_PAGES.filter((p) => R.buy.some((r) => r.page === p.key) || R.other.some((r) => r.page === p.key));
-  const chips = `<div class="cat-tabs pk-cat-row" style="margin:2px 0 10px;"><button type="button" data-advpage="all" class="${ADV_SET.page === "all" ? "active" : ""}">${esc(t("adv_all"))}</button>${pagesHere.map((p) => `<button type="button" data-advpage="${p.key}" class="${ADV_SET.page === p.key ? "active" : ""}">${esc(navLabel(p.tab))}</button>`).join("")}</div>`;
+  const chips = `<div class="cat-tabs pk-cat-row" data-advchips style="margin:2px 0 10px;"><button type="button" data-advpage="all" class="${ADV_SET.page === "all" ? "active" : ""}">${esc(t("adv_all"))}</button>${R.types.map((ty) => `<button type="button" data-advpage="${ty.key}" class="${ADV_SET.page === ty.key ? "active" : ""}">${esc(advTypeName(ty.key))}</button>`).join("")}</div>`;
+  const typesCard = `<div class="panel" data-advtypes><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span class="pca-mid"><span class="pca-nm">${esc(t("adv_types"))}</span><span class="pca-sb">${esc(t("adv_types_desc"))}</span></span><button type="button" class="pca-n" data-advtypesmore>${esc(t("adv_open"))} &#8250;</button></div></div>`;
   const settings = `<div class="panel">
-      <div class="bset-row" style="border-top:0;"><span class="bset-l">${esc(t("adv_value"))}<small>${esc(t("adv_value_sub"))}</small></span><span class="bset-c"><select data-advbasis aria-label="${esc(t("adv_value"))}">${ADV_BASES.map((b) => `<option value="${b}"${b === ADV_SET.basis ? " selected" : ""}>${esc(t(`adv_b_${b}`))}</option>`).join("")}</select></span></div>
-      <div class="bset-row"><span class="bset-l">${esc(t("adv_sort"))}<small>${esc(t(ADV_SET.mode === "pure" ? "adv_sort_pure_sub" : "adv_sort_prio_sub"))}</small></span><span class="bset-c"><span class="seg"><button type="button" data-advmode="prio" class="${ADV_SET.mode === "prio" ? "active" : ""}">${esc(t("adv_prio"))}</button><button type="button" data-advmode="pure" class="${ADV_SET.mode === "pure" ? "active" : ""}">${esc(t("adv_pure"))}</button></span></span></div>
+      <div class="bset-row" style="border-top:0;"><span class="bset-l">${esc(t("adv_sort"))}<small>${esc(t(ADV_SET.mode === "pure" ? "adv_sort_pure_sub" : "adv_sort_prio_sub"))}</small></span><span class="bset-c"><span class="seg"><button type="button" data-advmode="prio" class="${ADV_SET.mode === "prio" ? "active" : ""}">${esc(t("adv_prio"))}</button><button type="button" data-advmode="pure" class="${ADV_SET.mode === "pure" ? "active" : ""}">${esc(t("adv_pure"))}</button></span><button type="button" class="btn ghost small" data-advorder>&#8645; ${esc(t("adv_order"))}</button></span></div>
     </div>`;
   const N = 8, list = ADV_MORE ? shown : shown.slice(0, N);
-  const listCard = `<div class="panel">
-      <div class="t12x-title">${esc(t("adv_ranked"))} <small class="meta" style="font-weight:600; text-transform:none; letter-spacing:0;">· ${esc(t("adv_n_ups").replace("{n}", shown.length))}</small></div>
+  const listCard = `<div class="panel" data-advlist>
+      <div class="t12x-title">${esc(t("adv_ranked"))} <small class="meta" style="font-weight:600; text-transform:none; letter-spacing:0;">· ${esc(t(shown.length === 1 ? "adv_n_up1" : "adv_n_ups").replace("{n}", shown.length))}</small></div>
       <p class="desc">${esc(t("adv_ranked_desc"))}</p>
       ${chips}
       ${list.map((r) => advRowHtml(r, { rank: true, page: ADV_SET.page === "all" })).join("") || `<div class="meta">${esc(t("adv_nothing"))}</div>`}
       ${shown.length > N ? purMoreBtnHtml("data-advmore", ADV_MORE, shown.length - N) : ""}
-      ${other.length ? `<div class="pca-h">${esc(t("adv_other"))}</div>${other.map((r) => advRowHtml(r, { page: ADV_SET.page === "all" })).join("")}` : ""}
-      <p class="meta" style="margin:10px 0 0;">${esc(t("adv_legend"))}</p>
+      <p class="pca-sb" style="margin:10px 0 0;">${esc(t("adv_legend"))}</p>
     </div>`;
-  return `<div class="page-head"><div><h2>${esc(t("adv_title"))}</h2><p class="desc">${esc(t("adv_desc"))}</p></div></div>${answer}${advGapHtml()}${settings}${listCard}`;
+  return `<div class="page-head"><div><h2>${esc(t("adv_title"))}</h2><p class="desc">${esc(t("adv_desc"))}</p></div></div>${answer}${typesCard}${advGapHtml()}${settings}${listCard}`;
 }
 function advDraw() {
   const content = document.getElementById("content");
@@ -7996,33 +7997,32 @@ async function renderBestUpgradesPage() {
 function advFind(id) {
   const R = ADV_LAST && ADV_LAST.R;
   if (!R) return null;
-  return R.buy.find((r) => r.id === id) || R.other.find((r) => r.id === id) || null;
+  return R.buy.find((r) => r.id === id) || null;
 }
 function advOpenSheet(r) {
-  const m = gearSheetEl(), pg = advPageOf(r.page), R = ADV_LAST.R, per = advPer(r);
+  const m = gearSheetEl(), pg = advPageOf(r.page), R = ADV_LAST.R, per = advPer(r), nx = r.track ? R.next.get(r.track) : null;
   const by = {};
   Object.entries(r.gain).forEach(([k, v]) => { const [tr, st] = k.split("|"); (by[tr] = by[tr] || {})[st] = v; });
   const gives = PLX_TROOPS.filter((tr) => by[tr]).map((tr) => `<div class="bset-row"><span class="bset-l">${esc(troopDisplayName(tr))}</span><span class="bset-c" style="color:var(--good); font-weight:700;">${ADV_STATS.filter((s) => by[tr][s]).map((s) => `+${(Math.round(by[tr][s] * 100) / 100).toLocaleString("en-US")}% ${ADV_SHORT[s]}`).join(" · ")}</span></div>`).join("");
   const items = Object.entries(r.items || {}).filter(([, q]) => q > 0.5).map(([n, q]) => {
-    const v = q * advVal(n, ADV_SET.basis), src = materialIconSrc(advItemKey(n) === "General Sigils" ? n : n);
-    return `<div class="bset-row"><span class="bset-l" style="flex-direction:row; align-items:center; gap:8px;">${src ? `<img src="${esc(src)}" alt="" style="width:24px; height:24px; object-fit:contain;" />` : ""}<span>${esc(materialDisplayName(n))} <small>&times;${esc(shortAmount(q))}</small></span></span><b class="bset-c">${v > 0 ? advMoney(v) : "—"}</b></div>`;
+    const v = q * advVal(n), src = materialIconSrc(advItemKey(n) === "General Sigils" ? n : n);
+    return `<div class="bset-row"><span class="bset-l" style="flex-direction:row; align-items:center; gap:8px;">${src ? `<img src="${esc(src)}" alt="" style="width:24px; height:24px; object-fit:contain;" />` : ""}<span>${esc(materialDisplayName(n))} <small>&times;${esc(shortAmount(q))}</small>${ADV_OWN_FROM[advItemKey(n)] ? `<small class="meta" style="display:block;">${esc(t("adv_valued_from").replace("{pack}", ADV_OWN_FROM[advItemKey(n)]))}</small>` : ""}</span></span><b class="bset-c">${v > 0 ? advMoney(v) : "—"}</b></div>`;
   }).join("");
   const members = r.members && r.members.length > 1 ? `<div class="cgw-nh">${esc(t("adv_members"))}</div><div class="pca-gv">${r.members.map((x) => `<span class="pca-chip x">${esc(x.name.split(": ").slice(1).join(": "))}</span>`).join("")}</div>` : "";
-  const fixedRow = r.fixed && !Object.keys(r.items || {}).length ? `<div class="bset-row"><span class="bset-l">${esc(t(r.page === "islands" ? "adv_price_copy" : "adv_price_skin").replace("{v}", r.page === "islands" ? ADV_FIXED_PRICES.islandCopy : advMoney(r.fixed)))}</span><b class="bset-c">${advMoney(r.fixed)}</b></div>` : "";
   m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw" role="dialog" aria-modal="true" aria-label="${esc(r.name)}">
     <div class="cgw-top" data-cgwgrab><div class="cgw-grab"></div>
     <div class="gs-head">${advPic(r.img, r.page)}<div style="flex:1; min-width:0;"><b>${esc(r.name)}</b><div class="meta">${esc(navLabel(pg.tab))}${r.rank ? ` · ${esc(t("adv_rank_of").replace("{n}", r.rank).replace("{m}", R.buy.length))}` : ""}</div></div>${closeXHtml("data-advclose")}</div></div>
     <div class="cgw-nd" style="grid-template-columns:repeat(3, minmax(0, 1fr));">
-      <div class="cgw-nb"><small>${esc(t("adv_cost"))}</small><b>${r.kind === "buy" ? advMoney(r.usd) : "—"}</b></div>
+      <div class="cgw-nb"><small>${esc(t("adv_cost"))}</small><b>${advMoney(r.usd)}</b></div>
       <div class="cgw-nb"><small>${esc(t("adv_gives"))}</small><b style="color:var(--good);">+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%</b></div>
-      <div class="cgw-nb"><small>${esc(t("adv_per_1"))}</small><b>${r.kind === "buy" && Number.isFinite(per) ? bidiNum(`$${per.toFixed(2)}`) : "—"}</b></div>
+      <div class="cgw-nb"><small>${esc(t("adv_per_1"))}</small><b>${Number.isFinite(per) ? bidiNum(`$${per.toFixed(2)}`) : "\u2014"}</b></div>
     </div>
-    ${r.kind !== "buy" ? `<p class="pca-note">${esc(t(r.kind === "event" ? "adv_event_note" : "adv_noprice_note"))}</p>` : ""}
     <div class="cgw-nh">${esc(t("adv_what_gives"))}</div>${gives}
-    <p class="pca-sb" style="margin:6px 0 0;">${esc(ADV_SET.mode === "pure" ? t("adv_sheet_pure").replace("{v}", r.kind === "buy" ? `$${r.pp.toFixed(2)}` : "—") : t("adv_sheet_prio").replace("{w}", r.kind === "buy" ? `$${r.wpp.toFixed(2)}` : "—").replace("{v}", r.kind === "buy" ? `$${r.pp.toFixed(2)}` : "—"))}</p>
-    ${items || fixedRow ? `<div class="cgw-nh">${esc(t("adv_items"))} <small style="text-transform:none; letter-spacing:0;">· ${esc(t(`adv_b_${ADV_SET.basis}`))}</small></div>${items}${fixedRow}` : ""}
+    <p class="pca-sb" style="margin:6px 0 0;">${esc(ADV_SET.mode === "pure" ? t("adv_sheet_pure").replace("{v}", `$${r.pp.toFixed(2)}`) : t("adv_sheet_prio").replace("{w}", `$${r.wpp.toFixed(2)}`).replace("{v}", `$${r.pp.toFixed(2)}`))}</p>
+    ${items ? `<div class="cgw-nh">${esc(t("adv_items"))}</div>${items}` : ""}
     ${members}
     ${r.note ? `<p class="pca-sb" style="margin:10px 0 0;">${esc(r.note)}</p>` : ""}
+    ${nx && Number.isFinite(advPer(nx)) ? `<p class="pca-sb" style="margin:8px 0 0;">${esc(t("adv_after_this").replace("{name}", nx.name).replace("{v}", `$${advPer(nx).toFixed(2)}`))}</p>` : ""}
     <div style="display:flex; gap:8px; margin-top:14px;"><button type="button" class="btn ghost" style="flex:1;" data-advclose>${esc(t("close_button"))}</button><button type="button" class="btn" style="flex:1;" data-advopen="${esc(pg.tab)}">${esc(t("adv_open_page"))} &#8250;</button></div>
   </div>`;
   advWireSheet(m);
@@ -8039,16 +8039,143 @@ function advWireSheet(m) {
   };
   m.style.display = "flex";
 }
+// ---- Value by type: a reference for judging events and offers ----
+// Every step of each kind of upgrade over its whole table (not only what is left), priced
+// with the pack values (advVal) and the owner's fixed prices; plain $ per 1% (1% on one troop
+// = 1, an all-troops upgrade counts 3 times). Range = cheapest to dearest step, typical = whole table cost ÷ whole gain.
+const ADV_FIXED_PRICES = { "City Skin": 240, Frame: 5, "Teleport Skin": 35, islandCopy: 10 };
+// Prestige Appearance (owner's game screens): one Emblem of Exquisiteness Pack and how many it takes.
+const ADV_PRESTIGE = { appearance: "Royal North", packs: 10, price: 99.99, gems: 50000, speedH: 160, leth: 3, hp: 2 };
+let ADV_REF = null; // { seq, p }
+function advRefTypes() {
+  if (ADV_REF && ADV_REF.seq === CALC_SAVE_SEQ) return ADV_REF.p;
+  const p = (async () => {
+    await advOwnValues().catch(() => null);
+    const out = [], cost = (items) => Object.entries(items).reduce((s, [n, q]) => s + (Number(q) || 0) * advVal(n), 0);
+    const add = (key, tab, name, note, list, o = {}) => {
+      const ok = list.filter((x) => x.g > 1e-9 && x.usd > 0), per = ok.map((x) => x.usd / x.g).sort((x, y) => x - y);
+      const su = ok.reduce((s, x) => s + x.usd, 0), sg = ok.reduce((s, x) => s + x.g, 0);
+      // typical = the whole table's cost ÷ its whole gain
+      out.push({ key, tab, name, note, img: o.img || QUICK_ICONS[tab], n: per.length, lo: per[0], hi: per[per.length - 1], mid: sg > 0 ? su / sg : null });
+    };
+    const safe = async (f) => { try { await f(); } catch (e) { console.warn("value by type", e); } };
+    await safe(async () => {
+      const rows = await loadChiefGearRows(), cols = [["hardened_alloy", "Hardened Alloy"], ["polishing_solution", "Polishing Solution"], ["design_plan", "Design Plan"], ["amber", "Amber"]], st = (i) => parseStatPct(rows[i] && rows[i].stat) || 0;
+      add("chief_gear", "chiefgear", navLabel("chiefgear"), t("adv_r_cg"), rows.slice(1).map((r, k) => ({ usd: cost(Object.fromEntries(cols.map(([c, n]) => [n, Number(r[c]) || 0]))), g: 2 * (st(k + 1) - st(k)) })));
+    });
+    await safe(async () => {
+      await Promise.all([ensureCharmData(), ensureCharmLevelsData()]);
+      const L = CHARM_LEVELS.map(String);
+      add("charm", "charmscalc", navLabel("charmscalc"), t("adv_r_charm"), L.slice(1).map((l, k) => { const c = CHARM_STEP_COST[l] || [0, 0, 0]; return { usd: cost({ "Charm Guides": c[0], "Charm Designs": c[1], "Jewel Secrets": c[2] }), g: 2 * (charmStatAt(l) - charmStatAt(L[k])) }; }));
+    });
+    await safe(async () => {
+      await Promise.all([ensureT12NodesData(), ensureResearchSpeedData()]);
+      const list = [];
+      T12_ITEM_DEFS.filter((d) => d.stat).forEach((d) => { for (let lv = 1; lv <= d.max; lv++) { const r = (T12_NODES_CACHE[d.tier] || {})[lv]; if (r) list.push({ usd: cost({ Steel: Number(r.steel) || 0, "Refined FC": Number(r.refined_fc) || 0, "FC Shard": Number(r.fc_shard) || 0, "Research Speedups (minutes)": applyResearchPct(Number(r.time_hours) || 0) * 60 }), g: d.pct || 1 }); } });
+      add("t12", "t12research", navLabel("t12research"), t("adv_r_t12"), list);
+    });
+    await safe(async () => {
+      const [, skillRows, affinityRows] = await Promise.all([ensureExpertsRosterGlobal(), loadExpertNodes("skill"), loadExpertNodes("affinity")]);
+      const kit = expertKit(skillRows, affinityRows, {}), types = (s) => String(s || "").split(",").map((k) => k.trim()).filter((k) => ADV_STATS.includes(k));
+      const lv = [], sk = [];
+      EXPERTS_LIST.forEach((e) => {
+        const hero = e.key, rows = kit.AFFINITY_CACHE[hero] || [], pos = [];
+        for (let n = 0; n <= kit.heroTopLevel(hero); n++) { pos.push(n); if (n > 0 && kit.heroSigilLevel(hero, n)) pos.push(n + 0.1); }
+        const statSum = (v) => { const x = expertLevelStat(rows, v); return x && x.row ? types(x.row.stat_type).length * x.v : 0; };
+        for (let i = 1; i < pos.length; i++) { const c = kit.heroCost(hero, pos[i - 1], pos[i]); lv.push({ usd: cost({ Affinity: c.affinity, [`${hero} Sigils`]: c.sigil }), g: 3 * (statSum(pos[i]) - statSum(pos[i - 1])) }); }
+        (e.skills || []).forEach((s) => {
+          const sr = (kit.SKILL_CACHE[`${hero}|${s}`] || []).slice().sort((x, y) => x.level - y.level);
+          if (!sr.some((r) => types(r.stat_type).length)) return;
+          let prev = 0;
+          sr.forEach((r) => { const v = types(r.stat_type).length * (Number(r.stat_value) || 0); sk.push({ usd: cost({ "Books of Knowledge": Number(r.book_cost) || 0, "Expert Speedups (minutes)": (Number(r.exp_cost) || 0) / 60 }), g: 3 * (v - prev) }); prev = v; });
+        });
+      });
+      add("exp_level", "expertspage", navLabel("expertspage"), t("adv_r_exl"), lv);
+      add("exp_skill", "expertspage", t("adv_t_skills"), t("adv_r_exs"), sk);
+    });
+    await safe(async () => {
+      await ensureExpertsResearchDataGlobal();
+      const list = [];
+      EXPERTS_IN_ORDER_GLOBAL.forEach((ex) => expertsResearchPathNumbersGlobal(ex).forEach((pn) => {
+        const prow = ((EXPERTS_RESEARCH_NODES_GLOBAL[ex] || {})[pn] || []).slice().sort((x, y) => Number(x.level) - Number(y.level)), tr = expertTroopKey(ex) ? 1 : 3;
+        for (let l = 1; l <= 200; l++) { const g = Object.values(expertsResearchPathCostGlobal(ex, pn, l - 1, l)).reduce((s, v) => s + v, 0); list.push({ usd: cost({ [`${ex} Sigils`]: expertPathSigils(prow, l - 1, l) }), g: g * tr }); }
+      }));
+      add("exp_research", "expertsresearchpage", navLabel("expertsresearchpage"), t("adv_r_exr"), list);
+    });
+    await safe(async () => {
+      await ensurePetsData();
+      const list = [];
+      Object.values(PETS_NODES_CACHE || {}).forEach((levels) => {
+        let prev = 0;
+        (levels || []).forEach((r) => { const v = r.atk_def_pct != null ? Number(r.atk_def_pct) * 100 : prev; list.push({ usd: cost({ Food: Number(r.food) || 0, Manual: Number(r.manual) || 0, Potion: Number(r.potion) || 0, Serum: Number(r.serum) || 0 }), g: 6 * (v - prev) }); prev = v; });
+      });
+      add("pets", "petsdata", navLabel("petsdata"), t("adv_r_pets"), list);
+    });
+    // Islands: a Mythic building level = +1% for every troop (owner); copies per level.
+    const lvls = [];
+    for (let l = 2; l <= 10; l++) lvls.push(Number(ISL_COPIES[l]) || 0);
+    const per = Number(ISL_RULES.perCopy) || 10;
+    add("isl_copy", "islandgallery", t("adv_r_isl_copy_t"), t("adv_r_isl_copy"), lvls.map((c) => ({ usd: c * ADV_FIXED_PRICES.islandCopy, g: 3 })));
+    add("isl_shard", "islandgallery", t("adv_r_isl_shard_t"), t("adv_r_isl_shard").replace("{n}", per), lvls.map((c) => ({ usd: cost({ "Mythic Island Shards": c * per }), g: 3 })));
+    add("isl_mark", "islandgallery", t("adv_r_isl_mark_t"), t("adv_r_isl_mark").replace("{n}", Number(ISL_RULES.markPrice) || ISL_MARK_PRICE), lvls.map((c) => ({ usd: cost({ "Mark of Revival": c * (Number(ISL_RULES.markPrice) || ISL_MARK_PRICE) }), g: 3 })));
+    add("isl_tome", "islandgallery", t("adv_r_isl_tome_t"), t("adv_r_isl_tome").replace("{n}", Number(ISL_RULES.tomePrice) || 600), lvls.map((c) => ({ usd: cost({ "Glorious Tome": c * (Number(ISL_RULES.tomePrice) || 600) }), g: 3 })));
+    add("lighthouse", "islandgallery", t("adv_t_light"), t("adv_r_light"), ISL_LIGHT.map((x) => ({ usd: cost({ "Construction Contract": x.ct }), g: 6 })));
+    // Skins by kind, from each skin's own bonus.
+    await safe(async () => {
+      const rows = await keptRows("skins", skinGalleryPath()), cats = await islandCatRows();
+      const isl = new Set(cats.map((c) => c.category).concat([ISL_LIGHT_CAT, ISL_SHOP_CAT]));
+      const gOf = (r) => { let g = 0; ADV_SLOTS.forEach(([tk, vk]) => { const bs = cdaBonusStat(r[tk]); if (bs && r[vk] != null) g += (bs.troop === "all" ? 3 : 1) * (Number(r[vk]) || 0); }); return g; };
+      const globe = advIsGlobe;
+      const tomes = shiningTomesPer(), kinds = new Map();
+      rows.forEach((r) => {
+        if (isl.has(r.category)) return;
+        const k = globe(r.name) ? "__globe" : r.category === SHINING_SKIN_CAT && shiningSkinsAllow() && shiningPickable(r.name) ? "__shining" : r.category;
+        if (!kinds.has(k)) kinds.set(k, []);
+        kinds.get(k).push(r);
+      });
+      // Owner's kinds: City Skin, Frame, Teleport, the Chief Appearance bundle and Shining City skins.
+      // Globe skins (Frost Spheres, Gate of Time, Rally, a Chief Profile …), MVP and Name Cards (ranked
+      // rewards) and Private Chats on their own (free extras) are left out.
+      kinds.forEach((list, k) => {
+        const img = (list.find((r) => r.image_url) || {}).image_url || QUICK_ICONS.skingallery;
+        if (k === "__shining") return add("sk_shining", "skingallery", t("adv_t_shining"), t("adv_r_shining").replace("{n}", tomes.toLocaleString("en-US")), list.map((r) => ({ usd: cost({ "Glorious Tome": tomes }), g: gOf(r) })), { img });
+        const price = ADV_FIXED_PRICES[k];
+        if (price) add(`sk_${k}`, "skingallery", dataName(k), t("adv_r_skin").replace("{v}", price), list.map((r) => ({ usd: price, g: gOf(r) })), { img });
+      });
+      // Prestige Appearance "Royal North" (+3% LETH all troops) with its gift, the Chief Profile
+      // "Winter Bloom" (+2% HP all troops): 10,000 Prestige Emblems = all 10 Emblem of Exquisiteness
+      // Packs ($99.99, lifetime limit 10; each 1,000 Emblems + 50,000 gems + 20 × 8h speedups + resources
+      // ($0); its gold item and chest aren't counted).
+      const P = ADV_PRESTIGE, pack = P.price - P.gems * ADV_GEM_USD - P.speedH * 60 * advVal("Speedups (minutes)");
+      const app = (kinds.get("Chief Appearance") || []).find((r) => r.name === P.appearance);
+      add("sk_prestige", "skingallery", t("adv_r_prestige_t"), t("adv_r_prestige").replace("{n}", P.packs), [{ usd: P.packs * pack, g: 3 * (P.leth + P.hp) }], { img: (app && app.image_url) || QUICK_ICONS.skingallery });
+    });
+    return out.filter((x) => x.n).sort((x, y) => x.mid - y.mid);
+  })();
+  ADV_REF = { seq: CALC_SAVE_SEQ, p };
+  return p;
+}
+async function advOpenTypesSheet() {
+  const m = gearSheetEl(), list = await advRefTypes();
+  const f = (v) => `$${v.toFixed(2)}`;
+  m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw" role="dialog" aria-modal="true" aria-label="${esc(t("adv_types"))}">
+    <div class="cgw-top" data-cgwgrab><div class="cgw-grab"></div>
+    <div class="gs-head">${advPic(QUICK_ICONS.bestupgrades)}<div style="flex:1; min-width:0;"><b>${esc(t("adv_types"))}</b><div class="meta">${esc(t("adv_types_sub"))}</div></div>${closeXHtml("data-advclose")}</div></div>
+    ${list.map((x) => `<details class="pca-pk"><summary>${advPic(x.img)}<span class="pca-mid"><span class="pca-nm">${esc(x.name)}</span><span class="pca-sb">${esc(`${x.n > 1 && x.hi - x.lo > 0.005 ? t("adv_r_range").replace("{a}", f(x.lo)).replace("{b}", f(x.hi)) : t("adv_r_one").replace("{a}", f(x.lo))} \u00b7 ${x.note}`)}</span></span><b class="pca-pr">${advPillHtml(x.mid)}</b></summary></details>`).join("")}
+    <p class="pca-sb" style="margin:10px 0 0;">${esc(t("adv_ts_note"))}</p>
+    <div style="display:flex; gap:8px; margin-top:14px;"><button type="button" class="btn ghost" style="flex:1;" data-advclose>${esc(t("close_button"))}</button></div>
+  </div>`;
+  advWireSheet(m);
+}
 // "See all ›" of a planner page's card: that page's steps ranked, with their rank of all.
 function advOpenPageSheet(pageKey) {
   const m = gearSheetEl(), pg = advPageOf(pageKey), R = ADV_LAST.R;
-  const mine = R.buy.filter((r) => r.page === pageKey), other = R.other.filter((r) => r.page === pageKey);
+  const mine = R.buy.filter((r) => r.page === pageKey);
   const best = R.buy.find((r) => r.page !== pageKey);
   m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw" role="dialog" aria-modal="true" aria-label="${esc(t("adv_page_best").replace("{page}", navLabel(pg.tab)))}">
     <div class="cgw-top" data-cgwgrab><div class="cgw-grab"></div>
     <div class="gs-head">${advPic(QUICK_ICONS[pg.tab])}<div style="flex:1; min-width:0;"><b>${esc(t("adv_page_best").replace("{page}", navLabel(pg.tab)))}</b><div class="meta">${esc(t("adv_ranked_against").replace("{n}", R.buy.length))}</div></div>${closeXHtml("data-advclose")}</div></div>
     ${mine.map((r) => advRowHtml(r, { rank: true })).join("") || `<div class="meta">${esc(t("adv_nothing"))}</div>`}
-    ${other.length ? `<div class="pca-h">${esc(t("adv_other"))}</div>${other.map((r) => advRowHtml(r)).join("")}` : ""}
     ${best && mine[0] && best.rank < mine[0].rank ? `<p class="pca-sb" style="margin:10px 0 0;">${esc(t("adv_better_else").replace("{name}", best.name).replace("{v}", `$${advPer(best).toFixed(2)}`))}</p>` : ""}
     <div style="display:flex; gap:8px; margin-top:14px;"><button type="button" class="btn ghost" style="flex:1;" data-advclose>${esc(t("close_button"))}</button><button type="button" class="btn" style="flex:1;" data-advopen="bestupgrades">${esc(t("adv_all_best"))} &#8250;</button></div>
   </div>`;
@@ -8117,15 +8244,13 @@ document.addEventListener("click", (ev) => {
   const md = ev.target.closest("[data-advmode]");
   if (md) { ADV_SET.mode = md.dataset.advmode; advSaveSet(); advDraw(); return; }
   if (ev.target.closest("[data-advmore]")) { ADV_MORE = !ADV_MORE; advDraw(); return; }
+  if (ev.target.closest("[data-advtypesmore]")) { advOpenTypesSheet().catch((e) => console.warn("value by type", e)); return; }
+  if (ev.target.closest("[data-advorder]")) { cdaOrderSheet({ weights: true, after: advDraw }); return; }
   const tw = ev.target.closest("[data-advgap] [data-tswtroop]");
   if (tw) { PLX_TROOP.adv = tw.dataset.tswtroop; advDraw(); }
 });
 document.addEventListener("keydown", (ev) => {
   if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches && ev.target.matches("#content .pca-sum[data-advrow]")) { ev.preventDefault(); const r = advFind(ev.target.dataset.advrow); if (r) advOpenSheet(r); }
-});
-document.addEventListener("change", (ev) => {
-  if (TAB !== "bestupgrades" || !ev.target.matches || !ev.target.matches("[data-advbasis]")) return;
-  ADV_SET.basis = ev.target.value; advSaveSet(); advDraw();
 });
 const CANDO_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
 // ---- "Can do now" page (owner only: render() sends visitors to the Dashboard) ----
@@ -8979,7 +9104,7 @@ function mkInfo(root) {
   const cg = h.querySelector("[data-cghelp]");
   if (cg) cg.appendChild(d); else infoAttach(h, d);
 }
-function cdaOrderSheet() {
+function cdaOrderSheet(opts = {}) {
   let m = document.getElementById("candoSheet");
   if (!m) { m = document.createElement("div"); m.id = "candoSheet"; m.className = "modal-overlay adm-sheet-wrap cando-ov"; document.body.appendChild(m); }
   const ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
@@ -8987,7 +9112,7 @@ function cdaOrderSheet() {
     m.innerHTML = `<div class="modal-box adm-sheet cando-box" role="dialog" aria-modal="true" aria-label="${esc(t("cando_order"))}">
       <div class="cando-hd"><b>${esc(t("cando_order"))}</b>${closeXHtml("data-cdx")}</div>
       <div class="cando-oh"><span class="meta cando-desc">${esc(t("cando_drag_hint"))}</span><span class="cando-ob">${arrangeBtnHtml("upgrade_order")}<button type="button" class="btn ghost small" data-cdreset>${esc(t("rch_order_reset"))}</button></span></div>
-      <div class="cando-ord"${arrangeHostAttr("upgrade_order")}>${UPGRADE_ORDER.rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-cdrow="${i}" data-cdkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>${dsHandleHtml("data-cddrag")}</div>`).join("")}</div>
+      <div class="cando-ord"${arrangeHostAttr("upgrade_order")}>${UPGRADE_ORDER.rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-cdrow="${i}" data-cdkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>${opts.weights ? `<small class="meta">&times;${(1.5 - i / 11).toFixed(2)}</small>` : ""}${dsHandleHtml("data-cddrag")}</div>`).join("")}</div>
       <div class="cando-foot"><button type="button" class="btn cando-done" data-cdx>${esc(t("gs_done"))}</button></div>
     </div>`;
     m.querySelectorAll("[data-cddrag]").forEach((h) => dragSort(h, {
@@ -8996,7 +9121,7 @@ function cdaOrderSheet() {
       refocus: (row) => { const r2 = [...m.querySelectorAll("[data-cdkey]")].find((x) => x.dataset.cdkey === row.dataset.cdkey), hh = r2 && r2.querySelector("[data-cddrag]"); if (hh) hh.focus(); },
     }));
   };
-  const changed = () => { saveUpgradeOrder(); CDA_NOTE = null; draw(); if (cdaReady()) cdaRedraw(); };
+  const changed = () => { saveUpgradeOrder(); CDA_NOTE = null; draw(); if (cdaReady()) cdaRedraw(); if (opts.after) opts.after(); };
   m.onclick = (ev) => {
     if (ev.target === m || ev.target.closest("[data-cdx]")) { m.style.display = "none"; return; }
     if (ev.target.closest("[data-cdreset]")) { UPGRADE_ORDER.rows = UPGRADE_ORDER_DEFAULT.map((r) => r.slice()); changed(); }
