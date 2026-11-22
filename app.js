@@ -1316,7 +1316,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 123; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 124; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2640,6 +2640,8 @@ const T = {
   b3_not_counted: { en: "not in this budget" },
   b3_nothing: { en: "nothing planned" },
   b3_tick: { en: "Count in this budget" },
+  b3_pages: { en: "Pages" },
+  b3_arrange_hint: { en: "Hold ⋮⋮ and drag · ticks come back on Done" },
   b3_tile_research_center: { en: "Research" },
   b3_tile_hero_shards: { en: "Heroes" },
   b3_ring_tip: { en: "You already have {p}% of what this page needs (Backpack + trades)" },
@@ -6371,6 +6373,18 @@ let heroGearActiveSet = "Set 1";
 // Sets Budgets plans (picked in Budgets with tick chips,
 // not the set last opened here). calc_state budget_hg_sets = { sets: [...] }.
 let BUDGET_HG_SETS = ["Set 1"];
+// Order of the Budgets page tiles (owner picked A, 22 Nov 2026): per person in
+// calc_state budget_page_order = { order: [calcKeys] }; display only. Pages
+// not in it keep their built-in place after the saved ones.
+let BUDGET_PAGE_ORDER = null;
+const B3_ARR_KEY = "budget_pages";
+function b3PageOrdered(list) {
+  const ord = (BUDGET_PAGE_ORDER && Array.isArray(BUDGET_PAGE_ORDER.order)) ? BUDGET_PAGE_ORDER.order : [];
+  if (!ord.length) return list;
+  const at = new Map(ord.map((k, i) => [k, i]));
+  const saved = list.filter((x) => at.has(x.pg.calcKey)).sort((a, b) => at.get(a.pg.calcKey) - at.get(b.pg.calcKey));
+  return saved.concat(list.filter((x) => !at.has(x.pg.calcKey)));
+}
 const budgetHgSetStates = () => BUDGET_HG_SETS.map((n) => HERO_GEAR_SETS[n]).filter(Boolean);
 // Anything still to do in a set (a target above its current level)?
 function heroGearSetLeft(name) {
@@ -24735,6 +24749,7 @@ async function renderBudgetsPage(opts = {}) {
     ensureBudgetSpend(),
     visitorCan("goals") ? ensureBudgetGoals() : null,
     ensureBarHidden(),
+    BUDGET_PAGE_ORDER ? null : loadCalcState("budget_page_order").then((v) => { if (!BUDGET_PAGE_ORDER) BUDGET_PAGE_ORDER = v && Array.isArray(v.order) ? v : { order: [] }; }),
   ]);
   if (!budTab()) return;
   BUDGET_SELECTED = BUDGET_SELECTED || savedSel || {};
@@ -25458,12 +25473,12 @@ async function renderBudgetsPage(opts = {}) {
     const k = x.pg.calcKey, ic = pageIcon(x), nothing = isNothing(x);
     const [cls, sub] = nothing ? ["mu", k === "hero_gear" ? BUDGET_HG_SETS.map(gearSetDisplayName).join(" · ") : ""] : timing(x);
     return `<div class="b3-tile b3-pt${x.inc ? "" : " off"}" data-b3page="${esc(k)}" role="button" tabindex="0" aria-label="${esc(x.label)}">
-      <div class="b3-pt-h">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<b${B3_TILE_SHORT[k] ? ` title="${esc(x.label)}"` : ""}>${esc(B3_TILE_SHORT[k] ? t(B3_TILE_SHORT[k]) : x.label)}</b><label class="b3-tk" title="${esc(t("b3_tick"))}"><input type="checkbox" data-budgetinc="${esc(k)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" /></label></div>
+      <div class="b3-pt-h">${dsHandleHtml("data-b3drag")}${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<b${B3_TILE_SHORT[k] ? ` title="${esc(x.label)}"` : ""}>${esc(B3_TILE_SHORT[k] ? t(B3_TILE_SHORT[k]) : x.label)}</b><label class="b3-tk" title="${esc(t("b3_tick"))}"><input type="checkbox" data-budgetinc="${esc(k)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" /></label></div>
       ${nothing ? `<div class="b3-pt-p nothing">&#10003; ${esc(t("b3_nothing"))}</div>` : `<div class="b3-pt-p">${x.right}</div>`}
       <div class="b3-pt-m ${cls}">${esc(sub)}</div>${nothing ? ringHtml(100, true) : x.inc ? ringHtml(covered(x.pg), false) : ""}</div>`;
   };
   const missing = B3_PAGES.filter((x) => x.pg.missing);
-  const tilesHtml = `<div class="b3-pg">${B3_PAGES.filter((x) => !x.pg.missing).map(tileHtml).join("")}</div>`;
+  const tilesHtml = `<div class="b3-pgw"${arrangeHostAttr(B3_ARR_KEY)}><div class="b3-pgh"><span class="b3-lbl">${esc(t("b3_pages"))}</span>${arrangeBtnHtml(B3_ARR_KEY)}</div><div class="arr-hint b3-pghint">${esc(t("b3_arrange_hint"))}</div><div class="b3-pg">${b3PageOrdered(B3_PAGES.filter((x) => !x.pg.missing)).map(tileHtml).join("")}</div></div>`;
   const missHtml = missing.length ? `<button type="button" class="b3-tile b3-np" data-b3sheet="missing"><span>${esc(t("b3_missing").replace("{n}", missing.length))}</span><span class="b3-ics">${missing.slice(0, 6).map((x) => { const ic = pageIcon(x); return ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""; }).join("")}</span><span class="b3-go">&#8250;</span></button>` : "";
   // This week (Monday – Sunday): the shown plan's packs; opens My Purchases.
   const wkData = (() => {
@@ -25608,10 +25623,24 @@ async function renderBudgetsPage(opts = {}) {
   const b3bg = content.querySelector("[data-b3bg]");
   if (b3bg) b3bg.addEventListener("click", (e) => { if (e.target === b3bg || e.target.closest("[data-b3close]")) { BUDGET_SHEET = null; b3bg.remove(); } });
   content.querySelectorAll("[data-b3page]").forEach((el) => {
-    const open = (e) => { if (e.target.closest("input, label, button, a")) return; BUDGET_SHEET = "page:" + el.dataset.b3page; b3Redraw(); };
+    const open = (e) => { if (arrangeOn(B3_ARR_KEY) || e.target.closest("input, label, button, a, .ds-h")) return; BUDGET_SHEET = "page:" + el.dataset.b3page; b3Redraw(); };
     el.addEventListener("click", open);
     el.addEventListener("keydown", (e) => { if (e.target === el && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open(e); } });
   });
+  // Page tiles order: drag ⋮⋮ while Arrange is on; saved per person, display only.
+  content.querySelectorAll(".b3-pg .ds-h[data-b3drag]").forEach((h) => dragSort(h, {
+    arrange: B3_ARR_KEY,
+    row: ".b3-pt",
+    grid: true,
+    done: (el) => {
+      const keys = [...el.parentElement.querySelectorAll(":scope > .b3-pt")].map((x) => x.dataset.b3page);
+      const old = (BUDGET_PAGE_ORDER && Array.isArray(BUDGET_PAGE_ORDER.order)) ? BUDGET_PAGE_ORDER.order : [];
+      BUDGET_PAGE_ORDER = { order: keys.concat(old.filter((k) => !keys.includes(k))) };
+      saveCalcState("budget_page_order", BUDGET_PAGE_ORDER);
+      dsSaved();
+    },
+    refocus: (el) => { const nh = content.querySelector(`.b3-pt[data-b3page="${window.CSS.escape(el.dataset.b3page)}"] .ds-h`); if (nh) nh.focus(); },
+  }));
   // "Free now" (owner): wire the sheet, then work the pages out after the draw.
   const cdaHost = content.querySelector("[data-cdasheet]");
   if (cdaHost) { cdaWire(cdaHost); if (!cdaReady()) cdaDrawBar(); }

@@ -2970,5 +2970,7 @@
 "t:pur_op_upto":"hasta {n}",
 "t:pur_op_none_left":"no queda ninguno en esta ronda",
 "t:pur_op_sum":"plan {a} + extra {b}",
-"t:pur_op_note":"{n} extra · Presupuestos volverá a planear el resto con ello"
+"t:pur_op_note":"{n} extra · Presupuestos volverá a planear el resto con ello",
+"t:b3_pages":"Páginas",
+"t:b3_arrange_hint":"Mantén ⋮⋮ y arrastra · las casillas vuelven al pulsar Listo"
 }
