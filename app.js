@@ -3615,6 +3615,28 @@ const T = {
   adv_p_per100: { en: "per +100 march" },
   adv_p_cost: { en: "cost" },
   adv_p_list_h: { en: "Troop unlocks · march capacity" },
+  adv_p_avg_h: { en: "Then by average cost per 1%" },
+  adv_show: { en: "Show" },
+  adv_show_next_sub: { en: "the next step of each" },
+  adv_show_target_sub: { en: "now → page targets" },
+  adv_view_next: { en: "Next step" },
+  adv_view_target: { en: "To target" },
+  adv_ranked_avg: { en: "Ranked by average cost per 1%" },
+  adv_n_trs: { en: "{n} tracks" },
+  adv_n_tr1: { en: "1 track" },
+  adv_n_steps: { en: "{n} steps" },
+  adv_n_step1: { en: "1 step" },
+  adv_avg: { en: "avg" },
+  adv_to_target: { en: "to your target" },
+  adv_total: { en: "Total" },
+  adv_ts_average: { en: "Average" },
+  adv_steps_h: { en: "Step · cost · per 1%" },
+  adv_tt_note_prio: { en: "Each step's own price; the average and the pills count your upgrade order." },
+  adv_tt_note_pure: { en: "Each step's own price; every troop and stat the same." },
+  adv_open_named: { en: "Open {page}" },
+  adv_charm_base: { en: "{troop} {piece} charm {n}" },
+  adv_exp_level_base: { en: "{name} level" },
+  adv_isl_light_base: { en: "Lighthouse {name}" },
   adv_p_pct_h: { en: "Then by cost per 1%" },
   adv_ord_unlocks: { en: "Troop unlocks" },
   adv_ord_march: { en: "March capacity" },
@@ -5174,7 +5196,7 @@ let DASH_DATA_CACHE = {};
 const QUICK_DEFAULT = ["chiefgear", "charmscalc", "herogearcalc", "petsdata", "expertspage", "budgets"];
 const QUICK_ICONS = {
   overview: "icons/logo-64.webp", statetimeline: "icons/quick/events.png", packs: "icons/quick/gift.png", mypacks: "icons/quick/gift.png",
-  budgets: "icons/quick/calculator.png", purchases: "icons/quick/froststar.png", bestupgrades: "icons/quick/research.png",
+  budgets: "icons/quick/calculator.png", purchases: "icons/quick/froststar.png",
   charmscalc: "icons/charms/charm-infantry-16.webp", chiefgear: "icons/quick/chief-gear.png", herogearcalc: "icons/quick/hero-gear.png",
   expertspage: "icons/quick/experts.png", expertsresearchpage: "icons/quick/experts.png", petsdata: "icons/quick/pets.png", refinepage: "icons/quick/pets.png",
   researchcenter: "icons/quick/research.png", t11helios: "icons/quick/microscope.png", t12research: "icons/quick/microscope.png", rfclab: "icons/quick/microscope.png",
@@ -5183,7 +5205,7 @@ const QUICK_ICONS = {
   albumtundrapage: "icons/quick/tundra.png", collectiongallerypage: "icons/quick/collection.png",
 };
 // Pages shown with a symbol instead of a picture (others use the Menu's own).
-const QUICK_EMOJI = { backpack: "\u{1F392}" };
+const QUICK_EMOJI = { backpack: "\u{1F392}", bestupgrades: "\u{1F4C8}" };
 // Short names for the row's tiles, English only;
 // other languages, and pages renamed in Admin, keep the Menu name.
 const QUICK_SHORT = {
@@ -7710,7 +7732,7 @@ async function advStepsChiefGear(out) {
       const d6 = computeChiefGearSetBonus(lift).sixBonus - b0.sixBonus;
       if (d6 > 0) { advGain(g, "all", ["Attack"], d6 / short.length); notes.push(short.length > 1 ? t("adv_n_set6_share").split("{n}").join(short.length).replace("{v}", d6) : t("adv_n_set6").replace("{v}", d6)); }
     }
-    out.push({ id: `cg|${p.key}|${hi}`, track: `cg|${p.key}`, nth, page: "chief_gear", type: "chief_gear", name: `${troopDisplayName(p.troop)} ${pieceDisplayName(p.name)} ${cgBadge(rows[lo])} → ${cgBadge(rows[hi])}`,
+    out.push({ id: `cg|${p.key}|${hi}`, track: `cg|${p.key}`, nth, page: "chief_gear", type: "chief_gear", base: `${troopDisplayName(p.troop)} ${pieceDisplayName(p.name)}`, la: cgBadge(rows[lo]), lb: cgBadge(rows[hi]), hi, tgt: Math.min(cap, Math.max(base[p.key].from, Number(CHIEF_GEAR_STATE[p.key].to) || 0)), name: `${troopDisplayName(p.troop)} ${pieceDisplayName(p.name)} ${cgBadge(rows[lo])} → ${cgBadge(rows[hi])}`,
       img: chiefGearIcon(p.key, lo), items, gain: g, kind: "buy", note: notes.join(" · ") });
   }));
 }
@@ -7719,7 +7741,7 @@ async function advStepsCharm(out) {
   const cap = charmCapIdx(), L = CHARM_LEVELS.map(String);
   CHARM_PIECES.forEach((p) => (CHARM_CALC_STATE[p.key] || []).forEach((s, slot) => advEach(Math.max(0, L.indexOf(String(s.current))), cap, (lo, hi, nth) => {
     const c = CHARM_STEP_COST[L[hi]] || [0, 0, 0];
-    out.push({ id: `ch|${p.key}|${slot}|${L[hi]}`, track: `ch|${p.key}|${slot}`, nth, page: "charm", type: "charm",
+    out.push({ id: `ch|${p.key}|${slot}|${L[hi]}`, track: `ch|${p.key}|${slot}`, nth, page: "charm", type: "charm", base: t("adv_charm_base").replace("{troop}", troopDisplayName(p.troop)).replace("{piece}", pieceDisplayName(p.name)).replace("{n}", slot + 1), la: L[lo], lb: L[hi], hi, tgt: Math.min(cap, L.indexOf(String(s.target)) >= 0 ? L.indexOf(String(s.target)) : cap),
       name: t("adv_charm_step").replace("{troop}", troopDisplayName(p.troop)).replace("{piece}", pieceDisplayName(p.name)).replace("{n}", slot + 1).replace("{a}", L[lo]).replace("{b}", L[hi]),
       img: charmIconSrc(p.troop, L[hi]), items: { "Charm Guides": c[0], "Charm Designs": c[1], "Jewel Secrets": c[2] },
       gain: advGain({}, p.troop, ["Lethality", "Health"], charmStatAt(L[hi]) - charmStatAt(L[lo])), kind: "buy", note: "" });
@@ -7754,7 +7776,7 @@ async function advStepsT12(out) {
     });
     steps.forEach((x) => {
       const notes = [x.note, x.waits.length ? t("adv_n_waits").replace("{what}", x.waits.join(", ")) : ""].filter(Boolean);
-      out.push({ id: `t12|${troop}|${x.def.key}|${x.e}`, track: `t12|${troop}|${x.def.key}`, nth: x.nth, page: "t12", type: "t12", name: `${troopDisplayName(troop)} ${tT12Group(x.def.group)} · ${tT12Label(x.def.label)} ${x.b} → ${x.e}`,
+      out.push({ id: `t12|${troop}|${x.def.key}|${x.e}`, track: `t12|${troop}|${x.def.key}`, nth: x.nth, page: "t12", type: "t12", base: `${troopDisplayName(troop)} ${tT12Group(x.def.group)} \u00b7 ${tT12Label(x.def.label)}`, la: String(x.b), lb: String(x.e), hi: x.e, tgt: t12TargetOf(troop, x.def), name: `${troopDisplayName(troop)} ${tT12Group(x.def.group)} · ${tT12Label(x.def.label)} ${x.b} → ${x.e}`,
         img: QUICK_ICONS.t12research, items: x.items, gain: advGain({}, troop, [x.def.stat], (x.e - x.b) * (x.def.pct || 1)), kind: "buy", note: notes.join(" · ") });
     });
   });
@@ -7781,7 +7803,7 @@ async function advStepsExperts(out) {
       banked = Math.max(0, banked - c.affinity);
       const s0 = statAt(pos[lo]), s1 = statAt(pos[hi]), g = {};
       ADV_STATS.forEach((k) => advGain(g, "all", [k], (s1[k] || 0) - (s0[k] || 0)));
-      out.push({ id: `exl|${hero}|${lab(pos[hi])}`, track: `exl|${hero}`, nth, page: "experts", type: "exp_level", name: t("adv_exp_level").replace("{name}", name).replace("{a}", lab(pos[lo])).replace("{b}", lab(pos[hi])),
+      out.push({ id: `exl|${hero}|${lab(pos[hi])}`, track: `exl|${hero}`, nth, page: "experts", type: "exp_level", base: t("adv_exp_level_base").replace("{name}", name), la: lab(pos[lo]), lb: lab(pos[hi]), hi, tgt: hs.desired != null ? idxOf(hs.desired) : null, name: t("adv_exp_level").replace("{name}", name).replace("{a}", lab(pos[lo])).replace("{b}", lab(pos[hi])),
         img: e.img || "", items: { Affinity: a, [SIG]: c.sigil }, gain: g, kind: "buy", note: off });
     });
     // Skills with a troop stat, one level a step; EXP paid with expert speedups (1 EXP = 1 s).
@@ -7796,7 +7818,7 @@ async function advStepsExperts(out) {
         xp = Math.max(0, xp - c.exp);
         const g = {}, A = vAt(b), B = vAt(e2);
         B.k.forEach((k) => advGain(g, "all", [k], B.v - (A.k.includes(k) ? A.v : 0)));
-        out.push({ id: `exs|${hero}|${sk}|${e2}`, track: `exs|${hero}|${sk}`, nth, page: "experts", type: "exp_skill", name: t("adv_exp_skill").replace("{name}", name).replace("{skill}", dataName(sk)).replace("{a}", b).replace("{b}", e2),
+        out.push({ id: `exs|${hero}|${sk}|${e2}`, track: `exs|${hero}|${sk}`, nth, page: "experts", type: "exp_skill", base: `${name} \u00b7 ${dataName(sk)}`, la: String(b), lb: String(e2), hi: e2, tgt: st.desired != null ? Number(st.desired) || 0 : null, name: t("adv_exp_skill").replace("{name}", name).replace("{skill}", dataName(sk)).replace("{a}", b).replace("{b}", e2),
           img: e.img || "", items: { "Books of Knowledge": c.book, "Expert Speedups (minutes)": exp / 60 }, gain: g, kind: "buy", note: [t("adv_n_exp"), off].filter(Boolean).join(" · ") });
       });
     });
@@ -7815,7 +7837,7 @@ async function advStepsExpertsResearch(out) {
       advEach(Math.max(0, Number(((saved[expert] || {})[p] || {}).current) || 0), top, (lo, hi, nth) => {
         const g = {};
         Object.entries(expertsResearchPathCostGlobal(expert, p, lo, hi)).forEach(([k, v]) => { if (RAW[k]) advGain(g, troop ? reachTroopKey(troop) : "all", [RAW[k]], v); });
-        out.push({ id: `exr|${expert}|${p}|${hi}`, track: `exr|${expert}|${p}`, nth, page: "experts_research", type: "exp_research", name: `${dataName(expert)} · ${pname ? dataName(pname) : t("cda_path").replace("{n}", p)} ${lo} → ${hi}`,
+        out.push({ id: `exr|${expert}|${p}|${hi}`, track: `exr|${expert}|${p}`, nth, page: "experts_research", type: "exp_research", base: `${dataName(expert)} \u00b7 ${pname ? dataName(pname) : t("cda_path").replace("{n}", p)}`, la: String(lo), lb: String(hi), hi, tgt: ((saved[expert] || {})[p] || {}).desired != null ? Number(((saved[expert] || {})[p] || {}).desired) || 0 : null, name: `${dataName(expert)} · ${pname ? dataName(pname) : t("cda_path").replace("{n}", p)} ${lo} → ${hi}`,
           img: imgOf(expert), items: { [`${expert} Sigils`]: expertPathSigils(prow, lo, hi) }, gain: g, kind: "buy",
           note: [troop ? t("adv_n_troop_only").replace("{troop}", troopDisplayName(reachTroopKey(troop))) : "", off].filter(Boolean).join(" · ") });
       });
@@ -7845,7 +7867,7 @@ async function advStepsIslands(out) {
       const rec = light[s.id], cur = rec && rec.now != null ? Number(rec.now) || 0 : Number(s.current_level) || 0;
       advEach(cur, mx, (lo, hi, nth) => {
         const ct = islLightCost(lo, hi).ct;
-        out.push({ id: `isl|${s.id}|${hi}`, track: `isl|${s.id}`, nth, page: "islands", type: "lighthouse", name: t("adv_isl_light").replace("{name}", dataName(s.name)).replace("{a}", lo).replace("{b}", hi).replace("{n}", ct),
+        out.push({ id: `isl|${s.id}|${hi}`, track: `isl|${s.id}`, nth, page: "islands", type: "lighthouse", base: t("adv_isl_light_base").replace("{name}", dataName(s.name)), la: `Lv ${lo}`, lb: `Lv ${hi}`, hi, tgt: rec && rec.to != null ? Number(rec.to) || 0 : null, name: t("adv_isl_light").replace("{name}", dataName(s.name)).replace("{a}", lo).replace("{b}", hi).replace("{n}", ct),
           img: s.image_url || "", items: { "Construction Contract": ct }, gain: gainOf(s, lo, hi, mx, true), kind: "buy", note: "" });
       });
       return;
@@ -7865,7 +7887,7 @@ async function advStepsIslands(out) {
     advEach(Number(s.current_level) || 0, mx, (lo, hi, nth) => {
       const copies = islCopiesAt(hi, src.each), pay = Math.max(0, copies - free), used = copies - pay;
       free = Math.max(0, free - copies);
-      out.push({ id: `isl|${s.id}|${hi}`, track: `isl|${s.id}`, nth, page: "islands", type: "islands", name: t("adv_isl_bld").replace("{name}", dataName(s.name)).replace("{a}", lo).replace("{b}", hi).replace("{n}", copies),
+      out.push({ id: `isl|${s.id}|${hi}`, track: `isl|${s.id}`, nth, page: "islands", type: "islands", base: dataName(s.name), la: `Lv ${lo}`, lb: `Lv ${hi}`, hi, tgt: Number((isl.targets || {})[s.id]) > 0 ? Number(isl.targets[s.id]) : null, name: t("adv_isl_bld").replace("{name}", dataName(s.name)).replace("{a}", lo).replace("{b}", hi).replace("{n}", copies),
         img: s.image_url || "", items: pay ? { [way.k]: pay * way.n } : {}, gain: gainOf(s, lo, hi, mx, false), kind: "buy",
         note: [t("adv_n_copy_from").replace("{n}", way.n).replace("{item}", materialDisplayName(way.k)), used ? t("adv_n_store").replace("{n}", used) : ""].filter(Boolean).join(" \u00b7 ") });
     });
@@ -7880,7 +7902,7 @@ function advFromTracks(out, tracks, o) {
   tracks.forEach((tr) => advEach(tr.from, tr.top, (lo, hi, nth) => {
     const g0 = tr.gain(lo, { ...lv, [tr.id]: lo }) || {}, g1 = tr.gain(hi, { ...lv, [tr.id]: hi }) || {}, g = {};
     ADV_STATS.forEach((k) => advGain(g, tr.troop || "all", [k], (Number(g1[k]) || 0) - (Number(g0[k]) || 0)));
-    out.push({ id: `${o.type}|${tr.id}|${hi}`, track: `${o.type}|${tr.id}`, nth, page: o.page, type: o.type, name: `${tr.name} ${tr.lab ? tr.lab(lo) : lo} \u2192 ${tr.lab ? tr.lab(hi) : hi}`,
+    out.push({ id: `${o.type}|${tr.id}|${hi}`, track: `${o.type}|${tr.id}`, nth, page: o.page, type: o.type, base: tr.name, la: tr.lab ? tr.lab(lo) : String(lo), lb: tr.lab ? tr.lab(hi) : String(hi), hi, tgt: tr.tgt != null ? tr.tgt : null, name: `${tr.name} ${tr.lab ? tr.lab(lo) : lo} \u2192 ${tr.lab ? tr.lab(hi) : hi}`,
       img: (o.pic && o.pic(tr)) || QUICK_ICONS[advPageOf(o.page).tab], items: tr.cost(hi) || {}, gain: g, kind: "buy", note: "" });
   }));
 }
@@ -7891,7 +7913,7 @@ function advT11Tracks(all) {
     if (track === "Flame Squad" || /^Helios .* (Unlock|Training)$/.test(track)) return;
     const rows = rows0.slice().sort((x, y) => Number(x.level) - Number(y.level)), at = new Map(rows.map((r) => [Number(r.level), r])), cum = [{}];
     for (let l = 1; l <= rows.length; l++) { const c = { ...cum[l - 1] }, r = at.get(l); if (r && r.stat) c[r.stat] = (c[r.stat] || 0) + (Number(r.stat_pct) || 0); cum.push(c); }
-    tracks.push({ id: `${troop}|${track}`, troop, from: all ? 0 : Number(T11_STATE && T11_STATE[troop] && T11_STATE[troop][track]) || 0, top: t11Len(troop, track), name: `${troopDisplayName(troop)} ${dataName(track)}`,
+    tracks.push({ id: `${troop}|${track}`, troop, from: all ? 0 : Number(T11_STATE && T11_STATE[troop] && T11_STATE[troop][track]) || 0, top: t11Len(troop, track), tgt: t11TargetOf(troop, track, rows.length), name: `${troopDisplayName(troop)} ${dataName(track)}`,
       cost: (l) => { const r = at.get(l) || {}; return { Steel: Number(r.steel) || 0, "Refined FC": Number(r.refined_fc) || 0, "FC Shard": Number(r.fc_shard) || 0, "Research Speedups (minutes)": applyResearchPct(Number(r.time_hours) || 0) * 60 }; },
       gain: (l) => cum[Math.max(0, Math.min(l, cum.length - 1))] });
   }));
@@ -7908,7 +7930,7 @@ function advRcTracks(all) {
     if (!rows.length) return;
     const at = new Map(rows.map((r) => [Number(r.level), r])), cum = [{}];
     for (let l = 1; l <= rows.length; l++) { const c = { ...cum[l - 1] }, r = at.get(l); if (r && r.stat) c[r.stat] = (c[r.stat] || 0) + (Number(r.stat_pct) || 0); cum.push(c); }
-    tracks.push({ id: track, troop: troopOf[base] || "all", from: all ? 0 : Number(RC_STATE && RC_STATE[track]) || 0, top: rcLen(track), name: `${dataName(base)} ${tier}`,
+    tracks.push({ id: track, troop: troopOf[base] || "all", from: all ? 0 : Number(RC_STATE && RC_STATE[track]) || 0, top: rcLen(track), tgt: rcTargetOf(track), name: `${dataName(base)} ${tier}`,
       cost: (l) => { const r = at.get(l) || {}; return { Steel: Number(r.steel) || 0, "Research Speedups (minutes)": applyResearchPct(Number(r.time_hours) || 0) * 60 }; },
       gain: (l) => cum[Math.max(0, Math.min(l, cum.length - 1))] });
   })));
@@ -7919,7 +7941,7 @@ function advHgTracks(all) {
   if (!st || !HERO_GEAR_TABLES_CACHE) return [];
   return heroGearReachTracks(st).map((tr) => {
     const tn = tr.id.split("|")[2], rows = HERO_GEAR_TABLES_CACHE[tn] || [];
-    return { ...tr, name: `${troopDisplayName(tr.troop)} ${tr.name} \u00b7 ${t(tn === "Enhance Combined" ? "goal_hg_enhance" : "goal_hg_mastery")}`, from: all ? 0 : tr.from, top: Math.max(0, all ? rows.length - 1 : heroTrackCapIdx(tn)) };
+    return { ...tr, name: `${troopDisplayName(tr.troop)} ${tr.name} \u00b7 ${t(tn === "Enhance Combined" ? "goal_hg_enhance" : "goal_hg_mastery")}`, from: all ? 0 : tr.from, tgt: tr.to, top: Math.max(0, all ? rows.length - 1 : heroTrackCapIdx(tn)) };
   });
 }
 function advPetTracks(all) {
@@ -7927,7 +7949,7 @@ function advPetTracks(all) {
     const levels = PETS_NODES_CACHE[pet] || [], s = PETS_STATE && PETS_STATE[pet], from = all ? -1 : s && typeof s === "object" ? Number(s.from) : -1;
     const statAt = (i) => { for (let k = Math.min(i, levels.length - 1); k >= 0; k--) if (levels[k].atk_def_pct != null) return Number(levels[k].atk_def_pct) * 100; return 0; };
     const lab = (i) => { if (i < 0 || !levels[i]) return "0"; const l = String(levels[i].level_label), n = parseInt(l, 10) || 0; return /\.1$/.test(l) ? `${n} ${t("pet_adv_short")}` : String(n); };
-    return { id: pet, troop: "all", from, top: all ? levels.length - 1 : petMaxIdx(pet), name: dataName(pet), lab, img: petImage(pet),
+    return { id: pet, troop: "all", from, tgt: s && typeof s === "object" && s.to != null ? Number(s.to) : null, top: all ? levels.length - 1 : petMaxIdx(pet), name: dataName(pet), lab, img: petImage(pet),
       cost: (i) => { const r = levels[i] || {}; return { Food: Number(r.food) || 0, Manual: Number(r.manual) || 0, Potion: Number(r.potion) || 0, Serum: Number(r.serum) || 0 }; },
       gain: (i) => { const v = statAt(i); return { Attack: v, Defense: v }; } };
   });
@@ -7950,7 +7972,7 @@ async function advStepsSkins(out) {
     if (r.owned || r.category !== SHINING_SKIN_CAT || globe(r.name) || !shiningPickable(r.name)) return;
     const g = gainOf(r);
     if (!Object.values(g).some((v) => v > 1e-9)) return;
-    out.push({ id: `sk|${r.id}`, track: `sk|${r.id}`, nth: 0, page: "skins", type: "shining", cat: r.category, name: `${dataName(r.category)}: ${dataName(r.name)}`, img: r.image_url || "",
+    out.push({ id: `sk|${r.id}`, track: `sk|${r.id}`, nth: 0, page: "skins", type: "shining", base: `${dataName(r.category)}: ${dataName(r.name)}`, la: "\u2014", lb: t("cda_owned"), hi: 1, tgt: 1, cat: r.category, name: `${dataName(r.category)}: ${dataName(r.name)}`, img: r.image_url || "",
       items: { "Glorious Tome": shiningTomesPer() }, gain: g, kind: "buy", note: t("adv_n_shining") });
   });
 }
@@ -7970,8 +7992,8 @@ function advSteps() {
   return p;
 }
 // Settings, kept in this browser: value basis and sort.
-let ADV_SET = (() => { try { const v = JSON.parse(localStorage.getItem("adv_set") || "{}"); return { mode: v.mode === "pure" ? "pure" : "prio", page: "all" }; } catch (e) { return { mode: "prio", page: "all" }; } })();
-function advSaveSet() { try { localStorage.setItem("adv_set", JSON.stringify({ mode: ADV_SET.mode })); } catch (e) { /* not kept */ } }
+let ADV_SET = (() => { try { const v = JSON.parse(localStorage.getItem("adv_set") || "{}"); return { mode: v.mode === "pure" ? "pure" : "prio", view: v.view === "target" ? "target" : "next", page: "all" }; } catch (e) { return { mode: "prio", view: "next", page: "all" }; } })();
+function advSaveSet() { try { localStorage.setItem("adv_set", JSON.stringify({ mode: ADV_SET.mode, view: ADV_SET.view })); } catch (e) { /* not kept */ } }
 function advWeights() {
   const W = {};
   (UPGRADE_ORDER.rows || UPGRADE_ORDER_DEFAULT).forEach(([tr, st], i) => { W[`${reachTroopKey(tr)}|${st}`] = 1.5 - i / 11; });
@@ -8006,14 +8028,35 @@ function advRank(steps) {
   buy.sort((a, b) => a[key] - b[key] || a.usd - b.usd);
   buy.forEach((r, i) => { r.rank = i + 1; });
   const types = ADV_TYPES.filter((ty) => buy.some((r) => r.type === ty.key));
-  return { buy, key, next, types };
+  // To target: each track's steps up to its target (no target saved = the page's open max).
+  const byTrack = new Map();
+  steps.forEach((s) => { if (s.track) { if (!byTrack.has(s.track)) byTrack.set(s.track, []); byTrack.get(s.track).push(s); } });
+  const tracks = [];
+  byTrack.forEach((list) => {
+    list.sort((x, y) => x.nth - y.nth);
+    const first = list[0], top = list[list.length - 1].hi, tg = first.tgt != null ? first.tgt : top;
+    if (first.nth !== 0) return;
+    const st = list.filter((s) => s.hi <= tg).map(score);
+    if (!st.length) return;
+    const g = {}, usd = st.reduce((s, x) => s + x.usd, 0);
+    st.forEach((x) => Object.entries(x.gain).forEach(([k, v]) => { g[k] = (g[k] || 0) + v; }));
+    const gs = st.reduce((s, x) => s + x.g, 0), wg = st.reduce((s, x) => s + x.wg, 0);
+    if (!(gs > 1e-9)) return;
+    const from = first.hi - 1, lastHi = st[st.length - 1].hi;
+    tracks.push({ id: `tt|${first.track}`, track: first.track, page: first.page, type: first.type, img: first.img, base: first.base || first.name, la: first.la, lb: st[st.length - 1].lb,
+      name: first.base ? `${first.base} ${first.la} \u2192 ${st[st.length - 1].lb}` : first.name, steps: st, n: st.length, usd, gain: g, g: gs, wg, pp: usd / gs, wpp: wg > 0 ? usd / wg : Infinity,
+      bar: { now: top > 0 ? Math.max(0, Math.min(1, (from + 1 - (list[0].hi - list[0].nth - 1) * 0) / (top + 1))) : 0, from, to: lastHi, top } });
+  });
+  tracks.sort((x, y) => x[key] - y[key] || x.usd - y.usd);
+  tracks.forEach((r, i) => { r.rank = i + 1; });
+  return { buy, key, next, types, tracks };
 }
 // ---- Look ----
 const advMoney = (v) => `$${v >= 100 ? Math.round(v).toLocaleString("en-US") : v.toFixed(2)}`;
 const advPer = (r, key) => r[key || (ADV_SET.mode === "pure" ? "pp" : "wpp")];
-function advPillHtml(v) {
+function advPillHtml(v, pre) {
   const cls = v < 5 ? "pur-cmp pur-cmp-budget" : v <= 20 ? "pur-cmp pur-cmp-target" : "trd-sc";
-  return `<span class="${cls}">${bidiNum(`$${v.toFixed(2)}`)} / 1%</span>`;
+  return `<span class="${cls}">${pre ? `${esc(pre)} ` : ""}${bidiNum(`$${v.toFixed(2)}`)} / 1%</span>`;
 }
 function advGivesText(gain) {
   const by = {};
@@ -8065,16 +8108,19 @@ function advPageHtml(steps) {
   const chips = `<div class="cat-tabs pk-cat-row" data-advchips style="margin:2px 0 10px;"><button type="button" data-advpage="all" class="${ADV_SET.page === "all" ? "active" : ""}">${esc(t("adv_all"))}</button>${R.types.map((ty) => `<button type="button" data-advpage="${ty.key}" class="${ADV_SET.page === ty.key ? "active" : ""}">${esc(advTypeName(ty.key))}</button>`).join("")}</div>`;
   const typesCard = `<div class="panel" data-advtypes><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span class="pca-mid"><span class="pca-nm">${esc(t("adv_types"))}</span><span class="pca-sb">${esc(t("adv_types_desc"))}</span></span><button type="button" class="pca-n" data-advtypesmore>${esc(t("adv_open"))} &#8250;</button></div></div>`;
   const settings = `<div class="panel">
-      <div class="bset-row" style="border-top:0;"><span class="bset-l">${esc(t("adv_sort"))}<small>${esc(t(ADV_SET.mode === "pure" ? "adv_sort_pure_sub" : "adv_sort_prio_sub"))}</small></span><span class="bset-c"><span class="seg"><button type="button" data-advmode="prio" class="${ADV_SET.mode === "prio" ? "active" : ""}">${esc(t("adv_prio"))}</button><button type="button" data-advmode="pure" class="${ADV_SET.mode === "pure" ? "active" : ""}">${esc(t("adv_pure"))}</button></span><button type="button" class="btn ghost small" data-advorder>&#8645; ${esc(t("adv_order"))}</button></span></div>
+      <div class="bset-row" style="border-top:0;"><span class="bset-l">${esc(t("adv_show"))}<small>${esc(t(ADV_SET.view === "target" ? "adv_show_target_sub" : "adv_show_next_sub"))}</small></span><span class="bset-c"><span class="seg"><button type="button" data-advview="next" class="${ADV_SET.view === "next" ? "active" : ""}">${esc(t("adv_view_next"))}</button><button type="button" data-advview="target" class="${ADV_SET.view === "target" ? "active" : ""}">${esc(t("adv_view_target"))}</button></span></span></div>
+      <div class="bset-row"><span class="bset-l">${esc(t("adv_sort"))}<small>${esc(t(ADV_SET.mode === "pure" ? "adv_sort_pure_sub" : "adv_sort_prio_sub"))}</small></span><span class="bset-c"><span class="seg"><button type="button" data-advmode="prio" class="${ADV_SET.mode === "prio" ? "active" : ""}">${esc(t("adv_prio"))}</button><button type="button" data-advmode="pure" class="${ADV_SET.mode === "pure" ? "active" : ""}">${esc(t("adv_pure"))}</button></span><button type="button" class="btn ghost small" data-advorder>&#8645; ${esc(t("adv_order"))}</button></span></div>
     </div>`;
-  const N = 8, list = ADV_MORE ? shown : shown.slice(0, N);
+  const TT = ADV_SET.view === "target", shownT = TT ? (ADV_SET.page === "all" ? R.tracks : R.tracks.filter((r) => r.type === ADV_SET.page)) : null;
+  const N = 8, list = TT ? (ADV_MORE ? shownT : shownT.slice(0, N)) : ADV_MORE ? shown : shown.slice(0, N);
+  const listCount = TT ? t(shownT.length === 1 ? "adv_n_tr1" : "adv_n_trs").replace("{n}", shownT.length) : t(shown.length === 1 ? "adv_n_up1" : "adv_n_ups").replace("{n}", shown.length);
   const listCard = `<div class="panel" data-advlist>
-      <div class="t12x-title">${esc(t("adv_ranked"))} <small class="meta" style="font-weight:600; text-transform:none; letter-spacing:0;">· ${esc(t(shown.length === 1 ? "adv_n_up1" : "adv_n_ups").replace("{n}", shown.length))}</small></div>
+      <div class="t12x-title">${esc(t(TT ? "adv_ranked_avg" : "adv_ranked"))} <small class="meta" style="font-weight:600; text-transform:none; letter-spacing:0;">\u00b7 ${esc(listCount)}</small></div>
       <p class="desc">${esc(t("adv_ranked_desc"))}</p>
       ${chips}
-      ${ADV_SET.page === "all" ? (P.length ? `<div class="pca-h">${esc(t("adv_p_list_h"))}</div>${P.map(advPrioRowHtml).join("")}<div class="pca-h">${esc(t("adv_p_pct_h"))}</div>` : `<p class="pca-note ok" style="margin:0 0 6px;">&#10003; ${esc(t("adv_p_done"))}</p>`) : ""}
-      ${list.map((r) => advRowHtml(r, { rank: true, page: ADV_SET.page === "all" })).join("") || `<div class="meta">${esc(t("adv_nothing"))}</div>`}
-      ${shown.length > N ? purMoreBtnHtml("data-advmore", ADV_MORE, shown.length - N) : ""}
+      ${ADV_SET.page === "all" ? (P.length ? `<div class="pca-h">${esc(t("adv_p_list_h"))}</div>${(TT ? ADV_PRIO_TT : P).map(advPrioRowHtml).join("")}<div class="pca-h">${esc(t(TT ? "adv_p_avg_h" : "adv_p_pct_h"))}</div>` : `<p class="pca-note ok" style="margin:0 0 6px;">&#10003; ${esc(t("adv_p_done"))}</p>`) : ""}
+      ${list.map((r) => (TT ? advTrackRowHtml(r, ADV_SET.page === "all") : advRowHtml(r, { rank: true, page: ADV_SET.page === "all" }))).join("") || `<div class="meta">${esc(t("adv_nothing"))}</div>`}
+      ${(TT ? shownT : shown).length > N ? purMoreBtnHtml("data-advmore", ADV_MORE, (TT ? shownT : shown).length - N) : ""}
       <p class="pca-sb" style="margin:10px 0 0;">${esc(t("adv_legend"))}</p>
     </div>`;
   return `<div class="page-head"><div><h2>${esc(t("adv_title"))}</h2><p class="desc">${esc(t("adv_desc"))}</p></div></div>${answer}${typesCard}${advGapHtml()}${settings}${listCard}`;
@@ -8090,6 +8136,8 @@ async function renderBestUpgradesPage() {
   const [steps, prio] = await Promise.all([advSteps(), advPriority().catch((e) => { console.warn("best upgrades: priority", e); return []; })]);
   if (seq !== RENDER_SEQ) return;
   ADV_PRIO = prio;
+  ADV_PRIO_TT = await advPriorityTracks().catch(() => []);
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = advPageHtml(steps);
 }
 // ---- "Priority first": troop unlocks and march size, before any % upgrade ----
@@ -8118,51 +8166,104 @@ async function advPriority() {
     const now = Number(((T12_STATE || {})[troop] || {})[d.key]) || 0;
     if (now >= d.max) return;
     const r = (T12_NODES_CACHE[d.tier] || {})[now + 1] || {};
-    unl.push({ tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1}`, sub: t("adv_p_t12"), usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }) });
+    unl.push({ key: `t12|${troop}|${d.key}`, base: `${troopDisplayName(troop)} ${tT12Label(d.label)}`, subBase: t("adv_p_t12"), lvFrom: now, lvTo: now + 1, set: (s) => { s.t12[troop][d.key] = now + 1; }, tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1}`, sub: t("adv_p_t12"), usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }) });
   }));
   // T12 Troop Skill: part of the T12 soldier, right after the unlock slots.
   T12_TROOPS.forEach((troop) => T12_ITEM_DEFS.filter((d) => d.key === "troopskill").forEach((d) => {
     const now = Number(((T12_STATE || {})[troop] || {})[d.key]) || 0;
     if (now >= d.max) return;
     const r = (T12_NODES_CACHE[d.tier] || {})[now + 1] || {};
-    unl.push({ tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1}`, sub: t("adv_p_t12skill"), usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }), t11: 0.5 });
+    unl.push({ key: `t12|${troop}|${d.key}`, base: `${troopDisplayName(troop)} ${tT12Label(d.label)}`, subBase: t("adv_p_t12skill"), lvFrom: now, lvTo: now + 1, set: (s) => { s.t12[troop][d.key] = now + 1; }, tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1}`, sub: t("adv_p_t12skill"), usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }), t11: 0.5 });
   }));
   // T12 Solar Supremacy: +100 march capacity a level.
   T12_TROOPS.forEach((troop) => T12_ITEM_DEFS.filter((d) => d.key === "solar").forEach((d) => {
     const now = Number(((T12_STATE || {})[troop] || {})[d.key]) || 0;
     if (now >= d.max) return;
     const r = (T12_NODES_CACHE[d.tier] || {})[now + 1] || {}, add = ADV_MARCH_T12_SOLAR;
-    cap.push({ tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, add, usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }), extra: "" });
+    cap.push({ key: `t12|${troop}|${d.key}`, base: `${troopDisplayName(troop)} ${tT12Label(d.label)}`, subBase: "", lvFrom: now, lvTo: now + 1, set: (s) => { s.t12[troop][d.key] = now + 1; }, tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, add, usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }), extra: "" });
   }));
   // T11: Helios <troop> Unlock (XI troops), Flame Squad and Helios <troop> Training (capacity).
   T11_TROOPS.forEach((troop) => Object.entries((T11_NODES_CACHE || {})[troop] || {}).forEach(([track, rows0]) => {
     const rows = rows0.slice().sort((x, y) => Number(x.level) - Number(y.level)), now = Number(((T11_STATE || {})[troop] || {})[track]) || 0;
     if (now >= rows.length) return;
     const r = rows.find((x) => Number(x.level) === now + 1) || {}, usd = rowCost(r), lab = `${dataName(track)} Lv ${now} \u2192 ${now + 1}`;
-    if (/^Helios .* Unlock$/.test(track)) unl.push({ tab: "t11helios", img: QUICK_ICONS.t11helios, name: `${troopDisplayName(troop)} \u00b7 ${lab}`, sub: t("adv_p_t11"), usd, t11: 1 });
+    const t11k = { key: `t11|${troop}|${track}`, base: `${troopDisplayName(troop)} \u00b7 ${dataName(track)}`, lvFrom: now, lvTo: now + 1, set: (s) => { s.t11[troop][track] = now + 1; } };
+    if (/^Helios .* Unlock$/.test(track)) unl.push({ ...t11k, subBase: t("adv_p_t11"), tab: "t11helios", img: QUICK_ICONS.t11helios, name: `${troopDisplayName(troop)} \u00b7 ${lab}`, sub: t("adv_p_t11"), usd, t11: 1 });
     // Helios <troop> Training is part of the T11 unlock path: listed (and ranked) as an unlock,
     // with its +capacity on the line.
-    if (/^Helios .* Training$/.test(track)) { const m = ADV_MARCH_T11.Training, add = (m[now] || 0) - (m[now - 1] || 0); unl.push({ tab: "t11helios", img: QUICK_ICONS.t11helios, name: `${troopDisplayName(troop)} \u00b7 ${lab} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, sub: `${t("adv_p_t11")} \u00b7 ${t("adv_p_train").replace("{n}", 5)}`, usd, t11: 2 }); }
-    if (track === "Flame Squad") { const m = ADV_MARCH_T11["Flame Squad"], add = (m[now] || 0) - (m[now - 1] || 0); cap.push({ tab: "t11helios", img: QUICK_ICONS.t11helios, name: `${troopDisplayName(troop)} \u00b7 ${lab} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, add, usd, extra: "" }); }
+    if (/^Helios .* Training$/.test(track)) { const m = ADV_MARCH_T11.Training, add = (m[now] || 0) - (m[now - 1] || 0); unl.push({ ...t11k, add, subBase: `${t("adv_p_t11")} \u00b7 ${t("adv_p_train").replace("{n}", 5)}`, tab: "t11helios", img: QUICK_ICONS.t11helios, name: `${troopDisplayName(troop)} \u00b7 ${lab} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, sub: `${t("adv_p_t11")} \u00b7 ${t("adv_p_train").replace("{n}", 5)}`, usd, t11: 2 }); }
+    if (track === "Flame Squad") { const m = ADV_MARCH_T11["Flame Squad"], add = (m[now] || 0) - (m[now - 1] || 0); cap.push({ ...t11k, subBase: "", tab: "t11helios", img: QUICK_ICONS.t11helios, name: `${troopDisplayName(troop)} \u00b7 ${lab} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, add, usd, extra: "" }); }
   }));
   // Research Center: Regimental Expansion I–VI.
   Object.entries(ADV_MARCH_RC).forEach(([track, m]) => {
     const rows = (RC_NODES_CACHE[track] || []).slice().sort((x, y) => Number(x.level) - Number(y.level)), now = Number((RC_STATE || {})[track]) || 0, top = Math.max(rows.length, m.length);
     if (now >= top) return;
     const r = rows.find((x) => Number(x.level) === now + 1) || {}, add = (m[now] || 0) - (m[now - 1] || 0);
-    cap.push({ tab: "researchcenter", img: QUICK_ICONS.researchcenter, name: `${dataName(track)} Lv ${now} \u2192 ${now + 1} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, add, usd: rowCost(r), extra: "" });
+    cap.push({ key: `rc|${track}`, base: dataName(track), subBase: "", lvFrom: now, lvTo: now + 1, set: (s) => { s.rc[track] = now + 1; }, tab: "researchcenter", img: QUICK_ICONS.researchcenter, name: `${dataName(track)} Lv ${now} \u2192 ${now + 1} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, add, usd: rowCost(r), extra: "" });
   });
   unl.sort((x, y) => (x.t11 || 0) - (y.t11 || 0));
   cap.forEach((x) => { x.per = x.add > 0 ? (x.usd / x.add) * 100 : Infinity; x.sub = [t("adv_p_per").replace("{v}", `$${x.per.toFixed(2)}`), x.extra].filter(Boolean).join(" \u00b7 "); });
   cap.sort((x, y) => x.per - y.per);
   return unl.concat(cap);
 }
+// To target row: name now → target, "#n · +gain · $total · N steps", bar (green now, blue to the
+// target) and the average $ per 1% pill.
+function advTrackRowHtml(r, showPage) {
+  const b = r.bar, w = (x) => Math.max(0, Math.min(100, (x / Math.max(1, b.top)) * 100));
+  const sub = [`#${r.rank}`, showPage ? advTypeName(r.type) : "", `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`, advMoney(r.usd), t(r.n === 1 ? "adv_n_step1" : "adv_n_steps").replace("{n}", r.n)].filter(Boolean).join(" \u00b7 ");
+  return `<details class="pca-pk"><summary data-advtrack="${esc(r.track)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span><span style="display:flex; align-items:center; gap:6px;"><span class="pc-bar" style="flex:1; margin-top:0;"><i style="width:${w(b.from)}%;"></i><i style="width:${w(b.to) - w(b.from)}%;"></i></span><small class="meta">&rarr; ${esc(r.lb)}</small></span></span><b class="pca-pr">${advPillHtml(advPer(r), t("adv_avg"))}</b></summary></details>`;
+}
+// To target sheet: totals, then every step with its own $ and $ per 1%; long middles fold.
+let ADV_TT_ALL = false;
+function advOpenTrackSheet(r) {
+  const m = gearSheetEl(), pg = advPageOf(r.page), key = ADV_SET.mode === "pure" ? "pp" : "wpp";
+  const row = (s) => `<div class="bset-row"><span class="bset-l">${esc(s.lb)}</span><span class="bset-c"><b>${advMoney(s.usd)}</b>${Number.isFinite(s[key]) ? advPillHtml(s[key]) : ""}</span></div>`;
+  const st = r.steps, fold = !ADV_TT_ALL && st.length > 6;
+  const mid = fold ? `<div class="bset-row" role="button" tabindex="0" data-advttall style="cursor:pointer;"><span class="bset-l">\u2026 ${esc(`${st[2].lb} \u2013 ${st[st.length - 3].lb}`)}</span><span class="bset-c meta">${esc(t("adv_n_steps").replace("{n}", st.length - 4))} &#8250;</span></div>` : "";
+  m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw" role="dialog" aria-modal="true" aria-label="${esc(r.name)}">
+    <div class="cgw-top" data-cgwgrab><div class="cgw-grab"></div>
+    <div class="gs-head">${advPic(r.img, r.page)}<div style="flex:1; min-width:0;"><b>${esc(r.name)}</b><div class="meta">${esc(`${navLabel(pg.tab)} \u00b7 ${t("adv_to_target")} \u00b7 ${t(r.n === 1 ? "adv_n_step1" : "adv_n_steps").replace("{n}", r.n)}`)}</div></div>${closeXHtml("data-advclose")}</div></div>
+    <div class="cgw-nd" style="grid-template-columns:repeat(3, minmax(0, 1fr));">
+      <div class="cgw-nb"><small>${esc(t("adv_total"))}</small><b>${advMoney(r.usd)}</b></div>
+      <div class="cgw-nb"><small>${esc(t("adv_gives"))}</small><b style="color:var(--good);">+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%</b></div>
+      <div class="cgw-nb"><small>${esc(t("adv_ts_average"))}</small><b>${Number.isFinite(advPer(r)) ? bidiNum(`$${advPer(r).toFixed(2)}`) : "\u2014"}</b></div>
+    </div>
+    <div class="cgw-nh">${esc(t("adv_steps_h"))}</div>
+    ${fold ? st.slice(0, 2).map(row).join("") + mid + st.slice(-2).map(row).join("") : st.map(row).join("")}
+    <p class="pca-sb" style="margin:10px 0 0;">${esc(t(key === "pp" ? "adv_tt_note_pure" : "adv_tt_note_prio"))}</p>
+    <div style="display:flex; gap:8px; margin-top:14px;"><button type="button" class="btn ghost" style="flex:1;" data-advclose>${esc(t("close_button"))}</button><button type="button" class="btn" style="flex:1;" data-advopen="${esc(pg.tab)}">${esc(t("adv_open_named").replace("{page}", navLabel(pg.tab)))} &#8250;</button></div>
+  </div>`;
+  advWireSheet(m);
+  m.querySelectorAll("[data-advttall]").forEach((x) => { x.onclick = (ev) => { ev.stopPropagation(); ADV_TT_ALL = true; advOpenTrackSheet(r); }; });
+}
 // A "Priority first" step as a list row: its own $ (and $ per +100 march), no $/1% pill.
 function advPrioPill(x) { return `<span class="pur-cmp pur-cmp-both">${x.per != null && Number.isFinite(x.per) ? `${bidiNum(`$${x.per.toFixed(2)}`)} / +100` : bidiNum(advMoney(x.usd))}</span>`; }
+// Unlock / march tracks to their end, plain cost (To target view).
+async function advPriorityTracks() {
+  const out = [], saved = { t12: T12_STATE, t11: T11_STATE, rc: RC_STATE };
+  try {
+    // Walk each node to its end by asking advPriority() level by level on a copy of the states.
+    const st = { t12: JSON.parse(JSON.stringify(T12_STATE || {})), t11: JSON.parse(JSON.stringify(T11_STATE || {})), rc: JSON.parse(JSON.stringify(RC_STATE || {})) };
+    T12_STATE = st.t12; T11_STATE = st.t11; RC_STATE = st.rc;
+    const first = await advPriority(), acc = new Map(first.map((x) => [x.key, { ...x, total: x.usd, add: x.add || 0, n: 1, from: x.lvFrom, to: x.lvTo }]));
+    for (let guard = 0; guard < 400; guard++) {
+      first.forEach((x) => { const s = x.set; if (s) s(st); });
+      const next = await advPriority();
+      let any = false;
+      next.forEach((x) => { const a2 = acc.get(x.key); if (!a2) return; if (x.lvFrom !== a2.to) return; any = true; a2.total += x.usd; a2.add += x.add || 0; a2.n++; a2.to = x.lvTo; });
+      first.length = 0; next.forEach((x) => { if (acc.has(x.key)) first.push(x); });
+      if (!any || !first.length) break;
+    }
+    acc.forEach((a2) => out.push({ ...a2, usd: a2.total, name: `${a2.base} Lv ${a2.lvFrom} \u2192 ${a2.to}${a2.add ? ` \u00b7 ${t("adv_p_march").replace("{n}", a2.add.toLocaleString("en-US"))}` : ""}`, per: a2.per != null && a2.add > 0 ? (a2.total / a2.add) * 100 : null, sub: [a2.subBase, t(a2.n === 1 ? "adv_n_step1" : "adv_n_steps").replace("{n}", a2.n)].filter(Boolean).join(" \u00b7 ") }));
+  } finally { T12_STATE = saved.t12; T11_STATE = saved.t11; RC_STATE = saved.rc; }
+  const unl = out.filter((x) => x.per == null).sort((x, y) => (x.t11 || 0) - (y.t11 || 0)), cap = out.filter((x) => x.per != null).sort((x, y) => x.per - y.per);
+  return unl.concat(cap);
+}
 function advPrioRowHtml(x) {
   return `<details class="pca-pk"><summary data-advopen="${x.tab}">${advPic(x.img)}<span class="pca-mid"><span class="pca-nm">${esc(x.name)}</span><span class="pca-sb">${esc([x.per != null ? x.extra : x.sub, x.per != null ? advMoney(x.usd) : ""].filter(Boolean).join(" \u00b7 "))}</span></span><b class="pca-pr">${advPrioPill(x)}</b></summary></details>`;
 }
 let ADV_PRIO = [];
+let ADV_PRIO_TT = []; // the same tracks, from now to their end (To target view)
 // ---- Sheets ----
 function advFind(id) {
   const R = ADV_LAST && ADV_LAST.R;
@@ -8351,7 +8452,7 @@ async function advOpenTypesSheet() {
   const f = (v) => `$${v.toFixed(2)}`;
   m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw" role="dialog" aria-modal="true" aria-label="${esc(t("adv_types"))}">
     <div class="cgw-top" data-cgwgrab><div class="cgw-grab"></div>
-    <div class="gs-head">${advPic(QUICK_ICONS.bestupgrades)}<div style="flex:1; min-width:0;"><b>${esc(t("adv_types"))}</b><div class="meta">${esc(t("adv_types_sub"))}</div></div>${closeXHtml("data-advclose")}</div></div>
+    <div class="gs-head"><span class="pca-pic" style="font-size:22px;">${QUICK_EMOJI.bestupgrades}</span><div style="flex:1; min-width:0;"><b>${esc(t("adv_types"))}</b><div class="meta">${esc(t("adv_types_sub"))}</div></div>${closeXHtml("data-advclose")}</div></div>
     ${list.map((x) => `<details class="pca-pk"><summary>${advPic(x.img)}<span class="pca-mid"><span class="pca-nm">${esc(x.name)}</span><span class="pca-sb">${esc(`${x.n > 1 && x.hi - x.lo > 0.005 ? t("adv_r_range").replace("{a}", f(x.lo)).replace("{b}", f(x.hi)) : t("adv_r_one").replace("{a}", f(x.lo))} \u00b7 ${x.note}`)}</span></span><b class="pca-pr">${advPillHtml(x.mid)}</b></summary></details>`).join("")}
     <p class="pca-sb" style="margin:10px 0 0;">${esc(t("adv_ts_note"))}</p>
     <div style="display:flex; gap:8px; margin-top:14px;"><button type="button" class="btn ghost" style="flex:1;" data-advclose>${esc(t("close_button"))}</button></div>
@@ -8435,6 +8536,10 @@ document.addEventListener("click", (ev) => {
   const md = ev.target.closest("[data-advmode]");
   if (md) { ADV_SET.mode = md.dataset.advmode; advSaveSet(); advDraw(); return; }
   if (ev.target.closest("[data-advmore]")) { ADV_MORE = !ADV_MORE; advDraw(); return; }
+  const tk = ev.target.closest("[data-advtrack]");
+  if (tk) { ev.preventDefault(); const r = ADV_LAST && ADV_LAST.R.tracks.find((x) => x.track === tk.dataset.advtrack); if (r) { ADV_TT_ALL = false; advOpenTrackSheet(r); } return; }
+  const vw = ev.target.closest("[data-advview]");
+  if (vw) { ADV_SET.view = vw.dataset.advview; ADV_MORE = false; advSaveSet(); advDraw(); return; }
   if (ev.target.closest("[data-advtypesmore]")) { advOpenTypesSheet().catch((e) => console.warn("value by type", e)); return; }
   if (ev.target.closest("[data-advorder]")) { cdaOrderSheet({ weights: true, after: advDraw }); return; }
   const tw = ev.target.closest("[data-advgap] [data-tswtroop]");
