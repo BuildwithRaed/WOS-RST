@@ -3609,6 +3609,7 @@ const T = {
   adv_p_desc: { en: "Troop unlocks and march size come before any % upgrade: unlocks first, then march size, cheapest per +100 first. Costs at your pack values." },
   adv_p_t12: { en: "Needed for T12 troops" },
   adv_p_t11: { en: "Needed for T11 troops" },
+  adv_p_t12skill: { en: "Part of T12 troops" },
   adv_p_march: { en: "+{n} march" },
   adv_p_per: { en: "{v} per +100 march" },
   adv_p_train: { en: "−{n}% training cost" },
@@ -3671,6 +3672,9 @@ const T = {
   adv_r_exl: { en: "each level and Advance, every expert; all troops" },
   adv_r_exs: { en: "each level of skills with a troop stat; EXP as expert speedups" },
   adv_r_exr: { en: "each path level, every expert" },
+  adv_r_t11: { en: "each level of the stat tracks, research time included" },
+  adv_r_rc: { en: "each level of every track, research time included" },
+  adv_r_hg: { en: "each Enhance level (Mastery 0) and Mastery level (Enhance max), milestones included" },
   adv_r_pets: { en: "each level, every pet; ATK + DEF all troops" },
   adv_r_isl_copy_t: { en: "Island building ($10 a copy)" },
   adv_r_isl_copy: { en: "a level = +1% all troops; Lv 2–10 copies" },
@@ -7543,6 +7547,7 @@ const ADV_VALUES = {
   "Mythic Island Shards": { site: null, com: 1.0, tor: null },
   "Lucky Gear Chest": { site: null, com: null, tor: 0.118 },
   "XP 100": { site: 0.07561, com: 0.075, tor: 0.072 },
+  Mithril: { site: 2.493, com: 4, tor: 4.6 }, "Mythic Gear": { site: 8.663, com: 10, tor: 7.36 }, "Essence Stones": { site: 0.1386, com: 0.14, tor: 0.118 }, "XP Component": { site: 0.0007561, com: 0.00075, tor: 0.00072 },
   Food: { site: null, com: 0.00033, tor: 0.00032 }, Manual: { site: null, com: 0.04, tor: 0.038 }, Potion: { site: null, com: 0.14, tor: 0.132 }, Serum: { site: null, com: 0.28, tor: 0.265 },
 };
 // "Your packs": table title, step price (USD), and either the whole row ("also" = other
@@ -7563,6 +7568,8 @@ const ADV_PACK_SPECS = [
   { item: "XP 100", title: "Custom Armament Chest", price: 99.99, slot: "XP 100" },
   { item: "Mark of Revival", title: "Daybreak Island Supply", price: 4.99 },
   { item: "Pet Chest", title: "Custom Pet Chest", price: 99.99, slot: "Pet Chest" },
+  { item: "Mithril", title: "Gear Empowerment", price: 4.99 },
+  { item: "Essence Stones", title: "Wishfull", price: 9.99, slot: "Essence Stones" },
   { item: "Food", title: "Custom Pet Chest", price: 99.99, slot: "Food" },
   // Glorious Tomes: no regular pack; the Shining City Pack step with the most Tomes, gems ~0.
   { item: "Glorious Tome", title: "Shining City Pack", most: true, noGems: true, also: () => ({ "Lucky Glorious Tome Chest": Number(chestGives("Lucky Glorious Tome Chest")["Glorious Tome"]) || 20 }) },
@@ -7573,6 +7580,7 @@ const ADV_PACK_SPECS = [
 const ADV_PACK_LINKS = [
   ["Research Speedups (minutes)", "Speedups (minutes)", 1], ["Charm Designs", "Charm Guides", 1], ["Hardened Alloy", "Polishing Solution", 0.01],
   ["Amber", "Design Plan", 10], ["FC Shard", "Fire Crystal", 1 / 1.3], ["Refined FC", "Fire Crystal", 18.56], ["Fiery Heart", "Sail of Conquest", 0.1],
+  ["Mythic Gear", "Lucky Gear Chest", 62.5], ["XP Component", "XP 100", 0.01],
   ["Manual", "Pet Chest", 1 / 7], ["Potion", "Pet Chest", 1 / 2], ["Serum", "Pet Chest", 1],
 ];
 const ADV_GEM_USD = 0.00016;
@@ -7626,12 +7634,14 @@ const ADV_PAGES = [
   { key: "chief_gear", tab: "chiefgear" }, { key: "charm", tab: "charmscalc" }, { key: "t12", tab: "t12research" },
   { key: "experts", tab: "expertspage" }, { key: "experts_research", tab: "expertsresearchpage" },
   { key: "islands", tab: "islandgallery" }, { key: "skins", tab: "skingallery" },
+  { key: "t11", tab: "t11helios" }, { key: "rc", tab: "researchcenter" }, { key: "hero_gear", tab: "herogearcalc" }, { key: "pets", tab: "petsdata" },
 ];
 // Upgrade types ("Value by type", list chips): name, menu picture's page.
 const ADV_TYPES = [
   { key: "chief_gear", tab: "chiefgear", label: "chiefgear" }, { key: "charm", tab: "charmscalc", label: "charmscalc" }, { key: "t12", tab: "t12research", label: "t12research" },
   { key: "exp_level", tab: "expertspage", label: "expertspage" }, { key: "exp_skill", tab: "expertspage", text: "adv_t_skills" }, { key: "exp_research", tab: "expertsresearchpage", label: "expertsresearchpage" },
   { key: "islands", tab: "islandgallery", label: "islandgallery" }, { key: "lighthouse", tab: "islandgallery", text: "adv_t_light" }, { key: "shining", tab: "skingallery", text: "adv_t_shining" },
+  { key: "t11", tab: "t11helios", label: "t11helios" }, { key: "rc", tab: "researchcenter", label: "researchcenter" }, { key: "hero_gear", tab: "herogearcalc", label: "herogearcalc" }, { key: "pets", tab: "petsdata", label: "petsdata" },
 ];
 const advTypeOf = (k) => ADV_TYPES.find((x) => x.key === k) || ADV_TYPES[0];
 const advTypeName = (k) => { const x = advTypeOf(k); return x.text ? t(x.text) : navLabel(x.label); };
@@ -7722,7 +7732,8 @@ async function advStepsT12(out) {
       (researchNeedsOf("t12", lockNodes, def.key, e, (k) => k) || []).forEach((req) => (req[0] || []).forEach(([k, need]) => {
         const d = defOf(k);
         if (!d || cur(k) >= need) return;
-        if (d.stat) waits.add(`${tT12Group(d.group)} · ${tT12Label(d.label)} ${need}`);
+        if (d.stat) waits.add(`${tT12Group(d.group)} \u00b7 ${tT12Label(d.label)} ${need}`);
+        else if (ADV_T12_PRIO.includes(k)) waits.add(`${tT12Group(d.group)} ${need} (${t("adv_p_title")})`);
         else pre[k] = need;
       }));
       steps.push({ def, b, e, nth, items, pre, waits: [...waits] });
@@ -7855,6 +7866,75 @@ async function advStepsIslands(out) {
     });
   });
 }
+// T11, Research Center, Heroes Gears (Set 1) and Pets Level: built from tracks like Free now's
+// (from = now, top = the last level out, cost(i) = items for level i, gain(i, lv) = stats at
+// level i with every track at lv), one step a level.
+function advFromTracks(out, tracks, o) {
+  const lv = {};
+  tracks.forEach((tr) => { lv[tr.id] = tr.from; });
+  tracks.forEach((tr) => advEach(tr.from, tr.top, (lo, hi, nth) => {
+    const g0 = tr.gain(lo, { ...lv, [tr.id]: lo }) || {}, g1 = tr.gain(hi, { ...lv, [tr.id]: hi }) || {}, g = {};
+    ADV_STATS.forEach((k) => advGain(g, tr.troop || "all", [k], (Number(g1[k]) || 0) - (Number(g0[k]) || 0)));
+    out.push({ id: `${o.type}|${tr.id}|${hi}`, track: `${o.type}|${tr.id}`, nth, page: o.page, type: o.type, name: `${tr.name} ${tr.lab ? tr.lab(lo) : lo} \u2192 ${tr.lab ? tr.lab(hi) : hi}`,
+      img: (o.pic && o.pic(tr)) || QUICK_ICONS[advPageOf(o.page).tab], items: tr.cost(hi) || {}, gain: g, kind: "buy", note: "" });
+  }));
+}
+// T11 tracks (Flame Squad and the Helios Unlock / Training path are in "Priority first").
+function advT11Tracks(all) {
+  const tracks = [];
+  T11_TROOPS.forEach((troop) => Object.entries((T11_NODES_CACHE && T11_NODES_CACHE[troop]) || {}).forEach(([track, rows0]) => {
+    if (track === "Flame Squad" || /^Helios .* (Unlock|Training)$/.test(track)) return;
+    const rows = rows0.slice().sort((x, y) => Number(x.level) - Number(y.level)), at = new Map(rows.map((r) => [Number(r.level), r])), cum = [{}];
+    for (let l = 1; l <= rows.length; l++) { const c = { ...cum[l - 1] }, r = at.get(l); if (r && r.stat) c[r.stat] = (c[r.stat] || 0) + (Number(r.stat_pct) || 0); cum.push(c); }
+    tracks.push({ id: `${troop}|${track}`, troop, from: all ? 0 : Number(T11_STATE && T11_STATE[troop] && T11_STATE[troop][track]) || 0, top: t11Len(troop, track), name: `${troopDisplayName(troop)} ${dataName(track)}`,
+      cost: (l) => { const r = at.get(l) || {}; return { Steel: Number(r.steel) || 0, "Refined FC": Number(r.refined_fc) || 0, "FC Shard": Number(r.fc_shard) || 0, "Research Speedups (minutes)": applyResearchPct(Number(r.time_hours) || 0) * 60 }; },
+      gain: (l) => cum[Math.max(0, Math.min(l, cum.length - 1))] });
+  }));
+  return tracks;
+}
+// Research Center tracks (Regimental Expansion is in "Priority first").
+function advRcTracks(all) {
+  const troopOf = {}, tracks = [];
+  Object.entries(RC_BASE_CATEGORIES).forEach(([cat, list]) => list.forEach((b) => { troopOf[b] = cat === "Shared" ? "all" : cat; }));
+  RC_TIERS.forEach((tier) => Object.values(RC_BASE_CATEGORIES).forEach((list) => list.forEach((base) => {
+    const track = `${base} ${tier}`;
+    if (base === "Regimental Expansion" || tracks.some((x) => x.id === track)) return;
+    const rows = ((RC_NODES_CACHE && RC_NODES_CACHE[track]) || []).slice().sort((x, y) => Number(x.level) - Number(y.level));
+    if (!rows.length) return;
+    const at = new Map(rows.map((r) => [Number(r.level), r])), cum = [{}];
+    for (let l = 1; l <= rows.length; l++) { const c = { ...cum[l - 1] }, r = at.get(l); if (r && r.stat) c[r.stat] = (c[r.stat] || 0) + (Number(r.stat_pct) || 0); cum.push(c); }
+    tracks.push({ id: track, troop: troopOf[base] || "all", from: all ? 0 : Number(RC_STATE && RC_STATE[track]) || 0, top: rcLen(track), name: `${dataName(base)} ${tier}`,
+      cost: (l) => { const r = at.get(l) || {}; return { Steel: Number(r.steel) || 0, "Research Speedups (minutes)": applyResearchPct(Number(r.time_hours) || 0) * 60 }; },
+      gain: (l) => cum[Math.max(0, Math.min(l, cum.length - 1))] });
+  })));
+  return tracks;
+}
+function advHgTracks(all) {
+  const st = HERO_GEAR_SETS && HERO_GEAR_SETS["Set 1"];
+  if (!st || !HERO_GEAR_TABLES_CACHE) return [];
+  return heroGearReachTracks(st).map((tr) => {
+    const tn = tr.id.split("|")[2], rows = HERO_GEAR_TABLES_CACHE[tn] || [];
+    return { ...tr, name: `${troopDisplayName(tr.troop)} ${tr.name} \u00b7 ${t(tn === "Enhance Combined" ? "goal_hg_enhance" : "goal_hg_mastery")}`, from: all ? 0 : tr.from, top: Math.max(0, all ? rows.length - 1 : heroTrackCapIdx(tn)) };
+  });
+}
+function advPetTracks(all) {
+  return Object.keys(PETS_NODES_CACHE || {}).filter((pet) => all || (!hiddenForVisitor("pets", pet) && isPetUnlocked(pet))).map((pet) => {
+    const levels = PETS_NODES_CACHE[pet] || [], s = PETS_STATE && PETS_STATE[pet], from = all ? -1 : s && typeof s === "object" ? Number(s.from) : -1;
+    const statAt = (i) => { for (let k = Math.min(i, levels.length - 1); k >= 0; k--) if (levels[k].atk_def_pct != null) return Number(levels[k].atk_def_pct) * 100; return 0; };
+    const lab = (i) => { if (i < 0 || !levels[i]) return "0"; const l = String(levels[i].level_label), n = parseInt(l, 10) || 0; return /\.1$/.test(l) ? `${n} ${t("pet_adv_short")}` : String(n); };
+    return { id: pet, troop: "all", from, top: all ? levels.length - 1 : petMaxIdx(pet), name: dataName(pet), lab, img: petImage(pet),
+      cost: (i) => { const r = levels[i] || {}; return { Food: Number(r.food) || 0, Manual: Number(r.manual) || 0, Potion: Number(r.potion) || 0, Serum: Number(r.serum) || 0 }; },
+      gain: (i) => { const v = statAt(i); return { Attack: v, Defense: v }; } };
+  });
+}
+async function advStepsMore(out) {
+  await Promise.all([ensureT11StateData(), ensureRCData(), ensureResearchSpeedData(), ensureHeroGearData(), ensurePetsData()].map((p) => p.catch((e) => console.warn("best upgrades", e))));
+  if (!RC_TARGET) RC_TARGET = (await loadCalcState("research_center_target").catch(() => null)) || {};
+  advFromTracks(out, advT11Tracks(false), { page: "t11", type: "t11" });
+  advFromTracks(out, advRcTracks(false), { page: "rc", type: "rc" });
+  advFromTracks(out, advHgTracks(false), { page: "hero_gear", type: "hero_gear", pic: (tr) => `icons/hero-gear-icons/hero-gear-${String(tr.troop).toLowerCase()}-${String(tr.id.split("|")[1]).toLowerCase()}.png` });
+  advFromTracks(out, advPetTracks(false), { page: "pets", type: "pets", pic: (tr) => tr.img });
+}
 async function advStepsSkins(out) {
   // Only City Skins the Shining City event still sells (shiningPickable: the allow list, never a
   // Globe Level skin) and the person doesn't own; each costs rule skinTomes Glorious Tomes.
@@ -7877,7 +7957,7 @@ function advSteps() {
   if (ADV_STEPS && ADV_STEPS.seq === CALC_SAVE_SEQ) return ADV_STEPS.p;
   const seq = CALC_SAVE_SEQ, out = [];
   ADV_BUILDING = true;
-  const p = Promise.all([advOwnValues().catch((e) => console.warn("best upgrades: pack values", e)), advStepsChiefGear, advStepsCharm, advStepsT12, advStepsExperts, advStepsExpertsResearch, advStepsIslands, advStepsSkins]
+  const p = Promise.all([advOwnValues().catch((e) => console.warn("best upgrades: pack values", e)), advStepsChiefGear, advStepsCharm, advStepsT12, advStepsExperts, advStepsExpertsResearch, advStepsIslands, advStepsSkins, advStepsMore]
     .map((f) => (typeof f === "function" ? f(out).catch((e) => console.warn("best upgrades", f.name, e)) : f)))
     .then(() => out).finally(() => { ADV_BUILDING = false; });
   ADV_STEPS = { seq, p };
@@ -8013,6 +8093,10 @@ const ADV_MARCH_RC = {
   "Regimental Expansion IV": [990, 1900, 2900, 3900, 5600], "Regimental Expansion V": [1200, 2400, 3600, 4800, 6000, 8000],
   "Regimental Expansion VI": [2000, 4000, 6000, 8000, 10000, 13400],
 };
+// T12 research done in "Priority first" (never charged again to a % step): the Troop Unlock
+// slots, Troop Skill and Solar Supremacy (+100 march a level, owner's game info).
+const ADV_T12_PRIO = ["unlock_head", "unlock_shoulder", "unlock_body", "unlock_leg", "unlock_weapon", "troopskill", "solar"];
+const ADV_MARCH_T12_SOLAR = 100;
 const ADV_MARCH_T11 = { "Flame Squad": [200, 400, 600, 800, 1000], Training: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] };
 async function advPriority() {
   await Promise.all([ensureRCData(), ensureT11StateData(), ensureT12NodesData(), ensureT12StateData(), ensureResearchSpeedData()]);
@@ -8025,6 +8109,20 @@ async function advPriority() {
     if (now >= d.max) return;
     const r = (T12_NODES_CACHE[d.tier] || {})[now + 1] || {};
     unl.push({ tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1}`, sub: t("adv_p_t12"), usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }) });
+  }));
+  // T12 Troop Skill: part of the T12 soldier, right after the unlock slots.
+  T12_TROOPS.forEach((troop) => T12_ITEM_DEFS.filter((d) => d.key === "troopskill").forEach((d) => {
+    const now = Number(((T12_STATE || {})[troop] || {})[d.key]) || 0;
+    if (now >= d.max) return;
+    const r = (T12_NODES_CACHE[d.tier] || {})[now + 1] || {};
+    unl.push({ tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1}`, sub: t("adv_p_t12skill"), usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }), t11: 0.5 });
+  }));
+  // T12 Solar Supremacy: +100 march capacity a level.
+  T12_TROOPS.forEach((troop) => T12_ITEM_DEFS.filter((d) => d.key === "solar").forEach((d) => {
+    const now = Number(((T12_STATE || {})[troop] || {})[d.key]) || 0;
+    if (now >= d.max) return;
+    const r = (T12_NODES_CACHE[d.tier] || {})[now + 1] || {}, add = ADV_MARCH_T12_SOLAR;
+    cap.push({ tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, add, usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }), extra: "" });
   }));
   // T11: Helios <troop> Unlock (XI troops), Flame Squad and Helios <troop> Training (capacity).
   T11_TROOPS.forEach((troop) => Object.entries((T11_NODES_CACHE || {})[troop] || {}).forEach(([track, rows0]) => {
@@ -8164,6 +8262,23 @@ function advRefTypes() {
       }));
       add("exp_research", "expertsresearchpage", navLabel("expertsresearchpage"), t("adv_r_exr"), list);
     });
+    // T11, Research Center, Heroes Gears: every level of every track (one troop each; shared RC
+    // tracks count for the three troops), from level 0.
+    const fromTracks = (tracks, lvOf) => {
+      const list = [];
+      const lv = Object.fromEntries(tracks.map((x) => [x.id, lvOf ? lvOf(x) : 0]));
+      tracks.forEach((tr) => {
+        for (let i = Math.max(0, tr.from) + 1; i <= tr.top; i++) {
+          const g0 = tr.gain(i - 1, lv) || {}, g1 = tr.gain(i, lv) || {};
+          const g = ADV_STATS.reduce((s, k) => s + (Number(g1[k]) || 0) - (Number(g0[k]) || 0), 0) * (tr.troop === "all" ? 3 : 1);
+          list.push({ usd: cost(tr.cost(i) || {}), g });
+        }
+      });
+      return list;
+    };
+    await safe(async () => { await Promise.all([ensureT11StateData(), ensureResearchSpeedData()]); add("t11", "t11helios", navLabel("t11helios"), t("adv_r_t11"), fromTracks(advT11Tracks(true))); });
+    await safe(async () => { await Promise.all([ensureRCData(), ensureResearchSpeedData()]); add("rc", "researchcenter", navLabel("researchcenter"), t("adv_r_rc"), fromTracks(advRcTracks(true))); });
+    await safe(async () => { await ensureHeroGearData(); add("hero_gear", "herogearcalc", navLabel("herogearcalc"), t("adv_r_hg"), fromTracks(advHgTracks(true), (x) => (/Enhance Combined$/.test(x.id) ? x.top : 0))); });
     await safe(async () => {
       await ensurePetsData();
       const list = [];
@@ -8178,10 +8293,10 @@ function advRefTypes() {
     for (let l = 2; l <= 10; l++) lvls.push(Number(ISL_COPIES[l]) || 0);
     const per = Number(ISL_RULES.perCopy) || 10;
     add("isl_copy", "islandgallery", t("adv_r_isl_copy_t"), t("adv_r_isl_copy"), lvls.map((c) => ({ usd: c * ADV_FIXED_PRICES.islandCopy, g: 3 })));
-    add("isl_shard", "islandgallery", t("adv_r_isl_shard_t"), t("adv_r_isl_shard").replace("{n}", per), lvls.map((c) => ({ usd: cost({ "Mythic Island Shards": c * per }), g: 3 })));
-    add("isl_mark", "islandgallery", t("adv_r_isl_mark_t"), t("adv_r_isl_mark").replace("{n}", Number(ISL_RULES.markPrice) || ISL_MARK_PRICE), lvls.map((c) => ({ usd: cost({ "Mark of Revival": c * (Number(ISL_RULES.markPrice) || ISL_MARK_PRICE) }), g: 3 })));
-    add("isl_tome", "islandgallery", t("adv_r_isl_tome_t"), t("adv_r_isl_tome").replace("{n}", Number(ISL_RULES.tomePrice) || 600), lvls.map((c) => ({ usd: cost({ "Glorious Tome": c * (Number(ISL_RULES.tomePrice) || 600) }), g: 3 })));
-    add("lighthouse", "islandgallery", t("adv_t_light"), t("adv_r_light"), ISL_LIGHT.map((x) => ({ usd: cost({ "Construction Contract": x.ct }), g: 6 })));
+    add("isl_shard", "islandgallery", t("adv_r_isl_shard_t"), t("adv_r_isl_shard").replace("{n}", per), lvls.map((c) => ({ usd: cost({ "Mythic Island Shards": c * per }), g: 3 })), { img: "icons/island-shard.png" });
+    add("isl_mark", "islandgallery", t("adv_r_isl_mark_t"), t("adv_r_isl_mark").replace("{n}", Number(ISL_RULES.markPrice) || ISL_MARK_PRICE), lvls.map((c) => ({ usd: cost({ "Mark of Revival": c * (Number(ISL_RULES.markPrice) || ISL_MARK_PRICE) }), g: 3 })), { img: "icons/mark-of-revival.png" });
+    add("isl_tome", "islandgallery", t("adv_r_isl_tome_t"), t("adv_r_isl_tome").replace("{n}", Number(ISL_RULES.tomePrice) || 600), lvls.map((c) => ({ usd: cost({ "Glorious Tome": c * (Number(ISL_RULES.tomePrice) || 600) }), g: 3 })), { img: "icons/glorious-tome.png" });
+    add("lighthouse", "islandgallery", t("adv_t_light"), t("adv_r_light"), ISL_LIGHT.map((x) => ({ usd: cost({ "Construction Contract": x.ct }), g: 6 })), { img: "icons/lighthouse-blueprint.png" });
     // Skins by kind, from each skin's own bonus.
     await safe(async () => {
       const rows = await keptRows("skins", skinGalleryPath()), cats = await islandCatRows();
@@ -8195,12 +8310,16 @@ function advRefTypes() {
         if (!kinds.has(k)) kinds.set(k, []);
         kinds.get(k).push(r);
       });
+      // The $10-a-copy row shows a real island building (Ocean Paradise when there).
+      const ip = rows.find((r) => r.name === "Ocean Paradise" && r.image_url) || rows.find((r) => isl.has(r.category) && r.category !== ISL_LIGHT_CAT && r.category !== ISL_SHOP_CAT && r.image_url);
+      const ic = out.find((x) => x.key === "isl_copy");
+      if (ic && ip) ic.img = ip.image_url;
       // Owner's kinds: City Skin, Frame, Teleport, the Chief Appearance bundle and Shining City skins.
       // Globe skins (Frost Spheres, Gate of Time, Rally, a Chief Profile …), MVP and Name Cards (ranked
       // rewards) and Private Chats on their own (free extras) are left out.
       kinds.forEach((list, k) => {
         const img = (list.find((r) => r.image_url) || {}).image_url || QUICK_ICONS.skingallery;
-        if (k === "__shining") return add("sk_shining", "skingallery", t("adv_t_shining"), t("adv_r_shining").replace("{n}", tomes.toLocaleString("en-US")), list.map((r) => ({ usd: cost({ "Glorious Tome": tomes }), g: gOf(r) })), { img });
+        if (k === "__shining") return add("sk_shining", "skingallery", t("adv_t_shining"), t("adv_r_shining").replace("{n}", tomes.toLocaleString("en-US")), list.map((r) => ({ usd: cost({ "Glorious Tome": tomes }), g: gOf(r) })), { img: "icons/shining-city-pack.png" });
         const price = ADV_FIXED_PRICES[k];
         if (price) add(`sk_${k}`, "skingallery", dataName(k), t("adv_r_skin").replace("{v}", price), list.map((r) => ({ usd: price, g: gOf(r) })), { img });
       });
