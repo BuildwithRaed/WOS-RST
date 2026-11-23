@@ -3235,8 +3235,16 @@ const T = {
   ht_done_n: { en: "{n} heroes at target" },
   ht_to_go: { en: "Still to go" },
   ht_add_goals: { en: "+ Add as goals" },
-  ht_add_goals_n: { en: "Adds {n} goals (stars and widgets for each hero) to your list, then drag to order them." },
+  ht_add_goals_n: { en: "Adds {n} goals for these heroes together (all their stars, all their widgets). To rush one hero, add that hero from \u201c+ Add goal\u201d." },
   gu_gen_all: { en: "All Gen {g} heroes" },
+  gu_stars_l: { en: "stars" },
+  gu_locked: { en: "Not unlocked" },
+  gu_unlocked: { en: "Unlocked" },
+  gu_part_by: { en: "By {d}: {a} of {b} {u}" },
+  gu_part_pct: { en: "By {d}: {p}% of it" },
+  gu_u_shards: { en: "shards" },
+  gu_u_widgets: { en: "widgets" },
+  bud_dates_part: { en: "\u26A0 only {p}% by then" },
   gu_grp_n: { en: "{n} goals" },
   gu_goal_at: { en: "goal at {x}" },
   gu_out: { en: "out {d}" },
@@ -19926,7 +19934,7 @@ function packDayRewardPool(rows, out) {
     const runs = [];
     offs.forEach((o) => { const last = runs[runs.length - 1]; if (last && o === last[last.length - 1] + 1) last.push(o); else runs.push([o]); });
     const runAt = (off) => runs.findIndex((rn) => off >= rn[0] && off <= rn[rn.length - 1]);
-    const byPrice = idx.slice().sort((a, b) => (Number(rows[a].price) || 0) - (Number(rows[b].price) || 0) || a - b);
+    const byPrice = idx.slice().sort((a, b) => (rows[a].stage || 0) - (rows[b].stage || 0) || (Number(rows[a].price) || 0) - (Number(rows[b].price) || 0) || a - b);
     const per = new Map();
     idx.forEach((i) => {
       out[i] = out[i].filter((x) => {
@@ -23529,6 +23537,12 @@ async function heroShardBudget() {
         // Only the newest Gen's Hall of Heroes hero (gold ticket on the timeline)
         // sells its own shards there (owner).
         if (newestGen && Number(r.hero.generation) === newestGen && HALL_OF_HEROES_HERO[r.hero.generation] === r.hero.name) rule("Marks of Valor", sh, HERO_RULES.hallMarksPerShard, 1, HERO_RULES.hallWeekly);
+        // The next Gen's Hall of Heroes hero (not out yet, planned ahead): its shards are
+        // sold there from its release week (wk0), so Marks bought before are kept for then.
+        else if (r.notOut && r.notOut.date && HALL_OF_HEROES_HERO[r.hero.generation] === r.hero.name) {
+          const rel = Math.max(0, Math.round((r.notOut.date - packStartOfToday()) / 86400000));
+          rule("Marks of Valor", sh, HERO_RULES.hallMarksPerShard, 1, HERO_RULES.hallWeekly, { wk0: Math.max(1, Math.ceil(rel / 7)) });
+        }
       }
     }
   });
@@ -24361,12 +24375,42 @@ function plannerCombinedLocal(payload, onPart) {
 // Goals with their own "By" dates: plan the parts in
 // date order, each by its date with what the parts before it left of every
 // pack's limits (and their spare items); the rest by the main target. A part
-// that can't make its date is planned for its earliest day. A part marked
+// that can't make its date buys only what can be had by then (packs and trades
+// up to that day, the most of each item it can, `partial`, `got` / `need`); what
+// is left goes to the next part. The last part (no part after it) that can't
+// make its date is planned for its earliest day. A part marked
 // `late` (pages the plan already knows can't make the main target, with no date
 // of their own) comes last and is bought the cheapest way after the target,
 // like the plan's own "after your target" part. Returns the joined plan (one
 // row per offer) and, per part, if it made its date, the day it is done and
 // its own packs and trades (the Budgets total card lists them date by date).
+// A part that can't make its day: the most of each item the packs (and trades)
+// can give by then, the cheapest way, with what is left of every pack's limits.
+// Each item is first capped by what can be had at all by the day; when the
+// packs can't give all of that together, the capped items are cut down first,
+// then everything. { got: { item: amount }, plan } (plan null = nothing by then).
+function plannerDeadlineCover(groups, need, day, calcKey) {
+  const supply = packMaxSupply(groups, day), rem = {};
+  new Set([...Object.keys(need), ...Object.keys(supply)]).forEach((n) => { rem[n] = (need[n] || 0) - (supply[n] || 0); });
+  const short = packShortAfterTrades(rem, packTradeCtx(calcKey, day)).short, cap = {};
+  Object.entries(need).forEach(([n, q]) => { const v = Math.max(0, q - (short[n] || 0)); if (v > 1e-9) cap[n] = v; });
+  const capped = Object.keys(need).filter((n) => (cap[n] || 0) < need[n] - 1e-9 && cap[n] > 0);
+  const tryPlan = (o) => (Object.keys(o).length ? packCheapestPlan(groups, o, day, calcKey, true) : null);
+  const scaled = (a, items) => { const o = {}; Object.entries(cap).forEach(([n, v]) => { const x = items.includes(n) ? Math.floor(v * a) : v; if (x > 1e-9) o[n] = x; }); return o; };
+  let best = Object.keys(cap).length && tryPlan(cap) ? cap : null;
+  if (!best) for (const items of [capped, Object.keys(cap)]) {
+    if (!items.length) continue;
+    const base = scaled(0, items);
+    if (Object.keys(base).length && !tryPlan(base)) continue;
+    let lo = 0, hi = 1;
+    for (let k = 0; k < 6; k++) { const mid = (lo + hi) / 2; if (tryPlan(scaled(mid, items))) lo = mid; else hi = mid; }
+    best = scaled(lo, items);
+    break;
+  }
+  if (!best || !Object.keys(best).length) return { got: {}, plan: null };
+  const plan = packCheapestPlan(groups, best, day, calcKey) || tryPlan(best);
+  return plan ? { got: best, plan } : { got: {}, plan: null };
+}
 function plannerDeadlineLocal(payload) {
   payload = plannerPayloadDecode(payload);
   const { calcKey } = payload;
@@ -24376,11 +24420,21 @@ function plannerDeadlineLocal(payload) {
   const offerKey = (x) => [(x.tables || []).join(","), x.reset, x.resetDay, x.perCycle, x.label, x.price, x.row, x.from].join("|");
   const offerAt = new Map();
   groups.forEach((g, gi) => g.offers.forEach((o, oi) => { const k = offerKey({ ...o, tables: g.tables, reset: g.reset, resetDay: g.resetDay, perCycle: g.perCycle }); if (!offerAt.has(k)) offerAt.set(k, { gi, oi }); }));
-  for (const st of payload.stages) {
-    const need = {};
-    Object.entries(st.need).forEach(([n, q]) => { const have = carry[n] || 0; carry[n] = Math.max(0, have - q); if (q - have > 1e-9) need[n] = q - have; });
+  const defer = {};
+  for (let si = 0; si < payload.stages.length; si++) {
+    const st = payload.stages[si], want = { ...st.need }, need = {};
+    // (what an earlier part couldn't get by its day comes here)
+    Object.keys(defer).forEach((n) => { want[n] = (want[n] || 0) + defer[n]; delete defer[n]; });
+    Object.entries(want).forEach(([n, q]) => { const have = carry[n] || 0; carry[n] = Math.max(0, have - q); if (q - have > 1e-9) need[n] = q - have; });
     if (!Object.keys(need).length) { parts.push({ day: st.day, ok: true, total: 0 }); continue; }
-    let pl = st.late ? null : packCheapestPlan(groups, need, st.day, calcKey), ok = !!pl, earliest = null;
+    let pl = st.late ? null : packCheapestPlan(groups, need, st.day, calcKey), ok = !!pl, earliest = null, got = null;
+    if (!pl && !st.late && si < payload.stages.length - 1) {
+      const cv = plannerDeadlineCover(groups, need, st.day, calcKey);
+      got = cv.got;
+      Object.entries(need).forEach(([n, q]) => { const left = q - (got[n] || 0); if (left > 1e-9) defer[n] = (defer[n] || 0) + left; });
+      pl = cv.plan;
+      if (!pl) { parts.push({ day: st.day, ok: false, partial: true, got, need, total: 0, done: st.day, late: false, picks: [], trades: [] }); continue; }
+    }
     if (!pl) {
       earliest = packEarliestDays(groups, need, calcKey);
       if (earliest == null) return { failed: true, parts };
@@ -24395,18 +24449,19 @@ function plannerDeadlineLocal(payload) {
       if (!at) return;
       used[at.gi] += r.count;
       const e = picks.find((x) => x.gi === at.gi && x.oi === at.oi);
-      if (e) e.count += r.count; else picks.push({ gi: at.gi, oi: at.oi, count: r.count });
+      if (e) e.count += r.count; else picks.push({ gi: at.gi, oi: at.oi, count: r.count, stage: si });
       const m = mine.find((x) => x.gi === at.gi && x.oi === at.oi);
-      if (m) m.count += r.count; else mine.push({ gi: at.gi, oi: at.oi, count: r.count });
+      if (m) m.count += r.count; else mine.push({ gi: at.gi, oi: at.oi, count: r.count, stage: si });
     });
     groups = groups.map((g, gi) => (used[gi] ? { ...g, used: (g.used || 0) + used[gi] } : g));
     const spare = {};
     pl.rows.forEach((r) => Object.entries(r.gives || {}).forEach(([n, v]) => { spare[n] = (spare[n] || 0) + v * r.count; }));
     (pl.trades || []).forEach((x) => { spare[x.from] = (spare[x.from] || 0) - x.giveQty; spare[x.to] = (spare[x.to] || 0) + x.getQty; });
-    Object.entries(spare).forEach(([n, v]) => { const left = v - (need[n] || 0); if (left > 1e-9) carry[n] = (carry[n] || 0) + left; });
+    const took = got || need;
+    Object.entries(spare).forEach(([n, v]) => { const left = v - (took[n] || 0); if (left > 1e-9) carry[n] = (carry[n] || 0) + left; });
     (pl.trades || []).forEach((x) => trades.push(x));
     total += pl.total; days = Math.max(days, pl.days || 0);
-    parts.push({ day: st.day, ok, earliest, total: pl.total, done: pl.days || 0, late: !!st.late, picks: mine, trades: pl.trades || [] });
+    parts.push({ day: st.day, ok, earliest, total: pl.total, done: pl.days || 0, late: !!st.late, picks: mine, trades: pl.trades || [], ...(got ? { partial: true, got, need } : {}) });
   }
   // One row per offer over all the parts (like the combined plan's rows), so
   // a pack bought in two parts shares its buying days.
@@ -24416,8 +24471,10 @@ function plannerDeadlineLocal(payload) {
     pks.forEach((pk) => { perGroup[pk.gi] += pk.count; });
     return pks.map((pk) => {
       const g = base[pk.gi], o = g.offers[pk.oi];
-      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, extra: o.extra, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
-    }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
+      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, extra: o.extra, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null, stage: pk.stage || 0 };
+    // (rows of one pack in the order of the parts that bought them, so an earlier
+    // date's buys get the first buying days: packPlanSchedule fills them in this order)
+    }).sort((a, b) => a.title.localeCompare(b.title) || a.stage - b.stage || a.price - b.price);
   };
   // (Each part's own rows: the packs bought for that date.)
   parts.forEach((p) => { if (p.picks) { p.rows = rowsOf(p.picks); delete p.picks; } });
@@ -24441,7 +24498,7 @@ function plannerPagePlans(payload) {
 const PLANNER_CONST_SRC = () => `const BUDGET_RESEARCH_KEYS = ${JSON.stringify(BUDGET_RESEARCH_KEYS)}; const BUDGET_EXPERT_KEYS = ${JSON.stringify(BUDGET_EXPERT_KEYS)};`;
 const PLAN_SOLVER_URL = "https://cdn.jsdelivr.net/npm/highs@1.15.3/build/";
 const PLAN_SOLVER_SRI = { "highs.js": "sha384-8VF/84lUdwWTmd6C4TlyNI0GCoMmX0iTMuYiSgqm4Q+A36WnVSQAAHMvAGdx71U1", "highs.wasm": "sha384-MAiNyO4ydZtZMzFnxQmbxtpRfMmzGm/wbmtOYrOuns7GS6PMI/RukPAEV9MJjvCB" };
-const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeDaysLeftInWeek", "tradeWeekCap", "tradeCapLots", "tradeWeeksForLots", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packDayBonusList", "packDayBonusGives", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packGroupsSig", "packPlanCacheKey", "packCheapestPlan", "packPlanPrep", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerPayloadDecode", "plannerCombinedLocal", "plannerPagePlans", "plannerDeadlineLocal"];
+const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeDaysLeftInWeek", "tradeWeekCap", "tradeCapLots", "tradeWeeksForLots", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packDayBonusList", "packDayBonusGives", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packGroupsSig", "packPlanCacheKey", "packCheapestPlan", "packPlanPrep", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerPayloadDecode", "plannerCombinedLocal", "plannerPagePlans", "plannerDeadlineCover", "plannerDeadlineLocal"];
 let PLANNER_SEQ = 0;
 // Requests waiting for an answer: id -> { resolve, reject, msg, lane, onPart }.
 // There are two planners ("lanes"), each its own worker with its own line:
@@ -25440,9 +25497,32 @@ function goalUpgrades(page) {
     const outOf = (r) => { const o = goalNotOutInfo(r.hero.generation); return o ? { notOut: o } : {}; };
     // "All Gen 15 heroes · widgets": one goal for every not-out hero of that Gen
     // (added in Hero targets), each up to the level (never past its own target).
-    const grp = new Map();
-    rows.forEach((r) => { if (r.notOut && r.hasWidget && r.tW > r.wLevel) { const g = Number(r.hero.generation); if (!grp.has(g)) grp.set(g, []); grp.get(g).push(r); } });
+    const grp = new Map(), grpS = new Map();
+    // (A hero to unlock - the Gen's Hall of Heroes hero, Natalia / Jeronimo - starts at "0★" = Unlocked.)
+    const needsUnlock = (r) => r.unlock > 0 && r.step === 0;
+    rows.forEach((r) => {
+      const g = Number(r.hero.generation);
+      if (r.notOut && r.hasWidget && r.tW > r.wLevel) { if (!grp.has(g)) grp.set(g, []); grp.get(g).push(r); }
+      if (r.notOut && (r.tStep > r.step || needsUnlock(r))) { if (!grpS.has(g)) grpS.set(g, []); grpS.get(g).push(r); }
+    });
+    // "All Gen 15 heroes · stars": each hero up to the level (never past its own target).
+    const addGroupS = (g) => {
+      const list = grpS.get(g);
+      if (!list || list.length < 2 || list.done) return;
+      list.done = true;
+      const s0 = (r) => Math.floor(r.step / 6), lo = Math.min(...list.map(s0)), top = Math.max(...list.map((r) => Math.floor(r.tStep / 6)));
+      const un = lo === 0 && list.some(needsUnlock), lv = [];
+      if (un) { const totals = {}; list.forEach((r) => { if (needsUnlock(r)) totals[`${r.hero.name} Shards`] = r.unlock; }); lv.push({ label: "0\u2605", totals }); }
+      for (let S = lo + 1; S <= top; S++) {
+        const totals = {};
+        list.forEach((r) => { const to = Math.min(S, Math.floor(r.tStep / 6)); const v = to > s0(r) ? (r.cum && r.cum[to]) || 0 : needsUnlock(r) ? r.unlock : 0; if (v > 0) totals[`${r.hero.name} Shards`] = v; });
+        lv.push({ label: `${S}\u2605`, totals });
+      }
+      add({ key: `gen${g}|s`, name: `${t("gu_gen_all").replace("{g}", g)} \u00b7 ${t("gu_stars_l")}`, img: list[0].hero.image_url || HERO_IMG_BY_NAME[list[0].hero.name] || "", face: true, now: un ? t("gu_locked") : `${lo}\u2605`, ladder: [0, 1, 2, 3, 4, 5].map((x) => `${x}\u2605`), nowAt: un ? -1 : lo, levels: lv,
+        group: list.map((r) => ({ id: r.hero.id, name: r.hero.name, img: r.hero.image_url || HERO_IMG_BY_NAME[r.hero.name] || "" })), gen: g, kind: "s", ...outOf(list[0]) });
+    };
     const addGroup = (g) => {
+      addGroupS(g);
       const list = grp.get(g);
       if (!list || list.length < 2 || list.done) return;
       list.done = true;
@@ -25453,14 +25533,15 @@ function goalUpgrades(page) {
         lv.push({ label: String(L), totals });
       }
       add({ key: `gen${g}|w`, name: `${t("gu_gen_all").replace("{g}", g)} · ${t("ht_widgets")}`, img: list[0].hero.image_url || HERO_IMG_BY_NAME[list[0].hero.name] || "", face: true, now: String(lo), ladder: wLadder, nowAt: lo, levels: lv,
-        group: list.map((r) => ({ id: r.hero.id, name: r.hero.name, img: r.hero.image_url || HERO_IMG_BY_NAME[r.hero.name] || "" })), gen: g, ...outOf(list[0]) });
+        group: list.map((r) => ({ id: r.hero.id, name: r.hero.name, img: r.hero.image_url || HERO_IMG_BY_NAME[r.hero.name] || "" })), gen: g, kind: "w", ...outOf(list[0]) });
     };
     rows.forEach((r) => {
       const id = r.hero.id, nm = r.hero.name, img = r.hero.image_url || HERO_IMG_BY_NAME[nm] || "";
       if (r.notOut) addGroup(Number(r.hero.generation));
-      const s0 = Math.floor(r.step / 6), stars = [];
+      const s0 = Math.floor(r.step / 6), stars = [], un = needsUnlock(r);
+      if (un) stars.push({ label: "0★", totals: { [`${nm} Shards`]: r.unlock } });
       for (let s = s0 + 1; s * 6 <= r.tStep; s++) stars.push({ label: `${s}★`, totals: { [`${nm} Shards`]: (r.cum && r.cum[s]) || 0 } });
-      add({ key: `${id}|s`, name: `${nm} · ${t("gu_stars")}`, img, face: true, now: `${s0}★${r.step % 6 ? ` ${r.step % 6}/6` : ""}`, ladder: [0, 1, 2, 3, 4, 5].map((s) => `${s}★`), nowAt: s0, levels: stars, hero: nm, kind: "s", gen: Number(r.hero.generation), ...outOf(r) });
+      add({ key: `${id}|s`, name: `${nm} · ${t("gu_stars")}`, img, face: true, now: un ? t("gu_locked") : `${s0}★${r.step % 6 ? ` ${r.step % 6}/6` : ""}`, ladder: [0, 1, 2, 3, 4, 5].map((s) => `${s}★`), nowAt: un ? -1 : s0, levels: stars, hero: nm, kind: "s", gen: Number(r.hero.generation), ...outOf(r) });
       if (r.hasWidget) {
         const w = [];
         for (let L = r.wLevel + 1; L <= r.tW; L++) w.push({ label: String(L), totals: { [`${nm} Widgets`]: widgetNeedFrom(r.wLevel) - widgetNeedFrom(L) } });
@@ -25486,6 +25567,8 @@ function goalUpgrades(page) {
   }
   return out;
 }
+// A goal level as shown: "0★" (a hero's stars goal) is the unlock.
+function goalLvTxt(label) { return label === "0\u2605" ? t("gu_unlocked") : String(label == null ? "" : label); }
 // Pages whose upgrades aren't known yet (saved before per-upgrade goals): open them once.
 function goalUpMissing(keys) {
   return keys.filter((k) => GOAL_UP_SAVED.includes(k) && BUDGET_NEEDS_SNAPSHOT && BUDGET_NEEDS_SNAPSHOT[k] && !("ups" in BUDGET_NEEDS_SNAPSHOT[k]));
@@ -25522,6 +25605,22 @@ function budgetGoalList(pages, incKeys, defaultOrder) {
   const byUp = new Map();
   list.forEach((g, i) => { if (!byUp.has(g.up.id)) byUp.set(g.up.id, []); byUp.get(g.up.id).push(i); });
   byUp.forEach((pos) => { if (pos.length < 2) return; const gs = pos.map((i) => list[i]).sort((a, b) => a.li - b.li); pos.forEach((i, k) => { list[i] = gs[k]; }); });
+  // Hero goals on the same shards / widgets (a hero's own goal and its Gen's "all heroes"
+  // goal) are a chain too: the smaller amount first (Hank 0★ before all Gen 15 heroes 5★).
+  ["s", "w"].forEach((kd) => {
+    const idx = list.map((g, i) => i).filter((i) => list[i].page === "hero_shards" && list[i].up.kind === kd);
+    if (idx.length < 2) return;
+    const its = (g) => Object.keys((g.lv && g.lv.totals) || {}), root = idx.map((x, k) => k), find = (k) => (root[k] === k ? k : (root[k] = find(root[k])));
+    idx.forEach((a, ka) => idx.forEach((b, kb) => { if (kb > ka && its(list[a]).some((n) => its(list[b]).includes(n))) root[find(kb)] = find(ka); }));
+    const comps = new Map();
+    idx.forEach((i, k) => { const r = find(k); if (!comps.has(r)) comps.set(r, []); comps.get(r).push(i); });
+    comps.forEach((pos) => {
+      if (pos.length < 2) return;
+      const sumOn = (g, names) => names.reduce((a, n) => a + (Number(g.lv.totals[n]) || 0), 0);
+      const gs = pos.map((i) => list[i]).sort((a, b) => { const c = its(a).filter((n) => its(b).includes(n)); return c.length ? sumOn(a, c) - sumOn(b, c) : 0; });
+      pos.forEach((i, k) => { list[i] = gs[k]; });
+    });
+  });
   // "Without": no upgrade picked, each page's whole need in page order (a
   // picked upgrade's date is then its page's).
   if (defaultOrder) return incKeys.slice().sort((a, b) => pageIdx(a) - pageIdx(b)).map((k) => ({ id: "pg:" + k, page: k, pageAll: true }));
@@ -25663,17 +25762,21 @@ function budgetGoalDates(goals, pages, plan, calcKey, due, order) {
     };
     const covered = (j) => { const left = shortAt(j); return !mine.some((n) => left[n] > 1e-6); };
     // How much of the goal is there by its own deadline (each item's share, averaged).
-    let pctDue = null;
+    // (and how much of it in all: gotDue of needDue, added over its items)
+    let pctDue = null, gotDue = null, needDue = null;
     const dd = due ? due[gi] : null;
     if (dd != null) {
       let j = -1; while (j + 1 < days.length && days[j + 1] <= dd) j++;
       const left = shortAt(j);
       pctDue = mine.reduce((a, n) => a + Math.max(0, 1 - Math.min(seg[n], left[n] || 0) / seg[n]), 0) / mine.length;
+      needDue = mine.reduce((a, n) => a + seg[n], 0);
+      gotDue = mine.reduce((a, n) => a + Math.max(0, seg[n] - Math.min(seg[n], left[n] || 0)), 0);
     }
-    if (!days.length || !covered(days.length - 1)) return { day: end, spent: plan ? packPlanLocal(plan) : 0, approx: true, pctDue };
+    const dueBits = { pctDue, gotDue, needDue, items: mine };
+    if (!days.length || !covered(days.length - 1)) return { day: end, spent: plan ? packPlanLocal(plan) : 0, approx: true, ...dueBits };
     let lo = 0, hi = days.length - 1;
     while (lo < hi) { const mid = (lo + hi) >> 1; if (covered(mid)) hi = mid; else lo = mid + 1; }
-    return { day: days[lo], spent: at[lo] >= 0 ? spent[at[lo]] : 0, pctDue };
+    return { day: days[lo], spent: at[lo] >= 0 ? spent[at[lo]] : 0, ...dueBits };
   };
   (order || goals.map((g, i) => i)).forEach((gi) => { out[gi] = one(goals[gi], gi); });
   return out;
@@ -25730,7 +25833,7 @@ function budgetGoalHero(g) {
 }
 function budgetGoalName(g) {
   if (g.rest) return g.page ? t("gu_rest_of").replace("{p}", packPageLabel(g.page)) : t("gu_rest_name");
-  if (g.up) return `${g.up.name} \u2192 ${g.lv.label}`;
+  if (g.up) return `${g.up.name} \u2192 ${goalLvTxt(g.lv.label)}`;
   if (g.hero) {
     const r = g.hrow, st = Math.floor(r.tStep / 6), sub = r.tStep % 6;
     return `${g.hero.name} ${st}★${sub ? ` ${sub}/6` : ""}${r.hasWidget && r.wNeed > 0 ? ` + ${t("ht_widgets")} ${r.tW}` : ""}`;
@@ -25742,7 +25845,7 @@ function budgetGoalName(g) {
 }
 function budgetGoalShort(g) {
   if (g.rest) return g.page ? packPageLabel(g.page) : t("gu_rest_name");
-  if (g.up) return `${g.up.name.split(" \u00b7 ")[0]} ${g.lv.label}`;
+  if (g.up) return `${g.up.name.split(" \u00b7 ")[0]} ${goalLvTxt(g.lv.label)}`;
   if (g.hero) { const r = g.hrow, st = Math.floor(r.tStep / 6), sub = r.tStep % 6; return `${g.hero.name} ${st}★${sub ? ` ${sub}/6` : ""}`; }
   // A page's goal: its name and the target's last word ("Chief Gear ★3", "Chief Charm 16.8").
   const tg = g.mini ? String(g.opt.label || "") : goalTargetLabel(g.page) || "", last = tg.trim().split(/\s+/).pop() || "";
@@ -25875,7 +25978,7 @@ function budgetDeadlineFor(pages, selected, goals, due, mainDay, keys, onReady, 
   if (Object.keys(late).length) stages.push({ day: mainDay, need: late, late: true });
   const inp = budgetCombinedInput(pages, selected);
   const payload = plannerPayloadEncode({ pages: [], selected: {}, allGroups: inp.allGroups, stages, calcKey: "__budget:" + keys.join(",") });
-  const key = budgetPlanFingerprint({ deadline: 2, payload });
+  const key = budgetPlanFingerprint({ deadline: 3, payload });
   if (BUDGET_DEADLINE.key === key) return BUDGET_DEADLINE.res;
   // (Being worked out for someone else: this caller is told too when it is in.)
   if (BUDGET_DEADLINE.running === key) { if (onReady) BUDGET_DEADLINE.onReady = onReady; return null; }
@@ -25964,7 +26067,7 @@ function wireBudgetGoals(box) {
   const sheet = () => box.querySelector("[data-gusheet]");
   const pkSync = (row) => {
     const lvs = JSON.parse(row.dataset.lvs || "[]"), li = Number(row.dataset.li) || 0;
-    row.querySelector(".gu-ps b").textContent = lvs[li] || "";
+    row.querySelector(".gu-ps b").textContent = goalLvTxt(lvs[li] || "");
     row.querySelector('[data-gupkstep="-1"]').disabled = li <= 0;
     row.querySelector('[data-gupkstep="1"]').disabled = li >= lvs.length - 1;
   };
@@ -26042,9 +26145,11 @@ function wireBudgetGoals(box) {
     }
     if (b.hasAttribute("data-gusave")) {
       const add = [...sheet().querySelectorAll(".gu-pk.on")].map((row, i) => {
-        const lvs = JSON.parse(row.dataset.lvs || "[]"), li = Number(row.dataset.li) || 0, id = row.dataset.gupk, page = row.dataset.gupg;
-        return { id: Date.now().toString(36) + i, page, key: id.slice(page.length + 1), level: li >= lvs.length - 1 ? null : lvs[li] };
-      });
+        const lvs = JSON.parse(row.dataset.lvs || "[]"), li = Number(row.dataset.li) || 0, id = row.dataset.gupk, page = row.dataset.gupg, key = id.slice(page.length + 1);
+        // (a level that is already a goal of this upgrade isn't added again)
+        const lastL = lvs[lvs.length - 1], same = (BUDGET_GOALS.goals || []).some((e) => e.page === page && e.key === key && (e.level == null ? lastL : String(e.level)) === lvs[li]);
+        return same ? null : { id: Date.now().toString(36) + i, page, key, level: li >= lvs.length - 1 ? null : lvs[li] };
+      }).filter(Boolean);
       BUDGET_GOALS.goals = (BUDGET_GOALS.goals || []).concat(add);
       BUDGET_GOAL_ADD = null;
       saveBudgetGoals(); redraw();
@@ -26056,7 +26161,19 @@ function wireBudgetGoals(box) {
   if (htBox) htBox.addEventListener("toggle", () => { BUDGET_HT_OPEN = htBox.open; const f = htBox.querySelector(".ht-fold"); if (f) f.innerHTML = htBox.open ? `&#9652; ${esc(t("g1_hide"))}` : `&#9662; ${esc(t("g1_show"))}`; });
   box.addEventListener("change", (e) => {
     const el = e.target, row = el.closest("[data-hthero]"), id = row && row.dataset.hthero;
-    if (el.hasAttribute("data-htadd")) { if (el.value && !HERO_TARGETS.extra.includes(el.value)) HERO_TARGETS.extra = [...HERO_TARGETS.extra, el.value]; htSave(); return; }
+    if (el.hasAttribute("data-htadd")) {
+      const hid = el.value;
+      if (hid && !HERO_TARGETS.extra.includes(hid)) {
+        HERO_TARGETS.extra = [...HERO_TARGETS.extra, hid];
+        // (starts at the targets already set for its Gen's other heroes; none = 5★ / widgets max)
+        const P = HERO_PLAN_LAST || {}, h = (P.heroes || []).find((x) => x.id === hid);
+        if (h && !HERO_TARGETS.heroes[hid]) {
+          const T = (P.rows || []).filter((r) => r.hero.id !== hid && Number(r.hero.generation) === Number(h.generation)).map((r) => HERO_TARGETS.heroes[r.hero.id]).find((x) => x && !x.later && (x.stars != null || x.widget != null));
+          if (T) HERO_TARGETS.heroes = { ...HERO_TARGETS.heroes, [hid]: { ...(T.stars != null ? { stars: T.stars } : {}), ...(T.widget != null ? { widget: T.widget } : {}) } };
+        }
+      }
+      htSave(); return;
+    }
     if (!id || !el.hasAttribute("data-htlater")) return;
     HERO_TARGETS.heroes = { ...HERO_TARGETS.heroes, [id]: { ...(HERO_TARGETS.heroes[id] || {}), later: el.checked } };
     htSave();
@@ -26504,7 +26621,8 @@ async function renderBudgetsPage(opts = {}) {
     // their days, as the plan was bought (same day: their order on the list;
     // the pages that can't make the target last).
     const takeOrder = dlPlan ? goals.map((g, i) => i).sort((a, b) => { const da = stageDay(goals[a], a), db = stageDay(goals[b], b); return (da == null ? Infinity : da) - (db == null ? Infinity : db) || a - b; }) : null;
-    const dates = !planPending && plan ? budgetGoalDates(goals, pagesRaw, plan, ck, due, takeOrder) : null;
+    // (with a dated plan, how much of each goal is there by its part's day: own date or the main target)
+    const dates = !planPending && plan ? budgetGoalDates(goals, pagesRaw, plan, ck, dlPlan ? goals.map((g, i) => stageDay(g, i)) : due, takeOrder) : null;
     // The planner's own answer wins over the dates worked out from the buying
     // days (those are a close guess: trades are spread over the whole plan).
     // Without a dated plan, a page the plan buys by the target is done by it.
@@ -26541,7 +26659,8 @@ async function renderBudgetsPage(opts = {}) {
       });
     }
     // A goal of a hero not out yet is never reached before its release.
-    if (dates) goals.forEach((g, i) => { const o = g.up && g.up.notOut; if (o && dates[i] && !dates[i].done && dates[i].day < o.rel) dates[i] = { ...dates[i], day: o.rel, approx: false }; });
+    // (Nothing left to buy for it - e.g. the Backpack's General shards pay its unlock - is still its release day, not "Now".)
+    if (dates) goals.forEach((g, i) => { const o = g.up && g.up.notOut; if (o && dates[i] && o.rel > 0 && (dates[i].done || dates[i].day < o.rel)) dates[i] = { ...dates[i], done: false, day: o.rel, approx: false }; });
     // A page isn't finished before its own goals: its rest is done no sooner than they are.
     if (dates) goals.forEach((g, i) => {
       if (!g.rest || !dates[i] || dates[i].done) return;
@@ -26581,7 +26700,7 @@ async function renderBudgetsPage(opts = {}) {
       const gives = (r, n) => Number((r.gives || {})[n]) > 0;
       const dueI = due[i] != null ? due[i] : mainDay;
       const rel = goalDayShort(o.rel);
-      if (u.group || u.kind === "w") {
+      if (u.kind === "w") {
         // The Forge pack counts only when it comes by the goal's day; Mystery Points
         // only when what the goal needs is more than the Forge packs give.
         const seg = segsAll.get(g.id) || {}, n = Object.entries(seg).filter(([k]) => / Widgets$/.test(k)).reduce((a, [, v]) => a + v, 0);
@@ -26594,7 +26713,7 @@ async function renderBudgetsPage(opts = {}) {
         if (mp) return { ic: BP_EXTRA_ICONS["Mystery Points"], tx: t("gu_src_mp").replace("{d}", rel).replace("{n}", Math.round(n).toLocaleString()) };
         return null;
       }
-      const own = plan.rows.some((r) => gives(r, `${u.hero} Shards`));
+      const own = plan.rows.some((r) => names.some((h) => gives(r, `${h} Shards`)));
       const gen = plan.rows.some((r) => ["Mythic General Hero Shard", "Marks of Valor", "Mythic General Hero Lucky Box"].some((n) => gives(r, n)));
       const ic = BP_SHARD_ICONS["Mythic General Hero Shard"];
       return own && gen ? { ic, tx: t("gu_src_gen_own") } : own ? { ic, tx: t("gu_src_own") } : gen ? { ic, tx: t("gu_src_gen") } : null;
@@ -26616,6 +26735,15 @@ async function renderBudgetsPage(opts = {}) {
       const dTxt = pending ? workHtml("span", "small") : own ? esc(t("gd_own")) : esc(gdTxt(dt));
       const kind = goalByKind(myBy) === "date" ? " date" : myBy ? " ev" : "";
       const lock = u.lockAt >= 0 && g.li >= u.lockAt ? `<small class="gu-lk">&#9888; ${esc(t("gu_lock").replace("{x}", u.lockTxt))}</small>` : "";
+      // A goal that can't make its date: how far it gets by then (not the later day it is done).
+      const partTxt = (() => {
+        if (pending || own || !dt || dt.done || lim == null || !(dt.day > lim) || !(dt.needDue > 0) || dt.gotDue == null) return "";
+        const it = dt.items || [], unit = it.length && it.every((n) => / Shards$/.test(n)) ? t("gu_u_shards") : it.length && it.every((n) => / Widgets$/.test(n)) ? t("gu_u_widgets") : it.length === 1 ? itemShortName(it[0]) : "";
+        const dd = gdTxt({ day: lim });
+        return unit ? t("gu_part_by").replace("{d}", dd).replace("{a}", Math.floor(dt.gotDue + 1e-6).toLocaleString()).replace("{b}", Math.round(dt.needDue).toLocaleString()).replace("{u}", unit)
+          : t("gu_part_pct").replace("{d}", dd).replace("{p}", Math.floor(100 * dt.gotDue / dt.needDue));
+      })();
+      const partH = partTxt ? `<small class="gu-part">&#9888; ${esc(partTxt)}</small>` : "";
       const no = u.notOut || null;
       const picker = BUDGET_GOAL_BY_OPEN === g.id ? goalByPopHtml(myBy, mainDay, no) : "";
       const ic = budgetGoalIcon(g, pagesRaw);
@@ -26626,17 +26754,18 @@ async function renderBudgetsPage(opts = {}) {
       // text (cdaPatchGoals puts it there), the date at the right end (amber ⚠
       // after its By / the target). 2: − level +, short By chip, ✕.
       const isLate = !pending && !own && dt && !dt.done && lim != null && dt.day > lim;
-      const dc = pending || own ? null : gdCard(dt);
+      // (a goal that only gets part of the way shows its own day with ⚠, the line under it says how far)
+      const dc = pending || own ? null : gdCard(partTxt ? { day: lim } : dt);
       // (A hero not out yet: the day it is really due, never before its release.)
       const byD = no && d != null ? d : myBy ? dIn : mainDay;
       const bs = goalByShort(myBy), byShort = `${goalByIcon(myBy)} ${bs}${byD != null ? `${bs ? " " : ""}${gdTxt({ day: byD })}` : ""}`;
-      const nmH = `${esc(u.name)}${heroGoal ? ` <em>${esc(g.lv.label)}</em>` : ""}${no ? ` <span class="gu-out">${esc(t("gu_out").replace("{d}", goalDayShort(no.rel)))}</span>` : ""}`;
+      const nmH = `${esc(u.name)}${heroGoal ? ` <em>${esc(goalLvTxt(g.lv.label))}</em>` : ""}${no ? ` <span class="gu-out">${esc(t("gu_out").replace("{d}", goalDayShort(no.rel)))}</span>` : ""}`;
       return `<li class="bud-g gu c3${no ? " no" : ""}" data-goal="${esc(g.id)}">
         <span class="bud-g-h" data-goaldrag role="button" tabindex="0" aria-label="${esc(t("goals_desc_drag"))}" title="${esc(t("goals_desc_drag"))}">&#8942;&#8942;</span>
         <span class="c3-b">
-          <span class="c3-l1${dc && dc.y2 ? " y2" : ""}${src ? " has-cd" : ""}${u.group ? " grp" : ""}"><span class="c3-no">${i + 1}</span>${pic}<b class="c3-nm" title="${esc(`${u.name} · ${packPageLabel(g.page)} · ${u.now} → ${g.lv.label}`)}">${nmH}</b><span class="c3-dt${isLate ? " late" : ""}${pending ? " wk" : ""}" title="${pending ? esc(t("budgets_working")) : ""}">${isLate ? "&#9888; " : ""}${pending ? "&hellip;" : dc ? dc.h : dTxt}</span>${src ? `<span class="gu-src"><img src="${esc(src.ic)}" alt="" />${esc(src.tx)}</span>` : ""}</span>
-          <span class="c3-l2 gu-r2"><span class="gu-st"><button type="button" data-gustep="-1" ${g.li <= 0 ? "disabled" : ""} aria-label="&minus;">&minus;</button><b>${esc(g.lv.label)}</b><button type="button" data-gustep="1" ${g.li >= last ? "disabled" : ""} aria-label="+">+</button></span><button type="button" class="bud-g-by${kind}${BUDGET_GOAL_BY_OPEN === g.id ? " open" : ""}" data-goalby aria-expanded="${BUDGET_GOAL_BY_OPEN === g.id}" title="${esc(byText(myBy, byD))}">${esc(byShort)} ${BUDGET_GOAL_BY_OPEN === g.id ? "&#9652;" : "&#9662;"}</button>${u.group ? `<span class="gu-n3">${esc(t("gu_grp_n").replace("{n}", u.group.length))}</span>` : ""}<button type="button" class="gu-rm" data-goalrm aria-label="${esc(t("goal_remove"))}" title="${esc(t("goal_remove"))}">&times;</button></span>
-          ${lock}
+          <span class="c3-l1${dc && dc.y2 ? " y2" : ""}${src ? " has-cd" : ""}${u.group ? " grp" : ""}"><span class="c3-no">${i + 1}</span>${pic}<b class="c3-nm" title="${esc(`${u.name} · ${packPageLabel(g.page)} · ${u.now} → ${goalLvTxt(g.lv.label)}`)}">${nmH}</b><span class="c3-dt${isLate ? " late" : ""}${pending ? " wk" : ""}" title="${pending ? esc(t("budgets_working")) : ""}">${isLate ? "&#9888; " : ""}${pending ? "&hellip;" : dc ? dc.h : dTxt}</span>${src ? `<span class="gu-src"><img src="${esc(src.ic)}" alt="" />${esc(src.tx)}</span>` : ""}</span>
+          <span class="c3-l2 gu-r2"><span class="gu-st"><button type="button" data-gustep="-1" ${g.li <= 0 ? "disabled" : ""} aria-label="&minus;">&minus;</button><b>${esc(goalLvTxt(g.lv.label))}</b><button type="button" data-gustep="1" ${g.li >= last ? "disabled" : ""} aria-label="+">+</button></span><button type="button" class="bud-g-by${kind}${BUDGET_GOAL_BY_OPEN === g.id ? " open" : ""}" data-goalby aria-expanded="${BUDGET_GOAL_BY_OPEN === g.id}" title="${esc(byText(myBy, byD))}">${esc(byShort)} ${BUDGET_GOAL_BY_OPEN === g.id ? "&#9652;" : "&#9662;"}</button>${u.group ? `<span class="gu-n3">${esc(t("gu_grp_n").replace("{n}", u.group.length))}</span>` : ""}<button type="button" class="gu-rm" data-goalrm aria-label="${esc(t("goal_remove"))}" title="${esc(t("goal_remove"))}">&times;</button></span>
+          ${partH}${lock}
         </span>
         ${picker}</li>`;
     };
@@ -26675,8 +26804,8 @@ async function renderBudgetsPage(opts = {}) {
     const addHtml = () => {
       if (!BUDGET_GOAL_ADD) return `<button type="button" class="bud-g-add" data-goaladd>${esc(t("gu_add"))}</button>${missingHtml}`;
       const picked = new Set(goals.filter((g) => g.up).map((g) => g.up.id));
-      // (Hero widgets can be a goal twice, at two levels: those stay on the list.)
-      const twice = (u) => u.page === "hero_shards" && /\|w$/.test(u.key) && goals.filter((g) => g.up && g.up.id === u.id).length < 2;
+      // (A hero's stars / widgets and the Gen groups can be goals again at another level: they stay on the list.)
+      const twice = (u) => u.page === "hero_shards" && goals.filter((g) => g.up && g.up.id === u.id).length < u.levels.length;
       const pickedAt = (u) => goals.filter((g) => g.up && g.up.id === u.id).map((g) => g.lv.label);
       const keysAll = keys.includes("hero_shards") || !included("hero_shards") ? keys : keys.concat("hero_shards");
       const list = keysAll.flatMap((k) => goalUpgrades(k)).filter((u) => !picked.has(u.id) || twice(u));
@@ -26684,17 +26813,20 @@ async function renderBudgetsPage(opts = {}) {
       let genHd = null;
       const rowsH = list.map((u) => {
         const last = u.levels.length - 1, lbls = u.levels.map((l) => l.label), at = pickedAt(u);
+        // (starts on the highest level that isn't a goal yet)
+        let def = last;
+        while (def > 0 && at.includes(lbls[def])) def--;
         // The next Gen's heroes (not out yet) under a heading of their own.
         const hd = u.notOut && genHd !== u.notOut.gen ? `<div class="gu-gh" data-gupg="hero_shards" data-gugh>Gen ${esc(String(u.notOut.gen))} <span class="gu-out">${esc(t("gu_out").replace("{d}", goalDayShort(u.notOut.rel)))}</span></div>` : "";
         if (u.notOut) genHd = u.notOut.gen;
         const pic = u.group ? `<span class="gu-grp">${u.group.slice(0, 3).map((x) => (x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" />` : `<i>${esc(x.name.charAt(0))}</i>`)).join("")}</span>`
           : u.img ? `<img class="${u.face ? "face" : ""}" src="${esc(u.img)}" alt="" loading="lazy" />` : `<i>${esc(u.name.charAt(0))}</i>`;
-        return `${hd}<div class="gu-pk" data-gupk="${esc(u.id)}" data-gupg="${esc(u.page)}" data-q="${esc(`${u.name} ${packPageLabel(u.page)}${u.group ? " " + u.group.map((x) => x.name).join(" ") : ""}`.toLowerCase())}" data-lvs="${esc(JSON.stringify(lbls))}" data-li="${last}">
+        return `${hd}<div class="gu-pk" data-gupk="${esc(u.id)}" data-gupg="${esc(u.page)}" data-q="${esc(`${u.name} ${packPageLabel(u.page)}${u.group ? " " + u.group.map((x) => x.name).join(" ") : ""}`.toLowerCase())}" data-lvs="${esc(JSON.stringify(lbls))}" data-li="${def}">
           <button type="button" class="gu-cb" data-gutick aria-pressed="false" aria-label="${esc(u.name)}">&#10003;</button>
           ${pic}
-          <span class="gu-pt"><b>${esc(u.name)}</b><small>${esc(t("gu_on_page").replace("{a}", u.now).replace("{b}", lbls[last]))} · ${esc(packPageLabel(u.page))}${u.group ? ` · ${esc(t("gu_grp_n").replace("{n}", u.group.length))}` : ""}${at.length ? ` · ${esc(t("gu_goal_at").replace("{x}", at.join(", ")))}` : ""}</small></span>
-          <span class="gu-st gu-ps"><button type="button" data-gupkstep="-1" aria-label="&minus;" ${last <= 0 ? "disabled" : ""}>&minus;</button><b>${esc(lbls[last])}</b><button type="button" data-gupkstep="1" aria-label="+" disabled>+</button></span>
-          <span class="gu-pv">${esc(lbls[last])}</span></div>`;
+          <span class="gu-pt"><b>${esc(u.name)}</b><small>${esc(t("gu_on_page").replace("{a}", u.now).replace("{b}", goalLvTxt(lbls[last])))} · ${esc(packPageLabel(u.page))}${u.group ? ` · ${esc(t("gu_grp_n").replace("{n}", u.group.length))}` : ""}${at.length ? ` · ${esc(t("gu_goal_at").replace("{x}", at.map(goalLvTxt).join(", ")))}` : ""}</small></span>
+          <span class="gu-st gu-ps"><button type="button" data-gupkstep="-1" aria-label="&minus;" ${def <= 0 ? "disabled" : ""}>&minus;</button><b>${esc(goalLvTxt(lbls[def]))}</b><button type="button" data-gupkstep="1" aria-label="+" ${def >= last ? "disabled" : ""}>+</button></span>
+          <span class="gu-pv">${esc(goalLvTxt(lbls[def]))}</span></div>`;
       }).join("");
       return `<div class="gu-sheet" data-gusheet>
         <div class="gu-grab"></div>
@@ -26736,7 +26868,11 @@ async function renderBudgetsPage(opts = {}) {
       const goalKeys = new Set(((BUDGET_GOALS && BUDGET_GOALS.goals) || []).filter((e) => e.page === "hero_shards").map((e) => e.key));
       const nextHtml = nextGens.map((g) => {
         const list = next.filter((r) => Number(r.hero.generation) === g), info = goalNotOutInfo(g);
-        const add = list.flatMap((r) => [`${r.hero.id}|s`].concat(r.hasWidget && r.tW > r.wLevel ? [`${r.hero.id}|w`] : []).filter((k) => !goalKeys.has(k) && (k.endsWith("|w") || r.tStep > r.step)));
+        // Two goals for the whole Gen (all heroes' stars, all heroes' widgets); one hero
+        // alone (no group) gets its own. A hero to rush is added from "+ Add goal".
+        const ups = goalUpgrades("hero_shards"), has = (k) => ups.some((u) => u.key === k);
+        const add = ["s", "w"].flatMap((kd) => (has(`gen${g}|${kd}`) ? [`gen${g}|${kd}`]
+          : list.filter((r) => (kd === "s" ? r.tStep > r.step || (r.unlock > 0 && r.step === 0) : r.hasWidget && r.tW > r.wLevel)).map((r) => `${r.hero.id}|${kd}`))).filter((k) => !goalKeys.has(k) && has(k));
         return `<div class="ht-gh"><b>Gen ${esc(String(g))}</b>${info ? `<span class="gu-out">${esc(t("gu_out").replace("{d}", goalDayShort(info.rel)))}</span>` : ""}</div>${list.map(line).join("")}
           ${add.length ? `<button type="button" class="btn ht-addg" data-htaddgoals="${esc(add.join(","))}">${esc(t("ht_add_goals"))}</button><div class="meta ht-addg-n">${esc(t("ht_add_goals_n").replace("{n}", add.length))}</div>` : ""}`;
       }).join("");
@@ -26847,7 +26983,9 @@ async function renderBudgetsPage(opts = {}) {
       const ev = !p.late && kinds.length === 1 && kinds[0] && kinds[0] !== "date" ? goalByShort((BUDGET_GOALS.by || {})[gs[0].id]) : "";
       const color = p.late ? "var(--danger)" : ev ? EV : p.day === targetDays && kinds.every((k) => !k) ? "var(--good)" : "var(--ice)";
       // ("· N days" only where it fits beside the name: a long event name goes without it)
-      const meta = p.late ? "" : p.ok ? (p.day > 0 && ev.length <= 10 ? ` <span class="meta">\u00b7 ${p.day} ${esc(t("pack_days_short_long"))}</span>` : "") : ` <span class="meta" style="color:var(--amber);">\u00b7 ${esc(t("bud_dates_cant").replace("{date}", dShort(p.earliest != null ? p.earliest : p.done || 0)))}</span>`;
+      // (a part that only gets part of the way by its day: how much, the rest is in a later line)
+      const pctOf = (x) => { const ks = Object.keys(x.need || {}); return ks.length ? Math.floor(100 * ks.reduce((a, n) => a + Math.min(1, (x.got[n] || 0) / x.need[n]), 0) / ks.length) : 0; };
+      const meta = p.late ? "" : p.ok ? (p.day > 0 && ev.length <= 10 ? ` <span class="meta">\u00b7 ${p.day} ${esc(t("pack_days_short_long"))}</span>` : "") : p.partial ? ` <span class="meta" style="color:var(--amber);">\u00b7 ${esc(t("bud_dates_part").replace("{p}", pctOf(p)))}</span>` : ` <span class="meta" style="color:var(--amber);">\u00b7 ${esc(t("bud_dates_cant").replace("{date}", dShort(p.earliest != null ? p.earliest : p.done || 0)))}</span>`;
       const title = p.late ? `<b>${esc(t("bud_line_after"))}</b>` : `<b>${esc(t("bud_line_by").replace("{date}", (ev ? ev + " \u00b7 " : "") + dShort(p.day)))}</b>${meta}`;
       const names = gs.map((g) => budgetGoalName(g)), shown = names.slice(0, 6).join(" \u00b7 ") + (names.length > 6 ? " \u2026" : "");
       return { p, color, title, names: shown, v: packPlanLocal({ rows: p.rows }) };
@@ -26905,7 +27043,7 @@ async function renderBudgetsPage(opts = {}) {
       if (mine.length) {
         if (mine.some((y) => y.d == null)) return ["rd", t("b3_after")];
         // (the page's last day: a part that can't make its date counts with the day it is done)
-        const days = mine.map((y) => { const p = dl.parts.find((q) => !q.late && q.day === y.d); return p && !p.ok ? { d: p.earliest != null ? p.earliest : p.done || y.d, bad: true } : { d: y.d, bad: false }; });
+        const days = mine.map((y) => { const p = dl.parts.find((q) => !q.late && q.day === y.d); return p && !p.ok ? { d: p.partial ? y.d : p.earliest != null ? p.earliest : p.done || y.d, bad: true } : { d: y.d, bad: false }; });
         const last = Math.max(...days.map((z) => z.d));
         return days.some((z) => z.bad) ? ["rd", "\u26A0 " + dShort(last)] : ["ok", t("b3_by").replace("{date}", dShort(last))];
       }
