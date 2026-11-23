@@ -25948,7 +25948,7 @@ function goalPageIcon(pg) {
   for (const n of Object.keys((pg && pg.needFull) || {})) { const ic = itemRegIcon(n) || bpIcon({ name: n.replace(/ \(minutes\)$/, "") }); if (ic) return ic; }
   return "";
 }
-let BUDGET_PLAN_RUNNING = null; // "targetDays|ticks" of the packs plan being worked out in the background
+let BUDGET_PLAN_RUNNING = null; // "targetDays|ticks|cands|data gen" of the packs plan being worked out in the background
 let BUDGET_PLAN_FAILED = null; // the same key when that plan failed (cleared by ↻ Recalculate)
 let BUDGET_PLAN_TRACK = {}; // { req }: that plan's planner request, dropped when a newer plan starts
 function budTab() { return TAB === "budgets"; }
@@ -26001,7 +26001,9 @@ async function renderBudgetsPage(opts = {}) {
   // worked out in the background and the prices fill in when it's ready.
   // "My budget" needs plans for several finish dates (worked out only when an amount is set).
   const wantCands = spendActive();
-  const planKey = `${targetDays}|${selSig}|${wantCands ? 1 : 0}`;
+  // PACK_GROUPS_GEN (bumped by budgetInvalidate): a data change while the plan is
+  // worked out gives a new key, so the old plan is dropped and a new one starts.
+  const planKey = `${targetDays}|${selSig}|${wantCands ? 1 : 0}|${PACK_GROUPS_GEN}`;
   const haveCombined = dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending && BUDGET_DATA.selSig === selSig && (!wantCands || !!BUDGET_DATA.combined.budgetCands);
   // The parts of the plan that are in while the rest is still being worked out (budgetCombinedPlanAsync's onPart).
   const partPlan = !haveCombined && dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.selSig === selSig && BUDGET_DATA.combined && BUDGET_DATA.combined.pending && BUDGET_DATA.combined.partKey === planKey ? BUDGET_DATA.combined : null;
