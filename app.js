@@ -1669,6 +1669,7 @@ const T = {
   bs_hv_counted: { en: "{g} counted as {item}" },
   bs_hv_lab: { en: "Research Lab" },
   bs_hv_lab_left: { en: "{left} refinements left this week" },
+  bs_hv_lab_update: { en: "Done some already? Update" },
   bs_hv_chests: { en: "from {n} chests" },
   bs_hv_chest: { en: "Chests" },
   bs_hv_gear: { en: "Hero gear" },
@@ -28027,7 +28028,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       rows.push(row(pic(iconFor(from)), label, sub, q, true));
     });
     // This week's Research Lab refinements still left (counted here once).
-    if (lab) rows.push(row(pic(materialIconSrc("Refined FC") || "icons/item_icon_100082.png"), t("bs_hv_lab"), t("bs_hv_lab_left").replace("{left}", Math.round(lab.labLeft || 0).toLocaleString()), lab.getQty, true));
+    if (lab) rows.push(row(pic(materialIconSrc("Refined FC") || "icons/item_icon_100082.png"), t("bs_hv_lab"), t("bs_hv_lab_left").replace("{left}", Math.round(lab.labLeft || 0).toLocaleString()), lab.getQty, true)
+      .replace("</small></span>", `</small><button type="button" class="bs-hv-lab" data-bshvlab>${esc(t("bs_hv_lab_update"))} &rsaquo;</button></span>`));
     if (chest > 0) {
       // One row per chest that opens into this item (Chief Gear Chest …).
       const per = (itemPageMaps().fixed[calcKey || "chief_gear"] || []).map((ch) => {
@@ -34817,6 +34819,8 @@ function plxAmountModal(o) {
   if (!o.top) modal.onpointerdown = modal.onpointermove = modal.onpointerup = modal.onpointercancel = null;
   modal.onclick = (ev) => {
     if (sw && sw.dragged) { sw.dragged = false; return; }
+    // Research Lab row "Done some already? Update ›": the Lab with its Game says window.
+    if (ev.target.closest("[data-bshvlab]")) { close(); RFC_OPEN_GAME = true; goToTab("rfclab"); return; }
     // "N goes to Alloy ›": open that item's box on the same page.
     const go = ev.target.closest("[data-bsxgo]");
     if (go) {
@@ -35048,6 +35052,8 @@ function bsGroupModal(o) {
   modal.onclick = (ev) => {
     if (sw.dragged) { sw.dragged = false; return; }
     if (ev.target === modal || ev.target.closest("[data-bsgclose]")) { close(); return; }
+    // Research Lab row "Done some already? Update ›": the Lab with its Game says window.
+    if (ev.target.closest("[data-bshvlab]")) { close(); RFC_OPEN_GAME = true; goToTab("rfclab"); return; }
     // "N goes to Alloy ›": open that item's box on the same page.
     const go = ev.target.closest("[data-bsxgo]");
     if (go) {

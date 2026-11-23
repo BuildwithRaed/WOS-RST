@@ -3682,6 +3682,7 @@ input,select,textarea{
   .bs-hv-n{ flex:1 1 auto; min-width:0; line-height:1.25; }
   .bs-hv-n small{ display:block; font-size:12px; color:var(--muted); }
   .bs-hv-r b{ font-size:14px; color:var(--frost); white-space:nowrap; }
+  .bs-hv-lab{ display:inline-flex; align-items:center; min-height:26px; margin-top:2px; padding:0; border:0; background:none; color:var(--ice); font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
   .bs-hv-r b.g{ color:var(--good); }
   .bs-nb-parts b{ color:var(--frost); }
   .bs-tile.ro{ border-style:dashed; cursor:default; }
