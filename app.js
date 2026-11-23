@@ -1317,7 +1317,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 125; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 126; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -1661,9 +1661,10 @@ const T = {
   bs_nb_short: { en: "Short" },
   bs_hv_backpack: { en: "Backpack" },
   bs_hv_xp_items: { en: "XP items" },
-  bs_hv_trade: { en: "{item} (trade)" },
-  bs_hv_trade_week: { en: "this week's trade" },
-  bs_hv_traded: { en: "{g} traded" },
+  bs_hv_trade_do: { en: "Trade {g} {item} →" },
+  bs_hv_trade_todo: { en: "not done yet" },
+  bs_hv_trade_fit_week: { en: "not done yet · fits this week's limit" },
+  bs_hv_trade_fit_day: { en: "not done yet · fits today's limit" },
   bs_hv_opened: { en: "{g} opened" },
   bs_hv_bought: { en: "bought with {g} {item}" },
   bs_hv_counted: { en: "{g} counted as {item}" },
@@ -28045,11 +28046,15 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       // Only real in-game trades say "(trade)": Gems buy Common Marks; an
       // Advanced Mark isn't traded, it counts as 8 Common; chests (Pet Chest)
       // just open into the item.
-      const label = from === "Gems" || from === "Advanced Marks" || (rule && rule.hidden) ? nm(from) : t("bs_hv_trade").replace("{item}", nm(from));
+      const isTrade = !(from === "Gems" || from === "Advanced Marks" || (rule && rule.hidden));
+      // A real trade reads as the trade to make: "Trade 1,370 Fire Crystal →" (+ what it gives on the right).
+      const label = isTrade ? t("bs_hv_trade_do").replace("{g}", bidiNum(g)).replace("{item}", nm(from)) : nm(from);
+      const lots = rule && rule.give > 0 ? (gave[from] || 0) / rule.give : 0;
       const sub = from === "Gems" ? t("bs_hv_bought").replace("{g}", g).replace("{item}", nm(from))
         : from === "Advanced Marks" ? t("bs_hv_counted").replace("{g}", g).replace("{item}", nm(name))
-        : rule && rule.hidden ? t("bs_hv_opened").replace("{g}", g)
-        : rule && rule.max > 0 ? t("bs_hv_trade_week") : t("bs_hv_traded").replace("{g}", g);
+        : !isTrade ? t("bs_hv_opened").replace("{g}", g)
+        : rule && Number(rule.perDay) > 0 && lots <= Number(rule.perDay) + 1e-9 ? t("bs_hv_trade_fit_day")
+        : rule && rule.max > 0 ? t("bs_hv_trade_fit_week") : t("bs_hv_trade_todo");
       rows.push(row(pic(iconFor(from)), label, sub, q, true));
     });
     // This week's Research Lab refinements still left (counted here once).
