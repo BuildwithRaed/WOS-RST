@@ -1317,7 +1317,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 124; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 125; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3615,6 +3615,9 @@ const T = {
   adv_p_train: { en: "−{n}% training cost" },
   adv_p_done: { en: "Troop unlocks and march capacity done" },
   adv_p_per100: { en: "per +100 march" },
+  adv_p_unlock: { en: "unlock" },
+  adv_p_after: { en: "After this: Lv {lv} at {v}." },
+  adv_steps_h_march: { en: "Level · cost · per +100" },
   adv_p_cost: { en: "cost" },
   adv_p_list_h: { en: "Troop unlocks · march capacity" },
   adv_p_avg_h: { en: "Then by average cost per 1%" },
@@ -3644,6 +3647,8 @@ const T = {
   adv_p_pct_h: { en: "Then by cost per 1%" },
   adv_ord_unlocks: { en: "Troop unlocks" },
   adv_ord_march: { en: "March capacity" },
+  adv_ord_unlocks_sub: { en: "T12 Troop Unlock · Troop Skill · T11 Helios + Training" },
+  adv_ord_march_sub: { en: "Solar Supremacy · Regimental Expansion · Flame Squad" },
   adv_ord_first: { en: "always first" },
   adv_best_next: { en: "Best next" },
   adv_then: { en: "Then" },
@@ -3720,7 +3725,7 @@ const T = {
   adv_r_prestige: { en: "{n} × Emblem of Exquisiteness Pack, lifetime limit 10; gems and 8h speedups taken off, its gold item and chest not counted" },
   adv_r_shining: { en: "{n} Glorious Tomes a skin" },
   adv_r_skin: { en: "${v} each; its own bonus" },
-  adv_ts_note: { en: "Plain value: 1% on one troop = 1, an all-troops upgrade counts 3 times. The pill is the typical value: the whole table\'s cost ÷ its whole gain. A reference only: some kinds here aren't in your list." },
+  adv_ts_note: { en: "Plain value: 1% on one troop = 1, an all-troops upgrade counts 3 times. The pill is the typical value: the whole table's cost ÷ its whole gain. A reference only: some kinds here aren't in your list." },
   adv_rank_of: { en: "rank #{n} of {m}" },
   adv_cost: { en: "Cost" },
   adv_gives: { en: "Gives" },
@@ -5042,7 +5047,7 @@ async function render() {
     }
     // (Admin is for the owner only.) Sent to the Dashboard: the saved last page
     // stays, so a page the person can't open now isn't forgotten.
-    if (!IS_OWNER && (TAB === "adminpage" || TAB === "bestupgrades" || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
+    if (!IS_OWNER && (TAB === "adminpage" || (TAB === "bestupgrades" && !visitorCan("bestupgrades")) || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
     if (TAB === "overview") await renderOverview();
     else if (TAB === "budgets") await renderBudgetsPage();
     else if (TAB === "backpack") await renderInventory();
@@ -5085,7 +5090,7 @@ async function render() {
       else await renderCategoryPage(catName);
     }
     // Owner: the "Best next here" card on the planner pages (Best upgrades).
-    if (seq === RENDER_SEQ && IS_OWNER && ADV_CARD_TABS[TAB]) advCardInject(seq).catch((e) => console.warn("best upgrades", e));
+    if (seq === RENDER_SEQ && visitorCan("bestupgrades") && ADV_CARD_TABS[TAB]) advCardInject(seq).catch((e) => console.warn("best upgrades", e));
     // "Opens around day N" notes from the state age, under the page title.
     if (seq === RENDER_SEQ && STATE_UNLOCKS.some((u) => u.tabs.includes(TAB))) {
       await ensureStateAge();
@@ -8082,7 +8087,7 @@ function advGivesText(gain) {
 }
 const advPic = (src, page) => { const s = src || (page ? QUICK_ICONS[advPageOf(page).tab] : ""); return `<span class="pca-pic">${s ? `<img src="${esc(s)}" alt="" loading="lazy" />` : ""}</span>`; };
 function advRowHtml(r, o = {}) {
-  const pg = advPageOf(r.page), per = advPer(r, o.key);
+  const per = advPer(r, o.key);
   if (r.page === "skins") {
     const grp = r.members && r.members.length > 1, price = t("adv_tomes_price").replace("{n}", (r.tomes || 0).toLocaleString("en-US")).replace("{v}", advMoney(r.usd));
     r = { ...r, name: grp ? r.name : t("adv_buy_name").replace("{name}", r.base || r.name), usdTxt: grp ? `${price} ${t("adv_each")}` : price };
@@ -8119,7 +8124,7 @@ function advPageHtml(steps) {
   const P = ADV_PRIO || [], best = R.buy[0], then = R.buy.slice(1, 4);
   const answer = P.length ? `<div class="panel">
       <div class="pca-h">${esc(t("adv_best_next"))}</div>
-      <div class="pca-sum" data-advopen="${P[0].tab}" role="button" tabindex="0" style="cursor:pointer; margin-top:4px;">${advPic(P[0].img)}<span class="pca-mid"><span class="pca-nm">${esc(P[0].name)}</span><span class="pca-sb">${esc(P[0].sub)}</span></span><span style="text-align:end;"><b class="pca-big">${bidiNum(P[0].per != null ? `$${P[0].per.toFixed(2)}` : advMoney(P[0].usd))}</b><small class="meta">${esc(P[0].per != null ? t("adv_p_per100") : t("adv_p_cost"))}</small></span></div>
+      <div class="pca-sum" data-advprio="${esc(P[0].key)}" data-advprionext="1" role="button" tabindex="0" style="cursor:pointer; margin-top:4px;">${advPic(P[0].img)}<span class="pca-mid"><span class="pca-nm">${esc(P[0].name)}</span><span class="pca-sb">${esc(P[0].sub)}</span></span><span style="text-align:end;"><b class="pca-big">${bidiNum(P[0].per != null ? `$${P[0].per.toFixed(2)}` : advMoney(P[0].usd))}</b><small class="meta">${esc(P[0].per != null ? t("adv_p_per100") : t("adv_p_cost"))}</small></span></div>
       <div class="pca-h">${esc(t("adv_then"))}</div>${P.slice(1, 4).map(advPrioRowHtml).join("")}${P.length < 4 ? R.buy.slice(0, 4 - P.length).map((r) => advRowHtml(r, { rank: true })).join("") : ""}
     </div>` : best ? `<div class="panel">
       <div class="pca-h">${esc(t("adv_best_next"))}</div>
@@ -8179,29 +8184,31 @@ const ADV_MARCH_T12_SOLAR = 100;
 const ADV_MARCH_T11 = { "Flame Squad": [200, 400, 600, 800, 1000], Training: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] };
 async function advPriority() {
   await Promise.all([ensureRCData(), ensureT11StateData(), ensureT12NodesData(), ensureT12StateData(), ensureResearchSpeedData()]);
-  const cost = (items) => Object.entries(items).reduce((s, [n, q]) => s + (Number(q) || 0) * advVal(n), 0), RT = "Research Speedups (minutes)";
+  // Each line keeps the items it was priced from (its sheet lists them).
+  let lastItems = {};
+  const cost = (items) => { lastItems = items; return Object.entries(items).reduce((s, [n, q]) => s + (Number(q) || 0) * advVal(n), 0); }, RT = "Research Speedups (minutes)";
   const rowCost = (r) => cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 });
-  const unl = [], cap = [];
+  const unl = [], cap = [], pushU = (o) => unl.push({ items: lastItems, ...o }), pushC = (o) => cap.push({ items: lastItems, ...o });
   // T12 Troop Unlock slots: needed for T12 troops.
   T12_TROOPS.forEach((troop) => T12_ITEM_DEFS.filter((d) => d.group === "Troop Unlock").forEach((d) => {
     const now = Number(((T12_STATE || {})[troop] || {})[d.key]) || 0;
     if (now >= d.max) return;
     const r = (T12_NODES_CACHE[d.tier] || {})[now + 1] || {};
-    unl.push({ key: `t12|${troop}|${d.key}`, base: `${troopDisplayName(troop)} ${tT12Label(d.label)}`, subBase: t("adv_p_t12"), lvFrom: now, lvTo: now + 1, set: (s) => { s.t12[troop][d.key] = now + 1; }, tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1}`, sub: t("adv_p_t12"), usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }) });
+    pushU({ key: `t12|${troop}|${d.key}`, base: `${troopDisplayName(troop)} ${tT12Label(d.label)}`, subBase: t("adv_p_t12"), lvFrom: now, lvTo: now + 1, set: (s) => { s.t12[troop][d.key] = now + 1; }, tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1}`, sub: t("adv_p_t12"), usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }) });
   }));
   // T12 Troop Skill: part of the T12 soldier, right after the unlock slots.
   T12_TROOPS.forEach((troop) => T12_ITEM_DEFS.filter((d) => d.key === "troopskill").forEach((d) => {
     const now = Number(((T12_STATE || {})[troop] || {})[d.key]) || 0;
     if (now >= d.max) return;
     const r = (T12_NODES_CACHE[d.tier] || {})[now + 1] || {};
-    unl.push({ key: `t12|${troop}|${d.key}`, base: `${troopDisplayName(troop)} ${tT12Label(d.label)}`, subBase: t("adv_p_t12skill"), lvFrom: now, lvTo: now + 1, set: (s) => { s.t12[troop][d.key] = now + 1; }, tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1}`, sub: t("adv_p_t12skill"), usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }), t11: 0.5 });
+    pushU({ key: `t12|${troop}|${d.key}`, base: `${troopDisplayName(troop)} ${tT12Label(d.label)}`, subBase: t("adv_p_t12skill"), lvFrom: now, lvTo: now + 1, set: (s) => { s.t12[troop][d.key] = now + 1; }, tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1}`, sub: t("adv_p_t12skill"), usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }), t11: 0.5 });
   }));
   // T12 Solar Supremacy: +100 march capacity a level.
   T12_TROOPS.forEach((troop) => T12_ITEM_DEFS.filter((d) => d.key === "solar").forEach((d) => {
     const now = Number(((T12_STATE || {})[troop] || {})[d.key]) || 0;
     if (now >= d.max) return;
     const r = (T12_NODES_CACHE[d.tier] || {})[now + 1] || {}, add = ADV_MARCH_T12_SOLAR;
-    cap.push({ key: `t12|${troop}|${d.key}`, base: `${troopDisplayName(troop)} ${tT12Label(d.label)}`, subBase: "", lvFrom: now, lvTo: now + 1, set: (s) => { s.t12[troop][d.key] = now + 1; }, tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, add, usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }), extra: "" });
+    pushC({ key: `t12|${troop}|${d.key}`, base: `${troopDisplayName(troop)} ${tT12Label(d.label)}`, subBase: "", lvFrom: now, lvTo: now + 1, set: (s) => { s.t12[troop][d.key] = now + 1; }, tab: "t12research", img: QUICK_ICONS.t12research, name: `${troopDisplayName(troop)} ${tT12Label(d.label)} Lv ${now} \u2192 ${now + 1} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, add, usd: cost({ Steel: r.steel, "Refined FC": r.refined_fc, "FC Shard": r.fc_shard, [RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }), extra: "" });
   }));
   // T11: Helios <troop> Unlock (XI troops), Flame Squad and Helios <troop> Training (capacity).
   T11_TROOPS.forEach((troop) => Object.entries((T11_NODES_CACHE || {})[troop] || {}).forEach(([track, rows0]) => {
@@ -8209,18 +8216,18 @@ async function advPriority() {
     if (now >= rows.length) return;
     const r = rows.find((x) => Number(x.level) === now + 1) || {}, usd = rowCost(r), lab = `${dataName(track)} Lv ${now} \u2192 ${now + 1}`;
     const t11k = { key: `t11|${troop}|${track}`, base: `${troopDisplayName(troop)} \u00b7 ${dataName(track)}`, lvFrom: now, lvTo: now + 1, set: (s) => { s.t11[troop][track] = now + 1; } };
-    if (/^Helios .* Unlock$/.test(track)) unl.push({ ...t11k, subBase: t("adv_p_t11"), tab: "t11helios", img: QUICK_ICONS.t11helios, name: `${troopDisplayName(troop)} \u00b7 ${lab}`, sub: t("adv_p_t11"), usd, t11: 1 });
+    if (/^Helios .* Unlock$/.test(track)) pushU({ ...t11k, subBase: t("adv_p_t11"), tab: "t11helios", img: QUICK_ICONS.t11helios, name: `${troopDisplayName(troop)} \u00b7 ${lab}`, sub: t("adv_p_t11"), usd, t11: 1 });
     // Helios <troop> Training is part of the T11 unlock path: listed (and ranked) as an unlock,
     // with its +capacity on the line.
-    if (/^Helios .* Training$/.test(track)) { const m = ADV_MARCH_T11.Training, add = (m[now] || 0) - (m[now - 1] || 0); unl.push({ ...t11k, add, subBase: `${t("adv_p_t11")} \u00b7 ${t("adv_p_train").replace("{n}", 5)}`, tab: "t11helios", img: QUICK_ICONS.t11helios, name: `${troopDisplayName(troop)} \u00b7 ${lab} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, sub: `${t("adv_p_t11")} \u00b7 ${t("adv_p_train").replace("{n}", 5)}`, usd, t11: 2 }); }
-    if (track === "Flame Squad") { const m = ADV_MARCH_T11["Flame Squad"], add = (m[now] || 0) - (m[now - 1] || 0); cap.push({ ...t11k, subBase: "", tab: "t11helios", img: QUICK_ICONS.t11helios, name: `${troopDisplayName(troop)} \u00b7 ${lab} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, add, usd, extra: "" }); }
+    if (/^Helios .* Training$/.test(track)) { const m = ADV_MARCH_T11.Training, add = (m[now] || 0) - (m[now - 1] || 0); pushU({ ...t11k, add, subBase: `${t("adv_p_t11")} \u00b7 ${t("adv_p_train").replace("{n}", 5)}`, tab: "t11helios", img: QUICK_ICONS.t11helios, name: `${troopDisplayName(troop)} \u00b7 ${lab} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, sub: `${t("adv_p_t11")} \u00b7 ${t("adv_p_train").replace("{n}", 5)}`, usd, t11: 2 }); }
+    if (track === "Flame Squad") { const m = ADV_MARCH_T11["Flame Squad"], add = (m[now] || 0) - (m[now - 1] || 0); pushC({ ...t11k, subBase: "", tab: "t11helios", img: QUICK_ICONS.t11helios, name: `${troopDisplayName(troop)} \u00b7 ${lab} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, add, usd, extra: "" }); }
   }));
   // Research Center: Regimental Expansion I–VI.
   Object.entries(ADV_MARCH_RC).forEach(([track, m]) => {
     const rows = (RC_NODES_CACHE[track] || []).slice().sort((x, y) => Number(x.level) - Number(y.level)), now = Number((RC_STATE || {})[track]) || 0, top = Math.max(rows.length, m.length);
     if (now >= top) return;
     const r = rows.find((x) => Number(x.level) === now + 1) || {}, add = (m[now] || 0) - (m[now - 1] || 0);
-    cap.push({ key: `rc|${track}`, base: dataName(track), subBase: "", lvFrom: now, lvTo: now + 1, set: (s) => { s.rc[track] = now + 1; }, tab: "researchcenter", img: QUICK_ICONS.researchcenter, name: `${dataName(track)} Lv ${now} \u2192 ${now + 1} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, add, usd: rowCost(r), extra: "" });
+    pushC({ key: `rc|${track}`, base: dataName(track), subBase: "", lvFrom: now, lvTo: now + 1, set: (s) => { s.rc[track] = now + 1; }, tab: "researchcenter", img: QUICK_ICONS.researchcenter, name: `${dataName(track)} Lv ${now} \u2192 ${now + 1} \u00b7 ${t("adv_p_march").replace("{n}", add.toLocaleString("en-US"))}`, add, usd: rowCost(r), extra: "" });
   });
   unl.sort((x, y) => (x.t11 || 0) - (y.t11 || 0));
   cap.forEach((x) => { x.per = x.add > 0 ? (x.usd / x.add) * 100 : Infinity; x.sub = [t("adv_p_per").replace("{v}", `$${x.per.toFixed(2)}`), x.extra].filter(Boolean).join(" \u00b7 "); });
@@ -8260,6 +8267,39 @@ function advOpenTrackSheet(r) {
   advWireSheet(m);
   m.querySelectorAll("[data-advttall]").forEach((x) => { x.onclick = (ev) => { ev.stopPropagation(); ADV_TT_ALL = true; advOpenTrackSheet(r); }; });
 }
+// The sheet of an unlock / march line: what it gives, its items with their values, its $ (and $ per
+// +100 march); Next step adds "after this", To target lists every level to the end.
+function advOpenPrioSheet(key, view) {
+  const x = (ADV_PRIO || []).find((y) => y.key === key), tt = (ADV_PRIO_TT || []).find((y) => y.key === key), whole = view === "target" && tt;
+  const r = whole ? tt : x || tt;
+  if (!r) return;
+  const m = gearSheetEl(), pg = ADV_PAGES.find((q) => q.tab === r.tab) || { tab: r.tab };
+  const items = {};
+  (whole ? tt.steps : [{ items: r.items || {} }]).forEach((s) => advAddItems(items, s.items || {}));
+  const add = whole ? tt.add : r.add || 0, usd = whole ? tt.usd : r.usd, per = add > 0 ? (usd / add) * 100 : null;
+  const label = r.subBase || (add ? t("adv_p_march").replace("{n}", add.toLocaleString("en-US")) : "");
+  const itemRows = Object.entries(items).filter(([, q]) => q > 0.5).map(([n, q]) => {
+    const v = q * advVal(n), src = materialIconSrc(n);
+    return `<div class="bset-row"><span class="bset-l" style="flex-direction:row; align-items:center; gap:8px;">${src ? `<img src="${esc(src)}" alt="" style="width:24px; height:24px; object-fit:contain;" />` : ""}<span>${esc(materialDisplayName(n))} <small>&times;${esc(shortAmount(q))}</small>${ADV_OWN_FROM[advItemKey(n)] ? `<small class="meta" style="display:block;">${esc(t("adv_valued_from").replace("{pack}", ADV_OWN_FROM[advItemKey(n)]))}</small>` : ""}</span></span><b class="bset-c">${v > 0 ? advMoney(v) : "\u2014"}</b></div>`;
+  }).join("");
+  const stepRow = (s) => `<div class="bset-row"><span class="bset-l">Lv ${esc(String(s.lv))}${s.add ? ` <small>${esc(t("adv_p_march").replace("{n}", s.add.toLocaleString("en-US")))}</small>` : ""}</span><span class="bset-c"><b>${advMoney(s.usd)}</b>${s.add ? `<span class="pur-cmp pur-cmp-both">${bidiNum(`$${((s.usd / s.add) * 100).toFixed(2)}`)} / +100</span>` : ""}</span></div>`;
+  const after = !whole && tt && tt.steps && tt.steps[1] ? tt.steps[1] : null;
+  m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw" role="dialog" aria-modal="true" aria-label="${esc(r.name)}">
+    <div class="cgw-top" data-cgwgrab><div class="cgw-grab"></div>
+    <div class="gs-head">${advPic(r.img)}<div style="flex:1; min-width:0;"><b>${esc(r.name)}</b><div class="meta">${esc([navLabel(pg.tab), whole ? t(tt.n === 1 ? "adv_n_step1" : "adv_n_steps").replace("{n}", tt.n) : ""].filter(Boolean).join(" \u00b7 "))}</div></div>${closeXHtml("data-advclose")}</div></div>
+    <div class="cgw-nd" style="grid-template-columns:repeat(3, minmax(0, 1fr));">
+      <div class="cgw-nb"><small>${esc(t(whole ? "adv_total" : "adv_cost"))}</small><b>${advMoney(usd)}</b></div>
+      <div class="cgw-nb"><small>${esc(t("adv_gives"))}</small><b style="color:var(--good);">${esc(add ? `+${add.toLocaleString("en-US")}` : t("adv_p_unlock"))}</b></div>
+      <div class="cgw-nb"><small>${esc(t("adv_p_per100"))}</small><b>${per != null ? bidiNum(`$${per.toFixed(2)}`) : "\u2014"}</b></div>
+    </div>
+    ${label ? `<p class="pca-sb" style="margin:8px 0 0;">${esc(label)}</p>` : ""}
+    ${whole && tt.steps.length > 1 ? `<div class="cgw-nh">${esc(t("adv_steps_h_march"))}</div>${tt.steps.map(stepRow).join("")}` : ""}
+    ${itemRows ? `<div class="cgw-nh">${esc(t("adv_items"))}</div>${itemRows}` : ""}
+    ${after ? `<p class="pca-sb" style="margin:8px 0 0;">${esc(t("adv_p_after").replace("{lv}", after.lv).replace("{v}", advMoney(after.usd)))}</p>` : ""}
+    <div style="display:flex; gap:8px; margin-top:14px;"><button type="button" class="btn ghost" style="flex:1;" data-advclose>${esc(t("close_button"))}</button><button type="button" class="btn" style="flex:1;" data-advopen="${esc(pg.tab)}">${esc(t("adv_open_named").replace("{page}", navLabel(pg.tab)))} &#8250;</button></div>
+  </div>`;
+  advWireSheet(m);
+}
 // A "Priority first" step as a list row: its own $ (and $ per +100 march), no $/1% pill.
 function advPrioPill(x) { return `<span class="pur-cmp pur-cmp-both">${x.per != null && Number.isFinite(x.per) ? `${bidiNum(`$${x.per.toFixed(2)}`)} / +100` : bidiNum(advMoney(x.usd))}</span>`; }
 // Unlock / march tracks to their end, plain cost (To target view).
@@ -8269,12 +8309,12 @@ async function advPriorityTracks() {
     // Walk each node to its end by asking advPriority() level by level on a copy of the states.
     const st = { t12: JSON.parse(JSON.stringify(T12_STATE || {})), t11: JSON.parse(JSON.stringify(T11_STATE || {})), rc: JSON.parse(JSON.stringify(RC_STATE || {})) };
     T12_STATE = st.t12; T11_STATE = st.t11; RC_STATE = st.rc;
-    const first = await advPriority(), acc = new Map(first.map((x) => [x.key, { ...x, total: x.usd, add: x.add || 0, n: 1, from: x.lvFrom, to: x.lvTo }]));
+    const first = await advPriority(), acc = new Map(first.map((x) => [x.key, { ...x, total: x.usd, add: x.add || 0, n: 1, from: x.lvFrom, to: x.lvTo, steps: [{ lv: x.lvTo, usd: x.usd, add: x.add || 0, items: x.items }] }]));
     for (let guard = 0; guard < 400; guard++) {
       first.forEach((x) => { const s = x.set; if (s) s(st); });
       const next = await advPriority();
       let any = false;
-      next.forEach((x) => { const a2 = acc.get(x.key); if (!a2) return; if (x.lvFrom !== a2.to) return; any = true; a2.total += x.usd; a2.add += x.add || 0; a2.n++; a2.to = x.lvTo; });
+      next.forEach((x) => { const a2 = acc.get(x.key); if (!a2) return; if (x.lvFrom !== a2.to) return; any = true; a2.total += x.usd; a2.add += x.add || 0; a2.n++; a2.to = x.lvTo; a2.steps.push({ lv: x.lvTo, usd: x.usd, add: x.add || 0, items: x.items }); });
       first.length = 0; next.forEach((x) => { if (acc.has(x.key)) first.push(x); });
       if (!any || !first.length) break;
     }
@@ -8284,7 +8324,7 @@ async function advPriorityTracks() {
   return unl.concat(cap);
 }
 function advPrioRowHtml(x) {
-  return `<details class="pca-pk"><summary data-advopen="${x.tab}">${advPic(x.img)}<span class="pca-mid"><span class="pca-nm">${esc(x.name)}</span><span class="pca-sb">${esc([x.per != null ? x.extra : x.sub, x.per != null ? advMoney(x.usd) : ""].filter(Boolean).join(" \u00b7 "))}</span></span><b class="pca-pr">${advPrioPill(x)}</b></summary></details>`;
+  return `<details class="pca-pk"><summary data-advprio="${esc(x.key)}">${advPic(x.img)}<span class="pca-mid"><span class="pca-nm">${esc(x.name)}</span><span class="pca-sb">${esc([x.per != null ? x.extra : x.sub, x.per != null ? advMoney(x.usd) : ""].filter(Boolean).join(" \u00b7 "))}</span></span><b class="pca-pr">${advPrioPill(x)}</b></summary></details>`;
 }
 let ADV_PRIO = [];
 let ADV_PRIO_TT = []; // the same tracks, from now to their end (To target view)
@@ -8510,7 +8550,7 @@ function advCardHtml(pageKey) {
 let ADV_CARD_SEQ = 0;
 async function advCardInject(seq) {
   const pageKey = ADV_CARD_TABS[TAB];
-  if (!IS_OWNER || !pageKey) return;
+  if (!visitorCan("bestupgrades") || !pageKey) return;
   const my = ++ADV_CARD_SEQ;
   await ensureUpgradeOrder();
   const steps = await advSteps();
@@ -8539,7 +8579,7 @@ async function advCardInject(seq) {
 // A save on a planner page: the card follows a moment later.
 let ADV_SOON = null;
 function advSoon() {
-  if (ADV_BUILDING || !IS_OWNER || !ADV_CARD_TABS[TAB]) return;
+  if (ADV_BUILDING || !visitorCan("bestupgrades") || !ADV_CARD_TABS[TAB]) return;
   clearTimeout(ADV_SOON);
   const seq = RENDER_SEQ;
   ADV_SOON = setTimeout(() => { if (seq === RENDER_SEQ && document.querySelector("[data-advcard]")) advCardInject(seq).catch(() => {}); }, 900);
@@ -8560,6 +8600,8 @@ document.addEventListener("click", (ev) => {
   const md = ev.target.closest("[data-advmode]");
   if (md) { ADV_SET.mode = md.dataset.advmode; advSaveSet(); advDraw(); return; }
   if (ev.target.closest("[data-advmore]")) { ADV_MORE = !ADV_MORE; advDraw(); return; }
+  const pr = ev.target.closest("[data-advprio]");
+  if (pr) { ev.preventDefault(); advOpenPrioSheet(pr.dataset.advprio, pr.hasAttribute("data-advprionext") ? "next" : ADV_SET.view); return; }
   const tk = ev.target.closest("[data-advtrack]");
   if (tk) { ev.preventDefault(); const r = ADV_LAST && ADV_LAST.R.tracks.find((x) => x.track === tk.dataset.advtrack); if (r) { ADV_TT_ALL = false; advOpenTrackSheet(r); } return; }
   const vw = ev.target.closest("[data-advview]");
@@ -8570,6 +8612,7 @@ document.addEventListener("click", (ev) => {
   if (tw) { PLX_TROOP.adv = tw.dataset.tswtroop; advDraw(); }
 });
 document.addEventListener("keydown", (ev) => {
+  if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches && ev.target.matches("#content .pca-sum[data-advprio]")) { ev.preventDefault(); advOpenPrioSheet(ev.target.dataset.advprio, "next"); return; }
   if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches && ev.target.matches("#content .pca-sum[data-advrow]")) { ev.preventDefault(); const r = advFind(ev.target.dataset.advrow); if (r) advOpenSheet(r); }
 });
 const CANDO_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
@@ -9432,7 +9475,7 @@ function cdaOrderSheet(opts = {}) {
     m.innerHTML = `<div class="modal-box adm-sheet cando-box" role="dialog" aria-modal="true" aria-label="${esc(t("cando_order"))}">
       <div class="cando-hd"><b>${esc(t("cando_order"))}</b>${closeXHtml("data-cdx")}</div>
       <div class="cando-oh"><span class="meta cando-desc">${esc(t("cando_drag_hint"))}</span><span class="cando-ob">${arrangeBtnHtml("upgrade_order")}<button type="button" class="btn ghost small" data-cdreset>${esc(t("rch_order_reset"))}</button></span></div>
-      ${opts.weights ? `<div class="cando-ord" style="margin-bottom:6px;">${[["adv_ord_unlocks", "T12 Troop Unlock · Troop Skill · T11 Helios + Training"], ["adv_ord_march", "Solar Supremacy · Regimental Expansion · Flame Squad"]].map(([k, sub]) => `<div class="rch-ord-row"><b>&#128274;</b><span>${esc(t(k))}<small class="meta" style="display:block; font-weight:400;">${esc(sub)}</small></span><small class="meta">${esc(t("adv_ord_first"))}</small></div>`).join("")}</div>` : ""}
+      ${opts.weights ? `<div class="cando-ord" style="margin-bottom:6px;">${["adv_ord_unlocks", "adv_ord_march"].map((k) => `<div class="rch-ord-row"><b>&#128274;</b><span>${esc(t(k))}<small class="meta" style="display:block; font-weight:400;">${esc(t(k + "_sub"))}</small></span><small class="meta">${esc(t("adv_ord_first"))}</small></div>`).join("")}</div>` : ""}
       <div class="cando-ord"${arrangeHostAttr("upgrade_order")}>${UPGRADE_ORDER.rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-cdrow="${i}" data-cdkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>${opts.weights ? `<small class="meta">&times;${(1.5 - i / 11).toFixed(2)}</small>` : ""}${dsHandleHtml("data-cddrag")}</div>`).join("")}</div>
       <div class="cando-foot"><button type="button" class="btn cando-done" data-cdx>${esc(t("gs_done"))}</button></div>
     </div>`;
@@ -36340,7 +36383,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=d1905292bc";
+      s.src = "admin.min.js?v=afc8ef38aa";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
