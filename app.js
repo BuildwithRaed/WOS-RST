@@ -3605,6 +3605,9 @@ const T = {
   cda_not_avail: { en: "No data:" },
   cda_u_stats: { en: "stats" },
   cda_u_paths: { en: "paths" },
+  cda_u_heroes: { en: "hero upgrades" },
+  cda_hero_widget: { en: "Widget {a} \u2192 {b}" },
+  cda_hero_wfrom: { en: "{hero}: widgets from {date}" },
   cda_u_buildings: { en: "buildings" },
   cda_u_skins: { en: "skins" },
   cda_path: { en: "Path {n}" },
@@ -8897,6 +8900,44 @@ const CDA_PAGES = [
     });
     return { tracks, have: { "Glorious Tome": shiningTomesIn(bp || {}) }, conv: [], pic: (tr) => tr.img, step: () => t("cda_buy_skin") };
   } },
+  { key: "hero_shards", tab: "budgets", go: "budgets:hero_shards", label: () => t("b3_tile_hero_shards"), icon: () => budgetPagePic("hero_shards"), unit: "cda_u_heroes", async build() {
+    // The heroes Budgets plans (roster + Hero targets / added heroes, not Later): stars in
+    // 1/6 steps paid with the hero's own shards, then the rarity's General shard 1:1 (not
+    // Natalia / Jeronimo); widget levels from its own widgets, its Gen's widgets, Widget
+    // Chests and Mystery Points (800 → 2). A hero not out yet gets no widget levels
+    // before its release (owner: only Mystery Points can be saved for it).
+    const [, bp0, starRows, widgetRows] = await Promise.all([heroShardBudget(), loadCalcState("backpack").catch(() => null),
+      dashCached("star_stats", () => sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`)).catch(() => []),
+      dashCached("widget_stats", () => sb(`hero_gen_widget_stats?select=generation,level,leth_pct,hp_pct&order=generation,level`)).catch(() => [])]);
+    const last = HERO_PLAN_LAST;
+    if (!last || !last.rows) return null;
+    const bp = bp0 || {}, num = (n) => Number(bp[n]) || 0, costByGen = heroShardCostByGen(starRows);
+    const star = (gen, st) => (starRows || []).find((r) => Number(r.generation) === Number(gen) && Number(r.step) === st) || {};
+    const wid = (gen, lv) => (widgetRows || []).find((r) => Number(r.generation) === Number(gen) && Number(r.level) === lv) || {};
+    const have = { "Widget Chest": num("Widget Chest"), "Mystery Points": num("Mystery Points") }, conv = [], tracks = [], notes = [];
+    Object.values(HERO_GENERAL_SHARD).forEach((n) => { have[n] = num(n); });
+    last.rows.forEach((r) => {
+      const h = r.hero, nm = h.name, troop = reachTroopKey(r.troop || h.troop_type || "") || "all", img = h.image_url || HERO_IMG_BY_NAME[nm] || "";
+      const SH = `${nm} Shards`, WD = `${nm} Widgets`;
+      if (r.tStep > r.step) {
+        have[SH] = num(SH);
+        if (!vipPackHero(nm)) conv.push({ from: HERO_GENERAL_SHARD[r.rarity] || HERO_GENERAL_SHARD.Legendary, to: SH, give: 1, get: 1, max: 0 });
+        tracks.push({ id: `${h.id}|s`, troop, from: r.step, to: r.tStep, name: dataName(nm), img, lab: heroStepText,
+          cost: (i) => ({ [SH]: heroShardStepCost(costByGen, h.generation, i) + (i === r.step + 1 ? r.unlock || 0 : 0) }),
+          gain: (i) => { const x = star(h.generation, i); return { Attack: Number(x.atk_pct) || 0, Defense: Number(x.def_pct) || 0 }; } });
+      }
+      if (r.hasWidget && r.tW > r.wLevel) {
+        if (r.notOut) { notes.push(t("cda_hero_wfrom").replace("{hero}", dataName(nm)).replace("{date}", heroGenNotOutShort(r.notOut).replace(/^~/, ""))); return; }
+        have[WD] = num(WD); have[r.gKey] = num(r.gKey);
+        conv.push({ from: r.gKey, to: WD, give: 1, get: 1, max: 0 }, { from: "Widget Chest", to: WD, give: 1, get: HERO_RULES.widgetChestGives, max: 0 }, { from: "Mystery Points", to: WD, give: HERO_RULES.mysteryGive, get: HERO_RULES.mysteryGet, max: 0 });
+        tracks.push({ id: `${h.id}|w`, troop, from: r.wLevel, to: r.tW, name: dataName(nm), img, lab: (i) => String(i), wid: true,
+          cost: (L) => ({ [WD]: Number(WIDGET_LEVEL_COST[L]) || 0 }),
+          gain: (L) => { const x = wid(h.generation, L); return { Lethality: Number(x.leth_pct) || 0, Health: Number(x.hp_pct) || 0 }; } });
+      }
+    });
+    return { tracks, have, conv, pic: (tr) => tr.img, note: notes.join(" · "),
+      step: (tr, lv) => (tr.wid ? t("cda_hero_widget").replace("{a}", tr.from).replace("{b}", lv) : `${heroStepText(tr.from)} → ${heroStepText(lv)}`) };
+  } },
 ];
 // Builds one page: its tracks (ids "<page>::<id>") and Backpack (have / conv).
 async function cdaBuildPage(pg) {
@@ -8913,7 +8954,7 @@ async function cdaBuildPage(pg) {
       conv = conv.concat([{ from: GENERAL_SPEEDUP_KEY, to: r.general, give: 1, get: 1, max: 0 }]);
     }
   }
-  return { tracks, have: have || {}, conv, pic: r.pic, step: r.step };
+  return { tracks, have: have || {}, conv, pic: r.pic, step: r.step, note: r.note || "" };
 }
 let CDA_BUILT = null;   // { key: { tracks, have, conv, pic, step } | { none } | { err } } for this visit of the page
 let CDA_LOADED = 0;
@@ -8993,8 +9034,16 @@ function cdaPageInfo(pg, P) {
   const packs = !!(P.base && todo.some((tr) => (P.base.plan.lv[tr.id] ?? tr.from) !== plan.lv[tr.id]));
   return { b, todo, up, left, firstItem, firstTr, trades, packs, st: !todo.length ? "done" : up.length ? "up" : "none" };
 }
-function cdaPageName(pg) { return navLabel(pg.tab); }
-function cdaPagePic(pg) { return QUICK_ICONS[pg.tab] || ""; }
+function cdaPageName(pg) { return pg.label ? pg.label() : navLabel(pg.tab); }
+function cdaPagePic(pg) { return pg.icon ? pg.icon() : QUICK_ICONS[pg.tab] || ""; }
+// "Open ›" / "Get more ›" of a card that lives in Budgets (Heroes): its page sheet there.
+function cdaGoBudgets(go) {
+  const m = /^budgets:(.+)$/.exec(String(go || ""));
+  if (!m) return false;
+  BUDGET_SHEET = `page:${m[1]}`;
+  if (TAB === "budgets") render(); else goToTab("budgets");
+  return true;
+}
 function cdaUpRow(pg, info, tr, plan) {
   const lv = plan.lv[tr.id], off = CDA_SET.skip.has(tr.id);
   let pic = "";
@@ -9029,9 +9078,10 @@ function cdaCardHtml(pg, info, P) {
   return `<div class="panel cda-card" data-cdacard="${esc(pg.key)}"><div class="cda-pg">${pic ? `<img class="cda-pic" src="${esc(pic)}" alt="" loading="lazy" />` : ""}<div class="cda-m">
       <div class="cda-n">${esc(cdaPageName(pg))}</div>
       <div class="cda-u">${main}</div>
+      ${info.b.note ? `<div class="cda-s cda-nt">${esc(info.b.note)}</div>` : ""}
       ${tags || (!open && runs) ? `<div class="cda-s">${tags}${!open ? runs : ""}</div>` : ""}
       ${!open && moreN > 0 ? `<button type="button" class="cda-more" data-cdaopen="${esc(pg.key)}" aria-expanded="false">${esc(t("cdp_more").replace("{n}", moreN))} &#9662;</button>` : !open ? `<button type="button" class="cda-more" data-cdaopen="${esc(pg.key)}" aria-expanded="false">${esc(t("cdp_details"))} &#9662;</button>` : ""}
-    </div><button type="button" class="cda-go" data-cdago="${esc(pg.tab)}">${esc(t("cdp_open"))} &#8250;</button></div>${body}</div>`;
+    </div><button type="button" class="cda-go" data-cdago="${esc(pg.go || pg.tab)}">${esc(t("cdp_open"))} &#8250;</button></div>${body}</div>`;
 }
 // Budgets' "Free now" tile and sheet (owner only): every page worked out once per
 // Budgets visit (CDA_BUILD_P, shared), after the page is drawn.
@@ -9153,7 +9203,7 @@ function cdaSheetInner() {
       goals = `<div class="fz-hd"><span>${esc(t("cdb_your_goals"))}</span><em>${esc(t("cdb_n_can").replace("{n}", can).replace("{m}", gs.length))}</em></div><div class="fz-goals">${gs.map((s, i) => {
         const pg = CDA_PAGES.find((x) => x.key === s.e.page);
         const ic = budgetGoalIcon({ up: s.u, page: s.e.page });
-        return `<div class="fz-g"><span class="fz-num">${i + 1}</span>${ic.src ? `<img class="${ic.face ? "face" : ""}" src="${esc(ic.src)}" alt="" loading="lazy" />` : ""}<span class="fz-n"><b>${esc(s.u.name)}</b><small>${esc(t("cdb_goal_line").replace("{x}", s.goalLabel).replace("{now}", s.u.now))}</small>${cdaGoalChipHtml(s)}</span>${pg ? `<button type="button" class="cda-go" data-cdago="${esc(pg.tab)}">${esc(t("cdp_open"))} &#8250;</button>` : ""}</div>`;
+        return `<div class="fz-g"><span class="fz-num">${i + 1}</span>${ic.src ? `<img class="${ic.face ? "face" : ""}" src="${esc(ic.src)}" alt="" loading="lazy" />` : ""}<span class="fz-n"><b>${esc(s.u.name)}</b><small>${esc(t("cdb_goal_line").replace("{x}", s.goalLabel).replace("{now}", s.u.now))}</small>${cdaGoalChipHtml(s)}</span>${pg ? `<button type="button" class="cda-go" data-cdago="${esc(pg.go || pg.tab)}">${esc(t("cdp_open"))} &#8250;</button>` : ""}</div>`;
       }).join("")}</div><div class="fz-hd"><span>${esc(t("cdb_else"))}</span><em class="mu">${esc(t("cdb_ups").replace("{n}", cdaCounts(P).ups.toLocaleString()))}</em></div>`;
     }
   }
@@ -9239,7 +9289,7 @@ function cdaRedraw(after) {
 }
 function cdaClick(ev) {
   const go = ev.target.closest("[data-cdago]");
-  if (go) { goToTab(go.dataset.cdago); return; }
+  if (go) { if (!cdaGoBudgets(go.dataset.cdago)) goToTab(go.dataset.cdago); return; }
   const gm = ev.target.closest("[data-cdagm]");
   if (gm) { cdaGetMore(gm.dataset.cdagm); return; }
   const md = ev.target.closest("[data-cdamode]");
@@ -9278,6 +9328,7 @@ function cdaToggleSkip(id) {
 function cdaGetMore(key) {
   const pg = CDA_PAGES.find((p) => p.key === key);
   if (!pg) return;
+  if (pg.go && cdaGoBudgets(pg.go)) return;
   goToTab(pg.tab);
   const seq = RENDER_SEQ, t0 = Date.now();
   const tryOpen = () => {
@@ -20459,7 +20510,7 @@ function packPruneOffersFor(groups, need, ctx) {
 // plans clears this too). Returns { groups, rest (trades left after folding,
 // or null when nothing was folded), worth }.
 function packPlanPrep(groupsIn, need, calcKey, ctx) {
-  const sig = `${JSON.stringify(need)}|${calcKey}|${ctx ? ctx.rates.map((r) => `${r.from}>${r.to}:${r.give}:${r.get}:${r.max || 0}:${r.wk1 == null ? "" : r.wk1}`).join(",") : ""}`;
+  const sig = `${JSON.stringify(need)}|${calcKey}|${ctx ? ctx.rates.map((r) => `${r.from}>${r.to}:${r.give}:${r.get}:${r.max || 0}:${r.wk1 == null ? "" : r.wk1}:${r.wk0 || ""}`).join(",") : ""}`;
   let store = PACK_PLAN_CACHE.get("__prep");
   if (!store) { store = new WeakMap(); PACK_PLAN_CACHE.set("__prep", store); }
   const hit = store.get(groupsIn);
@@ -22819,14 +22870,18 @@ function tradeWeekCap(r, i) {
   return i === 0 && r.wk1 != null ? r.wk1 : r.max;
 }
 // Lots allowed over `weeks` weeks starting with this one (Infinity = no limit).
+// A rule with `wk0` (a hero not out yet: Mystery Points -> its widgets) only
+// opens in week wk0 (its release), r.max a week from then.
 function tradeCapLots(r, weeks) {
   if (!(r && r.max > 0)) return Infinity;
   const w = Math.max(1, Math.floor(Number(weeks) || 1));
+  if (r.wk0 > 0) return w > r.wk0 ? r.max * (w - r.wk0) : 0;
   return tradeWeekCap(r, 0) + r.max * (w - 1);
 }
 // Weeks (this one included) the limits need for `lots` trades.
 function tradeWeeksForLots(r, lots) {
   if (!(r && r.max > 0) || !(lots > 0)) return 0;
+  if (r.wk0 > 0) return r.wk0 + Math.ceil(lots / r.max);
   const a = tradeWeekCap(r, 0);
   return lots <= a ? 1 : 1 + Math.ceil((lots - a) / r.max);
 }
@@ -23426,7 +23481,7 @@ async function heroShardBudget() {
   const plan = heroShardPlan({ heroes, roster, playerHeroes, starRows, bp: bp || {}, targets: ht ? ht.heroes : null, extra: ht ? ht.extra : null, special });
   HERO_PLAN_LAST = { rows: plan.rows, heroes, roster };
   const totals = {}, owned = {}, rules = [];
-  const rule = (from, to, give, get, max) => rules.push({ from, to, give, get, max, hidden: true, silent: true });
+  const rule = (from, to, give, get, max, more) => rules.push({ from, to, give, get, max, hidden: true, silent: true, ...(more || {}) });
   // Mythic heroes General shards / Marks of Valor can go to (not the VIP pack heroes).
   const mythicShards = plan.rows.filter((r) => r.need > 0 && r.rarity === "Legendary" && !vipPackHero(r.hero.name));
   const newestGen = newGenGen();
@@ -23453,6 +23508,15 @@ async function heroShardBudget() {
     // A Gen's widgets ("Gen 14 Widgets") fit any hero of that Gen (the
     // roster cards still share them in troop order).
     owned[r.gKey] = Number((bp || {})[r.gKey]) || 0;
+    // A hero not out yet (next Gen, planned ahead): before its release the only way
+    // to prepare its widgets is saving Mystery Points (owner); the Mystery shop sells
+    // its widgets only from the release day (week wk0), and Widget Chests / Gen
+    // widgets don't go to it. Its own Forge packs are dated after the release anyway.
+    if (r.notOut && r.notOut.date) {
+      const rel = Math.max(0, Math.round((r.notOut.date - packStartOfToday()) / 86400000));
+      rule("Mystery Points", wd, HERO_RULES.mysteryGive, HERO_RULES.mysteryGet, 1e6, { wk0: Math.max(1, Math.ceil(rel / 7)) });
+      return;
+    }
     rule(r.gKey, wd, 1, 1, 0);
     rule("Widget Chest", wd, 1, HERO_RULES.widgetChestGives, 0);
     rule("Mystery Points", wd, HERO_RULES.mysteryGive, HERO_RULES.mysteryGet, 0); // only the 800 for 2 offer (owner)
