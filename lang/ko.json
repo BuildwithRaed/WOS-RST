@@ -2968,5 +2968,7 @@
 "t:pur_op_upto":"최대 {n}",
 "t:pur_op_none_left":"이번 회차에 남은 것 없음",
 "t:pur_op_sum":"계획 {a} + 추가 {b}",
-"t:pur_op_note":"{n}개 추가 · 나머지는 예산에서 다시 계획합니다"
+"t:pur_op_note":"{n}개 추가 · 나머지는 예산에서 다시 계획합니다",
+"t:b3_pages":"페이지",
+"t:b3_arrange_hint":"⋮⋮를 누른 채 끌기 · 완료하면 체크가 돌아옵니다"
 }

@@ -2968,5 +2968,7 @@
 "t:pur_op_upto":"最多 {n}",
 "t:pur_op_none_left":"本輪已無剩餘",
 "t:pur_op_sum":"計畫 {a} + 額外 {b}",
-"t:pur_op_note":"{n} 額外 · 預算會重新規劃其餘部分"
+"t:pur_op_note":"{n} 額外 · 預算會重新規劃其餘部分",
+"t:b3_pages":"頁面",
+"t:b3_arrange_hint":"按住 ⋮⋮ 拖動 · 點完成後勾選框會恢復"
 }

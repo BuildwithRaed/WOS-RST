@@ -2968,5 +2968,7 @@
 "t:pur_op_upto":"até {n}",
 "t:pur_op_none_left":"nada sobrando nesta rodada",
 "t:pur_op_sum":"plano {a} + extra {b}",
-"t:pur_op_note":"{n} extra · Orçamentos vai planejar o resto de novo com isso"
+"t:pur_op_note":"{n} extra · Orçamentos vai planejar o resto de novo com isso",
+"t:b3_pages":"Páginas",
+"t:b3_arrange_hint":"Segure ⋮⋮ e arraste · as marcações voltam ao tocar em Concluir"
 }

@@ -2968,5 +2968,7 @@
 "t:pur_op_upto":"tối đa {n}",
 "t:pur_op_none_left":"đợt này không còn",
 "t:pur_op_sum":"kế hoạch {a} + thêm {b}",
-"t:pur_op_note":"{n} thêm · Ngân sách sẽ lập lại kế hoạch phần còn lại"
+"t:pur_op_note":"{n} thêm · Ngân sách sẽ lập lại kế hoạch phần còn lại",
+"t:b3_pages":"Trang",
+"t:b3_arrange_hint":"Giữ ⋮⋮ và kéo · dấu tích trở lại khi bấm Xong"
 }

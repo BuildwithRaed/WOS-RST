@@ -2968,5 +2968,7 @@
 "t:pur_op_upto":"en fazla {n}",
 "t:pur_op_none_left":"bu turda kalmadı",
 "t:pur_op_sum":"plan {a} + ekstra {b}",
-"t:pur_op_note":"{n} ekstra · Bütçeler kalanı bununla yeniden planlayacak"
+"t:pur_op_note":"{n} ekstra · Bütçeler kalanı bununla yeniden planlayacak",
+"t:b3_pages":"Sayfalar",
+"t:b3_arrange_hint":"⋮⋮ simgesini basılı tutup sürükleyin · işaretler Bitti ile geri gelir"
 }

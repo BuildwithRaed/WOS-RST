@@ -2970,5 +2970,7 @@
 "t:pur_op_upto":"bis {n}",
 "t:pur_op_none_left":"in diesem Durchlauf keine mehr",
 "t:pur_op_sum":"Plan {a} + extra {b}",
-"t:pur_op_note":"{n} extra · Budgets plant den Rest damit neu"
+"t:pur_op_note":"{n} extra · Budgets plant den Rest damit neu",
+"t:b3_pages":"Seiten",
+"t:b3_arrange_hint":"⋮⋮ halten und ziehen · Häkchen kommen bei Fertig zurück"
 }
