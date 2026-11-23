@@ -2536,6 +2536,9 @@ const T = {
   pc_all_pages: { en: "All pages" },
   combined_share: { en: "This page's share" },
   combined_part: { en: "part" },
+  bud_of_all: { en: "of {n} for all pages" },
+  bud_tr_general: { en: "General shards" },
+  bud_tr_widgets: { en: "{h} widgets" },
   combined_not_included: { en: "This page is unticked on Budgets, so it's planned on its own and isn't part of the combined plan." },
   combined_no_share: { en: "The combined plan doesn't need any packs for this page (other pages' packs already cover it, or it needs nothing)." },
   combined_cant: { en: "The combined plan can't cover every selected page, so this page is planned on its own." },
@@ -23283,7 +23286,7 @@ function tradeAdjustedStill(calcKey, needFull, owned, targetDays, noLab) {
   const res = applyTrades(rates, needFull, owned, tradeWeeksFor(targetDays));
   const still = {};
   Object.keys(needFull).forEach((n) => { still[n] = res.after[n] || 0; });
-  return { still, trades: res.trades.filter((x) => !x.silent && !x.isl), weeks: res.weeks };
+  return { still, trades: res.trades.filter((x) => !x.silent && !x.isl), hidden: res.trades.filter((x) => x.silent && !x.isl), weeks: res.weeks };
 }
 // When a needed item isn't sold by any assigned pack but can be traded
 // for from something that is, the need is converted into the source item
@@ -24017,7 +24020,7 @@ async function budgetForPage(calcKey, targetDays, opts = {}) {
   const viaTrades = packNeedViaTrades(calcKey, needStill, supplied, targetDays);
   packSplitUncoverable(packGroups, viaTrades, calcKey);
   const need = viaTrades.need;
-  const res = { calcKey, tables, live, groups, owned, vip: vipNote, sh: shInfo, needFull, needStill, need, packGroups, supplied, trades: traded ? traded.trades : [], viaTrades, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
+  const res = { calcKey, tables, live, groups, owned, vip: vipNote, sh: shInfo, needFull, needStill, need, packGroups, supplied, trades: traded ? traded.trades : [], hiddenTrades: traded ? traded.hidden || [] : [], viaTrades, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
   if (!opts.noPlan && packGroups.length && Object.keys(need).length) {
     res.earliest = packEarliestDays(packGroups, need, calcKey);
     if (res.earliest != null) {
@@ -24695,7 +24698,7 @@ const BUDGET_PLANS_INDEX = "budget_plans_v2", BUDGET_PLAN_ITEM = "budget_plan_v2
 const BUDGET_PLANS_KEPT = 5;
 function budgetPlanFingerprint(payload) {
   tradeExtraSync();
-  const str = JSON.stringify({ v: 6, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
+  const str = JSON.stringify({ v: 7, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
   // cyrb53: a quick 53-bit hash of the text, plus its length.
   let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
   for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
@@ -24904,6 +24907,11 @@ function budgetShares(plan, inc) {
   inc.forEach((pg) => Object.entries(pg.need).forEach(([n, q]) => { total[n] = (total[n] || 0) + q; }));
   const shares = {};
   inc.forEach((pg) => { shares[pg.calcKey] = { total: 0, rows: [] }; });
+  // A page's trade counts only when the plan really makes it (an item that
+  // could be traded into what a page needs, but isn't, gives that page no part).
+  // Hidden rules (hero shards, speedups) are never listed in the plan's trades, so they always count.
+  const madeTr = Array.isArray(plan.trades) ? new Set(plan.trades.map((x) => `${x.from}>${x.to}`)) : null;
+  const trUsed = (rt) => rt.silent || !madeTr || madeTr.has(`${rt.from}>${rt.to}`);
   (plan.rows || []).forEach((r) => {
     // Option ladders are split step by step (each step's price goes to the
     // page its option is for); anything else as one purchase.
@@ -24920,7 +24928,7 @@ function budgetShares(plan, inc) {
           // own trades (general Speedups -> Research Speedups, Fire Crystal ->
           // FC Shard), so a page that trades for it gets its fair part too.
           rates.forEach((rt) => {
-            if (rt.from !== n || !(pg.need[rt.to] > 0) || !(total[rt.to] > 0)) return;
+            if (rt.from !== n || !(pg.need[rt.to] > 0) || !(total[rt.to] > 0) || !trUsed(rt)) return;
             x += Math.min(1, (u.gives[n] * (rt.get / rt.give) * r.count) / total[rt.to]) * (pg.need[rt.to] / total[rt.to]);
           });
         });
@@ -24937,7 +24945,7 @@ function budgetShares(plan, inc) {
       if (sum <= 0) inc.forEach((pg) => {
         const rates = TRADE_RATES_CACHE ? tradeRatesFor(pg.calcKey) : [];
         let x = 0;
-        Object.keys(u.gives).forEach((n) => rates.forEach((r) => { if (r.from === n && pg.need[r.to] > 0 && total[r.to] > 0) x += pg.need[r.to] / total[r.to]; }));
+        Object.keys(u.gives).forEach((n) => rates.forEach((r) => { if (r.from === n && pg.need[r.to] > 0 && total[r.to] > 0 && trUsed(r)) x += pg.need[r.to] / total[r.to]; }));
         w[pg.calcKey] = x; sum += x;
       });
       // Last resort: the pages whose packs sell those items.
@@ -26488,6 +26496,89 @@ async function renderBudgetsPage(opts = {}) {
     return `<label class="bud-hgset${on ? " on" : ""}${left ? "" : " done"}"><input type="checkbox" data-budhgset="${esc(n)}"${on ? " checked" : ""} /><span>${esc(gearSetDisplayName(n))}${left ? "" : ` · ${esc(t("bud_hg_nothing"))}`}</span></label>`;
   }).join("")}</div>`;
   const hgOther = BUDGET_HG_SETS.filter((n) => n !== "Set 1");
+  // A page's packs in its sheet, cut by date like the plan on screen: one group per
+  // dated part ("By Dec 21", "After your target"), or the split's part the page is
+  // in; each row is this page's own part of the purchase ("3× of 122 for all pages")
+  // with its buying dates. The groups add up to the page's share.
+  const shKey = (r) => [r.title, r.label, r.price, r.row, r.from, (r.tables || []).join(",")].join("|");
+  const shSched = new Map();
+  const schedOf = (pl) => { if (!shSched.has(pl)) shSched.set(pl, packPlanSchedule(pl.rows || [])); return shSched.get(pl); };
+  const shDay = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000), s0 = x.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); return x.getUTCFullYear() !== packStartOfToday().getUTCFullYear() ? `${s0} \u2019${String(x.getUTCFullYear()).slice(2)}` : s0; };
+  // Buying days of `n` units of plan row `j`, after the first `skip` units.
+  const unitDays = (pl, j, skip, n) => {
+    const sl = j >= 0 ? schedOf(pl)[j] || [] : [];
+    const out = []; let k = 0;
+    for (const x of sl) for (let c = 0; c < (x.count || 1); c++) { if (k >= skip && out.length < n) out.push(x.off); k++; }
+    return out;
+  };
+  const shareGroups = (calcKey, sh) => {
+    const pieces = (r, parts) => parts.map((p) => ({ r, c: p.c, frac: r.count > 0 ? p.c / r.count : 1, days: p.days, gi: p.gi }));
+    if (datedLead && combined.chosen === dlPlan) {
+      const ps = dl.parts.map((p, i) => ({ p, i })).filter(({ p }) => (p.rows || []).length);
+      const groups = ps.map(({ p }) => ({ title: p.late ? t("bud_line_after") : t("bud_line_by").replace("{date}", shDay(p.day)), late: !!p.late, items: [] }));
+      sh.rows.forEach((r) => {
+        const k = shKey(r), j = dlPlan.rows.findIndex((x) => shKey(x) === k);
+        const parts = []; let skip = 0;
+        ps.forEach(({ p }, gi) => { const pr = p.rows.find((x) => shKey(x) === k); if (pr && pr.count > 0) { parts.push({ c: pr.count, gi, days: unitDays(dlPlan, j, skip, pr.count) }); skip += pr.count; } });
+        const sum = parts.reduce((a, x) => a + x.c, 0);
+        if (!parts.length || Math.abs(sum - r.count) > 1e-6) { (groups[groups.length - 1] || groups[0]).items.push(...pieces(r, [{ c: r.count, days: unitDays(dlPlan, j, 0, r.count) }])); return; }
+        pieces(r, parts).forEach((pc) => groups[pc.gi].items.push(pc));
+      });
+      return groups.filter((g) => g.items.length);
+    }
+    const inSplit = split && BUDGET_VIEW === "main" && combined.chosen === splitMain.plan;
+    const late = inSplit && split.late.keys.includes(calcKey);
+    const pl = inSplit ? (late ? splitLate.plan : split.target.plan) : combined.chosen;
+    const items = sh.rows.map((r) => { const j = (pl.rows || []).findIndex((x) => shKey(x) === shKey(r)); return { r, c: r.count, frac: 1, days: unitDays(pl, j, 0, r.count) }; });
+    return [{ title: inSplit ? (late ? t("bud_line_after") : t("bud_line_by").replace("{date}", shDay(targetDays))) : "", late, items }];
+  };
+  const shareListHtml = (calcKey, sh, total, cur, smp) => {
+    const groups = shareGroups(calcKey, sh);
+    const val = (pc) => packShareLocal(pc.r) * pc.frac;
+    // (whole amounts that add up to the page's total: the spare units go to the largest fractions)
+    const vs = groups.map((g) => g.items.reduce((a, pc) => a + val(pc), 0)), whole = vs.map((v) => Math.floor(v));
+    let spare = total - whole.reduce((a, v) => a + v, 0);
+    vs.map((v, i) => [v - Math.floor(v), i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (spare > 0) { whole[i]++; spare--; } });
+    const when = (ds) => (!ds.length ? "" : ds[0] === ds[ds.length - 1] ? shDay(ds[0]) : `${shDay(ds[0])} \u2192 ${shDay(ds[ds.length - 1])}`);
+    const row = (pc) => {
+      const r = pc.r, all = pc.c, part = r.share < 0.995;
+      const mine = part ? Math.max(1, Math.round(all * r.share)) : all;
+      const w = when(pc.days);
+      const of = part ? (mine < all ? t("bud_of_all").replace("{n}", qty(all)) : `${t("combined_part")} ${Math.round(r.share * 100)}%`) : "";
+      return `<div class="bud-shr"><span class="bud-shr-n">${qty(mine)}&times;</span><span style="min-width:0;"><b>${budPackNameHtml(r.title)}</b>${of ? ` <small class="bud-shr-of">${esc(of)}</small>` : ""}<br><span class="meta" style="font-size:10.5px;">${esc(r.label)}${w ? ` \u00b7 ${esc(w)}` : ""}</span></span><span style="margin-inline-start:auto; white-space:nowrap;">${packFmtLocal(val(pc), r.currency, false, r.price)}</span></div>`;
+    };
+    const n = groups.reduce((a, g) => a + g.items.length, 0);
+    return `<details style="margin-top:4px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${n})</summary>
+      ${groups.map((g, i) => `${g.title ? `<div class="bud-shg"><span class="bud-line-bar" style="background:${g.late ? "var(--danger)" : "var(--good)"};"></span><b>${esc(g.title)}</b><span>${packFmtLocal(whole[i], cur, true, smp)}</span></div>` : ""}${g.items.map(row).join("")}`).join("")}</details>`;
+  };
+  // Heroes: the hidden trades the plan counts (never in the trades lists): General
+  // shards and a Gen's widgets in the Backpack going to a hero, the Backpack's Marks of
+  // Valor / Mystery Points / Widget Chests, and those the page's packs give.
+  const heroTradesHtml = (pg, sh) => {
+    if (pg.calcKey !== "hero_shards") return "";
+    // (short names: "General shards", a hero's own shards by the hero's name, "Hank widgets")
+    const heroOf = new Map(((HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || []).flatMap((r) => [[`${r.hero.name} Shards`, r.hero.name], [`${r.hero.name} Widgets`, t("bud_tr_widgets").replace("{h}", r.hero.name)]]));
+    const nm = (n) => heroOf.get(n) || (Object.values(HERO_GENERAL_SHARD).includes(n) ? t("bud_tr_general") : materialDisplayName(n));
+    const merge = (list) => { const m = new Map(); list.forEach((x) => { if (!(x.giveQty > 0)) return; const k = x.from + "|" + x.to, e = m.get(k); if (e) { e.giveQty += x.giveQty; e.getQty += x.getQty; } else m.set(k, { ...x }); }); return [...m.values()]; };
+    const txt = (list) => list.map((x) => `${qty(x.giveQty)} ${esc(nm(x.from))} \u2192 ${qty(x.getQty)} ${esc(nm(x.to))}`).join(" &middot; ");
+    const own = [];
+    ((HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || []).forEach((r) => {
+      if (r.fromGeneral > 0) own.push({ from: HERO_GENERAL_SHARD[r.rarity] || "Mythic General Hero Shard", to: `${r.hero.name} Shards`, giveQty: r.fromGeneral, getQty: r.fromGeneral });
+      const wg = (r.wOwn || 0) - (r.wMine || 0);
+      if (wg > 0) own.push({ from: r.gKey, to: `${r.hero.name} Widgets`, giveQty: wg, getQty: wg });
+    });
+    (pg.hiddenTrades || []).forEach((x) => own.push(x));
+    let bought = [];
+    if (sh && sh.rows.length && combined.chosen) {
+      const rem = { ...(pg.need || {}) };
+      sh.rows.forEach((r) => Object.entries(r.gives || {}).forEach(([n, v]) => { rem[n] = (rem[n] || 0) - v * r.count * (r.share || 0); }));
+      const ctx = packTradeCtx("hero_shards", combined.chosen.days || 0);
+      if (ctx) bought = packShortAfterTrades(rem, ctx).trades.filter((x) => x.silent);
+    }
+    const a = merge(own), b = merge(bought);
+    return (a.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--good);">${esc(t("trade_free"))}: ${txt(a)}</div>` : "")
+      + (b.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">${esc(t("trade_via_packs"))}: ${txt(b)}</div>` : "");
+  };
   // Per-page cards.
   let grandTotal = 0, grandCurrency = null, grandDays = 0, anyPlan = false;
   const grandMats = {}, grandDeltas = [];
@@ -26518,8 +26609,7 @@ async function renderBudgetsPage(opts = {}) {
           <span style="font-size:20px; font-weight:700;">${packFmtLocal(Math.ceil(packSharesLocal(sh)), cur, true, combined.chosen.rows[0]?.price)}</span>
           <span class="meta" style="font-size:11px;">${esc(t("combined_share"))}</span>
         </div>
-        ${sh.rows.length ? `<details style="margin-top:4px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${sh.rows.length})</summary>
-          ${sh.rows.map((r) => `<div style="display:flex; gap:6px; align-items:baseline; padding:3px 0; border-top:1px solid var(--line); font-size:11px;"><span style="color:var(--ice); min-width:34px; text-align:end;">${qty(r.count)}&times;</span><span style="min-width:0;"><b>${budPackNameHtml(r.title)}</b><br><span class="meta" style="font-size:10.5px;">${esc(r.label)}</span>${r.share < 0.995 ? ` <span class="meta" style="font-size:10px;">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</span>` : ""}</span><span style="margin-inline-start:auto; white-space:nowrap;">${packFmtLocal(packShareLocal(r), r.currency, false, r.price)}</span></div>`).join("")}</details>` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}`;
+        ${sh.rows.length ? shareListHtml(pg.calcKey, sh, Math.ceil(packSharesLocal(sh)), cur, combined.chosen.rows[0]?.price) : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}`;
     }
     else if (inc && planPending) costHtml = workHtml("div", "small");
     else if (inc && combined.inc.includes(pg.calcKey)) costHtml = `<div class="meta" style="font-size:11px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`;
@@ -26549,7 +26639,8 @@ async function renderBudgetsPage(opts = {}) {
       ${pg.vip ? `<div class="bud-vip">&#127873; ${esc(t("bud_vip_note").replace("{tier}", pg.vip.tier).replace("{n}", qty(pg.vip.total)).replace("{when}", BUDGET_TARGET ? t("vip_bundle_by").replace("{date}", fmtDate(pg.vip.days)) : t("vip_bundle_30d")).replace("{d}", pg.vip.daily))}</div>` : ""}
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials"))} <span style="font-weight:400;">(${esc(t("pack_mode_still"))} / ${esc(t("pack_mode_full"))})</span></div>${matsHtml(pg.needFull, pg.needStill, pg.owned)}
         ${pg.trades && pg.trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--good);">${esc(t("trade_free"))}: ${pg.trades.map((tr) => `${qty(tr.giveQty)} ${esc(materialDisplayName(tr.from))} → ${qty(tr.getQty)} ${esc(materialDisplayName(tr.to))}`).join(" &middot; ")}</div>` : ""}
-        ${pg.viaTrades && pg.viaTrades.conversions.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">${esc(t("trade_via_packs"))}: ${pg.viaTrades.conversions.map((c) => `${qty(c.qty)} ${esc(materialDisplayName(c.item))} ← ${qty(c.fromQty)} ${esc(materialDisplayName(c.from))}`).join(" &middot; ")}</div>` : ""}</div>
+        ${pg.viaTrades && pg.viaTrades.conversions.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">${esc(t("trade_via_packs"))}: ${pg.viaTrades.conversions.map((c) => `${qty(c.qty)} ${esc(materialDisplayName(c.item))} ← ${qty(c.fromQty)} ${esc(materialDisplayName(c.from))}`).join(" &middot; ")}</div>` : ""}
+        ${heroTradesHtml(pg, shareOf)}</div>
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("pack_cost_title"))}</div>${costHtml}</div>
       ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}${pg.calcKey === "hero_gear" ? ` · ${esc(t("bud_hg_set1").replace("{set}", gearSetDisplayName("Set 1")))}` : ""}</div>${statTableHtml(pg.deltas, pg.calcKey)}</div>` : ""}
       ${pg.calcKey === "hero_gear" && hgOther.length ? `<div class="meta bud-hgnote">${esc(t("bud_hg_note").replace("{sets}", hgOther.map(gearSetDisplayName).join(" / ")))}</div>` : ""}`);
@@ -26785,6 +26876,8 @@ async function renderBudgetsPage(opts = {}) {
       // text (cdaPatchGoals puts it there), the date at the right end (amber ⚠
       // after its By / the target). 2: − level +, short By chip, ✕.
       const isLate = !pending && !own && dt && !dt.done && lim != null && dt.day > lim;
+      // (done on or before its By / the target: the date in green with ✓)
+      const isOk = !pending && !own && !!dt && lim != null && (dt.done || dt.day <= lim);
       // (a goal that only gets part of the way shows its own day with ⚠, the line under it says how far)
       const dc = pending || own ? null : gdCard(partTxt ? { day: lim } : dt);
       // (A hero not out yet: the day it is really due, never before its release.)
@@ -26794,7 +26887,7 @@ async function renderBudgetsPage(opts = {}) {
       return `<li class="bud-g gu c3${no ? " no" : ""}" data-goal="${esc(g.id)}">
         <span class="bud-g-h" data-goaldrag role="button" tabindex="0" aria-label="${esc(t("goals_desc_drag"))}" title="${esc(t("goals_desc_drag"))}">&#8942;&#8942;</span>
         <span class="c3-b">
-          <span class="c3-l1${dc && dc.y2 ? " y2" : ""}${src ? " has-cd" : ""}${u.group ? " grp" : ""}"><span class="c3-no">${i + 1}</span>${pic}<b class="c3-nm" title="${esc(`${u.name} · ${packPageLabel(g.page)} · ${u.now} → ${goalLvTxt(g.lv.label)}`)}">${nmH}</b><span class="c3-dt${isLate ? " late" : ""}${pending ? " wk" : ""}" title="${pending ? esc(t("budgets_working")) : ""}">${isLate ? "&#9888; " : ""}${pending ? "&hellip;" : dc ? dc.h : dTxt}</span>${src ? `<span class="gu-src"><img src="${esc(src.ic)}" alt="" />${esc(src.tx)}</span>` : ""}</span>
+          <span class="c3-l1${dc && dc.y2 ? " y2" : ""}${src ? " has-cd" : ""}${u.group ? " grp" : ""}"><span class="c3-no">${i + 1}</span>${pic}<b class="c3-nm" title="${esc(`${u.name} · ${packPageLabel(g.page)} · ${u.now} → ${goalLvTxt(g.lv.label)}`)}">${nmH}</b><span class="c3-dt${isLate ? " late" : isOk ? " ok" : ""}${pending ? " wk" : ""}" title="${pending ? esc(t("budgets_working")) : ""}">${isLate ? "&#9888; " : isOk ? "&#10003; " : ""}${pending ? "&hellip;" : dc ? dc.h : dTxt}</span>${src ? `<span class="gu-src"><img src="${esc(src.ic)}" alt="" />${esc(src.tx)}</span>` : ""}</span>
           <span class="c3-l2 gu-r2"><span class="gu-st"><button type="button" data-gustep="-1" ${g.li <= 0 ? "disabled" : ""} aria-label="&minus;">&minus;</button><b>${esc(goalLvTxt(g.lv.label))}</b><button type="button" data-gustep="1" ${g.li >= last ? "disabled" : ""} aria-label="+">+</button></span><button type="button" class="bud-g-by${kind}${BUDGET_GOAL_BY_OPEN === g.id ? " open" : ""}" data-goalby aria-expanded="${BUDGET_GOAL_BY_OPEN === g.id}" title="${esc(byText(myBy, byD))}">${esc(byShort)} ${BUDGET_GOAL_BY_OPEN === g.id ? "&#9652;" : "&#9662;"}</button>${u.group ? `<span class="gu-n3">${esc(t("gu_grp_n").replace("{n}", u.group.length))}</span>` : ""}<button type="button" class="gu-rm" data-goalrm aria-label="${esc(t("goal_remove"))}" title="${esc(t("goal_remove"))}">&times;</button></span>
           ${partH}${lock}
         </span>
@@ -26812,6 +26905,7 @@ async function renderBudgetsPage(opts = {}) {
         const own = !planPending && !incKeys.includes(g.page), lim = d != null ? d : targetDays;
         const pending = planPending || (dlPending && d != null);
         const isLate = !pending && !own && dt && !dt.done && lim != null && dt.day > lim;
+        const isOk = !pending && !own && !!dt && lim != null && (dt.done || dt.day <= lim);
         const kind = goalByKind(myBy) === "date" ? " date" : myBy ? " ev" : "";
         const byD = myBy ? dIn : mainDay;
         const bs = goalByShort(myBy), byShort = `${goalByIcon(myBy)} ${bs}${byD != null ? `${bs ? " " : ""}${gdTxt({ day: byD })}` : ""}`;
@@ -26821,7 +26915,7 @@ async function renderBudgetsPage(opts = {}) {
         // its day is bought as fast as possible; a goal of the page has a later date.
         const afterTarget = d == null && lateKeys.includes(g.page) && (!!dlPlan || splitPlan), part = partOf(g, i);
         const note = !isLate ? "" : (afterTarget ? t("gu_rest_cant") : part && !part.ok ? t("gu_rest_cant_own") : dt.afterGoal ? t("gu_rest_goal_later") : "").replace("{date}", gdTxt({ day: lim }));
-        return `<div class="gu-rr" data-goal="${esc(g.id)}">${ic.src ? `<img src="${esc(ic.src)}" alt="" loading="lazy" />` : `<i></i>`}<span class="gu-rr-n">${esc(packPageLabel(g.page))}</span><span class="c3-dt${isLate ? " late" : ""}${pending ? " wk" : ""}" title="${pending ? esc(t("budgets_working")) : ""}">${isLate ? "&#9888; " : ""}${pending ? "&hellip;" : own ? esc(t("gd_own")) : esc(gdTxt(dt))}</span><span class="c3-l2"><button type="button" class="bud-g-by${kind}${open ? " open" : ""}" data-goalby aria-expanded="${open}" title="${esc(byText(myBy, byD))}">${esc(byShort)} ${open ? "&#9652;" : "&#9662;"}</button></span>${open ? goalByPopHtml(myBy, mainDay) : ""}</div>${note ? `<div class="gu-rr-note">${esc(note)}</div>` : ""}`;
+        return `<div class="gu-rr" data-goal="${esc(g.id)}">${ic.src ? `<img src="${esc(ic.src)}" alt="" loading="lazy" />` : `<i></i>`}<span class="gu-rr-n">${esc(packPageLabel(g.page))}</span><span class="c3-dt${isLate ? " late" : isOk ? " ok" : ""}${pending ? " wk" : ""}" title="${pending ? esc(t("budgets_working")) : ""}">${isLate ? "&#9888; " : isOk ? "&#10003; " : ""}${pending ? "&hellip;" : own ? esc(t("gd_own")) : esc(gdTxt(dt))}</span><span class="c3-l2"><button type="button" class="bud-g-by${kind}${open ? " open" : ""}" data-goalby aria-expanded="${open}" title="${esc(byText(myBy, byD))}">${esc(byShort)} ${open ? "&#9652;" : "&#9662;"}</button></span>${open ? goalByPopHtml(myBy, mainDay) : ""}</div>${note ? `<div class="gu-rr-note">${esc(note)}</div>` : ""}`;
       };
       const diff = total - baseTotal;
       const sum = !plan || planPending || !dlPlan ? ""
