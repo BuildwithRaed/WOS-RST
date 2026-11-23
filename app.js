@@ -24377,8 +24377,11 @@ function plannerCombinedLocal(payload, onPart) {
 // pack's limits (and their spare items); the rest by the main target. A part
 // that can't make its date buys only what can be had by then (packs and trades
 // up to that day, the most of each item it can, `partial`, `got` / `need`); what
-// is left goes to the next part. The last part (no part after it) that can't
-// make its date is planned for its earliest day. A part marked
+// is left stays with its own page: the next later part where that page needs
+// the same item, else the page's own "rest" date (`homes`: its own By, else the
+// main target) when that is later, else the part bought after the target. A part
+// that is the home day of all its pages and can't make it is planned for its
+// earliest day. Parts carry `pages` = { page: { item: amount } }. A part marked
 // `late` (pages the plan already knows can't make the main target, with no date
 // of their own) comes last and is bought the cheapest way after the target,
 // like the plan's own "after your target" part. Returns the joined plan (one
@@ -24420,18 +24423,40 @@ function plannerDeadlineLocal(payload) {
   const offerKey = (x) => [(x.tables || []).join(","), x.reset, x.resetDay, x.perCycle, x.label, x.price, x.row, x.from].join("|");
   const offerAt = new Map();
   groups.forEach((g, gi) => g.offers.forEach((o, oi) => { const k = offerKey({ ...o, tables: g.tables, reset: g.reset, resetDay: g.resetDay, perCycle: g.perCycle }); if (!offerAt.has(k)) offerAt.set(k, { gi, oi }); }));
-  const defer = {};
-  for (let si = 0; si < payload.stages.length; si++) {
-    const st = payload.stages[si], want = { ...st.need }, need = {};
-    // (what an earlier part couldn't get by its day comes here)
-    Object.keys(defer).forEach((n) => { want[n] = (want[n] || 0) + defer[n]; delete defer[n]; });
+  const stages = payload.stages.map((s) => ({ ...s, need: { ...s.need }, pages: Object.fromEntries(Object.entries(s.pages || {}).map(([p, m]) => [p, { ...m }])) }));
+  const homes = payload.homes || {};
+  // (a leftover of `page` goes to stage j: added to its need and that page's part of it)
+  const addTo = (j, page, n, q) => { const s = stages[j]; s.need[n] = (s.need[n] || 0) + q; const m = s.pages[page] || (s.pages[page] = {}); m[n] = (m[n] || 0) + q; };
+  const routeLeft = (si, page, n, q) => {
+    const st = stages[si];
+    let j = stages.findIndex((s, k) => k > si && !s.late && s.pages[page] && s.pages[page][n] > 1e-9);
+    const hd = homes[page];
+    if (j < 0 && hd != null && hd > st.day) {
+      j = stages.findIndex((s, k) => k > si && !s.late && s.day === hd);
+      if (j < 0) { let at = stages.findIndex((s, k) => k > si && (s.late || s.day > hd)); if (at < 0) at = stages.length; stages.splice(at, 0, { day: hd, need: {}, pages: {} }); j = at; }
+    }
+    if (j < 0) { j = stages.findIndex((s) => s.late); if (j < 0) { stages.push({ day: payload.mainDay != null ? payload.mainDay : st.day, need: {}, pages: {}, late: true }); j = stages.length - 1; } }
+    addTo(j, page, n, q);
+  };
+  for (let si = 0; si < stages.length; si++) {
+    const st = stages[si], want = { ...st.need }, need = {};
     Object.entries(want).forEach(([n, q]) => { const have = carry[n] || 0; carry[n] = Math.max(0, have - q); if (q - have > 1e-9) need[n] = q - have; });
     if (!Object.keys(need).length) { parts.push({ day: st.day, ok: true, total: 0 }); continue; }
     let pl = st.late ? null : packCheapestPlan(groups, need, st.day, calcKey), ok = !!pl, earliest = null, got = null;
-    if (!pl && !st.late && si < payload.stages.length - 1) {
+    // (A part that is the home day of every page in it keeps the old rule: planned for its earliest day.)
+    const pgs = Object.keys(st.pages);
+    const isHome = !pgs.length || pgs.every((p) => homes[p] === st.day);
+    if (!pl && !st.late && !isHome) {
       const cv = plannerDeadlineCover(groups, need, st.day, calcKey);
       got = cv.got;
-      Object.entries(need).forEach(([n, q]) => { const left = q - (got[n] || 0); if (left > 1e-9) defer[n] = (defer[n] || 0) + left; });
+      Object.entries(need).forEach(([n, q]) => {
+        const left = q - (got[n] || 0);
+        if (left <= 1e-9) return;
+        // (shared by the pages that asked for the item here, by their share of it)
+        const who = pgs.filter((p) => st.pages[p][n] > 1e-9), sum = who.reduce((a, p) => a + st.pages[p][n], 0);
+        if (!who.length) { routeLeft(si, pgs[0], n, left); return; }
+        who.forEach((p) => routeLeft(si, p, n, left * st.pages[p][n] / sum));
+      });
       pl = cv.plan;
       if (!pl) { parts.push({ day: st.day, ok: false, partial: true, got, need, total: 0, done: st.day, late: false, picks: [], trades: [] }); continue; }
     }
@@ -25965,20 +25990,26 @@ function budgetDeadlineDrop() {
 // the target (lateKeys), the cheapest way after it. `peek` = only what is
 // already worked out (in memory or kept on the phone); nothing is asked.
 function budgetDeadlineFor(pages, selected, goals, due, mainDay, keys, onReady, lateKeys, peek) {
-  const segs = budgetGoalSegs(goals, pages), byDay = new Map(), late = {};
+  const segs = budgetGoalSegs(goals, pages), byDay = new Map(), late = { need: {}, pages: {} };
   const put = (m, seg) => Object.entries(seg || {}).forEach(([n, q]) => { m[n] = (m[n] || 0) + q; });
+  // (each part also keeps every page's own share, so a leftover stays with its page)
+  const putSt = (st, g) => { put(st.need, segs.get(g.id)); if (g.page) put(st.pages[g.page] || (st.pages[g.page] = {}), segs.get(g.id)); };
+  const isLate = (k) => (lateKeys || []).includes(k);
   goals.forEach((g, i) => {
-    if (due[i] == null && g.page && (lateKeys || []).includes(g.page)) { put(late, segs.get(g.id)); return; }
+    if (due[i] == null && g.page && isLate(g.page)) { putSt(late, g); return; }
     const d = due[i] != null ? due[i] : mainDay;
-    const m = byDay.get(d) || {};
-    put(m, segs.get(g.id));
-    byDay.set(d, m);
+    const st = byDay.get(d) || { need: {}, pages: {} };
+    putSt(st, g);
+    byDay.set(d, st);
   });
-  const stages = [...byDay.entries()].sort((a, b) => a[0] - b[0]).map(([day, need]) => ({ day, need }));
-  if (Object.keys(late).length) stages.push({ day: mainDay, need: late, late: true });
+  const stages = [...byDay.entries()].sort((a, b) => a[0] - b[0]).map(([day, st]) => ({ day, need: st.need, pages: st.pages }));
+  if (Object.keys(late.need).length) stages.push({ day: mainDay, need: late.need, pages: late.pages, late: true });
+  // Each page's own "rest" day: its own By, else the main target (null = bought after the target).
+  const homes = {};
+  keys.forEach((k) => { const ri = goals.findIndex((g) => g.id === "rest:" + k); homes[k] = ri >= 0 && due[ri] != null ? due[ri] : isLate(k) ? null : mainDay; });
   const inp = budgetCombinedInput(pages, selected);
-  const payload = plannerPayloadEncode({ pages: [], selected: {}, allGroups: inp.allGroups, stages, calcKey: "__budget:" + keys.join(",") });
-  const key = budgetPlanFingerprint({ deadline: 3, payload });
+  const payload = plannerPayloadEncode({ pages: [], selected: {}, allGroups: inp.allGroups, stages, homes, mainDay, calcKey: "__budget:" + keys.join(",") });
+  const key = budgetPlanFingerprint({ deadline: 4, payload });
   if (BUDGET_DEADLINE.key === key) return BUDGET_DEADLINE.res;
   // (Being worked out for someone else: this caller is told too when it is in.)
   if (BUDGET_DEADLINE.running === key) { if (onReady) BUDGET_DEADLINE.onReady = onReady; return null; }
