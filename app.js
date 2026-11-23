@@ -3224,6 +3224,9 @@ const T = {
   ht_stars: { en: "Stars" },
   ht_widgets: { en: "widgets" },
   ht_added: { en: "added" },
+  ht_not_out: { en: "not out yet" },
+  ht_add_next: { en: "Gen {g} \u00b7 not out yet \u00b7 {date}" },
+  ht_add_out: { en: "Heroes out now" },
   ht_add: { en: "+ Add a hero" },
   ht_pushgen: { en: "Each new Gen: push 2 heroes first" },
   ht_pushgen_sub: { en: "Pushed heroes get \"Next SvS\" as their date; when a new Gen is out you'll be asked which 2." },
@@ -16271,10 +16274,14 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     if (!hero) return null;
     const troop = slotTroop || hero.troop_type || "";
     const T = tg[hero.id] || {};
-    // Not out yet in the person's state: no shards to plan for.
-    if (heroGenNotOut(hero.generation)) { notOut.push({ troop, hero }); return null; }
+    // Not out yet in the person's state: no shards to plan for, except a hero of the
+    // NEXT Gen added by hand in Budgets' Hero targets (planned ahead, from 0 stars).
+    const notOutInfo = heroGenNotOut(hero.generation);
+    if (notOutInfo && (inRoster || !heroGenNextPlannable(hero.generation))) { notOut.push({ troop, hero }); return null; }
     const sp = special && vipPackHero(hero.name) ? Math.max(0, Math.min(5, Math.floor(Number(special[hero.name]) || 0))) : 0;
-    const v = Math.max(Number((phBy[hero.id] || {}).current_stars) || 0, sp);
+    // A hero not out yet has no stars (a saved row from trying it in the roster is ignored).
+    const ph = notOutInfo ? null : phBy[hero.id];
+    const v = Math.max(Number((ph || {}).current_stars) || 0, sp);
     const star = Math.min(5, Math.floor(v)), sub = Math.min(6, Math.round((v - star) * 10));
     const step = Math.min(30, star * 6 + sub);
     const tStep = T.later ? step : Math.max(step, Math.min(30, T.stars != null ? Number(T.stars) * 6 : 30));
@@ -16283,7 +16290,7 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     // buy them; the other new heroes are unlocked free (Lucky Wheel / events).
     // Natalia / Jeronimo (VIP packs only) need it too.
     const isHall = HALL_OF_HEROES_HERO[Number(hero.generation)] === hero.name || vipPackHero(hero.name);
-    const unlock = isHall && !inRoster && !phBy[hero.id] && !sp && !T.later ? HERO_UNLOCK_SHARDS : 0;
+    const unlock = isHall && !inRoster && !ph && !sp && !T.later ? HERO_UNLOCK_SHARDS : 0;
     let need = unlock;
     const cum = {}; // shards from now to each whole star (mini targets)
     for (let k = step + 1; k <= tStep; k++) { need += heroShardStepCost(costByGen, hero.generation, k); if (k % 6 === 0) cum[k / 6] = need; }
@@ -16316,7 +16323,7 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     const wShort = Math.max(0, wNeed - wOwn);
     let wReach = wLevel, wLeft = wOwn;
     while (hasWidget && wReach < widgetMaxLevel() && wLeft >= WIDGET_LEVEL_COST[wReach + 1]) { wLeft -= WIDGET_LEVEL_COST[wReach + 1]; wReach++; }
-    return { troop, inRoster, tStep, tW, hero, step, unlock, need, cum, next, own, fromGeneral, short: Math.max(0, need - have), reach, rarity, hasWidget, wLevel, wNeed, wOwn, wMine, gKey, wShort, wReach, wCost: widgetCostFor(wShort) };
+    return { troop, inRoster, notOut: notOutInfo, tStep, tW, hero, step, unlock, need, cum, next, own, fromGeneral, short: Math.max(0, need - have), reach, rarity, hasWidget, wLevel, wNeed, wOwn, wMine, gKey, wShort, wReach, wCost: widgetCostFor(wShort) };
   }).filter(Boolean);
   return { rows, general, generalLeft: pool, notOut };
 }
@@ -18644,6 +18651,17 @@ function heroGenNotOut(gen) {
   const date = newGenStarts(base, g - cur + 1)[g - cur] || null;
   const day = date ? stateDayOn(date) : null;
   return { day: day != null ? day : stateAgeDay() != null ? STATE_GEN_DAYS[g - 1] || null : null, date };
+}
+// The Gen right after the person's newest one (Gen 15 while in Gen 14): its heroes
+// can be added in Budgets' Hero targets before they're out, to plan ahead.
+function heroGenNextPlannable(gen) {
+  const cur = newGenGen();
+  return !!cur && Math.floor(Number(gen) || 0) === cur + 1;
+}
+// "~Dec 21" for a hero Gen not out yet (the same date the State Timeline shows).
+function heroGenNotOutShort(info) {
+  if (!info || !info.date) return "";
+  try { return "~" + info.date.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); } catch (e) { return "~" + packDayKey(info.date); }
 }
 function heroGenNotOutText(info) {
   if (!info) return "";
@@ -25969,6 +25987,8 @@ async function renderBudgetsPage(opts = {}) {
     dashStatsPromise,
   ]);
   if (!budTab()) return;
+  // Hero targets need the last hero plan even when the Heroes page has nothing to buy.
+  if (visitorCan("goals") && included("hero_shards") && (!HERO_PLAN_LAST || !HERO_TARGETS)) { await heroShardBudget().catch(() => null); if (!budTab()) return; }
   const selSig = JSON.stringify(BUDGET_PAGES.map((p) => included(p.key)));
   // The page (settings, pages, materials) is drawn at once; the packs plan is
   // worked out in the background and the prices fill in when it's ready.
@@ -26293,7 +26313,7 @@ async function renderBudgetsPage(opts = {}) {
     const keys = planPending ? pagesRaw.filter((pg) => included(pg.calcKey) && !pg.missing && Object.keys(pg.need || {}).length).map((pg) => pg.calcKey) : incKeys;
     const goals = budgetGoalList(pagesRaw, keys);
     const nGoals = goals.filter((g) => !g.rest).length;
-    if (!nGoals && !keys.length) return "";
+    if (!nGoals && !keys.length && !included("hero_shards")) return "";
     const ck = "__budget:" + incKeys.join(",");
     // Pages the plan knows can't make the main target: without a date of their own they are bought the cheapest way after it.
     const lateKeys = split ? split.late.keys : [];
@@ -26466,14 +26486,15 @@ async function renderBudgetsPage(opts = {}) {
     // Hero targets: each hero's own target, push first, extra heroes, and
     // "each new Gen: push 2 heroes first" (asks when a new Gen is out).
     const heroEdHtml = () => {
-      if (!keys.includes("hero_shards") || !HERO_PLAN_LAST || !HERO_TARGETS) return "";
+      // Shown while the Heroes page is ticked, even with nothing to buy (to add heroes).
+      if (!included("hero_shards") || !HERO_PLAN_LAST || !HERO_TARGETS) return "";
       const HT = HERO_TARGETS, rows = HERO_PLAN_LAST.rows, heroes = HERO_PLAN_LAST.heroes || [], wMax = widgetMaxLevel();
       const opts = (from, to, v, fmt) => { let o = ""; for (let n = from; n <= to; n++) o += `<option value="${n}"${n === v ? " selected" : ""}>${esc(fmt(n))}</option>`; return o; };
       const line = (r) => {
         const T = HT.heroes[r.hero.id] || {}, st = T.stars != null ? Number(T.stars) : 5, w = T.widget != null ? Number(T.widget) : wMax, img = r.hero.image_url || HERO_IMG_BY_NAME[r.hero.name];
         return `<div class="bud-ht-r" data-hthero="${esc(r.hero.id)}">
           ${img ? `<img src="${esc(img)}" alt="" loading="lazy" />` : `<i>${esc(r.hero.name.charAt(0))}</i>`}
-          <span class="bud-ht-n"><b>${esc(r.hero.name)}</b><small>Gen ${esc(String(r.hero.generation || "?"))}${r.inRoster ? "" : ` \u00b7 ${esc(t("ht_added"))}`}</small></span>
+          <span class="bud-ht-n"><b>${esc(r.hero.name)}</b><small>Gen ${esc(String(r.hero.generation || "?"))}${r.inRoster ? "" : ` \u00b7 ${esc(t("ht_added"))}`}${r.notOut ? ` \u00b7 ${esc(t("ht_not_out"))}${r.notOut.date ? ` ${esc(heroGenNotOutShort(r.notOut))}` : ""}` : ""}</small></span>
           <span class="bud-ht-ctl">
             <label class="bud-ht-c"><input type="checkbox" data-htpush ${T.push ? "checked" : ""} /> ${esc(t("ht_push"))}</label>
             <select data-htstars aria-label="${esc(t("ht_stars"))}" ${T.later ? "disabled" : ""}>${opts(1, 5, st, (n) => `${n}\u2605`)}</select>
@@ -26484,13 +26505,18 @@ async function renderBudgetsPage(opts = {}) {
       };
       const listed = new Set(rows.map((r) => r.hero.id));
       const addable = heroes.filter((h) => !listed.has(h.id) && !heroGenNotOut(h.generation));
+      // The next Gen's heroes (not out yet) can be planned ahead; later Gens stay hidden.
+      const nextGen = newGenGen() ? newGenGen() + 1 : null;
+      const addNext = nextGen ? heroes.filter((h) => !listed.has(h.id) && Number(h.generation) === nextGen && heroGenNotOut(h.generation)) : [];
+      const nextInfo = addNext.length ? heroGenNotOut(nextGen) : null;
+      const optH = (h, soon) => `<option value="${esc(h.id)}">Gen ${esc(String(h.generation || "?"))} \u00b7 ${esc(h.name)}${soon ? ` \u00b7 ${esc(t("ht_not_out"))}${nextInfo && nextInfo.date ? ` \u00b7 ${esc(heroGenNotOutShort(nextInfo))}` : ""}` : ""}</option>`;
       const gen = newGenGen(), genHeroes = gen ? heroes.filter((h) => Number(h.generation) === gen) : [];
       const pushed = genHeroes.filter((h) => (HT.heroes[h.id] || {}).push).length;
       const prompt = HT.pushGen && genHeroes.length > 2 && pushed < 2 ? `<div class="bud-ht-gen"><b>${esc(t("ht_gen_pick").replace("{g}", gen))}</b><div class="bud-g-chips">${genHeroes.map((h) => `<button type="button" data-htpick="${esc(h.id)}" class="${(HT.heroes[h.id] || {}).push ? "on" : ""}">${esc(h.name)}</button>`).join("")}</div></div>` : "";
       return `<details class="bud-ht"${BUDGET_HT_OPEN ? " open" : ""}><summary>${esc(t("ht_title"))} <span class="meta">(${rows.length})</span></summary>
         <p class="meta bud-g-desc">${esc(t("ht_desc"))}</p>
         ${prompt}${rows.map(line).join("")}
-        ${addable.length ? `<div class="bud-ht-add"><select data-htadd aria-label="${esc(t("ht_add"))}"><option value="">${esc(t("ht_add"))}</option>${addable.map((h) => `<option value="${esc(h.id)}">Gen ${esc(String(h.generation || "?"))} \u00b7 ${esc(h.name)}</option>`).join("")}</select></div>` : ""}
+        ${addable.length || addNext.length ? `<div class="bud-ht-add"><select data-htadd aria-label="${esc(t("ht_add"))}"><option value="">${esc(t("ht_add"))}</option>${addNext.length ? `<optgroup label="${esc(t("ht_add_next").replace("{g}", nextGen).replace("{date}", nextInfo && nextInfo.date ? heroGenNotOutShort(nextInfo) : ""))}">${addNext.map((h) => optH(h, true)).join("")}</optgroup>` : ""}${addable.length && addNext.length ? `<optgroup label="${esc(t("ht_add_out"))}">` : ""}${addable.map((h) => optH(h, false)).join("")}${addable.length && addNext.length ? "</optgroup>" : ""}</select></div>` : ""}
         <label class="bset-row" style="cursor:pointer;"><span class="bset-l">${esc(t("ht_pushgen"))}<small>${esc(t("ht_pushgen_sub"))}</small></span><input type="checkbox" class="bset-sw" data-htpushgen ${HT.pushGen ? "checked" : ""} /></label>
       </details>`;
     };
