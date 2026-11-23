@@ -3228,6 +3228,32 @@ const T = {
   ht_add_next: { en: "Gen {g} \u00b7 not out yet \u00b7 {date}" },
   ht_add_out: { en: "Heroes out now" },
   ht_add: { en: "+ Add a hero" },
+  ht_stars_t: { en: "Stars target" },
+  ht_widgets_t: { en: "Widgets target" },
+  ht_unlock: { en: "needs {n} shards to unlock" },
+  ht_done_1: { en: "1 hero at target" },
+  ht_done_n: { en: "{n} heroes at target" },
+  ht_to_go: { en: "Still to go" },
+  ht_add_goals: { en: "+ Add as goals" },
+  ht_add_goals_n: { en: "Adds {n} goals (stars and widgets for each hero) to your list, then drag to order them." },
+  gu_gen_all: { en: "All Gen {g} heroes" },
+  gu_grp_n: { en: "{n} goals" },
+  gu_goal_at: { en: "goal at {x}" },
+  gu_out: { en: "out {d}" },
+  gu_out_info: { en: "Before {d} the plan saves Mystery Points and General shards for these goals." },
+  gu_src_mp: { en: "Mystery Points saved before {d} \u00b7 ~{n} widgets" },
+  gu_src_forge: { en: "Exclusive Gear Forge from {d}" },
+  gu_src_both: { en: "Forge pack + Mystery Points" },
+  gu_src_gen_own: { en: "General shards + Value Hero Pack" },
+  gu_src_own: { en: "Value Hero Pack" },
+  gu_src_gen: { en: "General shards" },
+  gbp_forge: { en: "Forge pack" },
+  gbp_release: { en: "Release" },
+  gbp_lock_b: { en: "Gen {g} comes out {d}." },
+  gbp_lock: { en: "Earlier days can't be picked for this goal." },
+  cdb_from: { en: "from {d}" },
+  cdb_out: { en: "Not out yet" },
+  cdb_out_stars: { en: "Not out yet \u00b7 shards wait in the Backpack" },
   ht_pushgen: { en: "Each new Gen: push 2 heroes first" },
   ht_pushgen_sub: { en: "Pushed heroes get \"Next SvS\" as their date; when a new Gen is out you'll be asked which 2." },
   ht_gen_pick: { en: "Gen {g} is out: pick the 2 heroes to push" },
@@ -3607,7 +3633,7 @@ const T = {
   cda_u_paths: { en: "paths" },
   cda_u_heroes: { en: "hero upgrades" },
   cda_hero_widget: { en: "Widget {a} \u2192 {b}" },
-  cda_hero_wfrom: { en: "{hero}: widgets from {date}" },
+  cda_hero_from: { en: "{hero}: from {date}" },
   cda_u_buildings: { en: "buildings" },
   cda_u_skins: { en: "skins" },
   cda_path: { en: "Path {n}" },
@@ -8919,6 +8945,8 @@ const CDA_PAGES = [
     last.rows.forEach((r) => {
       const h = r.hero, nm = h.name, troop = reachTroopKey(r.troop || h.troop_type || "") || "all", img = h.image_url || HERO_IMG_BY_NAME[nm] || "";
       const SH = `${nm} Shards`, WD = `${nm} Widgets`;
+      // A hero not out yet: nothing goes up before its release (shards / points wait in the Backpack).
+      if (r.notOut) { if (r.tStep > r.step || (r.hasWidget && r.tW > r.wLevel)) notes.push(t("cda_hero_from").replace("{hero}", dataName(nm)).replace("{date}", heroGenNotOutShort(r.notOut).replace(/^~/, ""))); return; }
       if (r.tStep > r.step) {
         have[SH] = num(SH);
         if (!vipPackHero(nm)) conv.push({ from: HERO_GENERAL_SHARD[r.rarity] || HERO_GENERAL_SHARD.Legendary, to: SH, give: 1, get: 1, max: 0 });
@@ -8927,7 +8955,6 @@ const CDA_PAGES = [
           gain: (i) => { const x = star(h.generation, i); return { Attack: Number(x.atk_pct) || 0, Defense: Number(x.def_pct) || 0 }; } });
       }
       if (r.hasWidget && r.tW > r.wLevel) {
-        if (r.notOut) { notes.push(t("cda_hero_wfrom").replace("{hero}", dataName(nm)).replace("{date}", heroGenNotOutShort(r.notOut).replace(/^~/, ""))); return; }
         have[WD] = num(WD); have[r.gKey] = num(r.gKey);
         conv.push({ from: r.gKey, to: WD, give: 1, get: 1, max: 0 }, { from: "Widget Chest", to: WD, give: 1, get: HERO_RULES.widgetChestGives, max: 0 }, { from: "Mystery Points", to: WD, give: HERO_RULES.mysteryGive, get: HERO_RULES.mysteryGet, max: 0 });
         tracks.push({ id: `${h.id}|w`, troop, from: r.wLevel, to: r.tW, name: dataName(nm), img, lab: (i) => String(i), wid: true,
@@ -9146,6 +9173,8 @@ function cdaGoalStates(P) {
     const li = goalUpLevelIdx(u, e.level);
     if (li < 0) return;
     const goalLabel = u.levels[li] ? u.levels[li].label : "";
+    // A hero not out yet: nothing can go up before its release (shown grey, "from Dec 21").
+    if (u.notOut) { out.push({ id: "up:" + e.id, u, e, goalLabel, k: "out", from: u.now, now: u.now, date: goalDayShort(u.notOut.rel) }); return; }
     const b = CDA_BUILT[e.page], tid = `${e.page}::${cdaGoalTrackKey(e.page, e.key)}`, tr = b && b.tracks && b.tracks.find((x) => x.id === tid);
     if (!tr || P.plan.lv[tr.id] == null) { out.push({ id: "up:" + e.id, u, e, goalLabel, k: "?" }); return; }
     const lab = (i) => (tr.lab ? tr.lab(i) : String(i)), lv = P.plan.lv[tr.id];
@@ -9160,6 +9189,7 @@ function cdaGoalStates(P) {
 }
 function cdaGoalChipHtml(s) {
   if (!s || s.k === "?") return "";
+  if (s.k === "out") return `<span class="gu-cd out">${esc(t("cdb_from").replace("{d}", s.date))}</span>`;
   if (s.k === "full") return `<span class="gu-cd full">&#10003; ${esc(t("cdb_can_now").replace("{x}", s.goalLabel))}</span>`;
   if (s.k === "part") return `<span class="gu-cd part">${esc(t("cdb_part_now").replace("{a}", s.from).replace("{b}", s.now))}</span>`;
   return `<span class="gu-cd none">${esc(t("cdb_not_yet"))} · ${s.blkIc ? `<img src="${esc(s.blkIc)}" alt="" />` : ""}${esc(t("cdb_short").replace("{item}", s.blk || t("cdb_items")))}</span>`;
@@ -9169,6 +9199,8 @@ function cdaPatchGoals(box) {
   const map = {};
   cdaGoalStates(cdaPlan()).forEach((s) => { map[s.id] = s; });
   box.querySelectorAll(".bud-g.gu").forEach((li) => {
+    // (A hero not out yet keeps its own line: which source the plan uses.)
+    if (map[li.dataset.goal] && map[li.dataset.goal].k === "out") return;
     li.querySelectorAll(".gu-cd").forEach((x) => x.remove());
     const h = cdaGoalChipHtml(map[li.dataset.goal]), l1 = li.querySelector(".c3-l1"), r2 = li.querySelector(".gu-r2"), lv = li.querySelector(".gu-lv");
     if (l1) l1.classList.toggle("has-cd", !!h);
@@ -9189,7 +9221,7 @@ function cdaTileHtml() {
 function cdaTileInner() {
   const ready = cdaReady(), P = ready ? cdaPlan() : null, c = P ? cdaCounts(P) : null;
   const gs = P ? cdaGoalStates(P).filter((s) => s.k !== "?") : [];
-  const gl = gs.length ? `<small class="gl">${esc(t("cdb_goals_up").replace("{n}", gs.filter((s) => s.k !== "none").length).replace("{m}", gs.length))}</small>` : "";
+  const gl = gs.length ? `<small class="gl">${esc(t("cdb_goals_up").replace("{n}", gs.filter((s) => s.k === "full" || s.k === "part").length).replace("{m}", gs.length))}</small>` : "";
   return `<span class="fz-ic">&#10003;</span><span class="b3-lr-t"><b>${esc(t("cdb_free"))} · <em>${c ? esc(t("cdb_ups").replace("{n}", c.ups.toLocaleString())) : esc(t("cdb_working"))}</em></b><small>${c ? esc(t("cdb_sub").replace("{n}", c.pages)) : esc(t("cdb_sub_wait"))}</small>${gl}</span><span class="b3-go">&#8250;</span>`;
 }
 // The sheet: the Can do settings and answer, the goals in order, then everything else.
@@ -9199,10 +9231,12 @@ function cdaSheetInner() {
   if (P) {
     const gs = cdaGoalStates(P).filter((s) => s.k !== "?");
     if (gs.length) {
-      const can = gs.filter((s) => s.k !== "none").length;
+      const can = gs.filter((s) => s.k === "full" || s.k === "part").length;
       goals = `<div class="fz-hd"><span>${esc(t("cdb_your_goals"))}</span><em>${esc(t("cdb_n_can").replace("{n}", can).replace("{m}", gs.length))}</em></div><div class="fz-goals">${gs.map((s, i) => {
         const pg = CDA_PAGES.find((x) => x.key === s.e.page);
         const ic = budgetGoalIcon({ up: s.u, page: s.e.page });
+        // A hero not out yet: grey, "from Dec 21" on the right (nothing to open yet).
+        if (s.k === "out") return `<div class="fz-g out"><span class="fz-num">${i + 1}</span>${ic.src ? `<img class="${ic.face ? "face" : ""}" src="${esc(ic.src)}" alt="" loading="lazy" />` : ""}<span class="fz-n"><b>${esc(s.u.name)} ${esc(s.goalLabel)}</b><small>${esc(t(s.u.kind === "s" ? "cdb_out_stars" : "cdb_out"))}</small></span>${cdaGoalChipHtml(s)}</div>`;
         return `<div class="fz-g"><span class="fz-num">${i + 1}</span>${ic.src ? `<img class="${ic.face ? "face" : ""}" src="${esc(ic.src)}" alt="" loading="lazy" />` : ""}<span class="fz-n"><b>${esc(s.u.name)}</b><small>${esc(t("cdb_goal_line").replace("{x}", s.goalLabel).replace("{now}", s.u.now))}</small>${cdaGoalChipHtml(s)}</span>${pg ? `<button type="button" class="cda-go" data-cdago="${esc(pg.go || pg.tab)}">${esc(t("cdp_open"))} &#8250;</button>` : ""}</div>`;
       }).join("")}</div><div class="fz-hd"><span>${esc(t("cdb_else"))}</span><em class="mu">${esc(t("cdb_ups").replace("{n}", cdaCounts(P).ups.toLocaleString()))}</em></div>`;
     }
@@ -25141,8 +25175,11 @@ function goalByEvents() {
   return out.sort((x, y) => x.a - y.a || x.name.localeCompare(y.name));
 }
 // K4: the small pop-over under a goal's By chip: the event list, or a month to pick any day.
-function goalByPopHtml(myBy, mainDay) {
+// `no` (a goal of a hero not out yet): { gen, rel, forge } — days before the release
+// can't be picked (greyed, struck), the release and its Forge pack are offered.
+function goalByPopHtml(myBy, mainDay, no) {
   const t0 = packStartOfToday(), DAY = 86400000, loc = LANG === "en" ? undefined : LANG;
+  const relD = no ? new Date(t0.getTime() + no.rel * DAY) : null;
   const md = (d) => d.toLocaleDateString(loc, { day: "numeric", month: "short", timeZone: "UTC" });
   const rng = (a, b) => (b.getTime() === a.getTime() ? md(a) : a.getUTCMonth() === b.getUTCMonth() ? `${md(a)} \u2013 ${b.getUTCDate()}` : `${md(a)} \u2013 ${md(b)}`);
   const evs = goalByEvents(), myD = goalDeadlineDay(myBy), myK = goalByKind(myBy);
@@ -25157,7 +25194,7 @@ function goalByPopHtml(myBy, mainDay) {
       if (i >= 35 && d.getUTCMonth() !== m - 1) break;
       const dots = evs.filter((e) => d >= e.a && d <= e.b).slice(0, 3).map((e) => `<i style="background:${e.col}"></i>`).join("");
       const cls = [d.getUTCMonth() !== m - 1 ? "out" : "", d.getTime() === t0.getTime() ? "today" : "", tgt && d.getTime() === tgt.getTime() ? "tg" : "", C.sel === key ? "on" : ""].filter(Boolean).join(" ");
-      cells.push(`<button type="button" class="${cls}" data-gbpday="${key}" ${d < t0 ? "disabled" : ""}><b>${d.getUTCDate()}</b><span>${dots}</span></button>`);
+      cells.push(`<button type="button" class="${cls}" data-gbpday="${key}" ${d < t0 || (relD && d < relD) ? "disabled" : ""}><b>${d.getUTCDate()}</b><span>${dots}</span></button>`);
     }
     const sd = C.sel ? packParseDay(C.sel) : null, n = sd ? Math.round((sd - t0) / DAY) : 0;
     const mon = first.toLocaleDateString(loc, { month: "long", year: "numeric", timeZone: "UTC" });
@@ -25171,19 +25208,34 @@ function goalByPopHtml(myBy, mainDay) {
       <div class="gbp-use"><span>${sd ? `<b>${esc(md(sd))}</b> \u00b7 ${esc(t("gbp_in_days").replace("{n}", n))}` : esc(t("gbp_tap_day"))}</span><button type="button" class="btn small" data-gbpuse ${sd ? "" : "disabled"}>${esc(sd ? t("gbp_use").replace("{d}", md(sd)) : t("gbp_use_x"))}</button></div>
     </div>`;
   }
-  const row = (v, dot, name, when, on) => `<button type="button" class="gbp-r${on ? " on" : ""}" data-goalbyset="${esc(v)}">${dot}<span class="gbp-n">${esc(name)}</span><span class="gbp-w">${esc(when)}</span>${on ? '<span class="gbp-ok">&#10003;</span>' : ""}</button>`;
-  let h = "";
-  if (myK === "date" && myD != null) h += row(myBy, '<span class="gbp-ic">&#128197;</span>', t("gbp_your_date"), md(new Date(t0.getTime() + myD * DAY)), true);
-  h += `<div class="gbp-hd">${esc(t("gbp_targets"))}</div>` + row("", '<span class="gbp-ic st">&#9733;</span>', t("goal_by_main"), tgt ? md(tgt) : "\u2014", !myBy);
+  const row = (v, dot, name, when, on, off, sub) => `<button type="button" class="gbp-r${on ? " on" : ""}${off ? " off" : ""}" data-goalbyset="${esc(v)}"${off ? " disabled" : ""}>${dot}<span class="gbp-n">${esc(name)}${sub ? ` <small>${esc(sub)}</small>` : ""}</span><span class="gbp-w">${esc(when)}</span>${on ? '<span class="gbp-ok">&#10003;</span>' : ""}</button>`;
+  let h = "", early = "";
+  if (myK === "date" && myD != null) h += row(myBy, '<span class="gbp-ic">&#128197;</span>', t("gbp_your_date"), md(new Date(t0.getTime() + myD * DAY)), true, no && myD < no.rel);
+  const mainRow = row("", '<span class="gbp-ic st">&#9733;</span>', t("goal_by_main"), tgt ? md(tgt) : "\u2014", !myBy, no && mainDay != null && mainDay < no.rel);
+  // Not out yet: what comes before the release is listed first, greyed and struck.
+  if (no && mainDay != null && mainDay < no.rel) early += mainRow; else h += `<div class="gbp-hd">${esc(t("gbp_targets"))}</div>` + mainRow;
+  const list = evs.slice();
+  if (no) {
+    const fd = new Date(t0.getTime() + no.forge * DAY);
+    if (no.forge <= 200) list.push({ v: `ev:forge:${packDayKey(fd)}`, kind: "forge", a: fd, b: fd, name: t("gbp_forge"), sub: t("ht_widgets"), col: "#e8b44c" });
+    list.sort((x, y) => x.a - y.a || x.name.localeCompare(y.name));
+  }
   let mon = "";
-  evs.forEach((e) => {
+  const earlyEv = [];
+  list.forEach((e) => {
+    const isRel = no && e.kind === "gen" && relD && e.a.getTime() === relD.getTime();
+    const dot = e.star ? '<span class="gbp-ic st">&#11088;</span>' : `<i class="gbp-dot" style="background:${e.col}"></i>`;
+    if (no && e.a < relD) { earlyEv.push(row(e.v, dot, e.name, rng(e.a, e.b), lit(e), true)); return; }
     const mm = e.a.toLocaleDateString(loc, { month: "long", ...(e.a.getUTCFullYear() !== t0.getUTCFullYear() ? { year: "numeric" } : {}), timeZone: "UTC" });
     if (mm !== mon) { mon = mm; h += `<div class="gbp-hd">${esc(mm)}</div>`; }
-    h += row(e.v, e.star ? '<span class="gbp-ic st">&#11088;</span>' : `<i class="gbp-dot" style="background:${e.col}"></i>`, e.name, rng(e.a, e.b), lit(e));
+    h += row(e.v, dot, isRel ? t("gbp_release") : e.name, rng(e.a, e.b), lit(e), false, isRel ? `Gen ${no.gen}` : e.sub);
   });
-  return `<div class="gbp" role="dialog" aria-label="${esc(t("goal_by_title"))}"><div class="gbp-t">${esc(t("gbp_upcoming"))}</div><div class="gbp-l">${h}</div><button type="button" class="gbp-pick" data-gbpcal>&#128197; ${esc(t("gbp_pick_date"))}</button></div>`;
+  early += earlyEv.slice(-2).join(""); // (the last two before the release are enough to show why)
+  const lock = no ? `<div class="gbp-lock">&#128274; <b>${esc(t("gbp_lock_b").replace("{g}", no.gen).replace("{d}", md(relD)))}</b> ${esc(t("gbp_lock"))}</div>` : "";
+  return `<div class="gbp${no ? " no" : ""}" role="dialog" aria-label="${esc(t("goal_by_title"))}"><div class="gbp-t">${esc(t("gbp_upcoming"))}</div><div class="gbp-l">${lock}${early ? `<div class="gbp-early">${early}</div>` : ""}${h}</div><button type="button" class="gbp-pick" data-gbpcal>&#128197; ${esc(t("gbp_pick_date"))}</button></div>`;
 }
 let BUDGET_HT_OPEN = false;     // Hero targets fold (for the visit)
+let BUDGET_HT_DONE_OPEN = false; // its "N heroes at target" line (for the visit)
 async function ensureBudgetGoals() {
   if (!BUDGET_GOALS) {
     const s = (await loadCalcState("budget_goals")) || {};
@@ -25331,6 +25383,19 @@ function goalResearchUnmet(pg, nodes, key, level, curOf) {
   }
   return null;
 }
+// A hero Gen not out yet in the person's state, as a goal sees it: { gen, date,
+// rel (days from today to the release), forge (days to its Exclusive Gear Forge pack) }.
+function goalNotOutInfo(gen) {
+  const o = heroGenNotOut(gen);
+  if (!o || !o.date) return null;
+  const rel = Math.max(0, Math.round((o.date - packStartOfToday()) / 86400000));
+  return { gen: Math.floor(Number(gen) || 0), date: o.date, rel, forge: rel + ngForgeDays() };
+}
+// "Dec 21" for a day from today.
+function goalDayShort(d) {
+  const x = new Date(packStartOfToday().getTime() + d * 86400000);
+  try { return x.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); } catch { return packDayKey(x); }
+}
 const GOAL_UPS_MEMO = { sig: null, map: new Map() };
 // One page's upgrades: [{ id, page, key, name, img, face, now, levels: [{ label, totals }], ord, ladder?, nowAt?, lockAt, lockTxt }].
 function goalUpgrades(page) {
@@ -25370,15 +25435,36 @@ function goalUpgrades(page) {
       }))));
     }
   } else if (page === "hero_shards") {
-    ((HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || []).forEach((r) => {
+    const rows = (HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || [], wLadder = Array.from({ length: widgetMaxLevel() + 1 }, (_, i) => String(i));
+    // A hero of a Gen not out yet: its goals carry the release (days from today) and the Forge pack's day.
+    const outOf = (r) => { const o = goalNotOutInfo(r.hero.generation); return o ? { notOut: o } : {}; };
+    // "All Gen 15 heroes · widgets": one goal for every not-out hero of that Gen
+    // (added in Hero targets), each up to the level (never past its own target).
+    const grp = new Map();
+    rows.forEach((r) => { if (r.notOut && r.hasWidget && r.tW > r.wLevel) { const g = Number(r.hero.generation); if (!grp.has(g)) grp.set(g, []); grp.get(g).push(r); } });
+    const addGroup = (g) => {
+      const list = grp.get(g);
+      if (!list || list.length < 2 || list.done) return;
+      list.done = true;
+      const top = Math.max(...list.map((r) => r.tW)), lo = Math.min(...list.map((r) => r.wLevel)), lv = [];
+      for (let L = lo + 1; L <= top; L++) {
+        const totals = {};
+        list.forEach((r) => { const to = Math.min(L, r.tW); if (to > r.wLevel) totals[`${r.hero.name} Widgets`] = widgetNeedFrom(r.wLevel) - widgetNeedFrom(to); });
+        lv.push({ label: String(L), totals });
+      }
+      add({ key: `gen${g}|w`, name: `${t("gu_gen_all").replace("{g}", g)} · ${t("ht_widgets")}`, img: list[0].hero.image_url || HERO_IMG_BY_NAME[list[0].hero.name] || "", face: true, now: String(lo), ladder: wLadder, nowAt: lo, levels: lv,
+        group: list.map((r) => ({ id: r.hero.id, name: r.hero.name, img: r.hero.image_url || HERO_IMG_BY_NAME[r.hero.name] || "" })), gen: g, ...outOf(list[0]) });
+    };
+    rows.forEach((r) => {
       const id = r.hero.id, nm = r.hero.name, img = r.hero.image_url || HERO_IMG_BY_NAME[nm] || "";
+      if (r.notOut) addGroup(Number(r.hero.generation));
       const s0 = Math.floor(r.step / 6), stars = [];
       for (let s = s0 + 1; s * 6 <= r.tStep; s++) stars.push({ label: `${s}★`, totals: { [`${nm} Shards`]: (r.cum && r.cum[s]) || 0 } });
-      add({ key: `${id}|s`, name: `${nm} · ${t("gu_stars")}`, img, face: true, now: `${s0}★${r.step % 6 ? ` ${r.step % 6}/6` : ""}`, ladder: [0, 1, 2, 3, 4, 5].map((s) => `${s}★`), nowAt: s0, levels: stars });
+      add({ key: `${id}|s`, name: `${nm} · ${t("gu_stars")}`, img, face: true, now: `${s0}★${r.step % 6 ? ` ${r.step % 6}/6` : ""}`, ladder: [0, 1, 2, 3, 4, 5].map((s) => `${s}★`), nowAt: s0, levels: stars, hero: nm, kind: "s", gen: Number(r.hero.generation), ...outOf(r) });
       if (r.hasWidget) {
         const w = [];
         for (let L = r.wLevel + 1; L <= r.tW; L++) w.push({ label: String(L), totals: { [`${nm} Widgets`]: widgetNeedFrom(r.wLevel) - widgetNeedFrom(L) } });
-        add({ key: `${id}|w`, name: `${nm} · ${t("ht_widgets")}`, img, face: true, now: String(r.wLevel), ladder: Array.from({ length: widgetMaxLevel() + 1 }, (_, i) => String(i)), nowAt: r.wLevel, levels: w });
+        add({ key: `${id}|w`, name: `${nm} · ${t("ht_widgets")}`, img, face: true, now: String(r.wLevel), ladder: wLadder, nowAt: r.wLevel, levels: w, hero: nm, kind: "w", gen: Number(r.hero.generation), ...outOf(r) });
       }
     });
   } else if (page === "shining_skins") {
@@ -25425,12 +25511,17 @@ function budgetGoalList(pages, incKeys, defaultOrder) {
   const list = (G.goals || []).map((e) => {
     if (!incKeys.includes(e.page)) return null;
     const u = ups.get(`${e.page}|${e.key}`);
-    if (!u || seen.has(u.id)) return null;
+    if (!u) return null;
     const li = goalUpLevelIdx(u, e.level);
-    if (li < 0) return null;
-    seen.add(u.id);
+    // (One upgrade can be a goal twice at different levels, e.g. widgets 8 by SvS and 10 later.)
+    if (li < 0 || seen.has(`${u.id}#${li}`)) return null;
+    seen.add(`${u.id}#${li}`);
     return { id: "up:" + e.id, page: e.page, up: u, entry: e, li, lv: u.levels[li] };
   }).filter(Boolean);
+  // Two goals on one upgrade work as a chain: the lower level takes the earlier place.
+  const byUp = new Map();
+  list.forEach((g, i) => { if (!byUp.has(g.up.id)) byUp.set(g.up.id, []); byUp.get(g.up.id).push(i); });
+  byUp.forEach((pos) => { if (pos.length < 2) return; const gs = pos.map((i) => list[i]).sort((a, b) => a.li - b.li); pos.forEach((i, k) => { list[i] = gs[k]; }); });
   // "Without": no upgrade picked, each page's whole need in page order (a
   // picked upgrade's date is then its page's).
   if (defaultOrder) return incKeys.slice().sort((a, b) => pageIdx(a) - pageIdx(b)).map((k) => ({ id: "pg:" + k, page: k, pageAll: true }));
@@ -25460,11 +25551,13 @@ function budgetUpSegs(goals, pages) {
     const rg = rests.find((g) => g.keys.includes(k)), restSeg = rg ? segs.get(rg.id) : null;
     const mine = goals.filter((g) => g.up && g.page === k);
     if (!mine.length) { if (restSeg) Object.entries(pg.need || {}).forEach(([n, v]) => addTo(restSeg, n, Number(v) || 0)); return; }
-    const still = pg.needStill || {}, used = {}, ownLeft = { ...(k === "hero_shards" ? goalHeroOwned() : pg.owned || {}) };
+    const still = pg.needStill || {}, used = {}, ownLeft = { ...(k === "hero_shards" ? goalHeroOwned() : pg.owned || {}) }, prevTot = new Map();
     mine.forEach((g) => {
-      const tot = g.lv.totals || {}, seg = {};
+      // (A second goal on the same upgrade adds only what its level takes over the first.)
+      const tot = g.lv.totals || {}, prev = prevTot.get(g.up.id) || {}, seg = {};
+      prevTot.set(g.up.id, tot);
       Object.keys(still).forEach((n) => {
-        const inc = Number(tot[n]) || 0;
+        const inc = Math.max(0, (Number(tot[n]) || 0) - (Number(prev[n]) || 0));
         if (!(inc > 0)) return;
         const take = Math.min(Math.max(0, Number(ownLeft[n]) || 0), inc);
         ownLeft[n] = (Number(ownLeft[n]) || 0) - take;
@@ -25618,10 +25711,11 @@ function goalByShort(by) {
   if (k === "koi") return "KOI";
   if (k === "gen") return t("gu_by_gen_s");
   if (k === "wheel") return t("pack_cal_wheel");
+  if (k === "forge") return t("gbp_forge");
   const ev = GAME_EVENTS.find((e) => e.key === k);
   return ev ? ev.name : k;
 }
-function goalByIcon(by) { const k = goalByKind(by); return !k ? "\u2605" : k === "date" ? "\uD83D\uDCC5" : k === "gen" ? "\u2B50" : k === "wheel" ? "\uD83C\uDFA1" : "\u2694"; }
+function goalByIcon(by) { const k = goalByKind(by); return !k ? "\u2605" : k === "date" ? "\uD83D\uDCC5" : k === "gen" ? "\u2B50" : k === "wheel" ? "\uD83C\uDFA1" : k === "forge" ? "\u2692" : "\u2694"; }
 function goalByName(by) {
   if (by && String(by).startsWith("ev:")) return goalByShort(by);
   if (by === "svs") return t("goal_by_svs");
@@ -25726,8 +25820,18 @@ function purGoalTagHtml(gm, gives, w) {
 function budgetGoalDue(goals) {
   const by = (BUDGET_GOALS && BUDGET_GOALS.by) || {};
   const due = goals.map((g) => goalDeadlineDay(by[g.id]));
-  const after = (h, g) => g.mini && (h.id === g.owner || (h.chain === g.chain && h.lvl > g.lvl));
+  const after = (h, g) => (g.mini && (h.id === g.owner || (h.chain === g.chain && h.lvl > g.lvl))) || (g.up && h.up && h.up.id === g.up.id && h.li > g.li);
   goals.forEach((g, i) => goals.forEach((h, j) => { if (after(h, g) && due[j] != null && (due[i] == null || due[j] < due[i])) due[i] = due[j]; }));
+  // A goal of a hero not out yet is never due before its release; without a date of
+  // its own it follows the main target, or the release when the target comes first.
+  let tgt = null;
+  if (BUDGET_TARGET) { const d = packParseDay(BUDGET_TARGET); if (d) tgt = Math.round((d - packStartOfToday()) / 86400000); }
+  goals.forEach((g, i) => {
+    const o = g.up && g.up.notOut;
+    if (!o) return;
+    if (due[i] != null) due[i] = Math.max(due[i], o.rel);
+    else if (tgt != null && tgt < o.rel) due[i] = o.rel;
+  });
   return due;
 }
 // The plan with the goals' own dates (worked out in the background planner,
@@ -25874,6 +25978,7 @@ function wireBudgetGoals(box) {
     const q = ((sh.querySelector("[data-guq]") || {}).value || "").trim().toLowerCase(), on = sh.querySelector("[data-gupage].on"), pg = on ? on.dataset.gupage : "";
     const words = q.split(/\s+/).filter(Boolean);
     sh.querySelectorAll(".gu-pk").forEach((r) => { r.hidden = !!(pg && r.dataset.gupg !== pg) || !words.every((w) => r.dataset.q.includes(w)); });
+    sh.querySelectorAll("[data-gugh]").forEach((h) => { h.hidden = !!(pg && pg !== "hero_shards") || words.length > 0; });
   };
   box.addEventListener("input", (e) => { if (e.target.hasAttribute("data-guq")) filterSync(); });
   box.onclick = (e) => {
@@ -25896,7 +26001,12 @@ function wireBudgetGoals(box) {
       saveBudgetGoals(); redraw();
       return;
     }
-    if (b.hasAttribute("data-goalby")) { const gid = b.closest("[data-goal]").dataset.goal; BUDGET_GOAL_BY_OPEN = BUDGET_GOAL_BY_OPEN === gid ? null : gid; BUDGET_BY_CAL = null; redraw(); return; }
+    if (b.hasAttribute("data-goalby")) {
+      const gid = b.closest("[data-goal]").dataset.goal; BUDGET_GOAL_BY_OPEN = BUDGET_GOAL_BY_OPEN === gid ? null : gid; BUDGET_BY_CAL = null;
+      // (Opened: its list starts at the picked choice.)
+      Promise.resolve(redraw()).then(() => setTimeout(() => { const l = document.querySelector(".gbp .gbp-l"), on = l && l.querySelector(".gbp-r.on"); const y = on ? on.getBoundingClientRect().top - l.getBoundingClientRect().top : 0; if (y > l.clientHeight - 40) l.scrollTop += y - l.clientHeight / 2; }, 30));
+      return;
+    }
     // By pop-over: month view, its arrows, a day, Use.
     if (b.hasAttribute("data-gbpcal")) { const t0 = packStartOfToday(), my = (BUDGET_GOALS.by || {})[b.closest("[data-goal]").dataset.goal] || ""; const sel = my.startsWith("date:") ? my.slice(5) : null; BUDGET_BY_CAL = { m: (sel || packDayKey(t0)).slice(0, 7), sel }; redraw(); return; }
     if (b.hasAttribute("data-gbpback")) { BUDGET_BY_CAL = null; redraw(); return; }
@@ -25942,41 +26052,34 @@ function wireBudgetGoals(box) {
   };
   // Hero targets: saved at once; Budgets works the hero shards out again.
   const htSave = () => { saveCalcState("hero_targets", HERO_TARGETS); budgetInvalidate(); keepPlace(() => renderBudgetsPage()); };
-  // Push: the hero's stars become the first goal ("By next SvS" with "push 2 per Gen").
-  const pushFirst = (id, on) => {
-    if (!on) return;
-    const key = `${id}|s`, list = BUDGET_GOALS.goals || [];
-    let en = list.find((e) => e.page === "hero_shards" && e.key === key);
-    if (!en) en = { id: Date.now().toString(36), page: "hero_shards", key, level: null };
-    BUDGET_GOALS.goals = [en, ...list.filter((e) => e !== en)];
-    const gid = "up:" + en.id;
-    if (HERO_TARGETS.pushGen && !(BUDGET_GOALS.by || {})[gid]) BUDGET_GOALS.by = { ...(BUDGET_GOALS.by || {}), [gid]: "svs" };
-    saveBudgetGoals();
-  };
   const htBox = box.querySelector(".bud-ht");
-  if (htBox) htBox.addEventListener("toggle", () => { BUDGET_HT_OPEN = htBox.open; });
+  if (htBox) htBox.addEventListener("toggle", () => { BUDGET_HT_OPEN = htBox.open; const f = htBox.querySelector(".ht-fold"); if (f) f.innerHTML = htBox.open ? `&#9652; ${esc(t("g1_hide"))}` : `&#9662; ${esc(t("g1_show"))}`; });
   box.addEventListener("change", (e) => {
     const el = e.target, row = el.closest("[data-hthero]"), id = row && row.dataset.hthero;
-    if (el.hasAttribute("data-htpushgen")) { HERO_TARGETS.pushGen = el.checked; htSave(); return; }
     if (el.hasAttribute("data-htadd")) { if (el.value && !HERO_TARGETS.extra.includes(el.value)) HERO_TARGETS.extra = [...HERO_TARGETS.extra, el.value]; htSave(); return; }
-    if (!id) return;
-    const T = { ...(HERO_TARGETS.heroes[id] || {}) };
-    if (el.hasAttribute("data-htpush")) { T.push = el.checked; pushFirst(id, el.checked); }
-    else if (el.hasAttribute("data-htstars")) T.stars = Number(el.value);
-    else if (el.hasAttribute("data-htw")) T.widget = Number(el.value);
-    else if (el.hasAttribute("data-htlater")) T.later = el.checked;
-    else return;
-    HERO_TARGETS.heroes = { ...HERO_TARGETS.heroes, [id]: T };
+    if (!id || !el.hasAttribute("data-htlater")) return;
+    HERO_TARGETS.heroes = { ...HERO_TARGETS.heroes, [id]: { ...(HERO_TARGETS.heroes[id] || {}), later: el.checked } };
     htSave();
   });
-  box.querySelectorAll("[data-htpick]").forEach((b) => b.addEventListener("click", () => {
-    const id = b.dataset.htpick, T = { ...(HERO_TARGETS.heroes[id] || {}) };
-    T.push = !T.push;
-    HERO_TARGETS.heroes = { ...HERO_TARGETS.heroes, [id]: T };
-    if (T.push && !HERO_TARGETS.extra.includes(id)) HERO_TARGETS.extra = [...HERO_TARGETS.extra, id];
-    pushFirst(id, T.push);
-    htSave();
-  }));
+  box.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b || b.disabled || !box.contains(b)) return;
+    // Stars / widgets target − / +.
+    if (b.dataset.htstep) {
+      const id = b.closest("[data-hthero]").dataset.hthero, [k, d] = b.dataset.htstep.split("|"), T = { ...(HERO_TARGETS.heroes[id] || {}) };
+      if (k === "s") T.stars = Math.max(1, Math.min(5, (T.stars != null ? Number(T.stars) : 5) + Number(d)));
+      else T.widget = Math.max(0, Math.min(widgetMaxLevel(), (T.widget != null ? Number(T.widget) : widgetMaxLevel()) + Number(d)));
+      HERO_TARGETS.heroes = { ...HERO_TARGETS.heroes, [id]: T };
+      htSave(); return;
+    }
+    if (b.hasAttribute("data-htdone")) { BUDGET_HT_DONE_OPEN = !BUDGET_HT_DONE_OPEN; redraw(); return; }
+    // "+ Add as goals": the heroes' stars and widgets goals (at their targets) after the list.
+    if (b.dataset.htaddgoals) {
+      const t0 = Date.now().toString(36);
+      BUDGET_GOALS.goals = (BUDGET_GOALS.goals || []).concat(b.dataset.htaddgoals.split(",").filter(Boolean).map((key, i) => ({ id: `${t0}h${i}`, page: "hero_shards", key, level: null })));
+      saveBudgetGoals(); redraw();
+    }
+  });
   box.querySelectorAll("[data-htrm]").forEach((b) => b.addEventListener("click", () => {
     const id = b.closest("[data-hthero]").dataset.hthero;
     HERO_TARGETS.extra = HERO_TARGETS.extra.filter((x) => x !== id);
@@ -26437,6 +26540,8 @@ async function renderBudgetsPage(opts = {}) {
         dates[i] = { ...dates[i], day, approx: cant || day !== dates[i].day ? false : dates[i].approx };
       });
     }
+    // A goal of a hero not out yet is never reached before its release.
+    if (dates) goals.forEach((g, i) => { const o = g.up && g.up.notOut; if (o && dates[i] && !dates[i].done && dates[i].day < o.rel) dates[i] = { ...dates[i], day: o.rel, approx: false }; });
     // A page isn't finished before its own goals: its rest is done no sooner than they are.
     if (dates) goals.forEach((g, i) => {
       if (!g.rest || !dates[i] || dates[i].done) return;
@@ -26463,6 +26568,44 @@ async function renderBudgetsPage(opts = {}) {
     };
     // A date for a card: one with a year takes two short lines ("Mar 5" over "’27").
     const gdCard = (dt) => { const tx = gdTxt(dt), m = tx.match(/^(.*) (\u2019\d\d)$/); return m ? { h: `${esc(m[1])}<br>${esc(m[2])}`, y2: true } : { h: esc(tx), y2: false }; };
+    // Goals of a hero not out yet: which source the plan uses for them (best effort
+    // from the plan's packs: Mystery Points bought before the release, the hero's
+    // Forge / Value Hero Pack, General shards).
+    let segsAll = null, schedAll = null;
+    const srcLine = (g, i) => {
+      const u = g.up, o = u && u.notOut;
+      if (!o || !plan || !plan.rows || planPending) return null;
+      if (!schedAll) schedAll = packPlanSchedule(plan.rows);
+      if (!segsAll) segsAll = budgetGoalSegs(goals, pagesRaw);
+      const names = u.group ? u.group.map((x) => x.name) : [u.hero];
+      const gives = (r, n) => Number((r.gives || {})[n]) > 0;
+      const dueI = due[i] != null ? due[i] : mainDay;
+      const rel = goalDayShort(o.rel);
+      if (u.group || u.kind === "w") {
+        // The Forge pack counts only when it comes by the goal's day; Mystery Points
+        // only when what the goal needs is more than the Forge packs give.
+        const seg = segsAll.get(g.id) || {}, n = Object.entries(seg).filter(([k]) => / Widgets$/.test(k)).reduce((a, [, v]) => a + v, 0);
+        const forgeOk = dueI == null || dueI >= o.forge;
+        const forgeGive = !forgeOk ? 0 : plan.rows.reduce((a, r) => a + names.reduce((b, h) => b + (Number((r.gives || {})[`${h} Widgets`]) || 0) * (r.count || 1), 0), 0);
+        const mp = plan.rows.some((r, k) => gives(r, "Mystery Points") && (schedAll[k] || []).some((x) => x.off < o.rel));
+        const needMp = n > forgeGive + 0.5;
+        if (forgeGive > 0 && needMp && mp) return { ic: HERO_ITEM_ICON.widget, tx: t("gu_src_both") };
+        if (forgeGive > 0) return { ic: HERO_ITEM_ICON.widget, tx: t("gu_src_forge").replace("{d}", goalDayShort(o.forge)), forge: true };
+        if (mp) return { ic: BP_EXTRA_ICONS["Mystery Points"], tx: t("gu_src_mp").replace("{d}", rel).replace("{n}", Math.round(n).toLocaleString()) };
+        return null;
+      }
+      const own = plan.rows.some((r) => gives(r, `${u.hero} Shards`));
+      const gen = plan.rows.some((r) => ["Mythic General Hero Shard", "Marks of Valor", "Mythic General Hero Lucky Box"].some((n) => gives(r, n)));
+      const ic = BP_SHARD_ICONS["Mythic General Hero Shard"];
+      return own && gen ? { ic, tx: t("gu_src_gen_own") } : own ? { ic, tx: t("gu_src_own") } : gen ? { ic, tx: t("gu_src_gen") } : null;
+    };
+    // (Its source decides its day too: a goal paid by the Forge pack alone is reached when that pack comes.)
+    const srcOf = new Map();
+    goals.forEach((g, i) => {
+      const sl = g.up && g.up.notOut ? srcLine(g, i) : null;
+      srcOf.set(g.id, sl);
+      if (sl && sl.forge && dates && dates[i] && !dates[i].done && dates[i].day < g.up.notOut.forge) dates[i] = { ...dates[i], day: g.up.notOut.forge, approx: false };
+    });
     // One picked upgrade: picture, name + page, now → goal level (− / +, any
     // level up to the page's target), the page's target, "By", date ✓ / ⚠.
     const rowHtml = (g, i) => {
@@ -26473,20 +26616,26 @@ async function renderBudgetsPage(opts = {}) {
       const dTxt = pending ? workHtml("span", "small") : own ? esc(t("gd_own")) : esc(gdTxt(dt));
       const kind = goalByKind(myBy) === "date" ? " date" : myBy ? " ev" : "";
       const lock = u.lockAt >= 0 && g.li >= u.lockAt ? `<small class="gu-lk">&#9888; ${esc(t("gu_lock").replace("{x}", u.lockTxt))}</small>` : "";
-      const picker = BUDGET_GOAL_BY_OPEN === g.id ? goalByPopHtml(myBy, mainDay) : "";
+      const no = u.notOut || null;
+      const picker = BUDGET_GOAL_BY_OPEN === g.id ? goalByPopHtml(myBy, mainDay, no) : "";
       const ic = budgetGoalIcon(g, pagesRaw);
+      const src = srcOf.get(g.id), heroGoal = !!(u.hero || u.group);
+      const pic = u.group ? `<span class="c3-pic c3-grp">${u.group.slice(0, 3).map((x) => (x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" />` : `<i>${esc(x.name.charAt(0))}</i>`)).join("")}</span>`
+        : ic.src ? `<img class="c3-pic${ic.face ? " face" : ""}" src="${esc(ic.src)}" alt="" loading="lazy" />` : `<i class="c3-pic">${esc(u.name.charAt(0))}</i>`;
       // Card C: 1: ⋮⋮, number, picture, the name over the can-do status as small
       // text (cdaPatchGoals puts it there), the date at the right end (amber ⚠
       // after its By / the target). 2: − level +, short By chip, ✕.
       const isLate = !pending && !own && dt && !dt.done && lim != null && dt.day > lim;
       const dc = pending || own ? null : gdCard(dt);
-      const byD = myBy ? dIn : mainDay;
+      // (A hero not out yet: the day it is really due, never before its release.)
+      const byD = no && d != null ? d : myBy ? dIn : mainDay;
       const bs = goalByShort(myBy), byShort = `${goalByIcon(myBy)} ${bs}${byD != null ? `${bs ? " " : ""}${gdTxt({ day: byD })}` : ""}`;
-      return `<li class="bud-g gu c3" data-goal="${esc(g.id)}">
+      const nmH = `${esc(u.name)}${heroGoal ? ` <em>${esc(g.lv.label)}</em>` : ""}${no ? ` <span class="gu-out">${esc(t("gu_out").replace("{d}", goalDayShort(no.rel)))}</span>` : ""}`;
+      return `<li class="bud-g gu c3${no ? " no" : ""}" data-goal="${esc(g.id)}">
         <span class="bud-g-h" data-goaldrag role="button" tabindex="0" aria-label="${esc(t("goals_desc_drag"))}" title="${esc(t("goals_desc_drag"))}">&#8942;&#8942;</span>
         <span class="c3-b">
-          <span class="c3-l1${dc && dc.y2 ? " y2" : ""}"><span class="c3-no">${i + 1}</span>${ic.src ? `<img class="c3-pic${ic.face ? " face" : ""}" src="${esc(ic.src)}" alt="" loading="lazy" />` : `<i class="c3-pic">${esc(u.name.charAt(0))}</i>`}<b class="c3-nm" title="${esc(`${u.name} · ${packPageLabel(g.page)} · ${u.now} → ${g.lv.label}`)}">${esc(u.name)}</b><span class="c3-dt${isLate ? " late" : ""}${pending ? " wk" : ""}" title="${pending ? esc(t("budgets_working")) : ""}">${isLate ? "&#9888; " : ""}${pending ? "&hellip;" : dc ? dc.h : dTxt}</span></span>
-          <span class="c3-l2 gu-r2"><span class="gu-st"><button type="button" data-gustep="-1" ${g.li <= 0 ? "disabled" : ""} aria-label="&minus;">&minus;</button><b>${esc(g.lv.label)}</b><button type="button" data-gustep="1" ${g.li >= last ? "disabled" : ""} aria-label="+">+</button></span><button type="button" class="bud-g-by${kind}${BUDGET_GOAL_BY_OPEN === g.id ? " open" : ""}" data-goalby aria-expanded="${BUDGET_GOAL_BY_OPEN === g.id}" title="${esc(byText(myBy, byD))}">${esc(byShort)} ${BUDGET_GOAL_BY_OPEN === g.id ? "&#9652;" : "&#9662;"}</button><button type="button" class="gu-rm" data-goalrm aria-label="${esc(t("goal_remove"))}" title="${esc(t("goal_remove"))}">&times;</button></span>
+          <span class="c3-l1${dc && dc.y2 ? " y2" : ""}${src ? " has-cd" : ""}${u.group ? " grp" : ""}"><span class="c3-no">${i + 1}</span>${pic}<b class="c3-nm" title="${esc(`${u.name} · ${packPageLabel(g.page)} · ${u.now} → ${g.lv.label}`)}">${nmH}</b><span class="c3-dt${isLate ? " late" : ""}${pending ? " wk" : ""}" title="${pending ? esc(t("budgets_working")) : ""}">${isLate ? "&#9888; " : ""}${pending ? "&hellip;" : dc ? dc.h : dTxt}</span>${src ? `<span class="gu-src"><img src="${esc(src.ic)}" alt="" />${esc(src.tx)}</span>` : ""}</span>
+          <span class="c3-l2 gu-r2"><span class="gu-st"><button type="button" data-gustep="-1" ${g.li <= 0 ? "disabled" : ""} aria-label="&minus;">&minus;</button><b>${esc(g.lv.label)}</b><button type="button" data-gustep="1" ${g.li >= last ? "disabled" : ""} aria-label="+">+</button></span><button type="button" class="bud-g-by${kind}${BUDGET_GOAL_BY_OPEN === g.id ? " open" : ""}" data-goalby aria-expanded="${BUDGET_GOAL_BY_OPEN === g.id}" title="${esc(byText(myBy, byD))}">${esc(byShort)} ${BUDGET_GOAL_BY_OPEN === g.id ? "&#9652;" : "&#9662;"}</button>${u.group ? `<span class="gu-n3">${esc(t("gu_grp_n").replace("{n}", u.group.length))}</span>` : ""}<button type="button" class="gu-rm" data-goalrm aria-label="${esc(t("goal_remove"))}" title="${esc(t("goal_remove"))}">&times;</button></span>
           ${lock}
         </span>
         ${picker}</li>`;
@@ -26526,14 +26675,24 @@ async function renderBudgetsPage(opts = {}) {
     const addHtml = () => {
       if (!BUDGET_GOAL_ADD) return `<button type="button" class="bud-g-add" data-goaladd>${esc(t("gu_add"))}</button>${missingHtml}`;
       const picked = new Set(goals.filter((g) => g.up).map((g) => g.up.id));
-      const list = keys.flatMap((k) => goalUpgrades(k)).filter((u) => !picked.has(u.id));
+      // (Hero widgets can be a goal twice, at two levels: those stay on the list.)
+      const twice = (u) => u.page === "hero_shards" && /\|w$/.test(u.key) && goals.filter((g) => g.up && g.up.id === u.id).length < 2;
+      const pickedAt = (u) => goals.filter((g) => g.up && g.up.id === u.id).map((g) => g.lv.label);
+      const keysAll = keys.includes("hero_shards") || !included("hero_shards") ? keys : keys.concat("hero_shards");
+      const list = keysAll.flatMap((k) => goalUpgrades(k)).filter((u) => !picked.has(u.id) || twice(u));
       const pgs = [...new Set(list.map((u) => u.page))];
+      let genHd = null;
       const rowsH = list.map((u) => {
-        const last = u.levels.length - 1, lbls = u.levels.map((l) => l.label);
-        return `<div class="gu-pk" data-gupk="${esc(u.id)}" data-gupg="${esc(u.page)}" data-q="${esc(`${u.name} ${packPageLabel(u.page)}`.toLowerCase())}" data-lvs="${esc(JSON.stringify(lbls))}" data-li="${last}">
+        const last = u.levels.length - 1, lbls = u.levels.map((l) => l.label), at = pickedAt(u);
+        // The next Gen's heroes (not out yet) under a heading of their own.
+        const hd = u.notOut && genHd !== u.notOut.gen ? `<div class="gu-gh" data-gupg="hero_shards" data-gugh>Gen ${esc(String(u.notOut.gen))} <span class="gu-out">${esc(t("gu_out").replace("{d}", goalDayShort(u.notOut.rel)))}</span></div>` : "";
+        if (u.notOut) genHd = u.notOut.gen;
+        const pic = u.group ? `<span class="gu-grp">${u.group.slice(0, 3).map((x) => (x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" />` : `<i>${esc(x.name.charAt(0))}</i>`)).join("")}</span>`
+          : u.img ? `<img class="${u.face ? "face" : ""}" src="${esc(u.img)}" alt="" loading="lazy" />` : `<i>${esc(u.name.charAt(0))}</i>`;
+        return `${hd}<div class="gu-pk" data-gupk="${esc(u.id)}" data-gupg="${esc(u.page)}" data-q="${esc(`${u.name} ${packPageLabel(u.page)}${u.group ? " " + u.group.map((x) => x.name).join(" ") : ""}`.toLowerCase())}" data-lvs="${esc(JSON.stringify(lbls))}" data-li="${last}">
           <button type="button" class="gu-cb" data-gutick aria-pressed="false" aria-label="${esc(u.name)}">&#10003;</button>
-          ${u.img ? `<img class="${u.face ? "face" : ""}" src="${esc(u.img)}" alt="" loading="lazy" />` : `<i>${esc(u.name.charAt(0))}</i>`}
-          <span class="gu-pt"><b>${esc(u.name)}</b><small>${esc(t("gu_on_page").replace("{a}", u.now).replace("{b}", lbls[last]))} · ${esc(packPageLabel(u.page))}</small></span>
+          ${pic}
+          <span class="gu-pt"><b>${esc(u.name)}</b><small>${esc(t("gu_on_page").replace("{a}", u.now).replace("{b}", lbls[last]))} · ${esc(packPageLabel(u.page))}${u.group ? ` · ${esc(t("gu_grp_n").replace("{n}", u.group.length))}` : ""}${at.length ? ` · ${esc(t("gu_goal_at").replace("{x}", at.join(", ")))}` : ""}</small></span>
           <span class="gu-st gu-ps"><button type="button" data-gupkstep="-1" aria-label="&minus;" ${last <= 0 ? "disabled" : ""}>&minus;</button><b>${esc(lbls[last])}</b><button type="button" data-gupkstep="1" aria-label="+" disabled>+</button></span>
           <span class="gu-pv">${esc(lbls[last])}</span></div>`;
       }).join("");
@@ -26547,26 +26706,40 @@ async function renderBudgetsPage(opts = {}) {
         <button type="button" class="btn gu-save" data-gusave disabled>${esc(t("gu_save").replace("{n}", 0))}</button>
       </div>`;
     };
-    // Hero targets: each hero's own target, push first, extra heroes, and
-    // "each new Gen: push 2 heroes first" (asks when a new Gen is out).
+    // Hero targets: each hero's stars and widgets target (− / +), heroes at their
+    // targets folded into one green line, the next Gen's heroes (not out yet) under
+    // their own heading with "+ Add as goals", "+ Add a hero". (No push / pick-2
+    // any more: saved `push` / `pushGen` are left as they are and not read.)
     const heroEdHtml = () => {
       // Shown while the Heroes page is ticked, even with nothing to buy (to add heroes).
       if (!included("hero_shards") || !HERO_PLAN_LAST || !HERO_TARGETS) return "";
       const HT = HERO_TARGETS, rows = HERO_PLAN_LAST.rows, heroes = HERO_PLAN_LAST.heroes || [], wMax = widgetMaxLevel();
-      const opts = (from, to, v, fmt) => { let o = ""; for (let n = from; n <= to; n++) o += `<option value="${n}"${n === v ? " selected" : ""}>${esc(fmt(n))}</option>`; return o; };
+      const face = (h) => { const img = h.image_url || HERO_IMG_BY_NAME[h.name]; return img ? `<img src="${esc(img)}" alt="" loading="lazy" />` : `<i>${esc(h.name.charAt(0))}</i>`; };
+      const atTarget = (r) => r.step >= r.tStep && (!r.hasWidget || r.wLevel >= r.tW);
+      const stepper = (attr, v, lo, hi, fmt, dis, lab) => `<span class="gu-st ht-st"><button type="button" data-htstep="${attr}|-1" ${dis || v <= lo ? "disabled" : ""} aria-label="${esc(lab)} &minus;">&minus;</button><b>${esc(fmt(v))}</b><button type="button" data-htstep="${attr}|1" ${dis || v >= hi ? "disabled" : ""} aria-label="${esc(lab)} +">+</button></span>`;
       const line = (r) => {
-        const T = HT.heroes[r.hero.id] || {}, st = T.stars != null ? Number(T.stars) : 5, w = T.widget != null ? Number(T.widget) : wMax, img = r.hero.image_url || HERO_IMG_BY_NAME[r.hero.name];
-        return `<div class="bud-ht-r" data-hthero="${esc(r.hero.id)}">
-          ${img ? `<img src="${esc(img)}" alt="" loading="lazy" />` : `<i>${esc(r.hero.name.charAt(0))}</i>`}
-          <span class="bud-ht-n"><b>${esc(r.hero.name)}</b><small>Gen ${esc(String(r.hero.generation || "?"))}${r.inRoster ? "" : ` \u00b7 ${esc(t("ht_added"))}`}${r.notOut ? ` \u00b7 ${esc(t("ht_not_out"))}${r.notOut.date ? ` ${esc(heroGenNotOutShort(r.notOut))}` : ""}` : ""}</small></span>
-          <span class="bud-ht-ctl">
-            <label class="bud-ht-c"><input type="checkbox" data-htpush ${T.push ? "checked" : ""} /> ${esc(t("ht_push"))}</label>
-            <select data-htstars aria-label="${esc(t("ht_stars"))}" ${T.later ? "disabled" : ""}>${opts(1, 5, st, (n) => `${n}\u2605`)}</select>
-            ${r.hasWidget ? `<select data-htw aria-label="${esc(t("ht_widgets"))}" ${T.later ? "disabled" : ""}>${opts(0, wMax, w, (n) => `${t("ht_widgets")} ${n}`)}</select>` : ""}
-            <label class="bud-ht-c"><input type="checkbox" data-htlater ${T.later ? "checked" : ""} /> ${esc(t("ht_later"))}</label>
-            ${r.inRoster ? "" : `<button type="button" class="bud-ht-x" data-htrm aria-label="${esc(t("goal_remove"))}">&times;</button>`}
-          </span></div>`;
+        const h = r.hero, T = HT.heroes[h.id] || {}, st = T.stars != null ? Number(T.stars) : 5, w = T.widget != null ? Number(T.widget) : wMax;
+        const hall = HALL_OF_HEROES_HERO[Number(h.generation)] === h.name, src = heroSourceLabel(heroSource(h.name, h.generation));
+        const sub = [troopDisplayName(r.troop || h.troop_type || ""), !hall ? src : "", r.unlock > 0 ? t("ht_unlock").replace("{n}", r.unlock) : "", !r.inRoster && !r.notOut ? t("ht_added") : ""].filter(Boolean).join(" \u00b7 ");
+        const later = !r.notOut ? `<label class="bud-ht-c"><input type="checkbox" data-htlater ${T.later ? "checked" : ""} /> ${esc(t("ht_later"))}</label>` : "";
+        return `<div class="bud-ht-r ht2" data-hthero="${esc(h.id)}">
+          <div class="ht2-h">${face(h)}<span class="bud-ht-n"><b>${esc(h.name)}${hall ? ` <span class="ht-hall">&#9733; ${esc(t("tl_src_hall"))}</span>` : ""}</b><small>${esc(sub)}</small></span>${later}${r.inRoster ? "" : `<button type="button" class="bud-ht-x" data-htrm aria-label="${esc(t("goal_remove"))}">&times;</button>`}</div>
+          <div class="ht2-c"><span class="ht2-k"><span>${esc(t("ht_stars_t"))}</span>${stepper("s", st, 1, 5, (n) => `${n}\u2605`, T.later, t("ht_stars_t"))}</span>${r.hasWidget ? `<span class="ht2-k"><span>${esc(t("ht_widgets_t"))}</span>${stepper("w", w, 0, wMax, (n) => String(n), T.later, t("ht_widgets_t"))}</span>` : ""}</div>
+        </div>`;
       };
+      const isDone = (r) => !r.notOut && atTarget(r) && !(HT.heroes[r.hero.id] || {}).later;
+      const done = rows.filter(isDone), open = rows.filter((r) => !r.notOut && !isDone(r)), next = rows.filter((r) => r.notOut);
+      const gens = [...new Set(done.map((r) => Number(r.hero.generation)).filter(Boolean))].sort((a, b) => b - a);
+      const doneHtml = done.length ? `<button type="button" class="ht-done" data-htdone aria-expanded="${BUDGET_HT_DONE_OPEN}"><span class="ht-faces">${done.slice(0, 3).map((r) => face(r.hero)).join("")}</span><span class="ht-done-t"><b>&#10003; ${esc(t(done.length === 1 ? "ht_done_1" : "ht_done_n").replace("{n}", done.length))}</b><small>${esc(done.map((r) => r.hero.name).join(", "))}${gens.length ? ` \u00b7 ${gens.map((g) => `Gen ${g}`).join(", ")}` : ""}</small></span><span class="ht-done-a">${BUDGET_HT_DONE_OPEN ? "&#9662;" : "&#9656;"}</span></button>${BUDGET_HT_DONE_OPEN ? done.map(line).join("") : ""}` : "";
+      // The next Gen's heroes, by Gen, with "+ Add as goals" (stars + widgets of each, not already goals).
+      const nextGens = [...new Set(next.map((r) => Number(r.hero.generation)))].sort((a, b) => a - b);
+      const goalKeys = new Set(((BUDGET_GOALS && BUDGET_GOALS.goals) || []).filter((e) => e.page === "hero_shards").map((e) => e.key));
+      const nextHtml = nextGens.map((g) => {
+        const list = next.filter((r) => Number(r.hero.generation) === g), info = goalNotOutInfo(g);
+        const add = list.flatMap((r) => [`${r.hero.id}|s`].concat(r.hasWidget && r.tW > r.wLevel ? [`${r.hero.id}|w`] : []).filter((k) => !goalKeys.has(k) && (k.endsWith("|w") || r.tStep > r.step)));
+        return `<div class="ht-gh"><b>Gen ${esc(String(g))}</b>${info ? `<span class="gu-out">${esc(t("gu_out").replace("{d}", goalDayShort(info.rel)))}</span>` : ""}</div>${list.map(line).join("")}
+          ${add.length ? `<button type="button" class="btn ht-addg" data-htaddgoals="${esc(add.join(","))}">${esc(t("ht_add_goals"))}</button><div class="meta ht-addg-n">${esc(t("ht_add_goals_n").replace("{n}", add.length))}</div>` : ""}`;
+      }).join("");
       const listed = new Set(rows.map((r) => r.hero.id));
       const addable = heroes.filter((h) => !listed.has(h.id) && !heroGenNotOut(h.generation));
       // The next Gen's heroes (not out yet) can be planned ahead; later Gens stay hidden.
@@ -26574,14 +26747,9 @@ async function renderBudgetsPage(opts = {}) {
       const addNext = nextGen ? heroes.filter((h) => !listed.has(h.id) && Number(h.generation) === nextGen && heroGenNotOut(h.generation)) : [];
       const nextInfo = addNext.length ? heroGenNotOut(nextGen) : null;
       const optH = (h, soon) => `<option value="${esc(h.id)}">Gen ${esc(String(h.generation || "?"))} \u00b7 ${esc(h.name)}${soon ? ` \u00b7 ${esc(t("ht_not_out"))}${nextInfo && nextInfo.date ? ` \u00b7 ${esc(heroGenNotOutShort(nextInfo))}` : ""}` : ""}</option>`;
-      const gen = newGenGen(), genHeroes = gen ? heroes.filter((h) => Number(h.generation) === gen) : [];
-      const pushed = genHeroes.filter((h) => (HT.heroes[h.id] || {}).push).length;
-      const prompt = HT.pushGen && genHeroes.length > 2 && pushed < 2 ? `<div class="bud-ht-gen"><b>${esc(t("ht_gen_pick").replace("{g}", gen))}</b><div class="bud-g-chips">${genHeroes.map((h) => `<button type="button" data-htpick="${esc(h.id)}" class="${(HT.heroes[h.id] || {}).push ? "on" : ""}">${esc(h.name)}</button>`).join("")}</div></div>` : "";
-      return `<details class="bud-ht"${BUDGET_HT_OPEN ? " open" : ""}><summary>${esc(t("ht_title"))} <span class="meta">(${rows.length})</span></summary>
-        <p class="meta bud-g-desc">${esc(t("ht_desc"))}</p>
-        ${prompt}${rows.map(line).join("")}
+      return `<details class="bud-ht ht2-box"${BUDGET_HT_OPEN ? " open" : ""}><summary><span>${esc(t("ht_title"))}</span><span class="ht-fold">${BUDGET_HT_OPEN ? `&#9652; ${esc(t("g1_hide"))}` : `&#9662; ${esc(t("g1_show"))}`}</span></summary>
+        ${doneHtml}${open.length ? `<div class="ht-gh"><b>${esc(t("ht_to_go"))}</b></div>${open.map(line).join("")}` : ""}${nextHtml}
         ${addable.length || addNext.length ? `<div class="bud-ht-add"><select data-htadd aria-label="${esc(t("ht_add"))}"><option value="">${esc(t("ht_add"))}</option>${addNext.length ? `<optgroup label="${esc(t("ht_add_next").replace("{g}", nextGen).replace("{date}", nextInfo && nextInfo.date ? heroGenNotOutShort(nextInfo) : ""))}">${addNext.map((h) => optH(h, true)).join("")}</optgroup>` : ""}${addable.length && addNext.length ? `<optgroup label="${esc(t("ht_add_out"))}">` : ""}${addable.map((h) => optH(h, false)).join("")}${addable.length && addNext.length ? "</optgroup>" : ""}</select></div>` : ""}
-        <label class="bset-row" style="cursor:pointer;"><span class="bset-l">${esc(t("ht_pushgen"))}<small>${esc(t("ht_pushgen_sub"))}</small></span><input type="checkbox" class="bset-sw" data-htpushgen ${HT.pushGen ? "checked" : ""} /></label>
       </details>`;
     };
     const next = dates ? goals.findIndex((g, i) => dates[i] && !dates[i].done) : -1;
@@ -26591,9 +26759,12 @@ async function renderBudgetsPage(opts = {}) {
     const sumHtml = !plan || planPending ? ""
       : dlPlan ? `<div class="bud-g-sum${cantMeet ? " warn" : ""}">${esc(t("goal_with_dates").replace("{v}", money(total)).replace("{d}", (total - baseTotal >= 0.5 ? "+" : "") + money(total - baseTotal)).replace("{w}", money(baseTotal)))}${cantMeet ? `<br>${esc(t("goal_dates_cant"))}` : ""}</div>`
       : `<div class="bud-g-sum">${esc(t("goal_same_path").replace("{v}", money(total)).replace("{date}", fmtDate(plan.days || 0)))}</div>`;
+    // A goal of a hero not out yet: what the plan does before the release.
+    const relFirst = Math.min(...goals.filter((g) => g.up && g.up.notOut).map((g) => g.up.notOut.rel));
+    const outInfoHtml = isFinite(relFirst) ? `<div class="gu-info"><i>i</i><span>${esc(t("gu_out_info").replace("{d}", goalDayShort(relFirst)))}</span></div>` : "";
     const goalsCard = `<div class="t12x-card bud-goals" style="margin-top:12px;">
       <button type="button" class="bud-g-head" data-goalsfold aria-expanded="${BUDGET_GOALS_OPEN}"><span class="t12x-title" style="margin:0;">${esc(t("goals_title"))}</span>${adminOnlyTagOn("goals") ? `<span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span>` : ""}<span class="bud-g-arrow">${BUDGET_GOALS_OPEN ? "&#9662;" : "&#9656;"}</span></button>
-      ${BUDGET_GOALS_OPEN ? `${nGoals ? `${goals.filter((g) => !g.rest).length > 1 ? arrangeBarHtml("goals", "", "bud-g-arr") : ""}<ol class="bud-g-list"${arrangeHostAttr("goals")}>${goals.map(rowHtml).join("")}</ol>` : `<div class="meta gu-empty">${esc(t("gu_empty"))}</div>`}
+      ${BUDGET_GOALS_OPEN ? `${outInfoHtml}${nGoals ? `${goals.filter((g) => !g.rest).length > 1 ? arrangeBarHtml("goals", "", "bud-g-arr") : ""}<ol class="bud-g-list"${arrangeHostAttr("goals")}>${goals.map(rowHtml).join("")}</ol>` : `<div class="meta gu-empty">${esc(t("gu_empty"))}</div>`}
       ${restHtml()}
       ${addHtml()}
       ${heroEdHtml()}`
