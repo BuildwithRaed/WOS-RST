@@ -1669,7 +1669,11 @@ const T = {
   bs_hv_counted: { en: "{g} counted as {item}" },
   bs_hv_lab: { en: "Research Lab" },
   bs_hv_lab_left: { en: "{left} refinements left this week" },
-  bs_hv_lab_update: { en: "Done some already? Update" },
+  bs_hv_lab_ok: { en: "On track" },
+  bs_hv_lab_ok_today: { en: "On track · today" },
+  bs_hv_lab_ok_tip: { en: "I followed the plan up to today: the game's count is the plan's {n}" },
+  bs_hv_lab_upd: { en: "Update in Lab" },
+  bs_hv_lab_cap: { en: "Already refined more or less? Update the count in the Lab." },
   bs_hv_chests: { en: "from {n} chests" },
   bs_hv_chest: { en: "Chests" },
   bs_hv_gear: { en: "Hero gear" },
@@ -23013,6 +23017,27 @@ function rfcLabWeekLeft() {
   const left = Math.max(0, planWeek - done);
   return { share: Math.min(1, Math.max(0, left / planWeek)), left };
 }
+// "✓ On track" (Backpack box pop-up, Research Lab row): the person followed the plan
+// up to and including today, so the game's count = the plan's tries Mon → today (B).
+// Saved like the Lab's "Game says" (calc_state rfc_lab.game = { wk, count, on }).
+function rfcLabOnTrackNow() {
+  const st = RFC_LAB_STATE || RFC_LAB_RATE_ST;
+  if (!st || !st.game) return false;
+  const w = rfcLabWeek(st);
+  return !!w.game && w.game.on === packDayKey(packStartOfToday()) && w.game.typed === w.planSoFar;
+}
+async function rfcLabOnTrack() {
+  const base = RFC_LAB_STATE || RFC_LAB_RATE_ST || {};
+  const w = rfcLabWeek(base);
+  const game = { wk: w.wkKey, count: w.planSoFar, on: packDayKey(packStartOfToday()) };
+  if (RFC_LAB_STATE) { RFC_LAB_STATE.game = game; saveCalcState("rfc_lab", RFC_LAB_STATE); }
+  else {
+    // Not opened the Lab this visit: keep every saved field, only the count changes.
+    const saved = (await loadCalcState("rfc_lab")) || {};
+    saveCalcState("rfc_lab", { ...saved, game });
+  }
+  if (RFC_LAB_RATE_ST && RFC_LAB_RATE_ST !== RFC_LAB_STATE) RFC_LAB_RATE_ST.game = game;
+}
 function rfcLabApplyRate(st) {
   RFC_LAB_RATE_ST = st || null;
   const p = rfcLabOn(st) ? rfcLabChosenPlan(st) : null;
@@ -28028,8 +28053,13 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       rows.push(row(pic(iconFor(from)), label, sub, q, true));
     });
     // This week's Research Lab refinements still left (counted here once).
-    if (lab) rows.push(row(pic(materialIconSrc("Refined FC") || "icons/item_icon_100082.png"), t("bs_hv_lab"), t("bs_hv_lab_left").replace("{left}", Math.round(lab.labLeft || 0).toLocaleString()), lab.getQty, true)
-      .replace("</small></span>", `</small><button type="button" class="bs-hv-lab" data-bshvlab>${esc(t("bs_hv_lab_update"))} &rsaquo;</button></span>`));
+    if (lab) {
+      rows.push(row(pic(materialIconSrc("Refined FC") || "icons/item_icon_100082.png"), t("bs_hv_lab"), t("bs_hv_lab_left").replace("{left}", Math.round(lab.labLeft || 0).toLocaleString()), lab.getQty, true));
+      // "✓ On track" (the plan's count up to today) or "Update in Lab ›" (the Lab's Game says window).
+      let ok = false, n = 0;
+      try { ok = rfcLabOnTrackNow(); n = rfcLabWeek(RFC_LAB_STATE || RFC_LAB_RATE_ST || {}).planSoFar; } catch (e) { ok = false; }
+      rows.push(`<div class="bs-hv-la"><div class="bs-hv-lb"><button type="button" class="bs-hv-ok${ok ? " on" : ""}" data-bshvlabok${ok ? " disabled" : ""} title="${esc(t("bs_hv_lab_ok_tip").replace("{n}", n.toLocaleString()))}">&#10003; ${esc(t(ok ? "bs_hv_lab_ok_today" : "bs_hv_lab_ok"))}</button><button type="button" class="bs-hv-up" data-bshvlab>${esc(t("bs_hv_lab_upd"))} &rsaquo;</button></div><div class="bs-hv-cap">${esc(t("bs_hv_lab_cap"))}</div></div>`);
+    }
     if (chest > 0) {
       // One row per chest that opens into this item (Chief Gear Chest …).
       const per = (itemPageMaps().fixed[calcKey || "chief_gear"] || []).map((ch) => {
@@ -28183,6 +28213,14 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
         owned[name] = backpackAmountFor(name, link.bp);
         ownedChanged(name);
       },
+      // Research Lab "✓ On track": saved like the Lab's Game says, then the page's boxes
+      // and this pop-up are worked out again (refinements left, You have, Spare).
+      onLabOk: async () => {
+        await rfcLabOnTrack();
+        ownedChanged(name, true);
+        const md = document.getElementById("bsEditModal");
+        if (md && md.style.display !== "none") editTileModal(name);
+      },
     });
   }
 
@@ -28253,15 +28291,19 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
 
   // A box changed (typed, or put back to the Backpack amount): update the
   // status lines in place - never the inputs, which would steal focus.
-  const ownedChanged = (name) => {
-    budgetInvalidate();
-    saveCalcState(`material_owned_${calcKey || "chief_gear"}`, owned);
+  // noSave: nothing typed changed (the Research Lab's count did): only work the boxes out again.
+  const ownedChanged = (name, noSave) => {
+    if (!noSave) {
+      budgetInvalidate();
+      saveCalcState(`material_owned_${calcKey || "chief_gear"}`, owned);
+    }
     const tile = summaryOn && el.querySelector(`[data-bsedit="${window.CSS.escape(name)}"]`);
-    if (tile) tile.outerHTML = editRowHtml(name);
+    if (tile && !noSave) tile.outerHTML = editRowHtml(name);
     const note = !summaryOn && el.querySelector(`[data-bplinknote="${window.CSS.escape(name)}"]`);
     if (note) note.innerHTML = backpackLinkNoteHtml(calcKey || "chief_gear", name, link);
     // A chest / convertible item changes other materials' status too.
     recomputeEffOwned();
+    if (noSave && summaryOn) names.forEach((n) => { const tl = el.querySelector(`[data-bsedit="${window.CSS.escape(n)}"]`); if (tl) tl.outerHTML = editRowHtml(n); });
     noteEff();
     reachRefresh();
     // Research pages: a chest box comes and goes with what it covers.
@@ -34819,8 +34861,11 @@ function plxAmountModal(o) {
   if (!o.top) modal.onpointerdown = modal.onpointermove = modal.onpointerup = modal.onpointercancel = null;
   modal.onclick = (ev) => {
     if (sw && sw.dragged) { sw.dragged = false; return; }
-    // Research Lab row "Done some already? Update ›": the Lab with its Game says window.
+    // Research Lab row "Update in Lab ›": the Lab with its Game says window.
     if (ev.target.closest("[data-bshvlab]")) { close(); RFC_OPEN_GAME = true; goToTab("rfclab"); return; }
+    // "✓ On track": the plan's count up to today becomes the game's count; the page redraws this pop-up.
+    const okb = ev.target.closest("[data-bshvlabok]");
+    if (okb) { if (!okb.disabled && o.onLabOk) { okb.disabled = true; o.onLabOk(); } return; }
     // "N goes to Alloy ›": open that item's box on the same page.
     const go = ev.target.closest("[data-bsxgo]");
     if (go) {
@@ -35052,7 +35097,7 @@ function bsGroupModal(o) {
   modal.onclick = (ev) => {
     if (sw.dragged) { sw.dragged = false; return; }
     if (ev.target === modal || ev.target.closest("[data-bsgclose]")) { close(); return; }
-    // Research Lab row "Done some already? Update ›": the Lab with its Game says window.
+    // Research Lab row "Update in Lab ›": the Lab with its Game says window.
     if (ev.target.closest("[data-bshvlab]")) { close(); RFC_OPEN_GAME = true; goToTab("rfclab"); return; }
     // "N goes to Alloy ›": open that item's box on the same page.
     const go = ev.target.closest("[data-bsxgo]");
