@@ -2120,6 +2120,7 @@
 "t:pkb_new_heroes":"Yeni kahramanlar",
 "t:pkb_ng_in":"{n} gün sonra",
 "t:admin_update_reload":"Site güncellendi. Yönetimi açmak için sayfayı yenile.",
+"t:page_update_reload":"Site güncellendi. Bu sayfayı açmak için sayfayı yenile.",
 "t:scan_tab_lab":"Araştırma Laboratuvarı",
 "t:scan_lab":"Araştırma Laboratuvarı ekranı",
 "t:scan_lab_hint":"Haftalık Süper arıtmaları (ve üstteki Arıtılmış FC / Ateş Kristalini) okur.",

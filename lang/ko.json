@@ -2120,6 +2120,7 @@
 "t:pkb_new_heroes":"새 영웅",
 "t:pkb_ng_in":"{n}일 후",
 "t:admin_update_reload":"사이트가 업데이트되었습니다. 관리자를 열려면 페이지를 새로고침하세요.",
+"t:page_update_reload":"사이트가 업데이트되었습니다. 이 페이지를 열려면 페이지를 새로고침하세요.",
 "t:scan_tab_lab":"연구소",
 "t:scan_lab":"연구소 화면",
 "t:scan_lab_hint":"주간 슈퍼 정제(와 위쪽의 정제 결정 / 화염 결정)를 읽습니다.",

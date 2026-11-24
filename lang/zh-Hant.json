@@ -2120,6 +2120,7 @@
 "t:pkb_new_heroes":"新英雄",
 "t:pkb_ng_in":"{n} 天後",
 "t:admin_update_reload":"網站已更新。請重新整理頁面以開啟管理。",
+"t:page_update_reload":"網站已更新。請重新整理頁面以開啟此頁面。",
 "t:scan_tab_lab":"研究實驗室",
 "t:scan_lab":"研究實驗室畫面",
 "t:scan_lab_hint":"讀取每週超級精煉（以及頂部的精煉火晶 / 火晶）。",

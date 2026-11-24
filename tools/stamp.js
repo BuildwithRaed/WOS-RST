@@ -1,10 +1,12 @@
 // Makes the packed (minified) copies the site loads and keeps their "?v=<hash>" links
 // in step with them. Not part of the site (nothing loads it); run it with Node after
-// editing app.js / app.css / admin.js / scan.js:
+// editing app.js / app.css or a file app.js loads on demand (LAZY below: admin.js /
+// scan.js / packs.js / gallery.js):
 //   (once) cd tools && npm ci   -> installs the pinned minifiers (terser, csso)
-//   node tools/stamp.js          -> writes admin.min.js, scan.min.js, app.min.css,
-//                                   app.min.js and updates the links in admin.js /
-//                                   scan.js / app.js / index.html
+//   node tools/stamp.js          -> writes admin.min.js, scan.min.js, packs.min.js,
+//                                   gallery.min.js, app.min.css, app.min.js and updates
+//                                   the build ids / links in those files, app.js and
+//                                   index.html
 //   node tools/stamp.js --check  -> only says whether the copies and links are right
 //                                   (exit code 1 if a copy is stale or a link is wrong)
 // The readable files are the source; the .min copies are committed so the site still
@@ -15,10 +17,12 @@
 // inside functions are shortened; comments and spaces go. Function / class names are
 // kept too (keep_fnames), so fn.name stays the same.
 // The hash is the first 10 hex digits of the file's SHA-256 (sw.js checks it before
-// keeping a copy). admin.min.js and scan.min.js carry their own build id
-// (window.ADMIN_BUILD / window.SCAN_BUILD): the id is the hash of the packed copy with
-// that value as "0000000000", written into admin.js / scan.js too. They are done first
-// (app.js links to them), then app.min.js and app.min.css (index.html links to them).
+// keeping a copy). The files app.js loads on demand (LAZY) carry their own build id
+// (window.ADMIN_BUILD, window.SCAN_BUILD, window.PACKS_BUILD, window.GALLERY_BUILD):
+// the id is the hash of the packed copy with that value as "0000000000", written into
+// the readable file too. They are done first (app.js links to them in CODE_FILES, and
+// index.html's preload map to the page files), then app.min.js and app.min.css
+// (index.html links to them).
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
@@ -47,6 +51,10 @@ const packJs = async (src, text) => {
 };
 const packCss = (src, text) => banner(src) + csso.minify(text, { restructure: false, comments: false }).css + "\n";
 
+// Files app.js loads on demand (loadCode / CODE_FILES); LAZY_PAGES are the page files
+// index.html may preload (its small map for the page last open).
+const LAZY = ["admin", "scan", "packs", "gallery"];
+const LAZY_PAGES = ["packs", "gallery"];
 let bad = 0;
 const put = (f, next, why) => {
   if (readOr(f) === next) return;
@@ -58,10 +66,11 @@ const put = (f, next, why) => {
 const link = (text, name, h) => text.replace(new RegExp(name.replace(/\./g, "\\.") + "\\?v=[0-9a-f]+", "g"), `${name}?v=${h}`);
 
 (async () => {
-  // 1. admin.js -> admin.min.js and scan.js -> scan.min.js, each with its build id.
+  // 1. each LAZY file -> its packed copy, each with its build id.
   const ZERO = "0000000000";
   const ids = {};
-  for (const [name, VAR] of [["admin", "ADMIN_BUILD"], ["scan", "SCAN_BUILD"]]) {
+  for (const name of LAZY) {
+    const VAR = `${name.toUpperCase()}_BUILD`;
     const ID_RE = new RegExp(`^window\\.${VAR} = "[0-9a-f]*";$`, "m");
     let src = read(`${name}.js`);
     if (!ID_RE.test(src)) { console.log(`${name}.js: the window.${VAR} line is missing`); process.exit(1); }
@@ -75,13 +84,13 @@ const link = (text, name, h) => text.replace(new RegExp(name.replace(/\./g, "\\.
     put(`${name}.min.js`, zero.replace(slot, `window.${VAR}="${id}"`), "stale (run node tools/stamp.js)");
   }
 
-  // 2. app.js links to admin.min.js and scan.min.js; then app.js -> app.min.js.
+  // 2. app.js links to every LAZY packed copy; then app.js -> app.min.js.
   let app = read("app.js");
-  for (const name of ["admin", "scan"]) {
+  for (const name of LAZY) {
     if (!new RegExp(`${name}\\.min\\.js\\?v=[0-9a-f]+`).test(app)) { console.log(`app.js: the ${name}.min.js?v= link is missing`); process.exit(1); }
     app = link(app, `${name}.min.js`, ids[name]);
   }
-  put("app.js", app, `admin.min.js?v= / scan.min.js?v= should be ${ids.admin} / ${ids.scan}`);
+  put("app.js", app, `the ${LAZY.map((n) => `${n}.min.js?v=`).join(" / ")} links should be ${LAZY.map((n) => ids[n]).join(" / ")}`);
   const appMin = await packJs("app.js", app);
   put("app.min.js", appMin, "stale (run node tools/stamp.js)");
 
@@ -89,13 +98,17 @@ const link = (text, name, h) => text.replace(new RegExp(name.replace(/\./g, "\\.
   const cssMin = packCss("app.css", read("app.css"));
   put("app.min.css", cssMin, "stale (run node tools/stamp.js)");
 
-  // 4. index.html links to the packed copies.
+  // 4. index.html links to the packed copies (and its preload map to the page files).
   let page = read("index.html");
   for (const [name, text] of [["app.min.js", appMin], ["app.min.css", cssMin]]) {
     if (!page.includes(`${name}?v=`)) { console.log(`index.html: the ${name}?v= link is missing`); process.exit(1); }
     page = link(page, name, sha(text));
   }
-  put("index.html", page, "app.min.js / app.min.css links out of date");
+  for (const name of LAZY_PAGES) {
+    if (!page.includes(`${name}.min.js?v=`)) { console.log(`index.html: the ${name}.min.js?v= link (preload map) is missing`); process.exit(1); }
+    page = link(page, `${name}.min.js`, ids[name]);
+  }
+  put("index.html", page, "app.min.js / app.min.css / page file links out of date");
 
   if (check) { console.log(bad ? "out of date: run node tools/stamp.js" : "packed copies and links up to date"); process.exit(bad ? 1 : 0); }
   if (!bad) console.log("packed copies and links up to date");

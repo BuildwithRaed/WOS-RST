@@ -2121,6 +2121,7 @@
 "t:pkb_new_heroes":"Nuevos héroes",
 "t:pkb_ng_in":"en {n} días",
 "t:admin_update_reload":"El sitio se actualizó. Recarga la página para abrir Admin.",
+"t:page_update_reload":"El sitio se actualizó. Recarga la página para abrir esta página.",
 "t:scan_tab_lab":"Laboratorio de Investigación",
 "t:scan_lab":"Pantalla del Laboratorio de Investigación",
 "t:scan_lab_hint":"Lee los Super refinamientos semanales (y el FC Refinado / Cristal de Fuego de arriba).",

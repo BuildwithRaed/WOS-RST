@@ -2121,6 +2121,7 @@
 "t:pkb_new_heroes":"新英雄",
 "t:pkb_ng_in":"{n} 天后",
 "t:admin_update_reload":"网站已更新。请刷新页面以打开管理。",
+"t:page_update_reload":"网站已更新。请刷新页面以打开此页面。",
 "t:scan_tab_lab":"研究实验室",
 "t:scan_lab":"研究实验室界面",
 "t:scan_lab_hint":"读取每周超级精炼（以及顶部的精炼火晶 / 火晶）。",
