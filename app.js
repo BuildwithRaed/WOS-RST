@@ -217,7 +217,9 @@ function preloadCalcStates() {
   }
   if (!CALC_STATE_PROMISE) {
     const uid = USER_ID;
-    CALC_STATE_PROMISE = sb(`calc_state?user_id=eq.${uid}&select=calc_name,state,updated_at`)
+    // The owner's undo backups ("backup_…") are left out: nothing on the pages
+    // reads them, and they're most of the read. loadCalcState reads one by itself.
+    CALC_STATE_PROMISE = sb(`calc_state?user_id=eq.${uid}&calc_name=not.like.backup*&select=calc_name,state,updated_at`)
       .then((rows) => {
         if (uid !== USER_ID) return;
         const map = {};
@@ -234,11 +236,15 @@ function preloadCalcStates() {
   }
   return CALC_STATE_PROMISE || Promise.resolve();
 }
+// States the bulk read above leaves out (the owner's backups): read on their own.
+function calcNotPreloaded(calcName) {
+  return /^backup/.test(String(calcName || ""));
+}
 async function loadCalcState(calcName) {
   await preloadCalcStates();
   if (CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID) {
     const v = CALC_STATE_CACHE[calcName];
-    return v === undefined ? null : cloneState(v);
+    if (v !== undefined || !calcNotPreloaded(calcName)) return v === undefined ? null : cloneState(v);
   }
   try {
     // Reading from the database directly: let a save of this state that's
@@ -257,7 +263,7 @@ async function loadCalcState(calcName) {
 // create the starter tables / templates a second time.
 async function calcFlagSet(calcName) {
   await preloadCalcStates();
-  if (CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID) return CALC_STATE_CACHE[calcName] != null;
+  if (CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID && (CALC_STATE_CACHE[calcName] != null || !calcNotPreloaded(calcName))) return CALC_STATE_CACHE[calcName] != null;
   try {
     const rows = await sb(`calc_state?user_id=eq.${USER_ID}&calc_name=eq.${encodeURIComponent(calcName)}&select=calc_name`);
     return !Array.isArray(rows) || rows.length > 0;
