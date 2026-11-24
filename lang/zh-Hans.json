@@ -2210,7 +2210,7 @@
 "t:pk_date_with_desc":"同一活动的两个表：此礼包在那个礼包的日子出现。只共享日期。",
 "t:pk_date_with_none":"—（自己的日期）",
 "t:pk_date_with_missing":"（找不到礼包：自己的日期）",
-"t:pk_date_follows":"跟随 {pack}：再次出现和下次日期在那里设置。“持续”仍是此礼包自己的。",
+"t:pk_date_follows":"跟随 {pack}：再次出现、下次日期和持续时间在那里设置。",
 "t:bp_lab_title":"研究实验室",
 "t:bp_lab_week":"本周",
 "t:bp_lab_super":"本周超级精炼",

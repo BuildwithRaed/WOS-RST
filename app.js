@@ -1310,7 +1310,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 129; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 130; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2996,7 +2996,7 @@ const T = {
   pk_ng_after_desc: { en: "Days from the day new heroes come (0 = the same day). Packs with the same dates follow this one." },
   pk_date_with_none: { en: "— (its own dates)" },
   pk_date_with_missing: { en: "(pack not found: own dates)" },
-  pk_date_follows: { en: "Follows {pack}: comes back and next date are set there. \"Lasts\" stays this pack's own." },
+  pk_date_follows: { en: "Follows {pack}: comes back, next date and how long it lasts are set there." },
   pk_visitor_start: { en: "Visitors can set when they start buying" },
   pk_visitor_start_desc: { en: "For cards that begin whenever the player first buys them, not on a fixed week." },
   mp_title: { en: "My packs" },
@@ -11301,7 +11301,7 @@ const SCAN_SUMMARY_ROWS = [[/\bgems?\b/i, "Gems"], [/\bmeat\b/i, "Meat"], [/\bwo
 const CODE_FILES = {
   admin: "admin.min.js?v=afc8ef38aa",
   scan: "scan.min.js?v=64a7ef20ff",
-  packs: "packs.min.js?v=afb90fc289",
+  packs: "packs.min.js?v=f248b1fa8f",
   gallery: "gallery.min.js?v=28a7717641",
   purchases: "purchases.min.js?v=eaee81a80b",
   budgets: "budgets.min.js?v=a42622de18",
@@ -13392,7 +13392,8 @@ function packLinkForBase(tableId, own) {
     hideVisitors: l.hideVisitors === true,
   };
   // "Same dates as": the leader's start day (its own date, or the viewer's
-  // own date for it) and its reset period; this pack keeps its window / limits.
+  // own date for it), its reset period and how long it lasts; this pack keeps
+  // its own limits.
   if (!own && !mine && !trig && !template && !out.newGen && l.reset !== "stack") {
     const lead = packDateLeader(tableId);
     const ll = lead ? packLinkForBase(lead, true) : null;
@@ -13402,12 +13403,13 @@ function packLinkForBase(tableId, own) {
       out.resetDay = ll.resetDay;
       out.resetDayDefault = ll.resetDayDefault;
       out.visitorDate = ll.visitorDate;
+      out.window = ll.window;
     }
   }
   // New Gen packs (Value Hero Pack → Hero Ascension
   // Training, Widget Pack → Exclusive Gear Forge): the follower comes with the
-  // leader's New Gen timing (packNewGenOffset follows the leader), keeping its
-  // own window / limits.
+  // leader's New Gen timing (packNewGenOffset follows the leader) and how long
+  // it lasts, keeping its own limits.
   if (!own && !mine && !trig && !template && out.newGen) {
     const lead = packDateLeader(tableId);
     const ll = lead ? packLinkForBase(lead, true) : null;
@@ -13416,6 +13418,7 @@ function packLinkForBase(tableId, own) {
       out.reset = ll.reset;
       out.resetDay = packNewGenAnchor(tableId) || ll.resetDay;
       out.resetDayDefault = ll.resetDayDefault;
+      out.window = ll.window;
     }
   }
   return out;

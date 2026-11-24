@@ -2209,7 +2209,7 @@
 "t:pk_date_with_desc":"Duas tabelas de um evento: este pacote vem nos dias daquele pacote. Só as datas são compartilhadas.",
 "t:pk_date_with_none":"— (datas próprias)",
 "t:pk_date_with_missing":"(pacote não encontrado: datas próprias)",
-"t:pk_date_follows":"Segue {pack}: a volta e a próxima data são definidas lá. \"dura\" continua sendo deste pacote.",
+"t:pk_date_follows":"Segue {pack}: o retorno, a próxima data e a duração são definidos lá.",
 "t:bp_lab_title":"Laboratório de Pesquisa",
 "t:bp_lab_week":"esta semana",
 "t:bp_lab_super":"super refinamentos esta semana",

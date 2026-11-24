@@ -4,7 +4,7 @@
 // its functions and variables join app.js's. Only names used by these pages alone
 // live here; anything another page (or admin.js / scan.js / the planner worker) uses
 // stays in app.js. The site loads the packed copy packs.min.js (tools/stamp.js).
-window.PACKS_BUILD = "afb90fc289";
+window.PACKS_BUILD = "f248b1fa8f";
 
 // A one-time flag ("…_seeded"): like loadCalcState, but a failed read counts
 // as "already done", so a network error can never make the Packs pages
@@ -2834,7 +2834,7 @@ async function renderPacksPageMain() {
             <span class="meta" data-packresetdayslabel style="font-size:11px; ${preset === "custom" ? "" : "display:none;"}">${esc(t("pack_days_short_long"))}</span>
         </span></div>
         <div class="bset-row pks-opt" data-pkanchorrow ${packDateLeaderShown(tb.id) ? "hidden" : ""}><span class="bset-l" data-packanchorlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_next_on"))}</span><span class="bset-c"><input type="date" data-packanchor value="${esc(link.resetDay || "")}" style="${typeof r === "number" ? "" : "display:none;"}" /></span></div>
-        <div class="bset-row pks-opt pks-nw"><span class="bset-l" data-packwindowlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(cap(t("pack_lasts_label")))}<small>${esc(t("pack_lasts_hint"))}</small></span><span class="bset-c"><input type="number" min="0" step="1" class="keep-w" data-packwindow value="${link.window || ""}" placeholder="0" title="${esc(t("pack_lasts_hint"))}" style="width:64px; ${typeof r === "number" ? "" : "display:none;"}" /><span class="meta" data-packwindowlabel2 style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_lasts_days"))}</span></span></div>
+        <div class="bset-row pks-opt pks-nw" data-pkwindowrow ${packDateLeaderShown(tb.id) ? "hidden" : ""}><span class="bset-l" data-packwindowlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(cap(t("pack_lasts_label")))}<small>${esc(t("pack_lasts_hint"))}</small></span><span class="bset-c"><input type="number" min="0" step="1" class="keep-w" data-packwindow value="${link.window || ""}" placeholder="0" title="${esc(t("pack_lasts_hint"))}" style="width:64px; ${typeof r === "number" ? "" : "display:none;"}" /><span class="meta" data-packwindowlabel2 style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_lasts_days"))}</span></span></div>
         <label class="bset-row" style="${typeof r === "number" && !link.sequential && link.buys > 1 ? "" : "display:none;"}" data-packbuyswrap>
             <span class="bset-l">${esc(t("pack_buys_per_reset"))}</span>
             <span class="bset-c"><input type="number" min="1" step="1" data-packbuys value="${link.buys}" style="width:64px;" /></span>
@@ -3144,7 +3144,7 @@ async function renderPacksPageMain() {
         }
         const lead = packDateLeaderShown(id);
         const leadTb = lead ? tables.find((x) => String(x.id) === lead) : null;
-        [box.querySelector("[data-pkresetrow]"), box.querySelector("[data-pkanchorrow]"), box.querySelector("[data-pkngafterrow]")].forEach((el) => { if (el) el.hidden = !!lead; });
+        [box.querySelector("[data-pkresetrow]"), box.querySelector("[data-pkanchorrow]"), box.querySelector("[data-pkwindowrow]"), box.querySelector("[data-pkngafterrow]")].forEach((el) => { if (el) el.hidden = !!lead; });
         const note = box.querySelector("[data-pkdwnote]");
         if (note) { note.hidden = !lead; note.textContent = "\u{1F517} " + t("pk_date_follows").replace("{pack}", leadTb ? leadTb.title || "" : ""); }
         // The window's "when" line and the list row follow the new dates.

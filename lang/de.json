@@ -2210,7 +2210,7 @@
 "t:pk_date_with_desc":"Zwei Tabellen eines Events: dieses Paket kommt an den Tagen des anderen. Nur die Daten werden geteilt.",
 "t:pk_date_with_none":"— (eigene Daten)",
 "t:pk_date_with_missing":"(Paket nicht gefunden: eigene Daten)",
-"t:pk_date_follows":"Folgt {pack}: Wiederkehr und nächstes Datum werden dort festgelegt. \"dauert\" bleibt die dieses Pakets.",
+"t:pk_date_follows":"Folgt {pack}: Wiederkehr, nächstes Datum und Dauer werden dort festgelegt.",
 "t:bp_lab_title":"Forschungslabor",
 "t:bp_lab_week":"diese Woche",
 "t:bp_lab_super":"Super-Veredelungen diese Woche",

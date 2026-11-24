@@ -2210,7 +2210,7 @@
 "t:pk_date_with_desc":"Due tabelle di uno stesso evento: questo pacchetto arriva nei giorni dell'altro. Si condividono solo le date.",
 "t:pk_date_with_none":"— (date proprie)",
 "t:pk_date_with_missing":"(pacchetto non trovato: date proprie)",
-"t:pk_date_follows":"Segue {pack}: ritorno e prossima data si impostano lì. \"dura\" resta di questo pacchetto.",
+"t:pk_date_follows":"Segue {pack}: ritorno, prossima data e durata si impostano lì.",
 "t:bp_lab_title":"Laboratorio di ricerca",
 "t:bp_lab_week":"questa settimana",
 "t:bp_lab_super":"super raffinazioni questa settimana",
