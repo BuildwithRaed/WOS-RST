@@ -1,10 +1,11 @@
 // Makes the packed (minified) copies the site loads and keeps their "?v=<hash>" links
 // in step with them. Not part of the site (nothing loads it); run it with Node after
 // editing app.js / app.css or a file app.js loads on demand (LAZY below: admin.js /
-// scan.js / packs.js / gallery.js):
+// scan.js / packs.js / gallery.js / purchases.js / budgets.js):
 //   (once) cd tools && npm ci   -> installs the pinned minifiers (terser, csso)
 //   node tools/stamp.js          -> writes admin.min.js, scan.min.js, packs.min.js,
-//                                   gallery.min.js, app.min.css, app.min.js and updates
+//                                   gallery.min.js, purchases.min.js, budgets.min.js,
+//                                   app.min.css, app.min.js and updates
 //                                   the build ids / links in those files, app.js and
 //                                   index.html
 //   node tools/stamp.js --check  -> only says whether the copies and links are right
@@ -18,7 +19,8 @@
 // kept too (keep_fnames), so fn.name stays the same.
 // The hash is the first 10 hex digits of the file's SHA-256 (sw.js checks it before
 // keeping a copy). The files app.js loads on demand (LAZY) carry their own build id
-// (window.ADMIN_BUILD, window.SCAN_BUILD, window.PACKS_BUILD, window.GALLERY_BUILD):
+// (window.ADMIN_BUILD, window.SCAN_BUILD, window.PACKS_BUILD, window.GALLERY_BUILD,
+// window.PURCHASES_BUILD, window.BUDGETS_BUILD):
 // the id is the hash of the packed copy with that value as "0000000000", written into
 // the readable file too. They are done first (app.js links to them in CODE_FILES, and
 // index.html's preload map to the page files), then app.min.js and app.min.css
@@ -53,8 +55,8 @@ const packCss = (src, text) => banner(src) + csso.minify(text, { restructure: fa
 
 // Files app.js loads on demand (loadCode / CODE_FILES); LAZY_PAGES are the page files
 // index.html may preload (its small map for the page last open).
-const LAZY = ["admin", "scan", "packs", "gallery"];
-const LAZY_PAGES = ["packs", "gallery"];
+const LAZY = ["admin", "scan", "packs", "gallery", "purchases", "budgets"];
+const LAZY_PAGES = ["packs", "gallery", "purchases", "budgets"];
 let bad = 0;
 const put = (f, next, why) => {
   if (readOr(f) === next) return;
