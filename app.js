@@ -3904,6 +3904,7 @@ const T = {
   pur_cnt_will: { en: "How many will you buy?" },
   pur_cnt_extra: { en: "+{n} extra" },
   pur_op_plan_pick: { en: "The plan's pick" },
+  pur_op_plan_prices: { en: "The plan's prices" },
   pur_op_plan_steps: { en: "The plan's steps ({n})" },
   pur_op_plan_card: { en: "The plan's card" },
   pur_op_other: { en: "Other prices in this pack" },
@@ -3975,6 +3976,7 @@ const T = {
   pur_a2_bought_mark: { en: "Bought" },
   pur_a2_n_prices: { en: "{n} prices" },
   pur_a2_then: { en: "+ {days}" },
+  pur_a2_none_today: { en: "Nothing to buy today — the rest comes on a later day" },
   pur_a2_unmark: { en: "Bought · tap to undo" },
   pur_o1_coming: { en: "Will buy" },
   pur_o1_box: { en: "Your packs" },
@@ -11305,7 +11307,7 @@ const CODE_FILES = {
   scan: "scan.min.js?v=64a7ef20ff",
   packs: "packs.min.js?v=f248b1fa8f",
   gallery: "gallery.min.js?v=28a7717641",
-  purchases: "purchases.min.js?v=e48e3ffd8e",
+  purchases: "purchases.min.js?v=fd5fdd0b3a",
   budgets: "budgets.min.js?v=a42622de18",
 };
 const CODE_P = {}, CODE_OK = {};
@@ -14039,7 +14041,7 @@ function packPlanSchedule(rows) {
   const out = rows.map(() => []);
   const pools = new Map();
   rows.forEach((r, i) => {
-    const k = `${r.title}|${r.perCycle}|${r.cycles}|${r.reset}|${r.resetDay}`;
+    const k = `${r.title}|${r.grp != null ? r.grp : ""}|${r.perCycle}|${r.cycles}|${r.reset}|${r.resetDay}`;
     if (!pools.has(k)) pools.set(k, { slots: slotsFor(r).map((x) => ({ ...x })), idx: [] });
     pools.get(k).idx.push(i);
   });
@@ -14934,7 +14936,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
   best.rows = best.picks.map((p) => {
     const g = groups[p.gi], o = g.offers[p.oi];
     const cycles = Math.ceil(perGroup[p.gi] / g.perCycle);
-    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, extra: o.extra, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
+    return { grp: p.gi, title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, extra: o.extra, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
   }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
   return best;
 }
@@ -18089,7 +18091,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       if (!picks.length) return;
       const rows = picks.map((pk) => {
         const g = res.groups[pk.gi], o = g.offers[pk.oi];
-        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, extra: o.extra, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
+        return { grp: pk.gi, title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, extra: o.extra, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
       }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
       const cand = { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades, picks, sequential: true };
       if (res.byTarget && cand.days > targetDays) return;
@@ -18416,7 +18418,7 @@ function plannerDeadlineLocal(payload) {
     pks.forEach((pk) => { perGroup[pk.gi] += pk.count; });
     return pks.map((pk) => {
       const g = base[pk.gi], o = g.offers[pk.oi];
-      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, extra: o.extra, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null, stage: pk.stage || 0 };
+      return { grp: pk.gi, title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, extra: o.extra, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null, stage: pk.stage || 0 };
     // (rows of one pack in the order of the parts that bought them, so an earlier
     // date's buys get the first buying days: packPlanSchedule fills them in this order)
     }).sort((a, b) => a.title.localeCompare(b.title) || a.stage - b.stage || a.price - b.price);
@@ -18615,7 +18617,7 @@ const BUDGET_PLANS_INDEX = "budget_plans_v2", BUDGET_PLAN_ITEM = "budget_plan_v2
 const BUDGET_PLANS_KEPT = 5;
 function budgetPlanFingerprint(payload) {
   tradeExtraSync();
-  const str = JSON.stringify({ v: 7, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
+  const str = JSON.stringify({ v: 8, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
   // cyrb53: a quick 53-bit hash of the text, plus its length.
   let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
   for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
@@ -18778,7 +18780,7 @@ function budgetMergedPlan(res, inc, targetDays) {
     if (Object.keys(tr.short).length) return null;
     const rows = picks.map((pk) => {
       const g = res.groups[pk.gi], o = g.offers[pk.oi];
-      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, extra: o.extra, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
+      return { grp: pk.gi, title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, extra: o.extra, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
     }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
     return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent && !x.isl), islShards: tr.trades.reduce((a, x) => a + (x.isl ? x.giveQty : 0), 0), picks, ...(Object.keys(bonusGot).length ? { bonus: bonusGot } : {}) };
   };
@@ -18948,7 +18950,7 @@ function budgetSpendSimulate(plan, sp) {
   const unit = rows.map((r) => packRowLocalUnits(r).reduce((a, b) => a + b, 0));
   const lists = [];
   const pools = new Map();
-  rows.forEach((r, i) => { const k = `${r.title}|${r.perCycle}|${r.cycles}|${r.reset}|${r.resetDay}`; if (!pools.has(k)) pools.set(k, []); pools.get(k).push(i); });
+  rows.forEach((r, i) => { const k = `${r.title}|${r.grp != null ? r.grp : ""}|${r.perCycle}|${r.cycles}|${r.reset}|${r.resetDay}`; if (!pools.has(k)) pools.set(k, []); pools.get(k).push(i); });
   pools.forEach((idx) => {
     const sum = idx.reduce((a, i) => a + rows[i].count, 0), r0 = rows[idx[0]];
     const shared = idx.length > 1 && Number.isFinite(r0.cycles) && sum <= r0.cycles * (r0.perCycle || 1);
