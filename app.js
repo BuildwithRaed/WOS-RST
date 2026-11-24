@@ -8122,6 +8122,11 @@ function advPillHtml(v, pre) {
   const cls = v < 5 ? "pur-cmp pur-cmp-budget" : v <= 20 ? "pur-cmp pur-cmp-target" : "trd-sc";
   return `<span class="${cls}">${pre ? `${esc(pre)} ` : ""}${bidiNum(`$${v.toFixed(2)}`)} / 1%</span>`;
 }
+// Right side of a ranked row: the total price big, $ per 1% as a small coloured tag under it.
+function advCcHtml(usdTxt, per, avg) {
+  const cls = per < 5 ? "g" : per <= 20 ? "a" : "r";
+  return `<span class="adv-cc"><b>${bidiNum(usdTxt)}</b>${Number.isFinite(per) ? `<em class="${cls}">${avg ? `${esc(t("adv_avg"))} ` : ""}${bidiNum(`$${per.toFixed(2)}/1%`)}</em>` : ""}</span>`;
+}
 function advGivesText(gain) {
   const by = {};
   Object.entries(gain).forEach(([k, v]) => { const [tr, st] = k.split("|"), r = Math.round(v * 100) / 100; const kk = `${st}|${r}`; (by[kk] = by[kk] || []).push(tr); });
@@ -8134,8 +8139,9 @@ function advRowHtml(r, o = {}) {
     const grp = r.members && r.members.length > 1, price = t("adv_tomes_price").replace("{n}", (r.tomes || 0).toLocaleString("en-US")).replace("{v}", advMoney(r.usd));
     r = { ...r, name: grp ? r.name : t("adv_buy_name").replace("{name}", r.base || r.name), usdTxt: grp ? `${price} ${t("adv_each")}` : price };
   }
-  const sub = [o.rank ? `#${r.rank}` : "", r.sub || "", o.page ? advTypeName(r.type) : "", `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`, advSetTxt(r), r.usdTxt || advMoney(r.usd) + (r.members && r.members.length > 1 ? ` ${t("adv_each")}` : "")].filter(Boolean).join(" · ");
-  return `<details class="pca-pk"><summary data-advrow="${esc(r.id)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span></span>${Number.isFinite(per) ? `<b class="pca-pr">${advPillHtml(per)}</b>` : ""}</summary></details>`;
+  const grp = r.members && r.members.length > 1;
+  const sub = [o.rank ? `#${r.rank}` : "", r.sub || "", o.page ? advTypeName(r.type) : "", `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`, advSetTxt(r), r.usdTxt && r.page === "skins" ? r.usdTxt.replace(/ \(\$[^)]*\)/, "") : grp ? t("adv_each") : ""].filter(Boolean).join(" · ");
+  return `<details class="pca-pk"><summary data-advrow="${esc(r.id)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span></span>${advCcHtml(advMoney(r.usd), per, false)}</summary></details>`;
 }
 // The Dashboard's numbers (now / max per troop + stat), kept when the Dashboard draws.
 let ADV_GAP = null;
@@ -8293,9 +8299,9 @@ function advTrackRowHtml(r, showPage) {
   const b = r.bar, w = (x) => Math.max(0, Math.min(100, (x / Math.max(1, b.top)) * 100));
   const one = r.single || r.n === 1, g = `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`;
   const price = r.single && r.tomes ? t("adv_tomes_price").replace("{n}", r.tomes.toLocaleString("en-US")).replace("{v}", advMoney(r.usd)) : advMoney(r.usd);
-  const sub = [`#${r.rank}`, showPage ? advTypeName(r.type) : "", g, price, one ? "" : t("adv_n_steps").replace("{n}", r.n)].filter(Boolean).join(" \u00b7 ");
+  const sub = [`#${r.rank}`, showPage ? advTypeName(r.type) : "", g, price === advMoney(r.usd) ? "" : price.replace(/ \(\$[^)]*\)/, ""), one ? "" : t("adv_n_steps").replace("{n}", r.n)].filter(Boolean).join(" \u00b7 ");
   const bar = one ? "" : `<span style="display:flex; align-items:center; gap:6px;"><span class="pc-bar" style="flex:1; margin-top:0;"><i style="width:${w(b.from)}%;"></i><i style="width:${w(b.to) - w(b.from)}%;"></i></span><small class="meta">&rarr; ${esc(r.lb)}</small></span>`;
-  return `<details class="pca-pk"><summary data-advtrack="${esc(r.track)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span>${bar}</span><b class="pca-pr">${advPillHtml(advPer(r), one ? "" : t("adv_avg"))}</b></summary></details>`;
+  return `<details class="pca-pk"><summary data-advtrack="${esc(r.track)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span>${bar}</span>${advCcHtml(advMoney(r.usd), advPer(r), !one)}</summary></details>`;
 }
 // To target sheet: totals, then every step with its own $ and $ per 1%; long middles fold.
 let ADV_TT_ALL = false;
