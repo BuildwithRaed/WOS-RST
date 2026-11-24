@@ -5,7 +5,7 @@
 // live here; anything another page (Budgets, the Menu, the Dashboard, admin.js /
 // scan.js / the planner worker) uses stays in app.js. The site loads the packed copy
 // purchases.min.js (tools/stamp.js).
-window.PURCHASES_BUILD = "2e55e72c4b";
+window.PURCHASES_BUILD = "f77230a2de";
 
 function packOpenSettingsOnPacks(id) {
   PACK_SETTINGS_FOCUS = String(id);
@@ -807,7 +807,7 @@ async function renderPurchasesPageMain() {
     const units = [];
     const unitOf = new Map();
     all.forEach((it, k) => {
-      const gk = it.done ? "" : String(it.tb.id);
+      const gk = it.done ? "" : `${it.tb.id}|${it.name}`;
       if (gk && unitOf.has(gk)) { unitOf.get(gk).kids.push(k); return; }
       const u = { gk, kids: [k] };
       if (gk) unitOf.set(gk, u);
