@@ -3007,6 +3007,7 @@
 "t:adv_n_not_counted":"o Contar está desligado, então não aparece no seu painel",
 "t:adv_n_pre":"inclui 1/{n} de {what} (necessário antes)",
 "t:adv_n_set3":"inclui o bônus de 3 peças +{v}% DEF todas as tropas",
+"t:adv_set_tag":"+bônus de conjunto {v}%",
 "t:adv_n_set6":"inclui o bônus de 6 peças +{v}% ATQ todas as tropas",
 "t:adv_n_set6_share":"inclui 1/{n} do bônus de 6 peças (+{v}% ATQ todas as tropas quando as {n} peças chegarem)",
 "t:adv_n_shining":"Shining City: comprado com Tomos Gloriosos",
