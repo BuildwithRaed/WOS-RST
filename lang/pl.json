@@ -3008,6 +3008,7 @@
 "t:adv_n_not_counted":"opcja Licz jest wyłączona, więc nie ma tego w panelu",
 "t:adv_n_pre":"w tym 1/{n} z {what} (najpierw wymagane)",
 "t:adv_n_set3":"w tym premia za 3 części +{v}% OBR wszystkie wojska",
+"t:adv_set_tag":"+premia za zestaw {v}%",
 "t:adv_n_set6":"w tym premia za 6 części +{v}% ATK wszystkie wojska",
 "t:adv_n_set6_share":"w tym 1/{n} premii za 6 części (+{v}% ATK wszystkie wojska, gdy wszystkie {n} części tam dotrą)",
 "t:adv_n_shining":"Shining City: kupowane za Chwalebne Tomy",

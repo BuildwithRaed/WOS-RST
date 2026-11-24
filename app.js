@@ -1317,7 +1317,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 127; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 128; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3725,6 +3725,7 @@ const T = {
   adv_isl_bld: { en: "{name} Lv {a} → {b} ({n} copies)" },
   adv_isl_light: { en: "Lighthouse {name} Lv {a} → {b} ({n} Contracts)" },
   adv_n_set3: { en: "incl. the 3-piece set bonus +{v}% DEF all troops" },
+  adv_set_tag: { en: "+set bonus {v}%" },
   adv_n_set6: { en: "incl. the 6-piece set bonus +{v}% ATK all troops" },
   adv_n_set6_share: { en: "incl. 1/{n} of the 6-piece set bonus (+{v}% ATK all troops once all {n} pieces get there)" },
   adv_n_pre: { en: "incl. 1/{n} of {what} (needed first)" },
@@ -7785,19 +7786,20 @@ async function advStepsChiefGear(out) {
     // goes to the piece cheapest to bring there; the 6-piece one (ATK, all troops) is
     // shared by every piece still below that tier.
     const atLo = { ...base, [p.key]: { from: lo } }, b0 = computeChiefGearSetBonus(atLo), notes = [];
+    let setPct = 0; // the set bonus part of this step's gain (same units as the gain: all troops added up), shown as a tag
     if (tierNo(lo) < tierNo(hi)) {
       const first = starts[tierNo(hi) - 1], raise = (k) => computeChiefGearSetBonus({ ...atLo, [k]: { from: first } });
       const short = CHIEF_GEAR_PIECES.filter((q) => tierNo(atLo[q.key].from) < tierNo(hi));
       const costTo = (q) => { let c = 0; for (let i = atLo[q.key].from + 1; i <= first; i++) cols.forEach(([col, n]) => { c += (Number(rows[i][col]) || 0) * advVal(n); }); return c; };
       const c3 = short.filter((q) => raise(q.key).threeBonus > b0.threeBonus).sort((x, y) => costTo(x) - costTo(y));
-      if (c3.length && c3[0].key === p.key) { const d = raise(p.key).threeBonus - b0.threeBonus; advGain(g, "all", ["Defense"], d); notes.push(t("adv_n_set3").replace("{v}", d)); }
+      if (c3.length && c3[0].key === p.key) { const d = raise(p.key).threeBonus - b0.threeBonus; advGain(g, "all", ["Defense"], d); setPct += d * PLX_TROOPS.length; notes.push(t("adv_n_set3").replace("{v}", d)); }
       const lift = {};
       CHIEF_GEAR_PIECES.forEach((q) => { lift[q.key] = { from: short.includes(q) ? first : atLo[q.key].from }; });
       const d6 = computeChiefGearSetBonus(lift).sixBonus - b0.sixBonus;
-      if (d6 > 0) { advGain(g, "all", ["Attack"], d6 / short.length); notes.push(short.length > 1 ? t("adv_n_set6_share").split("{n}").join(short.length).replace("{v}", d6) : t("adv_n_set6").replace("{v}", d6)); }
+      if (d6 > 0) { advGain(g, "all", ["Attack"], d6 / short.length); setPct += (d6 / short.length) * PLX_TROOPS.length; notes.push(short.length > 1 ? t("adv_n_set6_share").split("{n}").join(short.length).replace("{v}", d6) : t("adv_n_set6").replace("{v}", d6)); }
     }
     out.push({ id: `cg|${p.key}|${hi}`, track: `cg|${p.key}`, nth, page: "chief_gear", type: "chief_gear", base: `${troopDisplayName(p.troop)} ${pieceDisplayName(p.name)}`, la: cgBadge(rows[lo]), lb: cgBadge(rows[hi]), hi, tgt: Math.min(cap, Math.max(base[p.key].from, Number(CHIEF_GEAR_STATE[p.key].to) || 0)), name: `${troopDisplayName(p.troop)} ${pieceDisplayName(p.name)} ${cgBadge(rows[lo])} → ${cgBadge(rows[hi])}`,
-      img: chiefGearIcon(p.key, lo), items, gain: g, kind: "buy", note: notes.join(" · ") });
+      img: chiefGearIcon(p.key, lo), items, gain: g, kind: "buy", note: notes.join(" · "), setPct });
   }));
 }
 async function advStepsCharm(out) {
@@ -8119,6 +8121,9 @@ function advRank(steps) {
 // ---- Look ----
 const advMoney = (v) => `$${v >= 100 ? Math.round(v).toLocaleString("en-US") : v.toFixed(2)}`;
 const advPer = (r, key) => r[key || (ADV_SET.mode === "pure" ? "pp" : "wpp")];
+// "+set bonus 3%": a Chief Gear step that reaches a new tier (why it is cheap).
+const advSetTxt = (s) => (s && s.setPct > 1e-9 ? t("adv_set_tag").replace("{v}", (Math.round(s.setPct * 10) / 10).toLocaleString("en-US")) : "");
+const advSetTag = (s) => { const x = advSetTxt(s); return x ? ` <span class="pur-cmp pur-cmp-budget">${esc(x)}</span>` : ""; };
 function advPillHtml(v, pre) {
   const cls = v < 5 ? "pur-cmp pur-cmp-budget" : v <= 20 ? "pur-cmp pur-cmp-target" : "trd-sc";
   return `<span class="${cls}">${pre ? `${esc(pre)} ` : ""}${bidiNum(`$${v.toFixed(2)}`)} / 1%</span>`;
@@ -8135,7 +8140,7 @@ function advRowHtml(r, o = {}) {
     const grp = r.members && r.members.length > 1, price = t("adv_tomes_price").replace("{n}", (r.tomes || 0).toLocaleString("en-US")).replace("{v}", advMoney(r.usd));
     r = { ...r, name: grp ? r.name : t("adv_buy_name").replace("{name}", r.base || r.name), usdTxt: grp ? `${price} ${t("adv_each")}` : price };
   }
-  const sub = [o.rank ? `#${r.rank}` : "", r.sub || "", o.page ? advTypeName(r.type) : "", `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`, r.usdTxt || advMoney(r.usd) + (r.members && r.members.length > 1 ? ` ${t("adv_each")}` : "")].filter(Boolean).join(" · ");
+  const sub = [o.rank ? `#${r.rank}` : "", r.sub || "", o.page ? advTypeName(r.type) : "", `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`, advSetTxt(r), r.usdTxt || advMoney(r.usd) + (r.members && r.members.length > 1 ? ` ${t("adv_each")}` : "")].filter(Boolean).join(" · ");
   return `<details class="pca-pk"><summary data-advrow="${esc(r.id)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span></span>${Number.isFinite(per) ? `<b class="pca-pr">${advPillHtml(per)}</b>` : ""}</summary></details>`;
 }
 // The Dashboard's numbers (now / max per troop + stat), kept when the Dashboard draws.
@@ -8291,7 +8296,7 @@ function advTrackRowHtml(r, showPage) {
 let ADV_TT_ALL = false;
 function advOpenTrackSheet(r) {
   const m = gearSheetEl(), pg = advPageOf(r.page), key = ADV_SET.mode === "pure" ? "pp" : "wpp";
-  const row = (s) => `<div class="bset-row"><span class="bset-l">${esc(s.lb)}</span><span class="bset-c"><b>${advMoney(s.usd)}</b>${Number.isFinite(s[key]) ? advPillHtml(s[key]) : ""}</span></div>`;
+  const row = (s) => `<div class="bset-row"><span class="bset-l"><span>${esc(s.lb)}${advSetTag(s)}</span></span><span class="bset-c"><b>${advMoney(s.usd)}</b>${Number.isFinite(s[key]) ? advPillHtml(s[key]) : ""}</span></div>`;
   const st = r.steps, fold = !ADV_TT_ALL && st.length > 6;
   const mid = fold ? `<div class="bset-row" role="button" tabindex="0" data-advttall style="cursor:pointer;"><span class="bset-l">\u2026 ${esc(`${st[2].lb} \u2013 ${st[st.length - 3].lb}`)}</span><span class="bset-c meta">${esc(t("adv_n_steps").replace("{n}", st.length - 4))} &#8250;</span></div>` : "";
   m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw" role="dialog" aria-modal="true" aria-label="${esc(r.name)}">
@@ -8389,7 +8394,7 @@ function advOpenSheet(r) {
   const members = r.members && r.members.length > 1 ? `<div class="cgw-nh">${esc(t("adv_members"))}</div><div class="pca-gv">${r.members.map((x) => `<span class="pca-chip x">${esc(x.name.split(": ").slice(1).join(": "))}</span>`).join("")}</div>` : "";
   m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw" role="dialog" aria-modal="true" aria-label="${esc(r.name)}">
     <div class="cgw-top" data-cgwgrab><div class="cgw-grab"></div>
-    <div class="gs-head">${advPic(r.img, r.page)}<div style="flex:1; min-width:0;"><b>${esc(r.name)}</b><div class="meta">${esc(navLabel(pg.tab))}${r.rank ? ` · ${esc(t("adv_rank_of").replace("{n}", r.rank).replace("{m}", R.buy.length))}` : ""}</div></div>${closeXHtml("data-advclose")}</div></div>
+    <div class="gs-head">${advPic(r.img, r.page)}<div style="flex:1; min-width:0;"><b>${esc(r.name)}</b><div class="meta">${esc(navLabel(pg.tab))}${r.rank ? ` · ${esc(t("adv_rank_of").replace("{n}", r.rank).replace("{m}", R.buy.length))}` : ""}${advSetTag(r)}</div></div>${closeXHtml("data-advclose")}</div></div>
     <div class="cgw-nd" style="grid-template-columns:repeat(3, minmax(0, 1fr));">
       <div class="cgw-nb"><small>${esc(t("adv_cost"))}</small><b>${advMoney(r.usd)}</b></div>
       <div class="cgw-nb"><small>${esc(t("adv_gives"))}</small><b style="color:var(--good);">+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%</b></div>
@@ -23075,8 +23080,10 @@ function rfcLabWeek(st) {
   const planBefore = planDays.slice(0, todayIdx).reduce((s, d) => s + triesOf(d), 0);
   const planToday = triesOf(planDays[todayIdx]);
   // "Game says": the count is from the day it was typed
-  // (game.on); the days after that up to yesterday are taken as done like the
-  // plan, so a count typed on Thursday still compares right on Friday.
+  // (game.on); the days after that up to and including today are taken as
+  // done like the plan (today counts once it has started), so the site keeps
+  // tracking by itself after one entry (typed Monday, Tuesday adds Tuesday's
+  // plan tries). Typed today = today is already in the count.
   // count = typed + those days' plan tries (typed / onIdx / assumed kept).
   // No "on" (entries saved before) or a day outside this week = typed today.
   let game = null;
@@ -23087,7 +23094,7 @@ function rfcLabWeek(st) {
     let onIdx = onD ? Math.round((onD.getTime() - (today.getTime() - todayIdx * DAY)) / DAY) : todayIdx;
     const known = !!onD && onIdx >= 0 && onIdx <= todayIdx;
     if (!known) onIdx = todayIdx;
-    const assumed = planDays.slice(onIdx + 1, todayIdx).reduce((s, d) => s + triesOf(d), 0);
+    const assumed = planDays.slice(onIdx + 1, todayIdx + 1).reduce((s, d) => s + triesOf(d), 0);
     const onName = new Date(Date.UTC(2024, 0, 1 + onIdx)).toLocaleDateString(undefined, { weekday: "short", timeZone: "UTC" });
     // "(45 on Thu + plan)" beside the counted 47 when assumed days are in it
     const fromTxt = assumed > 0 ? `(${t("rl_counted_from").replace("{g}", typed.toLocaleString()).replace("{d}", onName)})` : "";
@@ -23097,7 +23104,9 @@ function rfcLabWeek(st) {
       updTxt: !known ? "" : onIdx === todayIdx ? t("rl_upd_today") : t("rl_upd_day").replace("{d}", onName)
     });
   }
-  return { wkKey, todayIdx, plan, wkOver, wkPlan, planDays, planBefore, planToday, planSoFar: planBefore + planToday, game };
+  // The plan's tries for the days after today (to Sunday): still to come.
+  const planAfter = planDays.slice(todayIdx + 1).reduce((s, d) => s + triesOf(d), 0);
+  return { wkKey, todayIdx, plan, wkOver, wkPlan, planDays, planBefore, planToday, planSoFar: planBefore + planToday, planAfter, game };
 }
 function rfcLabChosenPlan(st) {
   if (!st) return null;
@@ -23116,9 +23125,11 @@ function rfcLabOn(st) {
 }
 // The state the lab trade was last worked out from (for "Can do now").
 let RFC_LAB_RATE_ST = null;
-// "Can do now" on T12 counts only the lab refinements still left this week:
-// the This week box's plan tries Mon–Sun, minus the game's count (or, with no
-// "Game says", the plan's tries before today, as the box assumes).
+// "Can do now" on T12 counts only the lab refinements still left this week.
+// With a "Game says" entry: the plan's tries for the days after today (the
+// count already holds today and the days before, followed like the plan; being
+// ahead doesn't take the rest of the week away). With none: the plan's tries
+// Mon–Sun minus those before today (today still to do), as the box assumes.
 // Returns { share: 0..1 of the weekly lab trade, left: tries left }.
 function rfcLabWeekLeft() {
   const st = RFC_LAB_STATE || RFC_LAB_RATE_ST;
@@ -23126,8 +23137,7 @@ function rfcLabWeekLeft() {
   const w = rfcLabWeek(st);
   const planWeek = w.planDays.reduce((s, d) => s + d.parts.reduce((a, x) => a + x.cnt, 0), 0);
   if (!(planWeek > 0)) return { share: 0, left: 0 };
-  const done = w.game ? w.game.count : w.planBefore;
-  const left = Math.max(0, planWeek - done);
+  const left = Math.max(0, w.game ? w.planAfter : planWeek - w.planBefore);
   return { share: Math.min(1, Math.max(0, left / planWeek)), left };
 }
 // "✓ On track" (Backpack box pop-up, Research Lab row): the person followed the plan

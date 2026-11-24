@@ -3006,6 +3006,7 @@
 "t:adv_n_not_counted":"đã tắt Tính, nên không có trên bảng điều khiển",
 "t:adv_n_pre":"gồm 1/{n} của {what} (cần trước)",
 "t:adv_n_set3":"gồm thưởng bộ 3 món +{v}% THỦ mọi binh chủng",
+"t:adv_set_tag":"+thưởng bộ {v}%",
 "t:adv_n_set6":"gồm thưởng bộ 6 món +{v}% CÔNG mọi binh chủng",
 "t:adv_n_set6_share":"gồm 1/{n} thưởng bộ 6 món (+{v}% CÔNG mọi binh chủng khi cả {n} món đạt)",
 "t:adv_n_shining":"Shining City: mua bằng Sách Vinh Quang",

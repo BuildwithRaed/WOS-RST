@@ -3006,6 +3006,7 @@
 "t:adv_n_not_counted":"Say kapalı, bu yüzden panelinde yok",
 "t:adv_n_pre":"{what} maliyetinin 1/{n}'i dahil (önce gerekli)",
 "t:adv_n_set3":"3 parça set bonusu dahil +%{v} SAV tüm birlikler",
+"t:adv_set_tag":"+set bonusu %{v}",
 "t:adv_n_set6":"6 parça set bonusu dahil +%{v} SAL tüm birlikler",
 "t:adv_n_set6_share":"6 parça set bonusunun 1/{n}'i dahil ({n} parçanın hepsi gelince tüm birliklere +%{v} SAL)",
 "t:adv_n_shining":"Shining City: Görkemli Tomlarla alınır",

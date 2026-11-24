@@ -3008,6 +3008,7 @@
 "t:adv_n_not_counted":"il suo Conta è disattivato, quindi non è nella tua dashboard",
 "t:adv_n_pre":"incl. 1/{n} di {what} (necessario prima)",
 "t:adv_n_set3":"incl. il bonus 3 pezzi +{v}% DIF tutte le truppe",
+"t:adv_set_tag":"+bonus set {v}%",
 "t:adv_n_set6":"incl. il bonus 6 pezzi +{v}% ATT tutte le truppe",
 "t:adv_n_set6_share":"incl. 1/{n} del bonus 6 pezzi (+{v}% ATT tutte le truppe quando tutti i {n} pezzi arrivano)",
 "t:adv_n_shining":"Shining City: acquistato con Tomi Gloriosi",
