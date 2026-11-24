@@ -5,7 +5,7 @@
 // live here; anything another page (Budgets, the Menu, the Dashboard, admin.js /
 // scan.js / the planner worker) uses stays in app.js. The site loads the packed copy
 // purchases.min.js (tools/stamp.js).
-window.PURCHASES_BUILD = "eaee81a80b";
+window.PURCHASES_BUILD = "2e55e72c4b";
 
 function packOpenSettingsOnPacks(id) {
   PACK_SETTINGS_FOCUS = String(id);
@@ -240,6 +240,7 @@ let PUR_PICK_TAB = "on"; // Add a pack: the pack picker's tab ("on" / "soon" / "
 let PUR_TAB = (() => { try { const v = localStorage.getItem("pur_tab"); if (v === "coming" || v === "bought") return v; } catch (e) { /* blocked */ } return "coming"; })();
 const PUR_LIST_ALL = new Set(); // "n" / "c" / "b": that list shows every line (else the first 5), for the visit
 let PUR_CHK_ALL = false; // My Purchases: this week's list shows all packs (for the visit)
+const PUR_A2_OPEN = new Set(); // My Purchases: this week's grouped packs opened (table ids, for the visit)
 // My Purchases' "change ›": the same New heroes window over My Purchases
 // (no page change); closing it leaves the page where it was. `onClose(changed)`.
 function openNewHeroesWindow(onClose) {
@@ -801,10 +802,42 @@ async function renderPurchasesPageMain() {
         ${it.done ? `<button type="button" class="pur-a2-ck on" data-pura2un="${k}" title="${esc(t("pur_a2_unmark"))}" aria-label="${esc(t("pur_a2_unmark"))}">&#10003;</button>` : `<button type="button" class="pur-a2-ck" data-pura2ck="${k}" title="${esc(t("pur_a2_mark"))}" aria-label="${esc(t("pur_a2_mark"))}">&#10003;</button>`}
       </div>`;
     };
+    // Several prices of one pack still to buy (Hall of Heroes: $4.99 + $19.99 +
+    // $99.99 on one day) are one line; tapping it shows each price's own line.
+    const units = [];
+    const unitOf = new Map();
+    all.forEach((it, k) => {
+      const gk = it.done ? "" : String(it.tb.id);
+      if (gk && unitOf.has(gk)) { unitOf.get(gk).kids.push(k); return; }
+      const u = { gk, kids: [k] };
+      if (gk) unitOf.set(gk, u);
+      units.push(u);
+    });
+    const unitHtml = (u) => {
+      if (u.kids.length < 2) return rowHtml(all[u.kids[0]], u.kids[0]);
+      const kids = u.kids.map((k) => all[k]), it0 = kids[0], open = PUR_A2_OPEN.has(u.gk);
+      const n = kids.reduce((a, x) => a + x.n, 0), local = kids.reduce((a, x) => a + x.local, 0);
+      const offs = kids.flatMap((x) => x.offs || []);
+      const sameWhen = kids.every((x) => x.when === it0.when);
+      const gv = {};
+      kids.forEach((x) => Object.entries(x.gv || {}).forEach(([k, v]) => { gv[k] = (gv[k] || 0) + v; }));
+      const sub = `${sameWhen ? it0.tag || "" : ""}${[t("pur_a2_n_prices").replace("{n}", kids.length), sameWhen ? it0.when : ""].filter(Boolean).map(esc).join(" · ")}`;
+      return `<div class="pur-a2-it pur-a2-g${open ? " open" : ""}" data-pura2g="${esc(u.gk)}" role="button" tabindex="0" aria-expanded="${open}" >
+        <span class="pur-pic">${it0.pic ? `<img src="${esc(it0.pic)}" alt="" loading="lazy" />` : `<i>${esc(it0.name.charAt(0))}</i>`}</span>
+        <span class="pur-a2-tx"><b>${esc(it0.name)} <span class="pur-a2-x">${bidiNum("×" + n)}</span></b><small>${sub}</small>${purGoalTagHtml(gm, gv, 0)}</span>
+        <b class="pur-a2-pr">${esc(fmt(local))}</b>
+        <span class="pur-a2-gch" aria-hidden="true">${open ? "&#9652;" : "&#9662;"}</span>
+      </div>${open ? `<div class="pur-a2-kids">${u.kids.map((k) => rowHtml(all[k], k)).join("")}</div>` : ""}`;
+    };
     // First 5 packs, then "Show N more" (the list made a long scroll).
-    const CHK_N = 5, extra = all.length - CHK_N;
-    const shown = PUR_CHK_ALL || extra <= 1 ? all : all.slice(0, CHK_N);
-    chk.innerHTML = all.length ? shown.map(rowHtml).join("") + (extra > 1 ? purMoreBtnHtml("data-pura2more", PUR_CHK_ALL, extra) : "") : `<div class="meta pur-a2-none">${pending ? esc(t("budgets_working")) : esc(t("pur_a2_none"))}</div>`;
+    const CHK_N = 5, extra = units.length - CHK_N;
+    const shown = PUR_CHK_ALL || extra <= 1 ? units : units.slice(0, CHK_N);
+    chk.innerHTML = all.length ? shown.map(unitHtml).join("") + (extra > 1 ? purMoreBtnHtml("data-pura2more", PUR_CHK_ALL, extra) : "") : `<div class="meta pur-a2-none">${pending ? esc(t("budgets_working")) : esc(t("pur_a2_none"))}</div>`;
+    chk.querySelectorAll("[data-pura2g]").forEach((g) => {
+      const tog = () => { const k = g.dataset.pura2g; if (PUR_A2_OPEN.has(k)) PUR_A2_OPEN.delete(k); else PUR_A2_OPEN.add(k); drawWeek(P, pending); };
+      g.addEventListener("click", tog);
+      g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tog(); } });
+    });
     const moreB = chk.querySelector("[data-pura2more]");
     if (moreB) moreB.addEventListener("click", () => { PUR_CHK_ALL = !PUR_CHK_ALL; drawWeek(P, pending); });
     // Taps
@@ -846,7 +879,7 @@ async function renderPurchasesPageMain() {
       savePackPurchases(); redraw();
     }));
     chk.querySelectorAll("[data-pura2ck]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); markBought(all[Number(b.dataset.pura2ck)]); }));
-    chk.querySelectorAll(".pur-a2-it[role=button]").forEach((rw) => {
+    chk.querySelectorAll(".pur-a2-it[role=button]:not(.pur-a2-g)").forEach((rw) => {
       const go = () => {
         const it = all[Number(rw.dataset.pura2)];
         // A "will buy" of this week: its sheet (items, dates, ✎ Edit); a plan pack: the Will buy pop-up.

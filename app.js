@@ -3973,6 +3973,7 @@ const T = {
   pur_a2_less: { en: "Show less" },
   pur_a2_mark: { en: "Mark as bought" },
   pur_a2_bought_mark: { en: "Bought" },
+  pur_a2_n_prices: { en: "{n} prices" },
   pur_a2_unmark: { en: "Bought · tap to undo" },
   pur_o1_coming: { en: "Will buy" },
   pur_o1_box: { en: "Your packs" },
@@ -11303,7 +11304,7 @@ const CODE_FILES = {
   scan: "scan.min.js?v=64a7ef20ff",
   packs: "packs.min.js?v=f248b1fa8f",
   gallery: "gallery.min.js?v=28a7717641",
-  purchases: "purchases.min.js?v=eaee81a80b",
+  purchases: "purchases.min.js?v=2e55e72c4b",
   budgets: "budgets.min.js?v=a42622de18",
 };
 const CODE_P = {}, CODE_OK = {};

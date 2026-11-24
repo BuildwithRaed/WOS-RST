@@ -1453,6 +1453,10 @@
   .pur-a2-ck:hover, .pur-a2-ck:focus-visible{ color:#6b7d92; }
   .pur-a2-ck.on{ background:var(--good); border-color:var(--good); color:#0f141b; }
   .pur-a2-it.done{ cursor:default; }
+  .pur-a2-gch{ flex:0 0 36px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:10px; color:var(--muted); font-size:13px; }
+  .pur-a2-g.open .pur-a2-gch{ color:var(--ice); border-color:var(--ice); }
+  .pur-a2-kids{ margin-inline-start:20px; padding-inline-start:10px; border-inline-start:2px solid var(--line); }
+  .pur-a2-kids .pur-a2-it:first-child{ border-top:1px solid var(--line); }
   .pur-a2-it.done .pur-a2-tx b{ color:var(--muted); text-decoration:line-through; }
   .pur-a2-it.done .pur-a2-pr{ color:var(--muted); }
   .pur-a2-tag{ display:inline-block; font-size:11px; font-weight:700; padding:1px 6px; border-radius:6px; margin-inline-end:5px; }
