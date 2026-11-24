@@ -3154,5 +3154,10 @@
 "t:cdb_out_stars":"Ещё не вышел · осколки ждут в рюкзаке",
 "t:cda_u_heroes":"улучшения героев",
 "t:cda_hero_widget":"Виджет {a} → {b}",
-"t:cda_hero_from":"{hero}: с {date}"
+"t:cda_hero_from":"{hero}: с {date}",
+"t:pur_a2_n_prices":"цен: {n}",
+"t:pur_op_plan_prices":"Цены плана",
+"t:pur_a2_none_today":"Сегодня покупать нечего — остальное в другой день",
+"t:pur_a2_then":"+ {days}",
+"t:pur_op_one_day":"одна цена в день"
 }

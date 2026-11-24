@@ -3152,5 +3152,10 @@
 "t:cdb_out_stars":"Chưa ra mắt · mảnh chờ trong Ba lô",
 "t:cda_u_heroes":"nâng cấp anh hùng",
 "t:cda_hero_widget":"Widget {a} → {b}",
-"t:cda_hero_from":"{hero}: từ {date}"
+"t:cda_hero_from":"{hero}: từ {date}",
+"t:pur_a2_n_prices":"{n} mức giá",
+"t:pur_op_plan_prices":"Các mức giá của kế hoạch",
+"t:pur_a2_none_today":"Hôm nay không có gì để mua — phần còn lại vào ngày khác",
+"t:pur_a2_then":"+ {days}",
+"t:pur_op_one_day":"mỗi ngày một mức giá"
 }

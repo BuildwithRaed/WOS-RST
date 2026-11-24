@@ -3154,5 +3154,10 @@
 "t:cdb_out_stars":"Jeszcze nie wydany · fragmenty czekają w plecaku",
 "t:cda_u_heroes":"ulepszenia bohaterów",
 "t:cda_hero_widget":"Widżet {a} → {b}",
-"t:cda_hero_from":"{hero}: od {date}"
+"t:cda_hero_from":"{hero}: od {date}",
+"t:pur_a2_n_prices":"{n} ceny",
+"t:pur_op_plan_prices":"Ceny planu",
+"t:pur_a2_none_today":"Dziś nic do kupienia — reszta w inny dzień",
+"t:pur_a2_then":"+ {days}",
+"t:pur_op_one_day":"jedna cena dziennie"
 }

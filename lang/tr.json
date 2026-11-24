@@ -3152,5 +3152,10 @@
 "t:cdb_out_stars":"Henüz çıkmadı · parçalar çantada bekliyor",
 "t:cda_u_heroes":"kahraman yükseltmeleri",
 "t:cda_hero_widget":"Parçacık {a} → {b}",
-"t:cda_hero_from":"{hero}: {date} itibarıyla"
+"t:cda_hero_from":"{hero}: {date} itibarıyla",
+"t:pur_a2_n_prices":"{n} fiyat",
+"t:pur_op_plan_prices":"Planın fiyatları",
+"t:pur_a2_none_today":"Bugün alınacak bir şey yok — kalanı başka bir gün",
+"t:pur_a2_then":"+ {days}",
+"t:pur_op_one_day":"günde bir fiyat"
 }

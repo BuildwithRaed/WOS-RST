@@ -3154,5 +3154,10 @@
 "t:cdb_out_stars":"尚未推出 · 碎片留在背包中",
 "t:cda_u_heroes":"英雄升级",
 "t:cda_hero_widget":"专属装备 {a} → {b}",
-"t:cda_hero_from":"{hero}：{date}起"
+"t:cda_hero_from":"{hero}：{date}起",
+"t:pur_a2_n_prices":"{n} 个价格",
+"t:pur_op_plan_prices":"计划的价格",
+"t:pur_a2_none_today":"今天没有要买的——其余在之后的日子",
+"t:pur_a2_then":"+ {days}",
+"t:pur_op_one_day":"每天一个价格"
 }

@@ -3154,5 +3154,10 @@
 "t:cdb_out_stars":"未実装 · 欠片はバッグで待機",
 "t:cda_u_heroes":"英雄の強化",
 "t:cda_hero_widget":"ウィジェット {a} → {b}",
-"t:cda_hero_from":"{hero}: {date}から"
+"t:cda_hero_from":"{hero}: {date}から",
+"t:pur_a2_n_prices":"{n}つの価格",
+"t:pur_op_plan_prices":"プランの価格",
+"t:pur_a2_none_today":"今日買うものはありません。残りは後日です",
+"t:pur_a2_then":"+ {days}",
+"t:pur_op_one_day":"1日1つの価格"
 }

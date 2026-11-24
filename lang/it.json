@@ -3154,5 +3154,10 @@
 "t:cdb_out_stars":"Non ancora uscito · i frammenti aspettano nello zaino",
 "t:cda_u_heroes":"potenziamenti eroi",
 "t:cda_hero_widget":"Widget {a} → {b}",
-"t:cda_hero_from":"{hero}: dal {date}"
+"t:cda_hero_from":"{hero}: dal {date}",
+"t:pur_a2_n_prices":"{n} prezzi",
+"t:pur_op_plan_prices":"Prezzi del piano",
+"t:pur_a2_none_today":"Niente da comprare oggi: il resto arriva un altro giorno",
+"t:pur_a2_then":"+ {days}",
+"t:pur_op_one_day":"un prezzo al giorno"
 }
