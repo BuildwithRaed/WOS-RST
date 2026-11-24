@@ -5,21 +5,25 @@ const VERSION = "wosrst-v2";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest"];
 
 // The app's code and styles are loaded from the packed copies app.min.js /
-// app.min.css / admin.min.js / scan.min.js (made from app.js / app.css / admin.js /
-// scan.js by
+// app.min.css / admin.min.js / scan.min.js / packs.min.js / gallery.min.js (made from
+// app.js / app.css / admin.js / scan.js / packs.js / gallery.js by
 // tools/stamp.js), linked as "app.min.js?v=<hash>":
 // a new version gets a new address, so they are kept cache-first by address and
 // the older copies are dropped once a new one is stored. At install the ones the
-// page links to are cached with it, so the site also opens offline after the
-// first visit (the first page load happens before this worker is in control).
-const VERSIONED = /\/(app|admin|scan)(\.min)?\.(js|css)$/;
+// page links to are cached with it (also the page files packs / gallery, named in
+// its small preload map), so the site also opens offline after the first visit (the
+// first page load happens before this worker is in control).
+const VERSIONED = /\/(app|admin|scan|packs|gallery)(\.min)?\.(js|css)$/;
 // A copy is kept only when it is the version its address names: the server ignores
 // "?v=", so an old address can bring back a newer file. app / app.css: "v" = the
-// start of the file's SHA-256 (tools/stamp.js); admin / scan carry their id inside
-// (window.ADMIN_BUILD / window.SCAN_BUILD = "<v>", written without spaces in the packed copy).
+// start of the file's SHA-256 (tools/stamp.js); the files app.js loads on demand
+// carry their id inside (window.ADMIN_BUILD / SCAN_BUILD / PACKS_BUILD / GALLERY_BUILD
+// = "<v>", written without spaces in the packed copy).
+const BUILD_VAR = { admin: "ADMIN_BUILD", scan: "SCAN_BUILD", packs: "PACKS_BUILD", gallery: "GALLERY_BUILD" };
 const isVersion = async (url, res) => {
   const u = new URL(url), v = u.searchParams.get("v");
-  const build = /\/admin(\.min)?\.js$/.test(u.pathname) ? "ADMIN_BUILD" : /\/scan(\.min)?\.js$/.test(u.pathname) ? "SCAN_BUILD" : null;
+  const m = u.pathname.match(/\/(admin|scan|packs|gallery)(\.min)?\.js$/);
+  const build = m ? BUILD_VAR[m[1]] : null;
   if (build) { const text = await res.clone().text(); return text.includes(`window.${build}="${v}"`) || text.includes(`window.${build} = "${v}";`); }
   if (!self.crypto || !crypto.subtle) return true;
   const d = new Uint8Array(await crypto.subtle.digest("SHA-256", await res.clone().arrayBuffer()));
@@ -33,9 +37,12 @@ const putVersioned = (req, res) => caches.open(VERSION).then(async (c) => {
   const base = (p) => p.replace(/\.min\.(js|css)$/, ".$1");
   for (const k of await c.keys()) { const u = new URL(k.url); if (VERSIONED.test(u.pathname) && base(u.pathname) === base(url.pathname) && u.href !== url.href) await c.delete(k); }
 });
-// Caches the app.min.js / app.min.css a copy of the page links to, when not cached yet.
-const keepLinked = async (c, html) => {
-  for (const l of new Set(html.match(/app(?:\.min)?\.(?:js|css)\?v=[0-9a-f]+/g) || [])) {
+// Caches the app.min.js / app.min.css a copy of the page links to (and the page files
+// packs.min.js / gallery.min.js its preload map names), when not cached yet.
+// pagesOnly: only the page files (the page itself is loading app.min.js / app.min.css).
+const keepLinked = async (c, html, pagesOnly) => {
+  const re = pagesOnly ? /(?:packs|gallery)\.min\.js\?v=[0-9a-f]+/g : /(?:app(?:\.min)?\.(?:js|css)|(?:packs|gallery)\.min\.js)\?v=[0-9a-f]+/g;
+  for (const l of new Set(html.match(re) || [])) {
     const u = new URL("./" + l, self.location).href;
     if (!(await c.match(u))) { const res = await fetch(u); if (res.ok) await putVersioned(u, res); }
   }
@@ -79,9 +86,15 @@ self.addEventListener("fetch", (e) => {
     const net = fetch(req).then((res) => {
       if (res.ok) {
         // When the saved copy was shown, this copy's app.js / app.css weren't
-        // loaded: keep them too, so it also opens offline next time.
-        const copy = res.clone(), text = savedShown ? res.clone().text() : null;
-        caches.open(VERSION).then(async (c) => { await c.put(req, copy); if (text) await keepLinked(c, await text); }).then(stored, stored);
+        // loaded: keep them too, so it also opens offline next time. The page files
+        // (packs / gallery) of a new version are kept either way (after 5 s, so they
+        // don't slow the page's own downloads), so every page opens offline.
+        const copy = res.clone(), text = res.clone().text();
+        caches.open(VERSION).then(async (c) => {
+          await c.put(req, copy);
+          if (savedShown) await keepLinked(c, await text);
+          else { await new Promise((r) => setTimeout(r, 5000)); await keepLinked(c, await text, true); }
+        }).then(stored, stored);
       } else stored();
       return res;
     }, (err) => { stored(); throw err; });
@@ -94,9 +107,24 @@ self.addEventListener("fetch", (e) => {
     }));
     return;
   }
-  // app / app.css / admin / scan (packed copies) at one "?v=<hash>": cache first, older versions dropped.
+  // app / app.css / admin / scan / packs / gallery (packed copies) at one "?v=<hash>": cache first, older versions dropped.
   if (VERSIONED.test(url.pathname) && url.searchParams.has("v")) {
     e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => { if (res.ok) putVersioned(req, res.clone()); return res; })));
+    return;
+  }
+  // Language files at one "?v=N" (LANG_FILES_VERSION): cache first like any static
+  // file, but storing a new version drops the older copies of the same file.
+  if (/\/lang\/[^/]+\.json$/.test(url.pathname) && url.searchParams.has("v")) {
+    e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => {
+      if (res.ok) {
+        const copy = res.clone();
+        caches.open(VERSION).then(async (c) => {
+          await c.put(req, copy);
+          for (const k of await c.keys()) { const u = new URL(k.url); if (u.pathname === url.pathname && u.href !== url.href) await c.delete(k); }
+        });
+      }
+      return res;
+    })));
     return;
   }
   // Icons and other static files: cache first, fetched once.
