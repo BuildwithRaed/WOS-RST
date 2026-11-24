@@ -5,7 +5,7 @@
 // live here; anything another page (Budgets, the Menu, the Dashboard, admin.js /
 // scan.js / the planner worker) uses stays in app.js. The site loads the packed copy
 // purchases.min.js (tools/stamp.js).
-window.PURCHASES_BUILD = "408a5a041e";
+window.PURCHASES_BUILD = "e48e3ffd8e";
 
 function packOpenSettingsOnPacks(id) {
   PACK_SETTINGS_FOCUS = String(id);
@@ -691,7 +691,9 @@ async function renderPurchasesPageMain() {
     const o = [...new Set(offs.map((x) => Math.max(0, x)))].sort((a, b) => a - b);
     if (!o.length) return { tag: "", txt: "" };
     let tag = "";
-    if (o[0] <= 0) tag = ends ? `<span class="pur-a2-tag end">${esc(t("pur_a2_ends").replace("{day}", wdName(ends)))}</span>` : `<span class="pur-a2-tag today">${esc(t("pur_a2_today"))}</span>`;
+    const run0 = o.every((x, i) => i === 0 || x === o[i - 1] + 1);
+    if (o[0] <= 0 && o.length > 1 && !run0) tag = `<span class="pur-a2-tag today">${esc(t("pur_a2_today"))}</span>`;
+    else if (o[0] <= 0) tag = ends ? `<span class="pur-a2-tag end">${esc(t("pur_a2_ends").replace("{day}", wdName(ends)))}</span>` : `<span class="pur-a2-tag today">${esc(t("pur_a2_today"))}</span>`;
     const run = o.every((x, i) => i === 0 || x === o[i - 1] + 1);
     let txt = "";
     if (o.length > 1 && run && o[0] <= 0) txt = t("pur_a2_daily").replace("{day}", wdName(offDate(o[o.length - 1])));
