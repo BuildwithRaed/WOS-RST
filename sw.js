@@ -99,6 +99,21 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => { if (res.ok) putVersioned(req, res.clone()); return res; })));
     return;
   }
+  // Language files at one "?v=N" (LANG_FILES_VERSION): cache first like any static
+  // file, but storing a new version drops the older copies of the same file.
+  if (/\/lang\/[^/]+\.json$/.test(url.pathname) && url.searchParams.has("v")) {
+    e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => {
+      if (res.ok) {
+        const copy = res.clone();
+        caches.open(VERSION).then(async (c) => {
+          await c.put(req, copy);
+          for (const k of await c.keys()) { const u = new URL(k.url); if (u.pathname === url.pathname && u.href !== url.href) await c.delete(k); }
+        });
+      }
+      return res;
+    })));
+    return;
+  }
   // Icons and other static files: cache first, fetched once.
   e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => { if (res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); } return res; })));
 });

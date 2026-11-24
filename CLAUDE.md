@@ -682,6 +682,10 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - Fingerprints: Budgets plan `v: 7` (phones work the plans out again once).
 - Unused T keys removed: `ht_desc`, `ht_push`, `ht_stars`, `ht_pushgen`, `ht_pushgen_sub`, `ht_gen_pick`. 43 new texts in all 16 lang files (`LANG_FILES_VERSION` 127).
 
+**Start-up read skips backup rows + one copy of each language file (owner approved, 24 Nov 2026; step 91; nothing on screen changes):**
+- `preloadCalcStates` reads calc_state with `calc_name=not.like.backup*` (no "_" in the pattern: LIKE's "_" matches any letter): the owner's undo backups (`backup_…`, 486 of the 558 KB the owner's start-up read carried on 24 Nov 2026) are left out; no page reads them. `loadCalcState` / `calcFlagSet` read a name the bulk read leaves out (`calcNotPreloaded`: starts with "backup") on its own, so a backup can still be read by name. Admin → Backup & Restore does its own `select=*` read of the owner's calc_state, so the file and the restore comparison still hold every backup row. A new kind of state that should stay out of the start-up read goes into `calcNotPreloaded` and the query.
+- `sw.js`: `lang/<code>.json?v=N` is still cache-first, but storing a new `?v=` drops the older copies of that file (before, every old version stayed in the cache for ever). Cache name unchanged (`wosrst-v2`); other files unchanged.
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit (since Speed plan Step 5 it also writes the .min copies the site loads).
@@ -873,3 +877,4 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - Budgets no longer stuck on "Working out…" when something changes while the plan is being worked out (step 89)
 - Backpack box pop-up: "✓ On track" / "Update in Lab ›" under the Research Lab row, trade rows read "Trade N <item> → +M · not done yet · fits today's / this week's limit" (step 86, `LANG_FILES_VERSION` 126)
 - Gen 15 (next Gen) heroes as Budgets goals: stars / widgets and Gen group goals, saving up before release, partial dated stages that stay with their page, page sheet packs by date (step 84, `LANG_FILES_VERSION` 127)
+- Start-up calc_state read leaves out the owner's backup rows; the service worker keeps one copy of each language file (step 91)
