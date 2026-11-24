@@ -2210,7 +2210,7 @@
 "t:pk_date_with_desc":"Deux tableaux d'un même événement : ce pack arrive les jours de l'autre. Seules les dates sont partagées.",
 "t:pk_date_with_none":"— (ses propres dates)",
 "t:pk_date_with_missing":"(pack introuvable : dates propres)",
-"t:pk_date_follows":"Suit {pack} : le retour et la prochaine date se règlent là-bas. « dure » reste propre à ce pack.",
+"t:pk_date_follows":"Suit {pack} : le retour, la prochaine date et la durée se règlent là-bas.",
 "t:bp_lab_title":"Labo de recherche",
 "t:bp_lab_week":"cette semaine",
 "t:bp_lab_super":"super raffinages cette semaine",

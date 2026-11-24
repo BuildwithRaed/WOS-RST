@@ -2209,7 +2209,7 @@
 "t:pk_date_with_desc":"同一活動的兩個表：此禮包在那個禮包的日子出現。只共用日期。",
 "t:pk_date_with_none":"—（自己的日期）",
 "t:pk_date_with_missing":"（找不到禮包：自己的日期）",
-"t:pk_date_follows":"跟隨 {pack}：再次出現和下次日期在那裡設定。「持續」仍是此禮包自己的。",
+"t:pk_date_follows":"跟隨 {pack}：再次出現、下次日期和持續時間在那裡設定。",
 "t:bp_lab_title":"研究實驗室",
 "t:bp_lab_week":"本週",
 "t:bp_lab_super":"本週超級精煉",

@@ -2209,7 +2209,7 @@
 "t:pk_date_with_desc":"Dua tabel dari satu event: paket ini muncul di hari paket itu. Hanya tanggalnya yang dibagi.",
 "t:pk_date_with_none":"— (tanggal sendiri)",
 "t:pk_date_with_missing":"(paket tidak ditemukan: tanggal sendiri)",
-"t:pk_date_follows":"Mengikuti {pack}: muncul lagi dan tanggal berikutnya diatur di sana. \"berlaku\" tetap milik paket ini.",
+"t:pk_date_follows":"Mengikuti {pack}: muncul lagi, tanggal berikutnya, dan lamanya diatur di sana.",
 "t:bp_lab_title":"Research Lab",
 "t:bp_lab_week":"minggu ini",
 "t:bp_lab_super":"super refinement minggu ini",

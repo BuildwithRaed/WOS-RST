@@ -2210,7 +2210,7 @@
 "t:pk_date_with_desc":"Dwie tabele jednego wydarzenia: ta paczka przychodzi w dni tamtej. Wspólne są tylko daty.",
 "t:pk_date_with_none":"— (własne daty)",
 "t:pk_date_with_missing":"(nie znaleziono paczki: własne daty)",
-"t:pk_date_follows":"Podąża za {pack}: powrót i następna data ustawiane są tam. \"trwa\" zostaje własne tej paczki.",
+"t:pk_date_follows":"Podąża za {pack}: powrót, następna data i czas trwania ustawia się tam.",
 "t:bp_lab_title":"Laboratorium Badań",
 "t:bp_lab_week":"w tym tygodniu",
 "t:bp_lab_super":"super oczyszczeń w tym tygodniu",

@@ -2210,7 +2210,7 @@
 "t:pk_date_with_desc":"1つのイベントの2つの表：このパックはあのパックの日に来ます。共有するのは日程だけです。",
 "t:pk_date_with_none":"—（独自の日程）",
 "t:pk_date_with_missing":"（パックが見つかりません：独自の日程）",
-"t:pk_date_follows":"{pack}に従う：再登場と次の日付はそちらで設定します。「期間」はこのパック独自のままです。",
+"t:pk_date_follows":"{pack}に従う：再登場、次の日付、期間はそちらで設定します。",
 "t:bp_lab_title":"研究所",
 "t:bp_lab_week":"今週",
 "t:bp_lab_super":"今週のスーパー精錬",

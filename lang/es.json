@@ -2210,7 +2210,7 @@
 "t:pk_date_with_desc":"Dos tablas de un mismo evento: este paquete sale los días de ese paquete. Solo se comparten las fechas.",
 "t:pk_date_with_none":"— (sus propias fechas)",
 "t:pk_date_with_missing":"(paquete no encontrado: fechas propias)",
-"t:pk_date_follows":"Sigue a {pack}: el regreso y la próxima fecha se fijan allí. \"dura\" sigue siendo de este paquete.",
+"t:pk_date_follows":"Sigue a {pack}: el regreso, la próxima fecha y la duración se fijan allí.",
 "t:bp_lab_title":"Laboratorio de Investigación",
 "t:bp_lab_week":"esta semana",
 "t:bp_lab_super":"super refinamientos esta semana",

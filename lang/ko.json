@@ -2209,7 +2209,7 @@
 "t:pk_date_with_desc":"한 이벤트의 두 표: 이 패키지는 저 패키지와 같은 날에 나옵니다. 날짜만 공유합니다.",
 "t:pk_date_with_none":"— (자체 날짜)",
 "t:pk_date_with_missing":"(패키지 없음: 자체 날짜)",
-"t:pk_date_follows":"{pack}을(를) 따름: 재등장과 다음 날짜는 그쪽에서 정합니다. \"지속\"은 이 패키지 자체 값입니다.",
+"t:pk_date_follows":"{pack}을(를) 따름: 재등장, 다음 날짜, 지속 기간은 그쪽에서 정합니다.",
 "t:bp_lab_title":"연구소",
 "t:bp_lab_week":"이번 주",
 "t:bp_lab_super":"이번 주 슈퍼 정제",

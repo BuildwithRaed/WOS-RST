@@ -2209,7 +2209,7 @@
 "t:pk_date_with_desc":"Hai bảng của một sự kiện: gói này đến vào ngày của gói kia. Chỉ dùng chung ngày.",
 "t:pk_date_with_none":"— (ngày riêng)",
 "t:pk_date_with_missing":"(không tìm thấy gói: ngày riêng)",
-"t:pk_date_follows":"Theo {pack}: quay lại và ngày tiếp theo đặt ở đó. \"kéo dài\" vẫn là của gói này.",
+"t:pk_date_follows":"Theo {pack}: lần quay lại, ngày tiếp theo và thời lượng được đặt ở đó.",
 "t:bp_lab_title":"Phòng Nghiên Cứu",
 "t:bp_lab_week":"tuần này",
 "t:bp_lab_super":"siêu tinh luyện tuần này",

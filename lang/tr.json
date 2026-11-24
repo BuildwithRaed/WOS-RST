@@ -2209,7 +2209,7 @@
 "t:pk_date_with_desc":"Bir etkinliğin iki tablosu: bu paket o paketin günlerinde gelir. Yalnızca tarihler paylaşılır.",
 "t:pk_date_with_none":"— (kendi tarihleri)",
 "t:pk_date_with_missing":"(paket bulunamadı: kendi tarihleri)",
-"t:pk_date_follows":"{pack} paketini izler: geri gelme ve sonraki tarih orada ayarlanır. \"süre\" bu paketin kendisine ait kalır.",
+"t:pk_date_follows":"{pack} paketini izler: geri gelme, sonraki tarih ve süre orada ayarlanır.",
 "t:bp_lab_title":"Araştırma Laboratuvarı",
 "t:bp_lab_week":"bu hafta",
 "t:bp_lab_super":"bu hafta süper arıtma",
