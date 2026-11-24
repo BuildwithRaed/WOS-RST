@@ -2121,6 +2121,7 @@
 "t:pkb_new_heroes":"Neue Helden",
 "t:pkb_ng_in":"in {n} Tagen",
 "t:admin_update_reload":"Die Seite wurde aktualisiert. Lade die Seite neu, um Admin zu öffnen.",
+"t:page_update_reload":"Die Seite wurde aktualisiert. Lade die Seite neu, um diese Seite zu öffnen.",
 "t:scan_tab_lab":"Forschungslabor",
 "t:scan_lab":"Forschungslabor-Bildschirm",
 "t:scan_lab_hint":"Liest die wöchentlichen Super-Veredelungen (und Veredelter FC / Feuerkristall oben).",

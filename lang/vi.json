@@ -2120,6 +2120,7 @@
 "t:pkb_new_heroes":"Anh hùng mới",
 "t:pkb_ng_in":"sau {n} ngày",
 "t:admin_update_reload":"Trang đã được cập nhật. Tải lại trang để mở Quản trị.",
+"t:page_update_reload":"Trang đã được cập nhật. Tải lại trang để mở trang này.",
 "t:scan_tab_lab":"Phòng Nghiên Cứu",
 "t:scan_lab":"Màn hình Phòng Nghiên Cứu",
 "t:scan_lab_hint":"Đọc số Siêu tinh luyện hằng tuần (và FC Tinh Luyện / Tinh Thể Lửa ở trên cùng).",
