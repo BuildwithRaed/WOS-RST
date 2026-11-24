@@ -2120,6 +2120,7 @@
 "t:pkb_new_heroes":"Hero baru",
 "t:pkb_ng_in":"dalam {n} hari",
 "t:admin_update_reload":"Situs sudah diperbarui. Muat ulang halaman untuk membuka Admin.",
+"t:page_update_reload":"Situs sudah diperbarui. Muat ulang halaman untuk membuka halaman ini.",
 "t:scan_tab_lab":"Research Lab",
 "t:scan_lab":"Layar Research Lab",
 "t:scan_lab_hint":"Membaca Super refinement mingguan (dan Refined FC / Fire Crystal di atas).",
