@@ -8191,7 +8191,18 @@ function advPageHtml(steps) {
 function advDraw() {
   const content = document.getElementById("content");
   if (!content || TAB !== "bestupgrades" || !ADV_LAST) return;
-  keepPlace(() => { content.innerHTML = advPageHtml(ADV_LAST.steps); });
+  // The browser's scroll anchoring moved the page up when the list was rebuilt
+  // (a page chip, Next step | To target, Priority | Pure value): off while it redraws.
+  const y = window.scrollY;
+  content.style.overflowAnchor = "none";
+  keepPlace(() => { content.innerHTML = advPageHtml(ADV_LAST.steps); }).then(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => { content.style.overflowAnchor = ""; }));
+    // A page chip with fewer rows makes the page shorter: keep just enough room
+    // under it so the page stays where it was (render() clears it on a page change).
+    if (TAB !== "bestupgrades" || content.dataset.holdUntilReady) return;
+    const short = y + window.innerHeight - document.documentElement.scrollHeight;
+    if (short > 0) { content.style.minHeight = content.offsetHeight + short + "px"; window.scrollTo(0, y); }
+  });
 }
 async function renderBestUpgradesPage() {
   const seq = RENDER_SEQ, content = document.getElementById("content");
