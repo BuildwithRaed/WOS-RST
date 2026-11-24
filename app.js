@@ -1317,7 +1317,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 126; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 127; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3227,10 +3227,7 @@ const T = {
   gu_stars: { en: "Stars" },
   gu_level: { en: "Level" },
   ht_title: { en: "Hero targets" },
-  ht_desc: { en: "Each hero's own target. Push = straight to the top of your goals; Later = not planned for now." },
-  ht_push: { en: "push" },
   ht_later: { en: "Later" },
-  ht_stars: { en: "Stars" },
   ht_widgets: { en: "widgets" },
   ht_added: { en: "added" },
   ht_not_out: { en: "not out yet" },
@@ -3271,9 +3268,6 @@ const T = {
   cdb_from: { en: "from {d}" },
   cdb_out: { en: "Not out yet" },
   cdb_out_stars: { en: "Not out yet \u00b7 shards wait in the Backpack" },
-  ht_pushgen: { en: "Each new Gen: push 2 heroes first" },
-  ht_pushgen_sub: { en: "Pushed heroes get \"Next SvS\" as their date; when a new Gen is out you'll be asked which 2." },
-  ht_gen_pick: { en: "Gen {g} is out: pick the 2 heroes to push" },
   marks_use_site: { en: "Use site rates" },
   marks_site_rates_on: { en: "Using the site's rates" },
   marks_use_own: { en: "Use my own rates" },
