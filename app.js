@@ -14068,7 +14068,28 @@ function packGroupsFor(tables, calcKey) {
   const key = [stripGems ? 1 : 0, petMarksBuyAs(), LANG, DISPLAY_CURRENCY, new Date().toDateString(), tables.map((tb) => tb.id).join(",")].join("|");
   let out = PACK_GROUPS_CACHE.map.get(key);
   if (!out) { out = packGroupsForBuild(tables, stripGems); PACK_GROUPS_CACHE.map.set(key, out); }
-  return packPurchaseUse(out);
+  return packDaysPassedUse(packPurchaseUse(out));
+}
+// A pack bought once a day while it runs (Hall of Heroes: 3 buys over Sun–Tue,
+// no row Max, no daily reward; the same test as packRowSlots): the running copy
+// only has the days it has left, so the days already gone count as used.
+function packDaysPassedUse(groups) {
+  return groups.map((g) => {
+    const per = g.perCycle || 1, win = Number(g.window) || 0;
+    if (!(typeof g.reset === "number" && g.reset > 0) || packStackInfo(g.reset) || g.ladder || !(win > 1 && per > 1 && per <= win)) return g;
+    const lk = Array.isArray(g.tables) && g.tables.length ? packLinkFor(g.tables[0]) : null;
+    if (lk && lk.rowMax && Object.keys(lk.rowMax).some((k) => Number(lk.rowMax[k]) > 0)) return g;
+    if (packRowDayReward(g)) return g;
+    const st0 = packCurrentCycleStart(g.reset, g.resetDay);
+    if (!st0) return g;
+    const since = Math.round((packStartOfToday() - st0) / 86400000);
+    if (since <= 0 || since >= win) return g;
+    const usedAt = { ...(g.usedAt || {}) };
+    const was = usedAt[0] || 0, now = Math.max(was, per - (win - since));
+    if (now <= was) return g;
+    usedAt[0] = now;
+    return { ...g, used: (g.used || 0) + (now - was), usedNow: (g.usedNow || 0) + (now - was), usedAt };
+  });
 }
 const PACK_GEM_FREE = new WeakMap();
 function packGroupsForBuild(tables, stripGems) {
