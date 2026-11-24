@@ -3152,5 +3152,9 @@
 "t:cdb_out_stars":"لم يصدر بعد · الشظايا تنتظر في الحقيبة",
 "t:cda_u_heroes":"ترقيات أبطال",
 "t:cda_hero_widget":"الأداة {a} → {b}",
-"t:cda_hero_from":"{hero}: من {date}"
+"t:cda_hero_from":"{hero}: من {date}",
+"t:pur_a2_n_prices":"{n} أسعار",
+"t:pur_op_plan_prices":"أسعار الخطة",
+"t:pur_a2_none_today":"لا شيء للشراء اليوم — الباقي في يوم لاحق",
+"t:pur_a2_then":"+ {days}"
 }

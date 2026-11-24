@@ -3152,5 +3152,9 @@
 "t:cdb_out_stars":"아직 출시 안 됨 · 조각은 배낭에서 대기",
 "t:cda_u_heroes":"영웅 업그레이드",
 "t:cda_hero_widget":"위젯 {a} → {b}",
-"t:cda_hero_from":"{hero}: {date}부터"
+"t:cda_hero_from":"{hero}: {date}부터",
+"t:pur_a2_n_prices":"가격 {n}개",
+"t:pur_op_plan_prices":"계획의 가격",
+"t:pur_a2_none_today":"오늘 살 것이 없습니다 — 나머지는 다른 날입니다",
+"t:pur_a2_then":"+ {days}"
 }

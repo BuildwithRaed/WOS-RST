@@ -3154,5 +3154,9 @@
 "t:cdb_out_stars":"Pas encore sorti · les fragments attendent dans le sac",
 "t:cda_u_heroes":"améliorations de héros",
 "t:cda_hero_widget":"Widget {a} → {b}",
-"t:cda_hero_from":"{hero} : dès le {date}"
+"t:cda_hero_from":"{hero} : dès le {date}",
+"t:pur_a2_n_prices":"{n} prix",
+"t:pur_op_plan_prices":"Prix du plan",
+"t:pur_a2_none_today":"Rien à acheter aujourd'hui — le reste vient un autre jour",
+"t:pur_a2_then":"+ {days}"
 }

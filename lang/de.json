@@ -3154,5 +3154,9 @@
 "t:cdb_out_stars":"Noch nicht erschienen · Splitter warten im Rucksack",
 "t:cda_u_heroes":"Helden-Upgrades",
 "t:cda_hero_widget":"Widget {a} → {b}",
-"t:cda_hero_from":"{hero}: ab {date}"
+"t:cda_hero_from":"{hero}: ab {date}",
+"t:pur_a2_n_prices":"{n} Preise",
+"t:pur_op_plan_prices":"Preise des Plans",
+"t:pur_a2_none_today":"Heute nichts zu kaufen — der Rest kommt an einem späteren Tag",
+"t:pur_a2_then":"+ {days}"
 }

@@ -3154,5 +3154,9 @@
 "t:cdb_out_stars":"Aún no ha salido · los fragmentos esperan en la mochila",
 "t:cda_u_heroes":"mejoras de héroes",
 "t:cda_hero_widget":"Widget {a} → {b}",
-"t:cda_hero_from":"{hero}: desde el {date}"
+"t:cda_hero_from":"{hero}: desde el {date}",
+"t:pur_a2_n_prices":"{n} precios",
+"t:pur_op_plan_prices":"Precios del plan",
+"t:pur_a2_none_today":"Nada que comprar hoy: el resto llega otro día",
+"t:pur_a2_then":"+ {days}"
 }

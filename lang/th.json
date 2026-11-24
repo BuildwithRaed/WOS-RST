@@ -3152,5 +3152,9 @@
 "t:cdb_out_stars":"ยังไม่ออก · ชิ้นส่วนรออยู่ในกระเป๋า",
 "t:cda_u_heroes":"การอัปเกรดฮีโร่",
 "t:cda_hero_widget":"วิดเจ็ต {a} → {b}",
-"t:cda_hero_from":"{hero}: ตั้งแต่ {date}"
+"t:cda_hero_from":"{hero}: ตั้งแต่ {date}",
+"t:pur_a2_n_prices":"{n} ราคา",
+"t:pur_op_plan_prices":"ราคาตามแผน",
+"t:pur_a2_none_today":"วันนี้ไม่มีอะไรต้องซื้อ — ที่เหลืออยู่วันอื่น",
+"t:pur_a2_then":"+ {days}"
 }

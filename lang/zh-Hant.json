@@ -3152,5 +3152,9 @@
 "t:cdb_out_stars":"尚未推出 · 碎片留在背包中",
 "t:cda_u_heroes":"英雄升級",
 "t:cda_hero_widget":"專屬裝備 {a} → {b}",
-"t:cda_hero_from":"{hero}：{date}起"
+"t:cda_hero_from":"{hero}：{date}起",
+"t:pur_a2_n_prices":"{n} 個價格",
+"t:pur_op_plan_prices":"計畫的價格",
+"t:pur_a2_none_today":"今天沒有要買的——其餘在之後的日子",
+"t:pur_a2_then":"+ {days}"
 }
