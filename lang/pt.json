@@ -3156,5 +3156,6 @@
 "t:pur_a2_n_prices":"{n} preços",
 "t:pur_op_plan_prices":"Preços do plano",
 "t:pur_a2_none_today":"Nada para comprar hoje — o resto vem outro dia",
-"t:pur_a2_then":"+ {days}"
+"t:pur_a2_then":"+ {days}",
+"t:pur_op_one_day":"um preço por dia"
 }

@@ -3156,5 +3156,6 @@
 "t:pur_a2_n_prices":"{n} mức giá",
 "t:pur_op_plan_prices":"Các mức giá của kế hoạch",
 "t:pur_a2_none_today":"Hôm nay không có gì để mua — phần còn lại vào ngày khác",
-"t:pur_a2_then":"+ {days}"
+"t:pur_a2_then":"+ {days}",
+"t:pur_op_one_day":"mỗi ngày một mức giá"
 }

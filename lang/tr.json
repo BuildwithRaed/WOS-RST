@@ -3156,5 +3156,6 @@
 "t:pur_a2_n_prices":"{n} fiyat",
 "t:pur_op_plan_prices":"Planın fiyatları",
 "t:pur_a2_none_today":"Bugün alınacak bir şey yok — kalanı başka bir gün",
-"t:pur_a2_then":"+ {days}"
+"t:pur_a2_then":"+ {days}",
+"t:pur_op_one_day":"günde bir fiyat"
 }

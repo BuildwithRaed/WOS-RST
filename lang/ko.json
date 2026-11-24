@@ -3156,5 +3156,6 @@
 "t:pur_a2_n_prices":"가격 {n}개",
 "t:pur_op_plan_prices":"계획의 가격",
 "t:pur_a2_none_today":"오늘 살 것이 없습니다 — 나머지는 다른 날입니다",
-"t:pur_a2_then":"+ {days}"
+"t:pur_a2_then":"+ {days}",
+"t:pur_op_one_day":"하루에 한 가격"
 }

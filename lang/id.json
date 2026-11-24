@@ -3156,5 +3156,6 @@
 "t:pur_a2_n_prices":"{n} harga",
 "t:pur_op_plan_prices":"Harga rencana",
 "t:pur_a2_none_today":"Tidak ada yang dibeli hari ini — sisanya di hari lain",
-"t:pur_a2_then":"+ {days}"
+"t:pur_a2_then":"+ {days}",
+"t:pur_op_one_day":"satu harga per hari"
 }
