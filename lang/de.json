@@ -3009,6 +3009,7 @@
 "t:adv_n_not_counted":"„Zählen“ ist aus, daher nicht in deinem Dashboard",
 "t:adv_n_pre":"inkl. 1/{n} von {what} (zuerst nötig)",
 "t:adv_n_set3":"inkl. 3-Teile-Setbonus +{v} % VER alle Truppen",
+"t:adv_set_tag":"+Setbonus {v} %",
 "t:adv_n_set6":"inkl. 6-Teile-Setbonus +{v} % ANG alle Truppen",
 "t:adv_n_set6_share":"inkl. 1/{n} des 6-Teile-Setbonus (+{v} % ANG alle Truppen, wenn alle {n} Teile dort sind)",
 "t:adv_n_shining":"Shining City: mit Glorreichen Folianten gekauft",
