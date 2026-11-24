@@ -5,7 +5,7 @@
 // live here; anything another page (Budgets, the Menu, the Dashboard, admin.js /
 // scan.js / the planner worker) uses stays in app.js. The site loads the packed copy
 // purchases.min.js (tools/stamp.js).
-window.PURCHASES_BUILD = "fd5fdd0b3a";
+window.PURCHASES_BUILD = "ef632baf02";
 
 function packOpenSettingsOnPacks(id) {
   PACK_SETTINGS_FOCUS = String(id);
@@ -1503,7 +1503,7 @@ async function renderPurchasesPageMain() {
       // Heroes: $4.99 + $9.99 + $19.99 today and Sunday): one window, each
       // price ticked under "The plan's prices"; unticked ones aren't bought.
       const offKey = (xs) => (xs || []).map((x) => x.off).join(",");
-      const mates = opKind === "rows" && vi === 0 ? rows.slice(0, nFollow).map((r2, i) => ({ i, r: r2, s: (sel && sel.items.get(i)) || sched[i] })).filter((m) => m.i !== i0 && m.r !== r && sugTable(m.r) === tb && m.r.row != null && m.r.row !== r.row && !Array.isArray(m.r.steps) && offKey(m.s) === offKey(s0)) : [];
+      const mates = opKind === "rows" && vi === 0 && !packLinkFor(tb.id).choice ? rows.slice(0, nFollow).map((r2, i) => ({ i, r: r2, s: (sel && sel.items.get(i)) || sched[i] })).filter((m) => m.i !== i0 && m.r !== r && sugTable(m.r) === tb && m.r.row != null && m.r.row !== r.row && !Array.isArray(m.r.steps) && offKey(m.s) === offKey(s0)) : [];
       const mt = keep && keep.mt ? keep.mt : new Set(mates.map((m) => m.i));
       const mateParts = (d) => mates.filter((m) => mt.has(m.i)).map((m) => ({ row: m.r.row, label: m.r.label, price: m.r.price, local: packRowLocalUnits(m.r).reduce((a, x) => a + x, 0), gives: m.r.gives, plain: true, count: m.s[d].count, mate: m }));
       const mateLocal = (d) => mateParts(d).reduce((a, p) => a + p.local * p.count, 0);

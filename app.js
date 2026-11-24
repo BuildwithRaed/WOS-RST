@@ -11307,7 +11307,7 @@ const CODE_FILES = {
   scan: "scan.min.js?v=64a7ef20ff",
   packs: "packs.min.js?v=f248b1fa8f",
   gallery: "gallery.min.js?v=28a7717641",
-  purchases: "purchases.min.js?v=fd5fdd0b3a",
+  purchases: "purchases.min.js?v=ef632baf02",
   budgets: "budgets.min.js?v=a42622de18",
 };
 const CODE_P = {}, CODE_OK = {};
