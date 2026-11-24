@@ -1454,6 +1454,7 @@
   .pur-a2-ck.on{ background:var(--good); border-color:var(--good); color:#0f141b; }
   .pur-a2-it.done{ cursor:default; }
   .pur-op.plan.off{ opacity:.55; }
+  .pur-ms-row.off{ opacity:.5; }
   .pur-ms-tick.on, .pur-op.plan .pur-ms-tick[aria-pressed="true"]{ display:inline-flex; align-items:center; justify-content:center; background:var(--ice-dim); border-color:var(--ice); }
   .pur-op.plan .pur-ms-tick{ display:inline-flex; align-items:center; justify-content:center; }
   .pur-a2-it.done .pur-a2-tx b{ color:var(--muted); text-decoration:line-through; }

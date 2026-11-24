@@ -3905,6 +3905,7 @@ const T = {
   pur_cnt_extra: { en: "+{n} extra" },
   pur_op_plan_pick: { en: "The plan's pick" },
   pur_op_plan_prices: { en: "The plan's prices" },
+  pur_op_one_day: { en: "one price a day" },
   pur_op_plan_steps: { en: "The plan's steps ({n})" },
   pur_op_plan_card: { en: "The plan's card" },
   pur_op_other: { en: "Other prices in this pack" },
@@ -11307,7 +11308,7 @@ const CODE_FILES = {
   scan: "scan.min.js?v=64a7ef20ff",
   packs: "packs.min.js?v=f248b1fa8f",
   gallery: "gallery.min.js?v=28a7717641",
-  purchases: "purchases.min.js?v=b3f8741082",
+  purchases: "purchases.min.js?v=c400a15ad7",
   budgets: "budgets.min.js?v=a42622de18",
 };
 const CODE_P = {}, CODE_OK = {};

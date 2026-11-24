@@ -5,7 +5,7 @@
 // live here; anything another page (Budgets, the Menu, the Dashboard, admin.js /
 // scan.js / the planner worker) uses stays in app.js. The site loads the packed copy
 // purchases.min.js (tools/stamp.js).
-window.PURCHASES_BUILD = "b3f8741082";
+window.PURCHASES_BUILD = "c400a15ad7";
 
 function packOpenSettingsOnPacks(id) {
   PACK_SETTINGS_FOCUS = String(id);
@@ -1565,11 +1565,30 @@ async function renderPurchasesPageMain() {
       };
       const mateRow = (m) => { const on = mt.has(m.i); return `<div class="pur-op plan${on ? "" : " off"}"><div class="pur-ms-l"><button type="button" class="pur-ms-tick" data-pmmate="${m.i}" aria-pressed="${on}">${on ? "&#10003;" : ""}</button><b class="pur-ms-pr">${esc(packFmtMoney(m.r.price, m.r.currency))}</b>${on ? `<span class="pur-op-tag plan">${esc(t("pur_op_tag_plan"))}</span>` : ""}</div><div class="pur-ms-g">${givesHtml(m.r.gives)}</div></div>`; };
       const planBox = M ? "" : mates.length ? `<div class="pur-op-h ice"><span>${esc(t("pur_op_plan_prices"))}</span></div><div class="pur-op plan"><div class="pur-ms-l"><span class="pur-ms-tick on" aria-hidden="true">&#10003;</span><b class="pur-ms-pr">${esc(fmtN(1))}</b><span class="pur-op-tag plan">${esc(t("pur_op_tag_plan"))}</span></div><div class="pur-ms-g">${givesHtml(r.gives)}</div></div>${mates.map(mateRow).join("")}` : `<div class="pur-op-h ice"><span>${esc(t("pur_op_plan_pick"))}</span></div><div class="pur-op plan"><div class="pur-ms-l"><b class="pur-ms-pr">${esc(fmtN(1))}</b>${r.label !== fmtN(1) ? `<span class="meta pur-op-lb">${esc(r.label)}</span>` : ""}<span class="pur-op-tag plan">${esc(t("pur_op_tag_plan"))}</span></div><div class="pur-ms-g">${givesHtml(r.gives)}</div></div>`;
+      // Packs whose prices are bought one by one (Hall of Heroes, Daily Deals …):
+      // one list of every price like the step packs (owner, 24 Nov 2026: one
+      // style for every pack). The plan's prices ticked (blue, "plan"), a
+      // ticked other price is "extra" (gold, − n + when it can be bought more
+      // than once); choose-one-a-day packs keep the others greyed.
+      const oneDay = !!packLinkFor(tb.id).choice;
+      const oneRow = (o) => {
+        const pr = `<b class="pur-ms-pr">${esc(fmtL(local(o.price)))}</b>`, gv = `<div class="pur-ms-g">${givesHtml(o.gives)}</div>`;
+        const planTagH = `<span class="pur-op-tag plan">${esc(t("pur_op_tag_plan"))}</span>`;
+        if (o.row === r.row) return `<div class="pur-ms-row on op-plan"><div class="pur-ms-l"><span class="pur-ms-tick on" aria-hidden="true">&#10003;</span>${pr}${planTagH}</div>${gv}</div>`;
+        const m = mates.find((x) => x.r.row === o.row);
+        if (m) { const on = mt.has(m.i); return `<div class="pur-ms-row${on ? " on op-plan" : ""}"><div class="pur-ms-l"><button type="button" class="pur-ms-tick" data-pmmate="${m.i}" aria-pressed="${on}">${on ? "&#10003;" : ""}</button>${pr}${on ? planTagH : ""}</div>${gv}</div>`; }
+        const it = OP.find((x) => x.row === o.row);
+        if (!it) return "";
+        const n = ex[it.key] || 0, mx = Math.max(n, opMax(it)), dis = !n && (oneDay || mx < 1);
+        const note = oneDay && !n ? t("pur_op_one_day") : mx < 1 ? t("pur_op_none_left") : "";
+        return `<div class="pur-ms-row${n ? " on op-extra" : ""}${dis ? " off" : ""}" data-pmexi="${esc(it.key)}"><div class="pur-ms-l"><button type="button" class="pur-ms-tick" data-pmexr="${esc(it.key)}" aria-pressed="${n > 0}"${dis ? " disabled" : ""}>${n ? "&#10003;" : ""}</button>${pr}${n && mx > 1 ? purStepHtml("pmex", n, mx, 1) : ""}${note ? `<span class="meta pur-op-up">${esc(note)}</span>` : ""}${n ? `<span class="pur-op-tag extra">${esc(t("pur_op_tag_extra1"))}</span>` : ""}</div>${gv}</div>`;
+      };
+      const oneHtml = opKind === "rows" ? `<div class="pur-ms"><div class="pur-op-h ice"><span>${esc(t(mates.length ? "pur_op_plan_prices" : "pur_op_plan_pick"))}</span></div>${packOffersFor(tb, true).filter((o) => Object.keys(o.gives || {}).length).map(oneRow).join("")}</div>` : "";
       // A date's price with what is added to it.
       const baseLocal = () => packConvert(r.price, r.currency).n;
       const dayPrice = (d) => { const xl = exLocal() + (mates.length ? mateLocal(d) : 0); if (!xl) return fmtN(cntOf(d), selOf(d)); return fmtL((M ? localOf(selOf(d)) : baseLocal()) * cntOf(d) + xl); };
       modal.innerHTML = `<div class="modal-box pur-modal">
-        <div class="pur-m-head"><h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2>${closeXHtml("data-pmclose")}</div>${verHtml}${stepsHtml}${noteHtml}${planBox}${opHtml()}
+        <div class="pur-m-head"><h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2>${closeXHtml("data-pmclose")}</div>${verHtml}${stepsHtml}${noteHtml}${opKind === "rows" ? oneHtml : planBox + opHtml()}
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
         <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}${dayCtl(k) && x.count === 1 ? "<span></span>" : `<span class="meta" data-pmx>${bidiNum("× " + cntOf(k))}</span>`}<b data-pmpr>${esc(dayPrice(k))}</b></label>${cntHtml(k)}${dayMenu(k)}`).join("")}</div>
         <div class="pur-m-foot"><span data-pmsum></span><div class="pur-op-sum" data-pmexsum hidden></div><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-pmclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-pmadd>+ ${esc(t("pur_will_buy"))}</button></span></div>
@@ -1643,6 +1662,7 @@ async function renderPurchasesPageMain() {
         const n = Math.max(0, Math.min(Math.max(ex[k] || 0, opMax(it)), (ex[k] || 0) + Number(b.dataset.pmex)));
         openVer(vi, state({ ex: { ...ex, [k]: n } }));
       })));
+      modal.querySelectorAll("[data-pmexr]").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.pmexr; openVer(vi, state({ ex: { ...ex, [k]: ex[k] > 0 ? 0 : 1 } })); }));
       modal.querySelectorAll("[data-pmexc]").forEach((b) => b.addEventListener("click", () => {
         const k = b.dataset.pmexc;
         openVer(vi, state({ ex: { ...ex, [k]: ex[k] > 0 ? 0 : 1 } }));
