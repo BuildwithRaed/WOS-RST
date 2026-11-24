@@ -5,7 +5,7 @@
 // live here; anything another page (Budgets, the Menu, the Dashboard, admin.js /
 // scan.js / the planner worker) uses stays in app.js. The site loads the packed copy
 // purchases.min.js (tools/stamp.js).
-window.PURCHASES_BUILD = "ef632baf02";
+window.PURCHASES_BUILD = "b3f8741082";
 
 function packOpenSettingsOnPacks(id) {
   PACK_SETTINGS_FOCUS = String(id);
@@ -809,7 +809,7 @@ async function renderPurchasesPageMain() {
     const units = [];
     const unitOf = new Map();
     all.forEach((it, k) => {
-      const gk = it.done ? "" : `${it.tb.id}|${it.name}`;
+      const gk = it.done ? "" : String(it.tb.id);
       if (gk && unitOf.has(gk)) { unitOf.get(gk).kids.push(k); return; }
       const u = { gk, kids: [k] };
       if (gk) unitOf.set(gk, u);
@@ -826,7 +826,7 @@ async function renderPurchasesPageMain() {
       const sub = `${sameWhen ? it0.tag || "" : ""}${[t("pur_a2_n_prices").replace("{n}", kids.length), sameWhen ? it0.when : ""].filter(Boolean).map(esc).join(" · ")}`;
       return `<div class="pur-a2-it pur-a2-g" data-pura2g="${u.kids.join(",")}" role="button" tabindex="0">
         <span class="pur-pic">${it0.pic ? `<img src="${esc(it0.pic)}" alt="" loading="lazy" />` : `<i>${esc(it0.name.charAt(0))}</i>`}</span>
-        <span class="pur-a2-tx"><b>${esc(it0.name)} <span class="pur-a2-x">${bidiNum("×" + n)}</span></b><small>${sub}</small>${purGoalTagHtml(gm, gv, 0)}</span>
+        <span class="pur-a2-tx"><b>${esc(kids.every((x) => x.name === it0.name) ? it0.name : it0.name.split(" · ")[0])} <span class="pur-a2-x">${bidiNum("×" + n)}</span></b><small>${sub}</small>${purGoalTagHtml(gm, gv, 0)}</span>
         <b class="pur-a2-pr">${esc(fmt(local))}</b>
         <button type="button" class="pur-a2-ck" data-pura2gck="${u.kids.join(",")}" title="${esc(t("pur_a2_mark"))}" aria-label="${esc(t("pur_a2_mark"))}">&#10003;</button>
       </div>`;
@@ -1367,12 +1367,31 @@ async function renderPurchasesPageMain() {
       const openVer = (vi, keep) => {
       const { r, s0 } = vers[vi], tb = sugTable(r);
       if (!tb) return;
-      const M = stepModel(r, tb), isPick = !!M && M.kind === "pick";
+      let M = stepModel(r, tb);
+      // Pick-one cards (Benefit Card) the plan buys at several prices on the
+      // same dates (Chief Gear $4.99 + Chief Charm $9.99): one window, a row per
+      // price with its card switch, like the option packs' steps.
+      if (M && M.kind === "card" && vi === 0) {
+        const xsKey = (xs) => (xs || []).map((x) => `${x.off}:${x.count}`).join(",");
+        const tbs = (r.tables || []).map((id) => byId.get(String(id))).filter(Boolean);
+        const cm = rows.slice(0, nFollow).map((r2, i) => ({ i, r: r2, s: (sel && sel.items.get(i)) || sched[i] })).filter((m) => m.i !== i0 && m.r !== r && sugTable(m.r) === tb && m.r.row != null && !m.r.steps && xsKey(m.s) === xsKey(s0));
+        if (cm.length && tbs.length > 1) {
+          const tags = packLinkFor(tbs[0].id).linkSet ? packLinkSetTags(tbs) : tbs.map(packOptionTag);
+          const per = tbs.map((x) => packOffersFor(x, true)), n = Math.min(...per.map((o) => o.length));
+          const steps = [];
+          for (let k = 0; k < n; k++) steps.push({ price: per[0][k].price, row: per[0][k].row, opts: per.map((offs, j) => ({ tag: tags[j], gives: offs[k].gives || {} })) });
+          const near = (opts, gives) => { let best = 0, bd = Infinity; opts.forEach((o, j) => { const ks = new Set([...Object.keys(o.gives || {}), ...Object.keys(gives || {})].filter((x) => x !== "Gems")); let d = 0; ks.forEach((x) => { const a = (o.gives || {})[x] || 0, b = (gives || {})[x] || 0; d += Math.abs(a - b) / Math.max(1, a, b); }); if (d < bd) { bd = d; best = j; } }); return best; };
+          const planSet = steps.map(() => false), planPick = steps.map(() => 0), planI = steps.map(() => -1);
+          const ok = [{ i: i0, r }].concat(cm).every((m) => { const k = steps.findIndex((st) => st.row === m.r.row); if (k < 0 || planSet[k]) return false; planSet[k] = true; planPick[k] = near(steps[k].opts, m.r.gives); planI[k] = m.i; return true; });
+          if (ok) M = { kind: "cards", steps, planSet, planPick, planI };
+        }
+      }
+      const isPick = !!M && M.kind === "pick", isCards = !!M && M.kind === "cards";
       const ordered = !!M && (M.kind === "opt" || M.kind === "plain" || M.kind === "pickladder");
       const isPL = !!M && M.kind === "pickladder";
       // Top list = "Set all dates": kk steps (in order) or a set of prices (any price).
-      const kk = M && !isPick ? (keep ? keep.kk : M.planK) : 0;
-      const tset = isPick ? (keep ? keep.tset : M.planSet.slice()) : null;
+      const kk = M && !isPick && !isCards ? (keep ? keep.kk : M.planK) : 0;
+      const tset = isPick || isCards ? (keep ? keep.tset : M.planSet.slice()) : null;
       const pick = M && !isPick ? (keep ? keep.pick : M.planPick.slice()) : [];
       const pp = isPick ? (keep ? keep.pp : M.planPicks.map((x) => x.slice())) : null;
       const pp0 = isPL ? (keep ? keep.pp0 : M.planPP.slice()) : null;
@@ -1386,6 +1405,10 @@ async function renderPurchasesPageMain() {
       // What one date buys: [{ row, label, price (pack currency), local, gives }].
       const partsOf = (sel) => {
         if (!M) return [{ row: r.row != null ? r.row : 0, label: r.label, price: r.price, local: packRowLocalUnits(r).reduce((a, x) => a + x, 0), gives: r.gives, plain: true, ...(r.extra > 0 ? { extra: r.extra } : {}) }];
+        if (isCards) return sel.map((on, k) => (on ? k : -1)).filter((k) => k >= 0).map((k) => {
+          const st = M.steps[k], j = pick[k], o = st.opts[j], asPlan = M.planSet[k] && j === M.planPick[k], pr = asPlan ? rows[M.planI[k]] : null;
+          return { row: st.row, label: asPlan ? pr.label : `${packFmtMoney(st.price, r.currency)} · ${o.tag}`, price: st.price, local: local(st.price), gives: asPlan ? pr.gives : o.gives, ...(M.planSet[k] ? { mateI: M.planI[k] } : { isExtra: true }) };
+        });
         if (isPick) return sel.map((on, k) => (on ? k : -1)).filter((k) => k >= 0).map((k) => {
           const st = M.steps[k], g = {};
           pp[k].forEach((j) => Object.entries(st.opts[j].gives).forEach(([n, v]) => { g[n] = (g[n] || 0) + v; }));
@@ -1410,7 +1433,7 @@ async function renderPurchasesPageMain() {
         const row = same ? (r.row != null ? r.row : 0) : M.kind === "plain" ? ch[m - 1].row : M.kind === "card" ? r.row : m - 1;
         return [{ row, label, price: same ? r.price : Math.round(ch.reduce((a, st) => a + st.price, 0) * 100) / 100, local: ch.reduce((a, st) => a + local(st.price), 0), gives: same ? r.gives : g, plain: M.kind === "plain" }];
       };
-      const topSel = isPick ? tset : kk;
+      const topSel = isPick || isCards ? tset : kk;
       const selOf = (d) => (dsel[d] !== undefined ? dsel[d] : topSel);
       const localOf = (sel) => partsOf(sel).reduce((a, p) => a + p.local, 0);
       const fmtL = (v) => packFmtLocal(v, r.currency, false, r.price);
@@ -1426,31 +1449,33 @@ async function renderPurchasesPageMain() {
       // The plan's part (blue edge, "plan") and what is added to it (gold
       // edge, "extra · Budgets plans with it"): next steps of a ladder, other
       // prices of an "any price" pack.
-      const isPlanK = (k) => (isPick ? !!M.planSet[k] : k < M.planK);
+      const isPlanK = (k) => (isPick || isCards ? !!M.planSet[k] : k < M.planK);
       const opTag = (k, on) => (isPlanK(k) ? (on ? `<span class="pur-op-tag plan">${esc(t("pur_op_tag_plan"))}</span>` : "") : on ? `<span class="pur-op-tag extra">${esc(t("pur_op_tag_extra"))}</span>` : ordered ? `<span class="pur-op-tag step">${esc(t("pur_op_tag_step"))}</span>` : "");
       const opHead = (k) => {
+        if (isCards) return k === 0 ? `<div class="pur-op-h ice"><span>${esc(t("pur_op_plan_prices"))}</span></div>` : "";
         if (!M || isPick) return "";
         if (k === 0) return `<div class="pur-op-h ice"><span>${esc(M.kind === "card" ? t("pur_op_plan_card") : t("pur_op_plan_steps").replace("{n}", M.planK === 1 ? "1" : `1–${M.planK}`))}</span></div>`;
         return ordered && k === M.planK ? `<div class="pur-op-h gold"><span>${esc(t("pur_op_next"))}</span></div><div class="meta pur-op-d">${esc(t("pur_op_next_d"))}</div>` : "";
       };
-      const stepsHtml = M ? `${plHtml}${s0.length > 1 && M.kind !== "card" ? `<div class="pur-ms-head"><span class="meta">${esc(t("pur_ms_setall"))}</span>${differ ? `<span class="pur-ms-differ">${esc(t("pur_ms_differ"))}</span>` : ""}</div>` : ""}<div class="pur-ms">${M.steps.map((st, k) => {
-        const on = isPick ? tset[k] : k < kk, j = isPick || isPL ? 0 : pick[k], swt = !isPick && !isPL && st.opts.length > 1;
+      const stepsHtml = M ? `${plHtml}${s0.length > 1 && M.kind !== "card" && !isCards ? `<div class="pur-ms-head"><span class="meta">${esc(t("pur_ms_setall"))}</span>${differ ? `<span class="pur-ms-differ">${esc(t("pur_ms_differ"))}</span>` : ""}</div>` : ""}<div class="pur-ms">${M.steps.map((st, k) => {
+        const on = isPick || isCards ? tset[k] : k < kk, j = isPick || isPL ? 0 : pick[k], swt = !isPick && !isPL && st.opts.length > 1;
         const tag = opTag(k, on);
         const items = isPL ? `<div class="pur-ms-g">${givesHtml(plGives(k))}${tag}</div>` : isPick
           ? (on ? stripHtml(String(k), st.opts, pp[k]) : "")
           : `<div class="pur-ms-g">${givesHtml(st.opts[j].gives)}${swt ? tag : ""}</div>`;
-        return `${opHead(k)}<div class="pur-ms-row${on ? " on" : ""}${M.kind === "card" ? " card" : ""}${isPlanK(k) ? " op-plan" : on ? " op-extra" : ""}"><div class="pur-ms-l">
+        return `${opHead(k)}<div class="pur-ms-row${on ? " on" : ""}${M.kind === "card" || isCards ? " card" : ""}${isPlanK(k) ? " op-plan" : on ? " op-extra" : ""}"><div class="pur-ms-l">
           <button type="button" class="pur-ms-tick" data-pmtick="${k}" aria-pressed="${on}">${on ? "&#10003;" : ""}</button>
-          ${M.kind === "card" || isPick ? "" : `<b class="pur-ms-n">${k + 1}</b>`}<b class="pur-ms-pr">${esc(fmtL(local(st.price)))}</b>
+          ${M.kind === "card" || isPick || isCards ? "" : `<b class="pur-ms-n">${k + 1}</b>`}<b class="pur-ms-pr">${esc(fmtL(local(st.price)))}</b>
           ${swt ? `<span class="pur-ms-sw">${st.opts.map((o, oj) => `<button type="button" data-pmopt="${k}|${oj}" class="${oj === j ? "on" : ""}">${esc(o.tag)}</button>`).join("")}</span>` : ""}
           ${isPick && !on ? `<span class="meta pur-ms-pickn">${esc(t("pur_ms_pickn").replace("{n}", M.n))}</span>` : ""}${isPick && on ? slotsHtml(String(k), st.opts, pp[k]) : ""}${swt || isPL ? "" : tag}</div>
           ${items}</div>`;
-      }).join("")}</div>${M.kind !== "card" ? `<div class="meta" style="font-size:10.5px; margin:-4px 0 8px;">${esc(t(isPick ? "pur_ms_any" : "pur_ms_order"))}</div>` : ""}` : "";
+      }).join("")}</div>${M.kind !== "card" && !isCards ? `<div class="meta" style="font-size:10.5px; margin:-4px 0 8px;">${esc(t(isPick ? "pur_ms_any" : "pur_ms_order"))}</div>` : ""}` : "";
       const notes = [];
       const range = (a, b) => (a === b ? String(a) : `${a}–${b}`);
-      if (M && !isPick && kk < M.planK) notes.push(t("pur_ms_left").replace("{a}–{b}", range(kk + 1, M.planK)));
-      if (M && !isPick && kk > M.planK) notes.push(t("pur_ms_added").replace("{a}–{b}", range(M.planK + 1, kk)));
-      if (M && !isPick) pick.slice(0, Math.min(kk, M.planK)).forEach((j, k) => { if (j !== M.planPick[k]) notes.push(t(M.kind === "card" ? "pur_ms_card" : "pur_ms_step").replace("{k}", k + 1).replace("{tag}", M.steps[k].opts[j].tag)); });
+      if (isCards && (tset.join() !== M.planSet.join() || tset.some((on, k) => on && pick[k] !== M.planPick[k]))) notes.push(t("pur_ms_pick_changed"));
+      if (M && !isPick && !isCards && kk < M.planK) notes.push(t("pur_ms_left").replace("{a}–{b}", range(kk + 1, M.planK)));
+      if (M && !isPick && !isCards && kk > M.planK) notes.push(t("pur_ms_added").replace("{a}–{b}", range(M.planK + 1, kk)));
+      if (M && !isPick && !isCards) pick.slice(0, Math.min(kk, M.planK)).forEach((j, k) => { if (j !== M.planPick[k]) notes.push(t(M.kind === "card" ? "pur_ms_card" : "pur_ms_step").replace("{k}", k + 1).replace("{tag}", M.steps[k].opts[j].tag)); });
       if (isPL && pp0.join() !== M.planPP.join()) notes.push(t("pur_ms_pick_changed"));
       if (isPick && (tset.join() !== M.planSet.join() || tset.some((on, k) => on && pp[k].join() !== M.planPicks[k].join()))) notes.push(t("pur_ms_pick_changed"));
       if (differ) notes.push(t(isPick ? "pur_ms_dates_differ_p" : "pur_ms_dates_differ"));
@@ -1461,7 +1486,7 @@ async function renderPurchasesPageMain() {
       const priceShort2 = (loc) => fmtL(loc).replace(/[^\d.,]/g, "");
       const priceShort = (usd) => priceShort2(local(usd));
       const dayCtl = (d) => {
-        if (!M || M.kind === "card" || s0.length < 2) return "";
+        if (!M || M.kind === "card" || isCards || s0.length < 2) return "";
         const sel = selOf(d);
         if (ordered) return `<select class="pur-dsel${dsel[d] !== undefined ? " on" : ""}" data-pmdk="${d}" aria-label="${esc(t("pur_ms_upto_n").replace("{n}", ""))}">${M.steps.map((st, k) => `<option value="${k + 1}" ${k + 1 === sel ? "selected" : ""}>${esc(t("pur_ms_upto_n").replace("{n}", k + 1))} · ${esc(priceShort2(M.steps.slice(0, k + 1).reduce((a, x) => a + local(x.price), 0)))}</option>`).join("")}</select>`;
         const ks = sel.map((on, k) => (on ? k : -1)).filter((k) => k >= 0);
@@ -1558,7 +1583,7 @@ async function renderPurchasesPageMain() {
         const empty = ix.some((d) => (M ? !partsOf(selOf(d)).length : false));
         // Plan + extra: what the plan picked and what was added to it.
         const exTot = ix.reduce((a, d) => a + (M ? partsOf(selOf(d)).filter((p) => p.isExtra).reduce((b, p) => b + p.local, 0) * cntOf(d) : 0) + xl, 0);
-        const exN = (M && isPick ? tset.filter((on, k) => on && !M.planSet[k]).length : M && ordered && kk > M.planK && partsOf(kk).length > 1 ? kk - M.planK : 0) + exParts().reduce((a, p) => a + p.count, 0) + ix.reduce((a, d) => a + Math.max(0, cntOf(d) - s0[d].count), 0);
+        const exN = (M && (isPick || isCards) ? tset.filter((on, k) => on && !M.planSet[k]).length : M && ordered && kk > M.planK && partsOf(kk).length > 1 ? kk - M.planK : 0) + exParts().reduce((a, p) => a + p.count, 0) + ix.reduce((a, d) => a + Math.max(0, cntOf(d) - s0[d].count), 0);
         modal.querySelector("[data-pmsum]").innerHTML = `<b>${esc(M || useL ? fmtL(tot) : packFmtMoney(tot, r.currency))}</b> <span class="meta">${exTot > 0 ? esc(t("pur_op_sum").replace("{a}", fmtL(tot - exTot)).replace("{b}", fmtL(exTot))) : `${ordered && !differ ? esc(nSteps(kk)) + " · " : ""}${esc(t("pur_sug_n_of").replace("{n}", ix.length).replace("{m}", s0.length))}`}</span>`;
         const es = modal.querySelector("[data-pmexsum]");
         es.hidden = !exN; es.textContent = exN ? t("pur_op_note").replace("{n}", exN) : "";
@@ -1596,12 +1621,14 @@ async function renderPurchasesPageMain() {
         const adds = [];
         // What was added to the plan's part (next steps, other prices / cards)
         // is its own purchase, tagged "extra".
-        ix.forEach((d) => partsOf(selOf(d)).concat(mateParts(d), exParts()).forEach((p) => adds.push({ id: "p" + Date.now().toString(36) + d + "_" + adds.length + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: p.row, ...(p.from != null ? { from: p.from } : r.from != null && !p.isExtra ? { from: r.from } : {}), ...(p.extra > 0 ? { extra: p.extra } : {}), count: p.count != null ? p.count : cntOf(d), date: dayOf(Math.max(0, s0[d].off)), status: "planned", plan: p.isExtra ? "extra" : p.mate ? planTag(p.mate.i) : vers.length > 1 ? vers[vi].key : planTag(i0), ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: p.label, price: p.price, gives: p.gives } }) })));
+        ix.forEach((d) => partsOf(selOf(d)).concat(mateParts(d), exParts()).forEach((p) => adds.push({ id: "p" + Date.now().toString(36) + d + "_" + adds.length + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: p.row, ...(p.from != null ? { from: p.from } : r.from != null && !p.isExtra ? { from: r.from } : {}), ...(p.extra > 0 ? { extra: p.extra } : {}), count: p.count != null ? p.count : cntOf(d), date: dayOf(Math.max(0, s0[d].off)), status: "planned", plan: p.isExtra ? "extra" : p.mate ? planTag(p.mate.i) : p.mateI != null ? planTag(p.mateI) : vers.length > 1 ? vers[vi].key : planTag(i0), ...(plainPack(tb) ? {} : { choice: { name: p.mateI != null ? sugName(rows[p.mateI]) : sugName(r), label: p.label, price: p.price, gives: p.gives } }) })));
         if (!adds.length) return;
         PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
         savePackPurchases();
         // The plan's own pack, step and choice on some of its dates: the rest stays as planned.
         const ri = rows.indexOf(r), base = r.row != null ? r.row : 0;
+        if (isCards && ri >= 0 && ri < nFollow && ix.every((d) => cntOf(d) === s0[d].count) && tset.join() === M.planSet.join() && tset.every((on, k) => !on || pick[k] === M.planPick[k])) takeAsPlanned(M.planI.filter((x) => x >= 0).flatMap((i) => ix.map((d) => ({ i, off: s0[d].off, count: s0[d].count }))));
+        else
         if (ri >= 0 && ri < nFollow && !exParts().length && ix.every((d) => { const ps = partsOf(selOf(d)); return cntOf(d) === s0[d].count && ps.length === 1 && ps[0].label === r.label && ps[0].row === base; })) takeAsPlanned(ix.map((d) => ({ i: ri, off: s0[d].off, count: s0[d].count })).concat(mates.filter((m) => mt.has(m.i)).flatMap((m) => ix.map((d) => ({ i: m.i, off: m.s[d].off, count: m.s[d].count })))));
         close();
         toast(ix.length > 1 ? t("pur_added_dates").replace("{n}", ix.length) : t("pur_added"));
@@ -1625,10 +1652,10 @@ async function renderPurchasesPageMain() {
       // it; unticking one unticks the ones after it. Any price: each on its own.
       modal.querySelectorAll("[data-pmtick]").forEach((v) => v.addEventListener("click", () => {
         const k = Number(v.dataset.pmtick);
-        if (isPick) { const t2 = tset.slice(); t2[k] = !t2[k]; openVer(vi, state({ tset: t2, dsel: {} })); return; }
+        if (isPick || isCards) { const t2 = tset.slice(); t2[k] = !t2[k]; openVer(vi, state({ tset: t2, dsel: {} })); return; }
         openVer(vi, state({ kk: k < kk ? (M.kind === "card" ? 0 : k) : k + 1, dsel: {} }));
       }));
-      modal.querySelectorAll("[data-pmopt]").forEach((v) => v.addEventListener("click", () => { const [k, j] = v.dataset.pmopt.split("|").map(Number); const p2 = pick.slice(); p2[k] = j; openVer(vi, state({ kk: Math.max(kk, k + 1), pick: p2, dsel: k + 1 > kk ? {} : dsel })); }));
+      modal.querySelectorAll("[data-pmopt]").forEach((v) => v.addEventListener("click", () => { const [k, j] = v.dataset.pmopt.split("|").map(Number); const p2 = pick.slice(); p2[k] = j; if (isCards) { const t2 = tset.slice(); t2[k] = true; openVer(vi, state({ pick: p2, tset: t2 })); return; } openVer(vi, state({ kk: Math.max(kk, k + 1), pick: p2, dsel: k + 1 > kk ? {} : dsel })); }));
       modal.querySelectorAll("[data-pmslot]").forEach((v) => v.addEventListener("click", () => openVer(vi, state({ openSlot: openSlot === v.dataset.pmslot ? "" : v.dataset.pmslot }))));
       modal.querySelectorAll("[data-pmslotopt]").forEach((v) => v.addEventListener("click", () => {
         const [key, p, oj] = v.dataset.pmslotopt.split("|");
