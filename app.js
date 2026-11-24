@@ -26358,11 +26358,13 @@ async function renderBudgetsPage(opts = {}) {
     // page tile on screen below it stays where it is.
     const partRedraw = () => {
       const y = window.scrollY, sq = RENDER_SEQ, hd = content.querySelector(".b3-hd");
-      const below = !!hd && hd.getBoundingClientRect().bottom < window.innerHeight / 2;
+      // (only once the person has scrolled: at the top the page stays at the top)
+      const below = y > 0 && !!hd && hd.getBoundingClientRect().bottom < window.innerHeight / 2;
       const tile = below ? [...content.querySelectorAll("[data-b3page]")].find((el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; }) : null;
       const key = tile ? tile.dataset.b3page : null, top0 = tile ? tile.getBoundingClientRect().top : 0, h0 = hd ? hd.offsetHeight : 0;
       const putBoxes = saveBoxScroll(content); // an open window stays scrolled where it was
       keepFolds(content, () => renderBudgetsPage()).then(() => {
+        infoize(content); // the description goes into its (i) now, not a frame later (it made the page 78 px taller while measured)
         putBoxes();
         const t2 = key ? [...content.querySelectorAll("[data-b3page]")].find((el) => el.dataset.b3page === key) : null, h2 = content.querySelector(".b3-hd");
         window.scrollTo(0, y);
