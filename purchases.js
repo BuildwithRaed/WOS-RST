@@ -5,7 +5,7 @@
 // live here; anything another page (Budgets, the Menu, the Dashboard, admin.js /
 // scan.js / the planner worker) uses stays in app.js. The site loads the packed copy
 // purchases.min.js (tools/stamp.js).
-window.PURCHASES_BUILD = "f77230a2de";
+window.PURCHASES_BUILD = "408a5a041e";
 
 function packOpenSettingsOnPacks(id) {
   PACK_SETTINGS_FOCUS = String(id);
@@ -695,6 +695,7 @@ async function renderPurchasesPageMain() {
     const run = o.every((x, i) => i === 0 || x === o[i - 1] + 1);
     let txt = "";
     if (o.length > 1 && run && o[0] <= 0) txt = t("pur_a2_daily").replace("{day}", wdName(offDate(o[o.length - 1])));
+    else if (o.length > 1 && o[0] <= 0) txt = t("pur_a2_then").replace("{days}", o.slice(1).map((x) => wdName(offDate(x))).join(", "));
     else if (o[0] > 0) txt = o.length === 1 ? wdName(offDate(o[0])) : run ? `${wdName(offDate(o[0]))} – ${wdName(offDate(o[o.length - 1]))}` : o.map((x) => wdName(offDate(x))).join(", ");
     return { tag, txt };
   };
