@@ -8198,9 +8198,14 @@ function advDraw() {
     requestAnimationFrame(() => requestAnimationFrame(() => { content.style.overflowAnchor = ""; }));
     // A page chip with fewer rows makes the page shorter: keep just enough room
     // under it so the page stays where it was (render() clears it on a page change).
-    if (TAB !== "bestupgrades" || content.dataset.holdUntilReady) return;
-    const short = y + window.innerHeight - document.documentElement.scrollHeight;
-    if (short > 0) { content.style.minHeight = content.offsetHeight + short + "px"; window.scrollTo(0, y); }
+    // Checked in the next frame, after the page observer has moved the new
+    // descriptions into their (i) bubbles (that makes the page shorter too).
+    requestAnimationFrame(() => {
+      if (TAB !== "bestupgrades" || content.dataset.holdUntilReady) return;
+      const short = y + window.innerHeight - document.documentElement.scrollHeight;
+      if (short > 0) content.style.minHeight = content.offsetHeight + short + "px";
+      if (Math.round(window.scrollY) !== Math.round(y)) window.scrollTo(0, y);
+    });
   });
 }
 async function renderBestUpgradesPage() {
