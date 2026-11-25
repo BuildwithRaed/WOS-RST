@@ -3637,7 +3637,7 @@ const T = {
   mk_hg_lock: { en: "Mastery {n} first" },
   mk_hg_lock_n: { en: "{n} first" },
   mk_hg_lock_at: { en: "Mastery {n} for {e}+" },
-  mk_hg_for: { en: "for {e}+" },
+  mk_hg_lock_tail: { en: "· {e}+" },
   mk_hg_can_to: { en: "Your Backpack can take Enhance to {x}" },
   cda_hg_lock_at: { en: "{piece} Enhance {a} → {b} · Mastery {n} for {e}+" },
   mk_hg_cant: { en: "Your Backpack can't take Enhance past {x} yet" },
@@ -9497,7 +9497,7 @@ function mkHtml(tr, plan, k) {
   if (lk) {
     const lt = t("mk_hg_lock_at").replace("{n}", lk.need).replace("{e}", lk.next);
     return `<span class="mk mk2" role="button" tabindex="0" data-mk="${k}" title="${esc(t("mk_tip_short"))}"><span class="mk part">${MK_HALF}<small>${esc(t("mk_now"))}</small> ${esc(mkLab(tr, r))}</span>`
-      + `<span class="mk lock sm" title="${esc(lt)}" aria-label="${esc(lt)}"><span>&#128274; ${hgEsIcon()} ${esc(String(lk.need))}</span><span>${esc(t("mk_hg_for").replace("{e}", lk.next))}</span></span></span>`;
+      + `<span class="mk lock sm" title="${esc(lt)}" aria-label="${esc(lt)}"><span class="mk-lw"><span class="mk-lk" aria-hidden="true">&#128274;</span>${hgEsIcon()} ${esc(String(lk.need))}</span> <span class="mk-lw">${esc(t("mk_hg_lock_tail").replace("{e}", lk.next))}</span></span></span>`;
   }
   if (!(tr.to > tr.from) || !(r > tr.from)) return "";
   const full = r >= tr.to;

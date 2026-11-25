@@ -5365,11 +5365,12 @@ input,select,textarea{
 .mk.mk2{flex-direction:column;gap:2px;padding:0;border:0;background:none;line-height:normal}
 .mk.mk2 > .mk{margin:0}
 .mk.lock.sm{font-size:10.5px;line-height:13px;padding:1px 5px;font-weight:600}
-.mk.lock.sm{flex-direction:column;gap:0;white-space:nowrap}
-.mk.lock.sm > span{display:inline-flex;align-items:center;gap:2px}
+.mk.lock.sm{flex-wrap:wrap;column-gap:3px;row-gap:0;max-width:100%;padding:1px 4px;letter-spacing:-.2px}
+.mk.lock.sm .mk-lw{display:inline-flex;align-items:center;gap:1px;white-space:nowrap}
+.mk.lock.sm .mk-lk{font-size:8px;line-height:1}
 .mk.lock.sm:not(:has(.mk-es)){white-space:normal}
 .mk.lock:has(.mk-es){white-space:nowrap}
-.mk.lock.sm .mk-es{width:13px;height:13px}
+.mk.lock.sm .mk-es{width:12px;height:12px;margin:0}
 .ch-t-v .mk, .hg-cell .mk, .sg-t .mk{display:flex;width:max-content;max-width:100%;margin:3px auto 0}
 .pc-st > span{display:flex;align-items:center;justify-content:center;gap:4px;min-height:20px;flex-wrap:nowrap}
 .pc-st > span > .mk{display:inline-flex;margin:0;line-height:16px;padding:0 5px}
