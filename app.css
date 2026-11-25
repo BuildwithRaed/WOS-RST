@@ -1459,6 +1459,21 @@
   .pur-op.plan .pur-ms-tick{ display:inline-flex; align-items:center; justify-content:center; }
   .pur-a2-it.done .pur-a2-tx b{ color:var(--muted); text-decoration:line-through; }
   .pur-a2-it.done .pur-a2-pr{ color:var(--muted); }
+  /* My Purchases: this week's bought packs as small cards (D), two a row (more on wide screens). */
+  .pur-dn{ border-top:1px solid var(--line); margin-top:2px; }
+  .pur-dn-hd{ display:flex; align-items:center; gap:8px; min-height:36px; padding:6px 0 4px; font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+  .pur-dn-hd .g1-fold{ margin-inline-start:auto; }
+  .pur-dn.g1-folded .pur-dn-grid{ display:none; }
+  .pur-dn-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:6px; padding:2px 0 6px; }
+  .pur-dn-c{ display:flex; align-items:center; gap:6px; min-width:0; min-height:44px; padding:4px 6px; border-radius:10px; background:var(--panel-2); border:1px solid var(--line); color:var(--muted); cursor:pointer; }
+  .pur-dn-c .pur-pic{ flex:0 0 26px; width:26px; height:26px; border-radius:6px; background:none; }
+  .pur-dn-c .pur-pic img{ width:24px; height:24px; }
+  .pur-dn-t{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; line-height:1.25; }
+  .pur-dn-t b{ display:flex; gap:3px; min-width:0; font-size:12px; font-weight:600; color:var(--frost); white-space:nowrap; }
+  .pur-dn-t b > span:first-child{ min-width:0; overflow:hidden; text-overflow:ellipsis; }
+  .pur-dn-t b .pur-a2-x{ flex:none; }
+  .pur-dn-t small{ font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pur-dn-c .pur-a2-ck.on{ flex:0 0 24px; width:24px; height:24px; border:0; background:rgba(91,201,138,.18); color:var(--good); font-size:12px; }
   .pur-a2-tag{ display:inline-block; font-size:11px; font-weight:700; padding:1px 6px; border-radius:6px; margin-inline-end:5px; }
   .pur-a2-tag.today{ background:rgba(111,211,242,.16); color:var(--ice); }
   .pur-a2-tag.end{ background:rgba(232,162,60,.16); color:#e8a23c; }

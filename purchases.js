@@ -5,7 +5,7 @@
 // live here; anything another page (Budgets, the Menu, the Dashboard, admin.js /
 // scan.js / the planner worker) uses stays in app.js. The site loads the packed copy
 // purchases.min.js (tools/stamp.js).
-window.PURCHASES_BUILD = "d9a9309a34";
+window.PURCHASES_BUILD = "21c5b54f97";
 
 function packOpenSettingsOnPacks(id) {
   PACK_SETTINGS_FOCUS = String(id);
@@ -850,10 +850,43 @@ async function renderPurchasesPageMain() {
         <button type="button" class="pur-a2-ck" data-pura2gck="${u.kids.join(",")}" title="${esc(t("pur_a2_mark"))}" aria-label="${esc(t("pur_a2_mark"))}">&#10003;</button>
       </div>`;
     };
-    // First 5 packs, then "Show N more" (the list made a long scroll).
-    const CHK_N = 5, extra = units.length - CHK_N;
-    const shown = PUR_CHK_ALL || extra <= 1 ? units : units.slice(0, CHK_N);
-    chk.innerHTML = all.length ? shown.map(unitHtml).join("") + (extra > 1 ? purMoreBtnHtml("data-pura2more", PUR_CHK_ALL, extra) : "") : `<div class="meta pur-a2-none">${pending ? esc(t("budgets_working")) : esc(t("pur_a2_none"))}</div>`;
+    // Bought this week (owner picked D, 25 Nov 2026): small cards two a row under
+    // the packs still to buy, with "✓ Bought · N · total" and Hide / Show
+    // (calc_state bar_hidden "pur:bought-hidden"). ✓ on a card undoes it.
+    const todo = units.filter((u) => !all[u.kids[0]].done);
+    const doneKs = all.map((x, k) => (x.done ? k : -1)).filter((k) => k >= 0);
+    const miniHtml = (k) => {
+      const it = all[k], nm = it.name;
+      return `<div class="pur-dn-c" data-pura2b="${k}" role="button" tabindex="0" title="${esc(nm)}">
+        <span class="pur-pic">${it.pic ? `<img src="${esc(it.pic)}" alt="" loading="lazy" />` : `<i>${esc(nm.charAt(0))}</i>`}</span>
+        <span class="pur-dn-t"><b><span>${esc(nm)}</span>${it.n > 1 ? ` <span class="pur-a2-x">${bidiNum("×" + it.n)}</span>` : ""}</b><small>${esc(wdName(packParseDay(it.day)))} · ${esc(fmt(it.local))}</small></span>
+        <button type="button" class="pur-a2-ck on" data-pura2un="${k}" title="${esc(t("pur_a2_unmark"))}" aria-label="${esc(t("pur_a2_unmark"))}">&#10003;</button>
+      </div>`;
+    };
+    const boughtHtml = doneKs.length ? `<div class="pur-dn"><div class="pur-dn-hd"><span class="good">&#10003; ${esc(t("pur_dn_title").replace("{n}", doneKs.length).replace("{v}", fmt(doneV)))}</span><button type="button" class="g1-fold" data-g1fold="pur:bought-hidden" aria-expanded="true"></button></div><div class="pur-dn-grid">${doneKs.map(miniHtml).join("")}</div></div>` : "";
+    // First 5 packs to buy, then "Show N more" (the list made a long scroll; bought cards don't count).
+    const CHK_N = 5, extra = todo.length - CHK_N;
+    const shown = PUR_CHK_ALL || extra <= 1 ? todo : todo.slice(0, CHK_N);
+    chk.innerHTML = all.length ? shown.map(unitHtml).join("") + boughtHtml + (extra > 1 ? purMoreBtnHtml("data-pura2more", PUR_CHK_ALL, extra) : "") : `<div class="meta pur-a2-none">${pending ? esc(t("budgets_working")) : esc(t("pur_a2_none"))}</div>`;
+    g1FoldSync(chk);
+    // Tap a bought card: that pack's Bought sheet (items, dates ✓ / ↺ / ✕, Backpack question).
+    const openBought = (it) => {
+      const its = (PACK_PURCHASES.list || []).filter((p) => (it.ids || []).includes(p.id));
+      const p = its.slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).pop();
+      if (!p) return;
+      const bk = bucketFor("b", p), id = `b|${bk}|${purGroupKey(p)}`;
+      if (!GROUPS.has(id)) {
+        const part = (PACK_PURCHASES.list || []).filter((q) => q.status === "bought" && boughtShown(q) && byId.has(String(q.table)) && bucketFor("b", q) === bk && purGroupKey(q) === purGroupKey(p));
+        const g = groupBy(part)[0];
+        if (g) GROUPS.set(id, { g, kind: "b", bk });
+      }
+      openGrp(id);
+    };
+    chk.querySelectorAll("[data-pura2b]").forEach((c) => {
+      const go = () => openBought(all[Number(c.dataset.pura2b)]);
+      c.addEventListener("click", (e) => { if (!e.target.closest("button")) go(); });
+      c.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && !e.target.closest("button")) { e.preventDefault(); go(); } });
+    });
     // One line for several prices of a pack: tap = the Will buy window with
     // every price; ✓ = today's buys of every price bought.
     chk.querySelectorAll("[data-pura2g]").forEach((g) => {

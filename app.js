@@ -4021,6 +4021,7 @@ const T = {
   pur_a2_then: { en: "+ {days}" },
   pur_a2_none_today: { en: "Nothing to buy today — the rest comes on a later day" },
   pur_a2_unmark: { en: "Bought · tap to undo" },
+  pur_dn_title: { en: "Bought · {n} · {v}" },
   pur_o1_coming: { en: "Will buy" },
   pur_o1_box: { en: "Your packs" },
   pur_o1_none: { en: "none" },
@@ -11473,7 +11474,7 @@ const CODE_FILES = {
   scan: "scan.min.js?v=64a7ef20ff",
   packs: "packs.min.js?v=8c7c3e7c6f",
   gallery: "gallery.min.js?v=28a7717641",
-  purchases: "purchases.min.js?v=d9a9309a34",
+  purchases: "purchases.min.js?v=21c5b54f97",
   budgets: "budgets.min.js?v=0655976263",
 };
 const CODE_P = {}, CODE_OK = {};
@@ -15484,7 +15485,7 @@ function g1FoldVal(key) {
 }
 function g1FoldSync(root) {
   (root || document).querySelectorAll("[data-g1fold]").forEach((b) => {
-    const folded = g1FoldVal(b.dataset.g1fold) === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc, .trd-rules");
+    const folded = g1FoldVal(b.dataset.g1fold) === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc, .trd-rules, .pur-dn");
     if (box) box.classList.toggle("g1-folded", folded);
     // Compared as text: innerHTML gives back the real arrow, not "&#9662;", so an
     // HTML compare rewrote the button every time and the #content observer looped.
