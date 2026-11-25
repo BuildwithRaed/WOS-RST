@@ -4,7 +4,7 @@
 // its functions and variables join app.js's. Only names used by these pages alone
 // live here; anything another page (or admin.js / scan.js / the planner worker) uses
 // stays in app.js. The site loads the packed copy packs.min.js (tools/stamp.js).
-window.PACKS_BUILD = "f248b1fa8f";
+window.PACKS_BUILD = "8c7c3e7c6f";
 
 // A one-time flag ("…_seeded"): like loadCalcState, but a failed read counts
 // as "already done", so a network error can never make the Packs pages
@@ -885,7 +885,7 @@ async function renderPackCalendarPageMain() {
     return `<div class="pcl-ov" data-pclclose><div class="pcl-sheet" role="dialog" aria-modal="true" aria-label="${esc(gp.label)}">
       <div class="pcl-grab"></div>
       <div class="pcl-sh">${packCalImg(gp.icon, "pcl-sh-ic")}<div class="pcl-sh-t"><b>${esc(gp.label)}</b><small>${esc(sub)}</small></div><button type="button" class="pcl-x" data-pclx aria-label="${esc(t("close_button"))}">&times;</button></div>
-      ${gp.tables.length > 1 ? `<div class="pcl-tabs">${gp.tables.map((x, i) => { const nm = String(x.title || ""); const c = nm.indexOf(":"); return `<button type="button" class="${i === ti ? "on" : ""}" data-pclti="${i}">${esc(c > 0 ? nm.slice(c + 1).trim() : nm)}</button>`; }).join("")}</div>` : ""}
+      ${gp.tables.length > 1 ? `<div class="pcl-tabs">${gp.tables.map((x, i) => { const ev = packEventOfTables(gp.tables), dn = packDisplayName(x, x.title || ""); const nm = ev && dn.startsWith(ev + " · ") ? dn.slice(ev.length + 3) : String(x.title || ""); const c = nm.indexOf(":"); return `<button type="button" class="${i === ti ? "on" : ""}" data-pclti="${i}">${esc(c > 0 ? nm.slice(c + 1).trim() : nm)}</button>`; }).join("")}</div>` : ""}
       <div class="pcl-dates"><i style="background:${evCol({ kind: gp.kind })}"></i><b>${esc(range(cur))}</b>${daysLeftPill(cur.a, cur.b, gp)}</div>
       ${next && !gp.newGen ? `<div class="pcl-next">${esc(t("pcl_next_copy").replace("{range}", next.a === next.b ? wdmd(next.a) : `${wdmd(next.a)} → ${wdmd(next.b)}`))}</div>` : ""}
       ${chips ? `<div class="pcl-k">${esc(t("pcl_gives"))}</div><div class="pcl-chips">${chips}</div>` : ""}

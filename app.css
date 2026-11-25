@@ -1741,6 +1741,13 @@
   .pur-op-tag.plan{ background:var(--ice-dim); color:var(--ice); border:1px solid rgba(124,196,255,.45); }
   .pur-op-tag.extra{ background:rgba(224,178,90,.12); color:#e0b25a; border:1px solid rgba(224,178,90,.5); }
   .pur-op-tag.step{ color:var(--muted); border:1px solid var(--line); }
+  /* Will buy window: "Already bought" switch on today's date, green Save when all are bought. */
+  #purSugModal .pur-m-bt{ margin:2px 0 6px; padding-inline-start:38px; cursor:pointer; }
+  #purSugModal .pur-m-bt[hidden]{ display:none; }
+  #purSugModal .pur-m-bt input.bset-sw{ width:38px !important; height:22px !important; min-width:38px; min-height:22px !important; flex:0 0 38px; margin:0; padding:0; }
+  #purSugModal .pur-m-bt .pur-cnt-l.good, #purSugModal [data-pmsum] .good{ color:var(--good); font-weight:700; }
+  #purSugModal [data-pmadd].good{ background:var(--good); border-color:var(--good); color:#0f141b; }
+  .pur-cl-n small .pur-op-tag{ margin-inline-start:0; }
   .pur-ms-g .pur-op-tag{ margin-inline-start:auto; }
   .pur-op-list{ border:1px solid var(--line); border-radius:10px; margin-bottom:8px; }
   .pur-op{ padding:7px 10px; border-top:1px solid var(--line); }
