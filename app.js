@@ -9865,6 +9865,19 @@ function packCurrentCycleStart(reset, resetDay) {
 function packPurchaseUse(groups) {
   const list = (PACK_PURCHASES.list || []).filter((p) => packPurchaseUsesLimit(p, packLinkFor(p.table)));
   if (!list.length) return groups;
+  // A pick-one set bought as several prices in one purchase (Benefit Card
+  // $4.99 + $9.99 saved together as its last price, the choice price = the
+  // sum): that purchase uses every one of those prices, not just the last.
+  const setPrice = new Map();
+  groups.forEach((g) => { if (g.choice && !g.ladder && (g.tables || []).length > 1 && g.offers.length) setPrice.set(`${[...g.tables].sort().join(",")}|${g.offers[0].row}`, g.offers[0].price); });
+  const coversRow = (p, g) => {
+    if (!p.choice || !(g.choice && !g.ladder) || !setPrice.size || !g.offers.length) return false;
+    const key = [...(g.tables || [])].sort().join(","), last = Number(p.row) || 0, from = Math.max(0, Number(p.from) || 0), row = g.offers[0].row;
+    if (!(row >= from && row < last)) return false;
+    let sum = 0;
+    for (let k = from; k <= last; k++) { const pr = setPrice.get(`${key}|${k}`); if (pr == null) return false; sum += pr; }
+    return Math.abs(sum - (Number(p.choice.price) || 0)) < 0.02;
+  };
   const todayKey = packDayKey(packStartOfToday());
   const extra = [];
   const out = groups.map((g) => {
@@ -9896,7 +9909,7 @@ function packPurchaseUse(groups) {
     list.forEach((p) => {
       if (!(g.tables || []).includes(String(p.table))) return;
       const n = Math.max(1, Math.floor(Number(p.count) || 1));
-      if (!(g.ladder || rows.has(undefined) || rows.has(p.row))) return;
+      if (!(g.ladder || rows.has(undefined) || rows.has(p.row) || coversRow(p, g))) return;
       // Bought in an earlier copy of a repeating pack (a weekly pack bought on
       // Sunday, today Monday): that copy is over, its buys don't count now.
       if (p.status === "bought" && repeating && startKey && p.date < startKey) return;
