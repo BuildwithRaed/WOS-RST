@@ -3196,5 +3196,14 @@
 "t:mk_hg_lock_at":"{e}+ 는 숙련 {n} 필요",
 "t:mk_hg_lock_tail":"· {e}+",
 "t:mk_hg_can_to":"배낭으로 강화 {x}까지 가능",
-"t:cda_hg_lock_at":"{piece} 강화 {a} → {b} · {e}+ 는 숙련 {n} 필요"
+"t:cda_hg_lock_at":"{piece} 강화 {a} → {b} · {e}+ 는 숙련 {n} 필요",
+"t:pur_o1_other_add":"{plan} 계획: +{v} ×{n}",
+"t:pur_tag_willbuy":"구매 예정",
+"t:pur_bt_switch":"이미 구매함 ✓",
+"t:pur_bt_save":"구매함으로 저장 ({n})",
+"t:pur_bt_save_mix":"저장 ({n})",
+"t:pur_bt_n":"오늘 {n}개 구매함",
+"t:pur_bt_will_n":"{n}개 구매 예정",
+"t:pur_bt_hint":"체크한 오늘 날짜는 구매함으로, 이후 날짜는 구매 예정으로 저장됩니다.",
+"t:pur_dn_title":"구매함 · {n} · {v}"
 }

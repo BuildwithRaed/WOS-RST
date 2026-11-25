@@ -5,7 +5,7 @@
 // live here; anything another page (Budgets, the Menu, the Dashboard, admin.js /
 // scan.js / the planner worker) uses stays in app.js. The site loads the packed copy
 // purchases.min.js (tools/stamp.js).
-window.PURCHASES_BUILD = "c400a15ad7";
+window.PURCHASES_BUILD = "21c5b54f97";
 
 function packOpenSettingsOnPacks(id) {
   PACK_SETTINGS_FOCUS = String(id);
@@ -360,7 +360,7 @@ async function renderPurchasesPageMain() {
     else if (typeof r === "number" && r > 0) { const offs = packResetOffsets(r, link.resetDay, 400, link.window); on = offs[0] === 0; const nx = offs.find((o) => o > 0); if (nx != null) next = nx; }
     if (link.trigger) { on = false; next = null; }
     if (link.firstBuy) on = !vipFirstBuyDone();
-    const name = setLead(tb) ? setName(tb) : (tb.title || "");
+    const name = setLead(tb) ? setName(tb) : packDisplayName(tb, tb.title || "");
     const words = [name, tb.title || "", ...(tb.columns || []).map((c, ci) => (ci === pc ? "" : `${cols[ci] || c} ${materialDisplayName(cols[ci] || c) || ""}`))].join(" ").toLowerCase();
     return { id: String(tb.id), name, cat: link.group || "", icon, price, on, next, stack: !!st, words };
   };
@@ -418,7 +418,20 @@ async function renderPurchasesPageMain() {
   // (picture, name × count, date, price, ✓), tap it for its items, Used for and
   // dates; Coming grouped by week, Bought by month (older months folded); each
   // list scrolls inside its own box.
-  const purGroupKey = (p) => `${p.table}~${p.choice ? "c:" + p.choice.label : p.row}${p.from > 0 ? "f" + p.from : ""}${!p.choice && p.extra > 0 ? "x" + p.extra : ""}`;
+  // One line per pack (owner, 25 Nov 2026): a line / sheet holds every price
+  // of the pack (the tables of one linked set count as one pack);
+  // purRowKey still tells the prices apart.
+  const purRowKey = (p) => `${p.table}~${p.choice ? "c:" + p.choice.label : p.row}${p.from > 0 ? "f" + p.from : ""}${!p.choice && p.extra > 0 ? "x" + p.extra : ""}`;
+  const purPackKeyOf = (tid) => { const tb = byId.get(String(tid)); const lead = tb && setLead(tb); return String(lead ? lead.id : tid); };
+  const purGroupKey = (p) => purPackKeyOf(p.table);
+  const purNameOf = (p, tb) => packDisplayName(tb, purShortName((p.choice && p.choice.name) || tb.title || ""));
+  // A line's name: the shared name of its prices ("Benefit Card" for two cards).
+  const purNamesJoin = (names) => {
+    const ps = names.map((x) => String(x || "").split(" · "));
+    let k = 0;
+    while (k < ps[0].length && ps.every((x) => x[k] === ps[0][k])) k++;
+    return ps[0].slice(0, Math.max(1, k)).join(" · ");
+  };
   const monIdx = (packStartOfToday().getUTCDay() + 6) % 7;
   const dOff = (k) => { const d = packParseDay(k); return d ? Math.round((d - packStartOfToday()) / 86400000) : 0; };
   const bucketOf = (kind, k) => (kind === "c" ? "w" + (dOff(k) < 0 ? -1 : Math.floor((dOff(k) + monIdx) / 7)) : "m" + String(k || "").slice(0, 7));
@@ -447,7 +460,9 @@ async function renderPurchasesPageMain() {
   };
   const mainIcon = (gives) => { for (const k of Object.keys(gives || {})) { if (k === "Gems") continue; const ic = bpIcon({ name: k.replace(/ \(minutes\)$/, "") }); if (ic) return ic; } return ""; };
   // The plan a "will buy" came from (older ones have none).
-  const planTagOf = (g) => { const k = g.items[0].plan; return ["both", "target", "budget"].includes(k) && g.items.every((p) => p.plan === k) ? k : ""; };
+  // Several prices with other tags: "both" when any is in both plans, else the first one's, with "*".
+  const planTagOf = (g) => { const ks = g.items.map((p) => p.plan).filter((k) => ["both", "target", "budget"].includes(k)); if (!ks.length) return ""; return ks.includes("both") ? "both" : ks[0]; };
+  const planStarOf = (g) => { const ks = new Set(g.items.map((p) => p.plan || "")); return ks.size > 1 && !!planTagOf(g); };
   const untilHtml = (g) => {
     const us = g.items.map(untilFor);
     if (us.every((u) => u.once || !u.until)) return `<span class="pur-until once">&infin; ${esc(t("pur_until_once"))}</span>`;
@@ -467,14 +482,17 @@ async function renderPurchasesPageMain() {
     const tb = g.tb, link = packLinkFor(tb.id);
     const n = g.items.reduce((a, p) => a + cntNow(p), 0);
     const total = g.items.reduce((a, p) => a + cost(p), 0);
-    const dates = g.items.map((p) => p.date);
+    const dates = [...new Set(g.items.map((p) => p.date))].sort();
     const when = dates.length === 1 ? shortDay(dates[0]) : dates.length === 2 ? `${shortDay(dates[0])}, ${shortDay(dates[1])}` : `${shortDay(dates[0])} → ${shortDay(dates[dates.length - 1])}`;
     const late = kind === "c" && g.items.some((p) => p.date < today && !purTriggerWaiting(p));
-    const gives = rawOf(g.first, tb), ic = mainIcon(gives);
-    const name = purShortName((g.first.choice && g.first.choice.name) || tb.title || "");
-    return { tb, link, n, total, dates, when, late, gives, ic, name, tag: planTagOf(g) };
+    const gives = {};
+    g.items.forEach((p) => Object.entries(rawOf(p, byId.get(String(p.table)) || tb)).forEach(([k, v]) => { gives[k] = (gives[k] || 0) + v * cntNow(p); }));
+    const ic = mainIcon(rawOf(g.first, tb));
+    const name = purNamesJoin(g.items.map((p) => purNameOf(p, byId.get(String(p.table)) || tb)));
+    const nPrices = new Set(g.items.map(purRowKey)).size;
+    return { tb, link, n, total, dates: [...new Set(dates)].sort(), when, late, gives, ic, name, tag: planTagOf(g), star: planStarOf(g), nPrices };
   };
-  const tagChip = (k) => (k ? `<span class="pur-cmp pur-cmp-${k}">${esc(t("pur_tag_" + k))}</span> ` : "");
+  const tagChip = (k, star) => (k ? `<span class="pur-cmp pur-cmp-${k}">${esc(t("pur_tag_" + k))}${star ? "*" : ""}</span> ` : "");
   // Bought: a short label of how long the line stays.
   const untilShort = (g) => {
     const us = g.items.map(untilFor);
@@ -487,10 +505,10 @@ async function renderPurchasesPageMain() {
   const lineHtml = (g, kind, bk) => {
     const id = `${kind}|${bk}|${g.key}`;
     const I = grpInfo(g, kind);
-    const tier = kind === "b" ? purTierText(I.tb, g.row, Number(g.first.from) || 0, g.first.choice, g.first.extra) : "";
+    const tier = kind === "b" ? (I.nPrices > 1 ? t("pur_a2_n_prices").replace("{n}", I.nPrices) : purTierText(I.tb, g.row, Number(g.first.from) || 0, g.first.choice, g.first.extra)) : "";
     const sub = kind === "c"
-      ? `${tagChip(I.tag)}${esc(I.when)}${I.late ? ` <span class="pur-late">&#9888;</span>` : ""}`
-      : `${tagChip(I.tag)}${esc([t("pur_a2_bought_on").replace("{day}", I.when), tier].filter(Boolean).join(" · "))}`;
+      ? `${tagChip(I.tag, I.star)}${esc([I.nPrices > 1 ? t("pur_a2_n_prices").replace("{n}", I.nPrices) : "", I.when].filter(Boolean).join(" · "))}${I.late ? ` <span class="pur-late">&#9888;</span>` : ""}`
+      : `${tagChip(I.tag, I.star)}${esc([t("pur_a2_bought_on").replace("{day}", I.when), tier].filter(Boolean).join(" · "))}`;
     const allBought = t(g.items.length > 1 ? "pur_all_bought" : "pur_mark_bought");
     return `<div class="pur-a2-it pur-o1-ln" data-purgrp="${esc(id)}" role="button" tabindex="0">
       <span class="pur-pic">${I.ic ? `<img src="${esc(I.ic)}" alt="" loading="lazy" />` : `<i>${esc(I.name.charAt(0))}</i>`}</span>
@@ -505,23 +523,24 @@ async function renderPurchasesPageMain() {
     if (!G) return "";
     const { g, kind } = G, I = grpInfo(g, kind);
     const names = packUsedForNames(I.tb);
-    const tier = purTierText(I.tb, g.row, Number(g.first.from) || 0, g.first.choice, g.first.extra);
-    const dateRow = (p) => `<div class="pur-o1-dt" data-purid="${esc(p.id)}"><span class="pur-o1-dtt"><b>${esc(shortDay(p.date))}${p.date < today && kind === "c" && !purTriggerWaiting(p) ? " &#9888;" : ""}</b><small class="meta">${bidiNum("× " + cntNow(p))} · ${esc(packFmtMoney(cost(p), I.link.currency))}</small></span><button type="button" class="pur-o1-b ed" data-puredit="${esc(p.id)}" title="${esc(t("pur_ed_date_tip"))}" aria-label="${esc(t("pur_ed_date_tip"))}">&#9998;</button>${kind === "c"
+    const tierOf = (p) => { const tb1 = byId.get(String(p.table)) || I.tb; return purTierText(tb1, p.row, Number(p.from) || 0, p.choice, p.extra) || (I.nPrices > 1 ? packFmtMoney(purchasePrice(p, tb1), I.link.currency) : ""); };
+    const tier = I.nPrices > 1 ? t("pur_a2_n_prices").replace("{n}", I.nPrices) : purTierText(I.tb, g.row, Number(g.first.from) || 0, g.first.choice, g.first.extra);
+    const dateRow = (p) => `<div class="pur-o1-dt" data-purid="${esc(p.id)}"><span class="pur-o1-dtt"><b>${esc(shortDay(p.date))}${p.date < today && kind === "c" && !purTriggerWaiting(p) ? " &#9888;" : ""}</b><small class="meta">${esc(I.nPrices > 1 ? tierOf(p) + " · " : "")}${bidiNum("× " + cntNow(p))} · ${esc(packFmtMoney(cost(p), I.link.currency))}</small></span><button type="button" class="pur-o1-b ed" data-puredit="${esc(p.id)}" title="${esc(t("pur_ed_date_tip"))}" aria-label="${esc(t("pur_ed_date_tip"))}">&#9998;</button>${kind === "c"
       ? `<button type="button" class="pur-o1-b ok" data-purmove="bought" title="${esc(t("pur_mark_bought"))}" aria-label="${esc(t("pur_mark_bought"))}">&#10003;</button>`
       : `<button type="button" class="pur-o1-b" data-purmove="planned" title="${esc(t("pur_mark_planned"))}" aria-label="${esc(t("pur_mark_planned"))}">&#8634;</button>`}<button type="button" class="pur-o1-b" data-purdel title="${esc(t("pur_remove"))}" aria-label="${esc(t("pur_remove"))}">&times;</button></div>`;
     return `<div class="modal-box adm-sheet gs-box pur-o1-sh" role="dialog" aria-modal="true" aria-label="${esc(I.name)}">
       <div class="pur-o1-shh"><span class="pur-pic">${I.ic ? `<img src="${esc(I.ic)}" alt="" />` : `<i>${esc(I.name.charAt(0))}</i>`}</span>
-        <span class="pur-o1-sht"><b>${esc(I.name)}${I.n > 1 ? ` <span class="pur-a2-x">${bidiNum("×" + I.n)}</span>` : ""}</b><small>${tagChip(I.tag)}<span class="meta">${esc([packFmtMoney(I.total, I.link.currency), tier].filter(Boolean).join(" · "))}</span></small>${kind === "b" ? untilHtml(g) : ""}</span>
+        <span class="pur-o1-sht"><b>${esc(I.name)}${I.n > 1 ? ` <span class="pur-a2-x">${bidiNum("×" + I.n)}</span>` : ""}</b><small>${tagChip(I.tag, I.star)}<span class="meta">${esc([packFmtMoney(I.total, I.link.currency), tier].filter(Boolean).join(" · "))}</span></small>${kind === "b" ? untilHtml(g) : ""}</span>
         <button type="button" class="pur-o1-edit" data-puredit="" title="${esc(t("pur_ed_tip"))}">&#9998; ${esc(t("pur_ed_btn"))}</button>
         ${closeXHtml("data-gsx")}</div>
       <div class="pur-ed" data-pureditor hidden></div>
       <div class="pur-o1-lb">${esc(t("pur_o1_gives"))}</div>
-      <div class="bud-mats pur-chips">${chipsFor(I.gives, I.n, 8)}</div>
+      <div class="bud-mats pur-chips">${chipsFor(I.gives, 1, 8)}</div>
       <div class="meta pur-o1-for">${esc(t("pack_used_for"))}: ${names.length ? esc(names.join(" · ")) : esc(t("pur_for_none"))}</div>
       ${I.late ? `<div class="pur-o1-warn">${esc(t("pur_past_note"))}</div>` : ""}
       ${G.bk === "w-2" ? `<div class="meta pur-o1-for">${esc(t("pur_wk_waiting"))} · ${esc(t("pur_wait_note"))}</div>` : ""}
       <div class="pur-o1-lb">${esc(t("pur_o1_dates"))}</div>
-      <div class="pur-o1-dts">${g.items.map(dateRow).join("")}</div>
+      <div class="pur-o1-dts">${g.items.slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).map(dateRow).join("")}</div>
       <div class="pur-o1-foot"><button type="button" class="btn ghost pur-o1-rm" data-purgdel>&#10005; ${esc(t(g.items.length > 1 ? "pur_o1_remove_all" : "pur_remove"))}</button>${kind === "c" ? `<button type="button" class="btn pur-o1-ok" data-purgall>&#10003; ${esc(t(g.items.length > 1 ? "pur_all_bought" : "pur_mark_bought"))}</button>` : ""}</div>
     </div>`;
   };
@@ -729,7 +748,7 @@ async function renderPurchasesPageMain() {
     const bw = (PACK_PURCHASES.list || []).filter((p) => p.status === "bought" && !p.hidden && byId.has(String(p.table)) && p.date >= monKeyW && p.date <= today);
     groupBy(bw).forEach((g) => {
       const tb = g.tb, last = g.items.map((p) => p.date).sort().pop();
-      const it = { done: true, ids: g.items.map((p) => p.id), tb, name: purShortName((g.first.choice && g.first.choice.name) || tb.title || ""), pic: mainIcon(rawOf(g.first, tb)), n: nPacks(g.items), local: g.items.reduce((a, p) => a + pLocal(p), 0), day: last };
+      const it = { done: true, ids: g.items.map((p) => p.id), tb, name: purNamesJoin(g.items.map((p) => purNameOf(p, byId.get(String(p.table)) || tb))), nPrices: new Set(g.items.map(purRowKey)).size, pic: mainIcon(rawOf(g.first, tb)), n: nPacks(g.items), local: g.items.reduce((a, p) => a + pLocal(p), 0), day: last };
       g.items.forEach((p) => addGv(it, purchaseGives(p, tb), cntNow(p)));
       items.push(it);
     });
@@ -738,7 +757,7 @@ async function renderPurchasesPageMain() {
     const restOf = (key, mk) => { if (!rest.has(key)) rest.set(key, mk()); return rest.get(key); };
     coming.filter((p) => p.date <= sunKeyW && !purTriggerWaiting(p)).forEach((p) => {
       const tb = byId.get(String(p.table));
-      const it = restOf(purGroupKey(p), () => ({ done: false, tb, first: p, name: purShortName((p.choice && p.choice.name) || tb.title || ""), pic: mainIcon(rawOf(p, tb)), n: 0, local: 0, offs: [], coming: [], sugg: [], step: link0Seq(tb) ? purTierText(tb, p.row, Number(p.from) || 0, p.choice, p.extra) : (p.choice ? purTierText(tb, p.row, 0, p.choice) : "") }));
+      const it = restOf(purRowKey(p), () => ({ done: false, tb, first: p, name: purNameOf(p, tb), pic: mainIcon(rawOf(p, tb)), n: 0, local: 0, offs: [], coming: [], sugg: [], step: link0Seq(tb) ? purTierText(tb, p.row, Number(p.from) || 0, p.choice, p.extra) : (p.choice ? purTierText(tb, p.row, 0, p.choice) : "") }));
       it.coming.push(p); it.n += cntNow(p); it.local += pLocal(p); it.offs.push(dOff(p.date));
       addGv(it, purchaseGives(p, tb), cntNow(p));
     });
@@ -750,7 +769,7 @@ async function renderPurchasesPageMain() {
         if (!tb) continue;
         const plain = P.plainPack(tb), key = `${tb.id}~${plain ? (r.row != null ? r.row : 0) : "c:" + r.label}${r.from > 0 ? "f" + r.from : ""}${plain && r.extra > 0 ? "x" + r.extra : ""}`;
         const choice = plain ? null : { name: P.sugName(r), label: r.label, price: r.price, gives: r.gives };
-        const it = restOf(key, () => ({ done: false, tb, first: null, name: purShortName(P.sugName(r)) + (optOfLabel(r.label) ? ` · ${optOfLabel(r.label)}` : ""), pic: mainIcon(rawOf({ row: r.row != null ? r.row : 0, from: r.from, extra: r.extra, ...(choice ? { choice } : {}) }, tb)), n: 0, local: 0, offs: [], coming: [], sugg: [], step: plain ? (link0Seq(tb) ? purTierText(tb, r.row != null ? r.row : 0, r.from || 0, null, r.extra) : "") : purTierText(tb, r.row != null ? r.row : 0, 0, choice) }));
+        const it = restOf(key, () => ({ done: false, tb, first: null, name: packDisplayName(tb, purShortName(P.sugName(r))) + (optOfLabel(r.label) ? ` · ${optOfLabel(r.label)}` : ""), pic: mainIcon(rawOf({ row: r.row != null ? r.row : 0, from: r.from, extra: r.extra, ...(choice ? { choice } : {}) }, tb)), n: 0, local: 0, offs: [], coming: [], sugg: [], step: plain ? (link0Seq(tb) ? purTierText(tb, r.row != null ? r.row : 0, r.from || 0, null, r.extra) : "") : purTierText(tb, r.row != null ? r.row : 0, 0, choice) }));
         const n = xs.reduce((a, x) => a + x.count, 0);
         it.sugg.push({ i, r, xs, choice, plain });
         addGv(it, r.gives, xs.reduce((a, x) => a + x.count, 0));
@@ -795,7 +814,7 @@ async function renderPurchasesPageMain() {
     const rowHtml = (it, k) => {
       const nm = `${esc(it.name)}${it.n > 1 ? ` <span class="pur-a2-x">${bidiNum("×" + it.n)}</span>` : ""}`;
       const sub = it.done
-        ? esc(it.day === today ? t("pur_a2_bought_today") : t("pur_a2_bought_on").replace("{day}", wdName(packParseDay(it.day))))
+        ? esc([it.nPrices > 1 ? t("pur_a2_n_prices").replace("{n}", it.nPrices) : "", it.day === today ? t("pur_a2_bought_today") : t("pur_a2_bought_on").replace("{day}", wdName(packParseDay(it.day)))].filter(Boolean).join(" · "))
         : `${it.tag || ""}${[it.step, it.when].filter(Boolean).map(esc).join(" · ")}`;
       return `<div class="pur-a2-it${it.done ? " done" : ""}" data-pura2="${k}" ${it.done ? "" : `role="button" tabindex="0"`}>
         <span class="pur-pic">${it.pic ? `<img src="${esc(it.pic)}" alt="" loading="lazy" />` : `<i>${esc(it.name.charAt(0))}</i>`}</span>
@@ -809,7 +828,7 @@ async function renderPurchasesPageMain() {
     const units = [];
     const unitOf = new Map();
     all.forEach((it, k) => {
-      const gk = it.done ? "" : String(it.tb.id);
+      const gk = it.done ? "" : purPackKeyOf(it.tb.id);
       if (gk && unitOf.has(gk)) { unitOf.get(gk).kids.push(k); return; }
       const u = { gk, kids: [k] };
       if (gk) unitOf.set(gk, u);
@@ -826,15 +845,48 @@ async function renderPurchasesPageMain() {
       const sub = `${sameWhen ? it0.tag || "" : ""}${[t("pur_a2_n_prices").replace("{n}", kids.length), sameWhen ? it0.when : ""].filter(Boolean).map(esc).join(" · ")}`;
       return `<div class="pur-a2-it pur-a2-g" data-pura2g="${u.kids.join(",")}" role="button" tabindex="0">
         <span class="pur-pic">${it0.pic ? `<img src="${esc(it0.pic)}" alt="" loading="lazy" />` : `<i>${esc(it0.name.charAt(0))}</i>`}</span>
-        <span class="pur-a2-tx"><b>${esc(kids.every((x) => x.name === it0.name) ? it0.name : it0.name.split(" · ")[0])} <span class="pur-a2-x">${bidiNum("×" + n)}</span></b><small>${sub}</small>${purGoalTagHtml(gm, gv, 0)}</span>
+        <span class="pur-a2-tx"><b>${esc(purNamesJoin(kids.map((x) => x.name)))} <span class="pur-a2-x">${bidiNum("×" + n)}</span></b><small>${sub}</small>${purGoalTagHtml(gm, gv, 0)}</span>
         <b class="pur-a2-pr">${esc(fmt(local))}</b>
         <button type="button" class="pur-a2-ck" data-pura2gck="${u.kids.join(",")}" title="${esc(t("pur_a2_mark"))}" aria-label="${esc(t("pur_a2_mark"))}">&#10003;</button>
       </div>`;
     };
-    // First 5 packs, then "Show N more" (the list made a long scroll).
-    const CHK_N = 5, extra = units.length - CHK_N;
-    const shown = PUR_CHK_ALL || extra <= 1 ? units : units.slice(0, CHK_N);
-    chk.innerHTML = all.length ? shown.map(unitHtml).join("") + (extra > 1 ? purMoreBtnHtml("data-pura2more", PUR_CHK_ALL, extra) : "") : `<div class="meta pur-a2-none">${pending ? esc(t("budgets_working")) : esc(t("pur_a2_none"))}</div>`;
+    // Bought this week (owner picked D, 25 Nov 2026): small cards two a row under
+    // the packs still to buy, with "✓ Bought · N · total" and Hide / Show
+    // (calc_state bar_hidden "pur:bought-hidden"). ✓ on a card undoes it.
+    const todo = units.filter((u) => !all[u.kids[0]].done);
+    const doneKs = all.map((x, k) => (x.done ? k : -1)).filter((k) => k >= 0);
+    const miniHtml = (k) => {
+      const it = all[k], nm = it.name;
+      return `<div class="pur-dn-c" data-pura2b="${k}" role="button" tabindex="0" title="${esc(nm)}">
+        <span class="pur-pic">${it.pic ? `<img src="${esc(it.pic)}" alt="" loading="lazy" />` : `<i>${esc(nm.charAt(0))}</i>`}</span>
+        <span class="pur-dn-t"><b><span>${esc(nm)}</span>${it.n > 1 ? ` <span class="pur-a2-x">${bidiNum("×" + it.n)}</span>` : ""}</b><small>${esc(wdName(packParseDay(it.day)))} · ${esc(fmt(it.local))}</small></span>
+        <button type="button" class="pur-a2-ck on" data-pura2un="${k}" title="${esc(t("pur_a2_unmark"))}" aria-label="${esc(t("pur_a2_unmark"))}">&#10003;</button>
+      </div>`;
+    };
+    const boughtHtml = doneKs.length ? `<div class="pur-dn"><div class="pur-dn-hd"><span class="good">&#10003; ${esc(t("pur_dn_title").replace("{n}", doneKs.length).replace("{v}", fmt(doneV)))}</span><button type="button" class="g1-fold" data-g1fold="pur:bought-hidden" aria-expanded="true"></button></div><div class="pur-dn-grid">${doneKs.map(miniHtml).join("")}</div></div>` : "";
+    // First 5 packs to buy, then "Show N more" (the list made a long scroll; bought cards don't count).
+    const CHK_N = 5, extra = todo.length - CHK_N;
+    const shown = PUR_CHK_ALL || extra <= 1 ? todo : todo.slice(0, CHK_N);
+    chk.innerHTML = all.length ? shown.map(unitHtml).join("") + boughtHtml + (extra > 1 ? purMoreBtnHtml("data-pura2more", PUR_CHK_ALL, extra) : "") : `<div class="meta pur-a2-none">${pending ? esc(t("budgets_working")) : esc(t("pur_a2_none"))}</div>`;
+    g1FoldSync(chk);
+    // Tap a bought card: that pack's Bought sheet (items, dates ✓ / ↺ / ✕, Backpack question).
+    const openBought = (it) => {
+      const its = (PACK_PURCHASES.list || []).filter((p) => (it.ids || []).includes(p.id));
+      const p = its.slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).pop();
+      if (!p) return;
+      const bk = bucketFor("b", p), id = `b|${bk}|${purGroupKey(p)}`;
+      if (!GROUPS.has(id)) {
+        const part = (PACK_PURCHASES.list || []).filter((q) => q.status === "bought" && boughtShown(q) && byId.has(String(q.table)) && bucketFor("b", q) === bk && purGroupKey(q) === purGroupKey(p));
+        const g = groupBy(part)[0];
+        if (g) GROUPS.set(id, { g, kind: "b", bk });
+      }
+      openGrp(id);
+    };
+    chk.querySelectorAll("[data-pura2b]").forEach((c) => {
+      const go = () => openBought(all[Number(c.dataset.pura2b)]);
+      c.addEventListener("click", (e) => { if (!e.target.closest("button")) go(); });
+      c.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && !e.target.closest("button")) { e.preventDefault(); go(); } });
+    });
     // One line for several prices of a pack: tap = the Will buy window with
     // every price; ✓ = today's buys of every price bought.
     chk.querySelectorAll("[data-pura2g]").forEach((g) => {
@@ -1073,6 +1125,7 @@ async function renderPurchasesPageMain() {
     // Box 1: This week (0) = the ✓ checklist under the strip; kept for the visit.
     // A week emptied by a pick goes on to the next week with packs (else This week).
     if (!keys.includes(PUR_SUG_WEEK)) PUR_SUG_WEEK = (typeof PUR_SUG_WEEK === "number" && keys.find((k) => k === "after" || k > PUR_SUG_WEEK)) || keys[0];
+    let openSugFn = null; // the Will buy window of a plan row (set by each draw)
     let sugAll = false; // every line drawn (the checklist opening a pack's Will buy pop-up)
     let firstDraw = true;
     const drawSug = () => {
@@ -1090,6 +1143,24 @@ async function renderPurchasesPageMain() {
     // Both plans first, then this plan only, then the other plan only.
     const rank = (i) => (i >= nFollow ? 2 : sel.match.has(i) ? 0 : 1);
     const list = sel ? [...sel.items.entries()].sort((a, b) => (cmp ? rank(a[0]) - rank(b[0]) : 0) || Math.min(...a[1].map((x) => x.off)) - Math.min(...b[1].map((x) => x.off))) : [];
+    // One line per pack (owner, 25 Nov 2026: one line and one window per
+    // pack): the followed plan's prices of a pack are one line; the other
+    // plan's prices of that pack are a note on it (and "other prices" in its
+    // window); a pack only in the other plan is its own (unticked) line. The
+    // person's own "will buy" dates of the pack in this week sit in the same
+    // line, marked "will buy".
+    const pkOf = (i) => { const tb = sugTable(rows[i]); return tb ? purPackKeyOf(tb.id) : "t:" + rows[i].title; };
+    const wkShown = PUR_SUG_WEEK;
+    const comingWk = coming.filter((p) => !purTriggerWaiting(p) && byId.has(String(p.table)) && bucketOf(dOff(p.date)) === wkShown);
+    const units = [], uBy = new Map();
+    const uGet = (k, grey) => { const kk = (grey ? "o:" : "") + k; if (!uBy.has(kk)) { const u = { key: kk, pk: k, grey: !!grey, kids: [], oth: [], coming: [] }; uBy.set(kk, u); units.push(u); } return uBy.get(kk); };
+    list.forEach(([i, xs]) => { if (i < nFollow) uGet(pkOf(i)).kids.push([i, xs]); });
+    list.forEach(([i, xs]) => { if (i < nFollow) return; const u = uBy.get(pkOf(i)); if (u) u.oth.push([i, xs]); else uGet(pkOf(i), true).kids.push([i, xs]); });
+    comingWk.forEach((p) => { const k = purGroupKey(p); (uBy.get(k) || uBy.get("o:" + k) || uGet(k)).coming.push(p); });
+    const uFirst = (u) => Math.min(...u.kids.flatMap(([, xs]) => xs.map((x) => Math.max(0, x.off))), ...u.coming.map((p) => Math.max(0, dOff(p.date))));
+    const uRank = (u) => (u.grey ? 2 : u.kids.length && u.kids.every(([i]) => sel.match.has(i)) ? 0 : 1);
+    units.sort((a, b) => (cmp ? uRank(a) - uRank(b) : 0) || uFirst(a) - uFirst(b));
+    const shownIs = new Set(units.flatMap((u) => u.kids.map(([i]) => i)));
     // Which plan a pick came from, kept on the purchase so Coming shows it
     // "both" / "target" / "budget".
     const planTag = (i) => (cmp ? (i >= nFollow ? otherName : sel && sel.match.has(i) ? "both" : follow) : plan && plan.spend ? "budget" : "target");
@@ -1172,30 +1243,52 @@ async function renderPurchasesPageMain() {
       };
       // O1: one line per pack — tick, main item picture,
       // short name × count, plan tag + dates under it, price, ＋ (Will buy pop-up).
-      const rowHtml = ([i, xs]) => {
-        const r = rows[i], n = xs.reduce((a, x) => a + x.count, 0);
-        const { main: first, keys: chipKeys, more } = shownOf(r, n);
+      // One line per pack: tick, main item picture, name × count, plan tag +
+      // dates (and "will buy" dates) under it, price, ＋ (one Will buy window).
+      const unitHtml = (u) => {
+        const kidsR = u.kids.map(([i, xs]) => { const vr = verOf(i), n = xs.reduce((a, x) => a + x.count, 0); return { i, xs, r: rows[i], vr, n }; });
+        const tb0 = u.kids.length ? sugTable(rows[u.kids[0][0]]) : byId.get(String(u.coming[0].table));
+        const nameOf = (k) => packDisplayName(sugTable(k.r) || tb0, purShortName(sugName(k.r))) + (optOf(k.r) ? ` · ${optOf(k.r)}` : "");
+        const name = kidsR.length ? purNamesJoin(kidsR.map(nameOf)) : purNameOf(u.coming[0], tb0);
+        const gives = {};
+        kidsR.forEach((k) => Object.entries(k.r.gives || {}).forEach(([g, v]) => { gives[g] = (gives[g] || 0) + v * k.n; }));
+        u.coming.forEach((p) => Object.entries(purchaseGives(p, byId.get(String(p.table)) || tb0)).forEach(([g, v]) => { gives[g] = (gives[g] || 0) + v * cntNow(p); }));
+        const n = kidsR.reduce((a, k) => a + k.n, 0) + u.coming.reduce((a, p) => a + cntNow(p), 0);
+        const { main: first, keys: chipKeys, more } = shownOf({ gives, count: 1 }, 1);
         const icon = first ? bpIcon({ name: first.replace(/ \(minutes\)$/, "") }) : null;
-        const open = PUR_SUG_ROW === `${PUR_SUG_WEEK}|${i}`;
-        const tk = tickOf(i), vr = verOf(i);
-        const kind = cmp ? (i >= nFollow ? otherName : sel.match.has(i) ? "both" : follow) : null;
-        const m = kind === "both" ? sel.match.get(i) : null;
-        const star = m && (!m.same || m.n !== n) ? "*" : "";
+        const open = PUR_SUG_ROW === `${PUR_SUG_WEEK}|${u.key}`;
+        const buyK = kidsR.filter((k) => canBuy(k.i));
+        const tk = buyK.length > 0 && buyK.every((k) => tickOf(k.i));
+        const kinds = kidsR.map((k) => (k.i >= nFollow ? otherName : sel.match.has(k.i) ? "both" : follow));
+        const stars = kidsR.some((k) => { const m = sel.match.get(k.i); return m && (!m.same || m.n !== k.n); });
+        const kind = cmp && kinds.length ? (u.grey ? otherName : kinds.includes("both") ? "both" : follow) : null;
+        const star = cmp && kind && (stars || new Set(kinds).size > 1 || u.oth.length > 0) ? "*" : "";
         const tagged = chipKeys.length > 1 && !!needMap;
         const chips = chipKeys.map((k) => {
-          const v = r.gives[k] * n, ic = bpIcon({ name: k.replace(/ \(minutes\)$/, "") });
+          const v = gives[k], ic = bpIcon({ name: k.replace(/ \(minutes\)$/, "") });
           const sh = /\(minutes\)$/.test(k) ? t12FormatTime(v / 60) : shortAmount(v);
           const role = k === first ? "main" : isNeeded(k) ? "needed" : "extra";
           const chip = `<span class="bud-mat${tagged || k === first ? ` pur-${role}` : ""}" title="${esc(materialDisplayName(k))}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(sh)}</b></span>`;
           return tagged ? `<span class="pur-tagc">${chip}<small class="pur-tag-${role}">${esc(t("pur_role_" + role))}</small></span>` : chip;
         }).join("");
-        return `<div class="pur-cl-row pur-o1-sr${open ? " open" : ""}${tk ? " on" : ""}" data-purrow="${i}">
-          ${canBuy(i) ? `<input type="checkbox" class="pur-cl-tick" data-purtick="${i}" ${tk ? "checked" : ""} aria-label="${esc(t("pur_will_buy"))}" />` : `<span class="pur-cl-tick"></span>`}
+        const localSum = kidsR.reduce((a, k) => a + packRowLocalUnits(k.vr.r).reduce((x, y) => x + y, 0) * k.vr.n, 0) + u.coming.reduce((a, p) => a + packConvert(cost(p), packLinkFor(p.table).currency || "USD").n, 0);
+        const r0 = kidsR.length ? kidsR[0].vr.r : rows[0];
+        const willTag = `<span class="pur-op-tag plan">${esc(t("pur_tag_willbuy"))}</span>`;
+        const cOffs = [...new Set(u.coming.map((p) => Math.max(0, dOff(p.date))))].sort((a, b) => a - b);
+        const whenC = cOffs.length ? `${willTag} ${esc(cOffs.map(whenTxt).join(", "))}` : "";
+        const allXs = kidsR.flatMap((k) => k.vr.xs);
+        const whenS = allXs.length ? esc(whenShort(allXs)) : "";
+        const othNote = u.oth.length ? `<span class="pur-cmp-note">${esc(u.oth.map(([j, xs]) => { const nn = xs.reduce((a, x) => a + x.count, 0); return t("pur_o1_other_add").replace("{plan}", tagTxt(otherName)).replace("{v}", packFmtLocal(packRowLocalUnits(rows[j]).reduce((a, x) => a + x, 0), rows[j].currency, false, rows[j].price)).replace("{n}", nn); }).join(", "))}</span>` : "";
+        const nPr = kidsR.length > 1 ? `${esc(t("pur_a2_n_prices").replace("{n}", kidsR.length))} · ` : "";
+        const firstOff = Math.min(...allXs.map((x) => x.off), ...cOffs);
+        const plus = buyK[0] ? `<button type="button" class="pur-cl-add" data-pursug="${buyK[0].i}" aria-label="${esc(t("pur_will_buy"))}">+</button>` : `<span class="pur-cl-add off"></span>`;
+        return `<div class="pur-cl-row pur-o1-sr${open ? " open" : ""}${tk || !kidsR.length ? " on" : ""}" data-purrow="${esc(u.key)}"${!kidsR.length ? ` data-purcgrp="${esc(`c|${bucketFor("c", u.coming[0])}|${purGroupKey(u.coming[0])}`)}"` : ""}>
+          ${buyK.length ? `<input type="checkbox" class="pur-cl-tick" data-purtick="${buyK.map((k) => k.i).join(",")}" ${tk ? "checked" : ""} aria-label="${esc(t("pur_will_buy"))}" />` : `<span class="pur-cl-tick"></span>`}
           <span class="pur-cl-ic" title="${first ? esc(materialDisplayName(first.replace(/ \(minutes\)$/, ""))) : ""}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : ""}${more ? `<u class="pur-cl-more">+${more}</u>` : ""}</span>
-          <span class="pur-cl-n"><b>${esc(purShortName(sugName(r)))}${optOf(r) ? ` · ${esc(optOf(r))}` : ""} <span class="pur-a2-x">${bidiNum("×" + n)}</span></b><small>${kind ? `<span class="pur-cmp pur-cmp-${kind}">${esc(tagTxt(kind))}${star}</span> ` : ""}${esc(whenShort(vr.xs))}</small>${gm ? purGoalTagHtml(gm, r.gives, Math.floor((Math.max(0, Math.min(...xs.map((x) => x.off))) + dowG) / 7)) : ""}</span>
-          <span class="pur-cl-p" data-purprice="${i}">${esc(packFmtLocal(packRowLocalUnits(vr.r).reduce((a, x) => a + x, 0) * vr.n, vr.r.currency, false, vr.r.price))}</span>
-          ${canBuy(i) ? `<button type="button" class="pur-cl-add" data-pursug="${i}" aria-label="${esc(t("pur_will_buy"))}">+</button>` : `<span class="pur-cl-add off"></span>`}
-        </div>${open ? `<div class="pur-cl-ex">${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}<div>${esc(whenShort(vr.xs))} · ${esc(vr.r.label)}</div>${cmp ? `<div>${tagHtml(i, n)}</div>` : ""}</div>` : ""}`;
+          <span class="pur-cl-n"><b>${esc(name)} <span class="pur-a2-x">${bidiNum("×" + n)}</span></b><small>${kind ? `<span class="pur-cmp pur-cmp-${kind}">${esc(tagTxt(kind))}${star}</span> ` : ""}${nPr}${[whenC, whenS].filter(Boolean).join(" · ")}</small>${othNote ? `<small>${othNote}</small>` : ""}${gm ? purGoalTagHtml(gm, gives, Math.floor((Math.max(0, firstOff) + dowG) / 7)) : ""}</span>
+          <span class="pur-cl-p">${esc(packFmtLocal(localSum, r0.currency, false, r0.price))}</span>
+          ${plus}
+        </div>${open ? `<div class="pur-cl-ex">${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}${kidsR.map((k) => `<div>${esc(whenShort(k.vr.xs))} · ${esc(k.vr.r.label)}${cmp ? ` ${tagHtml(k.i, k.n)}` : ""}</div>`).join("")}${u.coming.map((p) => `<div>${willTag} ${esc(whenTxt(Math.max(0, dOff(p.date))))} · ${esc(purTierText(byId.get(String(p.table)) || tb0, p.row, Number(p.from) || 0, p.choice, p.extra) || packFmtMoney(purchasePrice(p, byId.get(String(p.table)) || tb0), packLinkFor(p.table).currency))} ${bidiNum("× " + cntNow(p))}</div>`).join("")}${u.oth.map(([j, xs]) => `<div>${esc(whenShort(xs))} · ${esc(rows[j].label)} <span class="pur-cmp pur-cmp-${otherName}">${esc(tagTxt(otherName))}</span></div>`).join("")}</div>` : ""}`;
       };
       // Week strip (box 1, Option 1): This week · Next week · Week 3 … This week = the ✓ checklist below.
       const boxes = `<div class="pur-wbs pur-o1-wbs">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wb${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${tOff != null && k === lastWeek ? "&#127919; " : ""}${esc(wkName(k))}</span><b>${b && b.cost ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<i class="pur-cmp-${otherName}">${esc(tagTxt(otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</i>` : ""}</button>`; }).join("")}</div>`;
@@ -1208,13 +1301,13 @@ async function renderPurchasesPageMain() {
       // First 5 lines, then "Show N more" (the + Will buy button counts every ticked pack).
       // This week shows the ✓ checklist instead (drawWeek), unless the checklist is opening a pack's pop-up.
       if (PUR_SUG_WEEK === 0 && !sugAll) return `${boxes}${followLine}${budLine}`;
-      const lim = sugAll || PUR_LIST_ALL.has("n") ? list : list.slice(0, 5);
-      const moreN = list.length - 5;
-      const listPart = list.length
-        ? `<div class="pur-cl-list" data-week="${esc(String(PUR_SUG_WEEK))}">${lim.map(rowHtml).join("")}</div>${moreN > 0 ? purMoreBtnHtml('data-purlmore="n"', PUR_LIST_ALL.has("n"), moreN) : ""}`
+      const lim = sugAll || PUR_LIST_ALL.has("n") ? units : units.slice(0, 5);
+      const moreN = units.length - 5;
+      const listPart = units.length
+        ? `<div class="pur-cl-list" data-week="${esc(String(PUR_SUG_WEEK))}">${lim.map(unitHtml).join("")}</div>${moreN > 0 ? purMoreBtnHtml('data-purlmore="n"', PUR_LIST_ALL.has("n"), moreN) : ""}`
         : `<div class="meta pur-a2-none">${esc(t("pur_wk_none"))}</div>`;
-      const buyBtn = list.some(([i]) => canBuy(i)) ? `<button type="button" class="btn pur-wk-all" data-purtickbuy></button>` : "";
-      const hint = list.length ? `<div class="meta pur-o1-hint"><span>${esc(t("pur_o1_n_hint"))}</span>${list.some(([i]) => canBuy(i)) ? ` <button type="button" class="linklike" data-purtickall>${esc(t(list.every(([i]) => !canBuy(i) || tickOf(i)) ? "pur_sug_pick_none" : "pur_sug_pick_all"))}</button>` : ""}</div>` : "";
+      const buyBtn = list.some(([i]) => shownIs.has(i) && canBuy(i)) ? `<button type="button" class="btn pur-wk-all" data-purtickbuy></button>` : "";
+      const hint = units.length ? `<div class="meta pur-o1-hint"><span>${esc(t("pur_o1_n_hint"))}</span>${list.some(([i]) => shownIs.has(i) && canBuy(i)) ? ` <button type="button" class="linklike" data-purtickall>${esc(t(list.every(([i]) => !shownIs.has(i) || !canBuy(i) || tickOf(i)) ? "pur_sug_pick_none" : "pur_sug_pick_all"))}</button>` : ""}</div>` : "";
       return `${boxes}${followLine}${budLine}${listPart}${buyBtn}${hint}`;
     };
     box.innerHTML = compactHtml();
@@ -1233,16 +1326,17 @@ async function renderPurchasesPageMain() {
     // Admin list: tick what you'll buy, then one "Will buy" adds every date of
     // the ticked packs this week.
     const tickBuy = box.querySelector("[data-purtickbuy]");
-    const tickedNow = () => list.filter(([i]) => { const tb = sugTable(rows[i]); return tb && (rows[i].row != null || !plainPack(tb)) && tickOf(i); });
+    const tickedNow = () => list.filter(([i]) => { const tb = sugTable(rows[i]); return shownIs.has(i) && tb && (rows[i].row != null || !plainPack(tb)) && tickOf(i); });
     const syncTick = () => {
       if (!tickBuy) return;
       const pk = tickedNow(), sum = pk.reduce((a, [i]) => { const v = verOf(i); return a + packRowLocalUnits(v.r).reduce((x, y) => x + y, 0) * v.n; }, 0);
-      tickBuy.textContent = pk.length ? `+ ${t("pur_will_buy")} (${pk.length}) · ${money(sum)}` : t("pur_tick_none");
+      const nPk = new Set(pk.map(([i]) => pkOf(i))).size;
+      tickBuy.textContent = pk.length ? `+ ${t("pur_will_buy")} (${nPk}) · ${money(sum)}` : t("pur_tick_none");
       tickBuy.disabled = !pk.length;
     };
     syncTick();
     box.querySelectorAll("[data-purtick]").forEach((cb) => cb.addEventListener("change", () => {
-      PUR_SUG_TICK.set(`${PUR_SUG_WEEK}|${cb.dataset.purtick}`, cb.checked);
+      cb.dataset.purtick.split(",").forEach((i) => PUR_SUG_TICK.set(`${PUR_SUG_WEEK}|${i}`, cb.checked));
       cb.closest(".pur-cl-row").classList.toggle("on", cb.checked);
       syncTick();
     }));
@@ -1250,8 +1344,8 @@ async function renderPurchasesPageMain() {
     const moreN = box.querySelector('[data-purlmore="n"]');
     if (moreN) moreN.addEventListener("click", () => { if (PUR_LIST_ALL.has("n")) PUR_LIST_ALL.delete("n"); else PUR_LIST_ALL.add("n"); drawSug(); });
     if (tickAll) tickAll.addEventListener("click", () => {
-      const on = !list.every(([i]) => tickOf(i) || !sugTable(rows[i]));
-      list.forEach(([i]) => PUR_SUG_TICK.set(`${PUR_SUG_WEEK}|${i}`, on));
+      const on = !list.every(([i]) => !shownIs.has(i) || tickOf(i) || !sugTable(rows[i]));
+      list.forEach(([i]) => { if (shownIs.has(i)) PUR_SUG_TICK.set(`${PUR_SUG_WEEK}|${i}`, on); });
       drawSug();
     });
     box.querySelectorAll("[data-purver]").forEach((vb) => vb.addEventListener("click", () => {
@@ -1278,13 +1372,15 @@ async function renderPurchasesPageMain() {
     });
     box.querySelectorAll("[data-purrow]").forEach((rw) => rw.addEventListener("click", (e) => {
       if (e.target.closest("[data-pursug], [data-purtick], [data-purver]")) return;
+      // A pack with only your own "will buy" dates this week: its sheet (dates, ✎ Edit).
+      if (rw.dataset.purcgrp) { openGrp(rw.dataset.purcgrp); return; }
       const k = `${PUR_SUG_WEEK}|${rw.dataset.purrow}`;
       PUR_SUG_ROW = PUR_SUG_ROW === k ? null : k;
       drawSug();
     }));
     // "+ Will buy" opens a small window: tick the dates to buy on (all ticked).
-    box.querySelectorAll("[data-pursug]").forEach((b) => b.addEventListener("click", () => {
-      const i0 = Number(b.dataset.pursug);
+    const openSug = (i0) => {
+      const wkOpen = PUR_SUG_WEEK;
       // A pack both plans buy differently (another step or count): pick which
       // plan's version to add.
       const m = cmp && sel && sel.match.get(i0);
@@ -1533,6 +1629,9 @@ async function renderPurchasesPageMain() {
       const mateParts = (d) => mates.filter((m) => mt.has(m.i)).map((m) => ({ row: m.r.row, label: m.r.label, price: m.r.price, local: packRowLocalUnits(m.r).reduce((a, x) => a + x, 0), gives: m.r.gives, plain: true, count: m.s[d].count, mate: m }));
       const mateLocal = (d) => mateParts(d).reduce((a, p) => a + p.local * p.count, 0);
       if (mates.length) for (let q = OP.length - 1; q >= 0; q--) if (mates.some((m) => m.r.row === OP[q].row)) OP.splice(q, 1);
+      // The other plan's prices of this pack this week: in this list, tagged
+      // with that plan (gold edge like extras); ticked, they're saved with its tag.
+      if (cmp && i0 < nFollow && opKind === "rows" && sel) sel.items.forEach((xs, j) => { if (j < nFollow || !rows[j] || sugTable(rows[j]) !== tb || rows[j].row == null) return; const it = OP.find((o) => o.row === rows[j].row); if (it) it.oth = otherName; });
       const runAt = (g, off) => { if (typeof g.reset === "number" && g.reset > 0 && g.reset < PACK_ONE_TIME_DAYS) return packResetOffsets(g.reset, g.resetDay, PACK_HORIZON_DAYS, g.window).filter((x) => x <= off).pop(); return "all"; };
       const roomAt = (g, off) => { if (g.reset === "unlimited") return 99; const at = runAt(g, off); if (at === undefined) return 0; const used = at === "all" ? g.used || 0 : (g.usedAt || {})[at] || 0; return (g.perCycle || 1) - used; };
       const planCard = M && M.kind === "card" ? (kk > 0 ? pick[0] : -1) : null;
@@ -1548,7 +1647,7 @@ async function renderPurchasesPageMain() {
         });
         return Math.max(0, Math.min(99, best));
       };
-      const exParts = () => OP.filter((it) => (ex[it.key] || 0) > 0 && !isPlanItem(it)).map((it) => ({ row: it.row, label: opKind === "cards" ? `${packFmtMoney(it.price, r.currency)} · ${it.tag}` : packFmtMoney(it.price, r.currency), price: it.price, local: local(it.price), gives: it.gives, count: ex[it.key], isExtra: true }));
+      const exParts = () => OP.filter((it) => (ex[it.key] || 0) > 0 && !isPlanItem(it)).map((it) => ({ row: it.row, label: opKind === "cards" ? `${packFmtMoney(it.price, r.currency)} · ${it.tag}` : packFmtMoney(it.price, r.currency), price: it.price, local: local(it.price), gives: it.gives, count: ex[it.key], isExtra: true, ...(it.oth ? { oth: it.oth } : {}) }));
       const exLocal = () => exParts().reduce((a, p) => a + p.local * p.count, 0);
       const opHtml = () => {
         if (!OP.length) return "";
@@ -1581,16 +1680,26 @@ async function renderPurchasesPageMain() {
         if (!it) return "";
         const n = ex[it.key] || 0, mx = Math.max(n, opMax(it)), dis = !n && (oneDay || mx < 1);
         const note = oneDay && !n ? t("pur_op_one_day") : mx < 1 ? t("pur_op_none_left") : "";
-        return `<div class="pur-ms-row${n ? " on op-extra" : ""}${dis ? " off" : ""}" data-pmexi="${esc(it.key)}"><div class="pur-ms-l"><button type="button" class="pur-ms-tick" data-pmexr="${esc(it.key)}" aria-pressed="${n > 0}"${dis ? " disabled" : ""}>${n ? "&#10003;" : ""}</button>${pr}${n && mx > 1 ? purStepHtml("pmex", n, mx, 1) : ""}${note ? `<span class="meta pur-op-up">${esc(note)}</span>` : ""}${n ? `<span class="pur-op-tag extra">${esc(t("pur_op_tag_extra1"))}</span>` : ""}</div>${gv}</div>`;
+        return `<div class="pur-ms-row${n ? " on op-extra" : it.oth ? " op-extra" : ""}${dis ? " off" : ""}" data-pmexi="${esc(it.key)}"><div class="pur-ms-l"><button type="button" class="pur-ms-tick" data-pmexr="${esc(it.key)}" aria-pressed="${n > 0}"${dis ? " disabled" : ""}>${n ? "&#10003;" : ""}</button>${pr}${n && mx > 1 ? purStepHtml("pmex", n, mx, 1) : ""}${note ? `<span class="meta pur-op-up">${esc(note)}</span>` : ""}${it.oth ? `<span class="pur-op-tag extra">${esc(tagTxt(it.oth))}</span>` : n ? `<span class="pur-op-tag extra">${esc(t("pur_op_tag_extra1"))}</span>` : ""}</div>${gv}</div>`;
       };
       const oneHtml = opKind === "rows" ? `<div class="pur-ms"><div class="pur-op-h ice"><span>${esc(t(mates.length ? "pur_op_plan_prices" : "pur_op_plan_pick"))}</span></div>${packOffersFor(tb, true).filter((o) => Object.keys(o.gives || {}).length).map(oneRow).join("")}</div>` : "";
       // A date's price with what is added to it.
       const baseLocal = () => packConvert(r.price, r.currency).n;
       const dayPrice = (d) => { const xl = exLocal() + (mates.length ? mateLocal(d) : 0); if (!xl) return fmtN(cntOf(d), selOf(d)); return fmtL((M ? localOf(selOf(d)) : baseLocal()) * cntOf(d) + xl); };
+      // This pack's own "will buy" dates in this week: listed ticked (already added).
+      const willRows = coming.filter((p) => !purTriggerWaiting(p) && purGroupKey(p) === purPackKeyOf(tb.id) && bucketOf(dOff(p.date)) === wkOpen).map((p) => {
+        const tb1 = byId.get(String(p.table)) || tb, off = Math.max(0, dOff(p.date));
+        const lb = purTierText(tb1, p.row, Number(p.from) || 0, p.choice, p.extra);
+        return { off, html: `<label class="pur-m-row"><input type="checkbox" checked disabled aria-label="${esc(t("pur_tag_willbuy"))}" /><span>${esc(whenTxt(off))} <span class="pur-op-tag plan">${esc(t("pur_tag_willbuy"))}</span>${lb ? ` <small class="meta">${esc(lb)}</small>` : ""}</span><span class="meta">${bidiNum("× " + cntNow(p))}</span><b>${esc(packFmtMoney(cost(p), packLinkFor(p.table).currency))}</b></label>` };
+      });
+      // A ticked date of today: "Already bought" saves it as bought (owner, 25 Nov 2026).
+      const bt = keep && keep.bt ? keep.bt : {};
+      const btOn = (d) => !!bt[d] && s0[d].off <= 0;
+      const btHtml = (d) => (s0[d].off <= 0 ? `<label class="pur-cnt pur-m-bt" data-pmbtrow="${d}"><input type="checkbox" class="bset-sw" data-pmbought="${d}" ${bt[d] ? "checked" : ""} /><span class="pur-cnt-l${bt[d] ? " good" : ""}">${esc(t("pur_bt_switch"))}</span></label>` : "");
       modal.innerHTML = `<div class="modal-box pur-modal">
-        <div class="pur-m-head"><h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2>${closeXHtml("data-pmclose")}</div>${verHtml}${stepsHtml}${noteHtml}${opKind === "rows" ? oneHtml : planBox + opHtml()}
+        <div class="pur-m-head"><h2>${esc(packDisplayName(tb, purShortName(sugName(r))))}</h2>${closeXHtml("data-pmclose")}</div>${verHtml}${stepsHtml}${noteHtml}${opKind === "rows" ? oneHtml : planBox + opHtml()}
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
-        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}${dayCtl(k) && x.count === 1 ? "<span></span>" : `<span class="meta" data-pmx>${bidiNum("× " + cntOf(k))}</span>`}<b data-pmpr>${esc(dayPrice(k))}</b></label>${cntHtml(k)}${dayMenu(k)}`).join("")}</div>
+        <div class="pur-m-list">${s0.map((x, k) => ({ off: Math.max(0, x.off), html: `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}${dayCtl(k) && x.count === 1 ? "<span></span>" : `<span class="meta" data-pmx>${bidiNum("× " + cntOf(k))}</span>`}<b data-pmpr>${esc(dayPrice(k))}</b></label>${btHtml(k)}${cntHtml(k)}${dayMenu(k)}` })).concat(willRows).sort((a, b) => a.off - b.off).map((x) => x.html).join("")}</div>${s0.some((x) => x.off <= 0) ? `<div class="meta pur-o1-hint" data-pmbthint hidden>${esc(t("pur_bt_hint"))}</div>` : ""}
         <div class="pur-m-foot"><span data-pmsum></span><div class="pur-op-sum" data-pmexsum hidden></div><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-pmclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-pmadd>+ ${esc(t("pur_will_buy"))}</button></span></div>
       </div>`;
       modal.style.display = "flex";
@@ -1606,10 +1715,19 @@ async function renderPurchasesPageMain() {
         modal.querySelector("[data-pmsum]").innerHTML = `<b>${esc(M || useL ? fmtL(tot) : packFmtMoney(tot, r.currency))}</b> <span class="meta">${exTot > 0 ? esc(t("pur_op_sum").replace("{a}", fmtL(tot - exTot)).replace("{b}", fmtL(exTot))) : `${ordered && !differ ? esc(nSteps(kk)) + " · " : ""}${esc(t("pur_sug_n_of").replace("{n}", ix.length).replace("{m}", s0.length))}`}</span>`;
         const es = modal.querySelector("[data-pmexsum]");
         es.hidden = !exN; es.textContent = exN ? t("pur_op_note").replace("{n}", exN) : "";
-        modal.querySelector("[data-pmadd]").disabled = !ix.length || empty;
+        const addB = modal.querySelector("[data-pmadd]");
+        addB.disabled = !ix.length || empty;
+        // "Already bought": shown on today's ticked date; the footer says what is saved how.
+        modal.querySelectorAll("[data-pmbtrow]").forEach((x) => { x.hidden = !ix.includes(Number(x.dataset.pmbtrow)); });
+        const nb = ix.filter(btOn).length, nw = ix.length - nb;
+        if (nb) modal.querySelector("[data-pmsum]").insertAdjacentHTML("beforeend", `<div class="meta"><span class="good">${esc(t("pur_bt_n").replace("{n}", nb))}</span>${nw ? ` · <span>${esc(t("pur_bt_will_n").replace("{n}", nw))}</span>` : ""}</div>`);
+        addB.textContent = !nb ? `+ ${t("pur_will_buy")}` : nw ? t("pur_bt_save_mix").replace("{n}", ix.length) : `✓ ${t("pur_bt_save").replace("{n}", nb)}`;
+        addB.classList.toggle("good", !!nb && !nw);
+        const bh = modal.querySelector("[data-pmbthint]"); if (bh) bh.hidden = !nb;
         const all = modal.querySelector("[data-pmall]"); if (all) all.textContent = ix.length === s0.length ? t("pur_sug_pick_none") : t("pur_sug_pick_all");
       };
       boxes.forEach((c) => c.addEventListener("change", sync));
+      modal.querySelectorAll("[data-pmbought]").forEach((c) => c.addEventListener("change", () => { const d = Number(c.dataset.pmbought); bt[d] = c.checked; const l = c.parentNode.querySelector(".pur-cnt-l"); if (l) l.classList.toggle("good", c.checked); sync(); }));
       // − / + / Max on a date: the number, its price and the total change in place.
       modal.querySelectorAll("[data-pmcnt]").forEach((row) => {
         const d = Number(row.dataset.pmcnt), max = maxes[d], lab = boxes[d] && boxes[d].closest("label");
@@ -1640,7 +1758,7 @@ async function renderPurchasesPageMain() {
         const adds = [];
         // What was added to the plan's part (next steps, other prices / cards)
         // is its own purchase, tagged "extra".
-        ix.forEach((d) => partsOf(selOf(d)).concat(mateParts(d), exParts()).forEach((p) => adds.push({ id: "p" + Date.now().toString(36) + d + "_" + adds.length + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: p.row, ...(p.from != null ? { from: p.from } : r.from != null && !p.isExtra ? { from: r.from } : {}), ...(p.extra > 0 ? { extra: p.extra } : {}), count: p.count != null ? p.count : cntOf(d), date: dayOf(Math.max(0, s0[d].off)), status: "planned", plan: p.isExtra ? "extra" : p.mate ? planTag(p.mate.i) : p.mateI != null ? planTag(p.mateI) : vers.length > 1 ? vers[vi].key : planTag(i0), ...(plainPack(tb) ? {} : { choice: { name: p.mateI != null ? sugName(rows[p.mateI]) : sugName(r), label: p.label, price: p.price, gives: p.gives } }) })));
+        ix.forEach((d) => partsOf(selOf(d)).concat(mateParts(d), exParts()).forEach((p) => adds.push({ id: "p" + Date.now().toString(36) + d + "_" + adds.length + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: p.row, ...(p.from != null ? { from: p.from } : r.from != null && !p.isExtra ? { from: r.from } : {}), ...(p.extra > 0 ? { extra: p.extra } : {}), count: p.count != null ? p.count : cntOf(d), date: dayOf(Math.max(0, s0[d].off)), status: btOn(d) ? "bought" : "planned", plan: p.isExtra ? (p.oth || "extra") : p.mate ? planTag(p.mate.i) : p.mateI != null ? planTag(p.mateI) : vers.length > 1 ? vers[vi].key : planTag(i0), ...(plainPack(tb) ? {} : { choice: { name: p.mateI != null ? sugName(rows[p.mateI]) : sugName(r), label: p.label, price: p.price, gives: p.gives } }) })));
         if (!adds.length) return;
         PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
         savePackPurchases();
@@ -1650,10 +1768,10 @@ async function renderPurchasesPageMain() {
         else
         if (ri >= 0 && ri < nFollow && !exParts().length && ix.every((d) => { const ps = partsOf(selOf(d)); return cntOf(d) === s0[d].count && ps.length === 1 && ps[0].label === r.label && ps[0].row === base; })) takeAsPlanned(ix.map((d) => ({ i: ri, off: s0[d].off, count: s0[d].count })).concat(mates.filter((m) => mt.has(m.i)).flatMap((m) => ix.map((d) => ({ i: m.i, off: m.s[d].off, count: m.s[d].count })))));
         close();
-        toast(ix.length > 1 ? t("pur_added_dates").replace("{n}", ix.length) : t("pur_added"));
+        toast(ix.some(btOn) ? t("pur_a2_bought_mark") + " ✓" : ix.length > 1 ? t("pur_added_dates").replace("{n}", ix.length) : t("pur_added"));
         redraw();
       });
-      const state = (patch) => ({ kk, tset, pick, pp, pp0, dsel, openDay, openSlot, cnt, ex, mt, days: new Set(pickedIdx()), ...patch });
+      const state = (patch) => ({ kk, tset, pick, pp, pp0, dsel, openDay, openSlot, cnt, ex, mt, bt, days: new Set(pickedIdx()), ...patch });
       modal.querySelectorAll("[data-pmmate]").forEach((b) => b.addEventListener("click", () => { const k = Number(b.dataset.pmmate), m2 = new Set(mt); if (m2.has(k)) m2.delete(k); else m2.add(k); openVer(vi, state({ mt: m2 })); }));
       // Other prices: ▲ / ▼ per row, a tap per card price.
       modal.querySelectorAll("[data-pmexi]").forEach((row) => row.querySelectorAll("[data-pmex]").forEach((b) => b.addEventListener("click", () => {
@@ -1692,7 +1810,9 @@ async function renderPurchasesPageMain() {
       modal.querySelectorAll("[data-pmdt]").forEach((v) => v.addEventListener("change", () => { const [d, k] = v.dataset.pmdt.split("|").map(Number); const s2 = selOf(d).slice(); s2[k] = v.checked; openVer(vi, state({ dsel: setDay(d, s2) })); }));
       };
       openVer(0);
-    }));
+    };
+    openSugFn = openSug;
+    box.querySelectorAll("[data-pursug]").forEach((b) => b.addEventListener("click", () => openSug(Number(b.dataset.pursug))));
       // Show the top 3 packs; the rest scroll inside the box.
       const listEl = box.querySelector(".pur-sug-list"), items = listEl ? [...listEl.children] : [];
       if (items.length > 3) listEl.style.maxHeight = `${items[3].offsetTop + 1}px`; // the list is the cards' offset parent
@@ -1714,10 +1834,10 @@ async function renderPurchasesPageMain() {
       open: (i) => {
         const prev = PUR_SUG_WEEK;
         PUR_SUG_WEEK = 0; sugAll = true; drawSug();
-        const b = box.querySelector(`[data-pursug="${i}"]`);
-        if (b) b.click();
+        const ok = !!(rows[i] && sugTable(rows[i]) && openSugFn);
+        if (ok) openSugFn(i);
         PUR_SUG_WEEK = prev; sugAll = false; drawSug();
-        return !!b;
+        return ok;
       },
     };
     drawSug();
@@ -1726,8 +1846,8 @@ async function renderPurchasesPageMain() {
       planTag: (i) => (cmp ? (b0 && b0.match.has(i) ? "both" : follow) : plan && plan.spend ? "budget" : "target") }, !!updating);
     // From the Pack calendar's "+ Will buy": open that pack's Will buy pop-up.
     if (focusI != null) {
-      const b = box.querySelector(`[data-pursug="${focusI}"]`);
-      if (b) b.click(); else if (PUR_SUG_WEEK === 0 && sugCtl) sugCtl.open(focusI);
+      if (PUR_SUG_WEEK === 0 && sugCtl) sugCtl.open(focusI);
+      else if (rows[focusI] && sugTable(rows[focusI]) && openSugFn) openSugFn(focusI);
     }
   };
   const sugFail = (e) => { if (e && e.superseded) return; const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) { box.style.minHeight = ""; box.innerHTML = `<div class="meta pur-a2-none">${esc(t("pur_sug_fail"))}</div>`; const chk0 = document.getElementById("purChk"); if (chk0) chk0.hidden = false; drawWeek(null); } };
@@ -1890,9 +2010,9 @@ async function renderPurchasesPageMain() {
     if (!tb) return;
     const n = items.reduce((a, p) => a + Math.max(1, Math.floor(Number(p.count) || 1)), 0);
     const gives = {};
-    items.forEach((p) => { const c = Math.max(1, Math.floor(Number(p.count) || 1)); Object.entries(rawGives(p, tb)).forEach(([k, v]) => { gives[k] = (gives[k] || 0) + v * c; }); });
+    items.forEach((p) => { const c = Math.max(1, Math.floor(Number(p.count) || 1)); Object.entries(rawGives(p, byId.get(String(p.table)) || tb)).forEach(([k, v]) => { gives[k] = (gives[k] || 0) + v * c; }); });
     const addable = Object.keys(gives).filter((k) => k !== "Gems" && gives[k] > 0);
-    const name = purShortName((items[0].choice && items[0].choice.name) || tb.title || "");
+    const name = purNameOf(items[0], tb);
     const lastBuy = items.map((p) => p.date).sort().pop();
     const bpAt = CALC_STATE_UPDATED.backpack ? CALC_STATE_UPDATED.backpack.slice(0, 10) : null;
     const old = !bpAt || bpAt < lastBuy;
@@ -1944,7 +2064,7 @@ async function renderPurchasesPageMain() {
     const tb = byId.get(String(p0.table));
     if (!tb) return;
     const cur = packLinkFor(tb.id).currency, each = purchasePrice(p0, tb), max = cntNow(p0);
-    const name = purShortName((p0.choice && p0.choice.name) || tb.title || ""), ic = mainIcon(purchaseGives(p0, tb));
+    const name = purNameOf(p0, tb), ic = mainIcon(purchaseGives(p0, tb));
     let n = max;
     let m = document.getElementById("purBsSheet");
     if (!m) { m = document.createElement("div"); m.id = "purBsSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap"; document.body.appendChild(m); }
@@ -2096,7 +2216,9 @@ async function renderPurchasesPageMain() {
     const p = its.find((x) => x.id === pid) || its[0], tb = byId.get(String(p.table));
     if (!tb) return;
     const M = editModel(p, tb);
-    PUR_EDIT = { id, pid: p.id, scope: pid || its.length === 1 ? "one" : "all", date: p.date, count: cntNow(p), status: p.status === "bought" ? "bought" : "planned", M, k: M ? M.k : 0, pick: M && M.pick ? M.pick.slice() : [], pp: M && M.pp ? M.pp.slice() : [], card: M && M.card != null ? M.card : 0, slot: "", p };
+    // A line of several prices: each date is edited on its own (one step / card for all would change the others).
+    const mixed = new Set(its.map(purRowKey)).size > 1;
+    PUR_EDIT = { id, pid: p.id, mixed, scope: pid || its.length === 1 || mixed ? "one" : "all", date: p.date, count: cntNow(p), status: p.status === "bought" ? "bought" : "planned", M, k: M ? M.k : 0, pick: M && M.pick ? M.pick.slice() : [], pp: M && M.pp ? M.pp.slice() : [], card: M && M.card != null ? M.card : 0, slot: "", p };
     PUR_EDIT.k0 = PUR_EDIT.k; PUR_EDIT.pick0 = PUR_EDIT.pick.join(); PUR_EDIT.pp0 = PUR_EDIT.pp.join(); PUR_EDIT.card0 = PUR_EDIT.card;
     drawEdit();
   };
@@ -2134,7 +2256,7 @@ async function renderPurchasesPageMain() {
       stepHtml = row(t("pur_ed_price"), `<select class="pur-ed-sel" data-edprice aria-label="${esc(t("pur_ed_price"))}">${M.perTable[0].map((o, i) => `<option value="${i}"${i === E.k ? " selected" : ""}>${esc(packFmtMoney(o.price, cur))}</option>`).join("")}</select>`)
         + `<div class="pur-ed-ov"><span class="meta">${esc(t("pur_ed_card"))}</span><span class="pur-ed-chips">${M.tags.map((tg, j) => `<button type="button" class="pur-ed-chip${j === E.card ? " on" : ""}" data-edcard="${j}">${esc(tg)}</button>`).join("")}</span></div>`;
     }
-    const scopeHtml = its.length > 1 ? `<div class="pur-ed-scope" role="group">${["all", "one"].map((s) => `<button type="button" data-edscope="${s}" class="${E.scope === s ? "on" : ""}" aria-pressed="${E.scope === s}"><b>${esc(t(s === "all" ? "pur_ed_all" : "pur_ed_one"))}</b><small>${esc(s === "all" ? (its.length === 2 ? `${shortDay(its[0].date)}, ${shortDay(its[1].date)}` : `${shortDay(its[0].date)} – ${shortDay(its[its.length - 1].date)}`) : `${shortDay(E.p.date)} · ${t("pur_ed_others")}`)}</small></button>`).join("")}</div>` : "";
+    const scopeHtml = its.length > 1 && !E.mixed ? `<div class="pur-ed-scope" role="group">${["all", "one"].map((s) => `<button type="button" data-edscope="${s}" class="${E.scope === s ? "on" : ""}" aria-pressed="${E.scope === s}"><b>${esc(t(s === "all" ? "pur_ed_all" : "pur_ed_one"))}</b><small>${esc(s === "all" ? (its.length === 2 ? `${shortDay(its[0].date)}, ${shortDay(its[1].date)}` : `${shortDay(its[0].date)} – ${shortDay(its[its.length - 1].date)}`) : `${shortDay(E.p.date)} · ${t("pur_ed_others")}`)}</small></button>`).join("")}</div>` : "";
     host.hidden = false;
     host.innerHTML = `<div class="pur-ed-h">&#9998; ${esc(t("pur_ed_title"))}${E.scope === "one" ? ` <span class="meta">· ${esc(shortDay(E.p.date))}</span>` : ""}</div>
       ${scopeHtml}

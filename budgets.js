@@ -5,7 +5,7 @@
 // code and the Budgets state other pages read (My Purchases, the Menu, the Dashboard,
 // recordBudgetNeeds / budgetInvalidate, admin.js / scan.js / the planner worker) stay
 // in app.js. The site loads the packed copy budgets.min.js (tools/stamp.js).
-window.BUDGETS_BUILD = "ee4063867a";
+window.BUDGETS_BUILD = "0655976263";
 
 // Order of the Budgets page tiles (owner picked A, 22 Nov 2026): per person in
 // calc_state budget_page_order = { order: [calcKeys] }; display only. Pages
@@ -58,7 +58,7 @@ function cdaTileHtml() {
 // Budgets plan lines: the pack's own name only (no category, no option list); full title in the tooltip.
 function budPackNameHtml(title) {
   const full = String(title || "");
-  const n = purShortName(purPackName(full, PACK_TABLES_CACHE)) || full;
+  const n = packDisplayTitle(full, purShortName(purPackName(full, PACK_TABLES_CACHE))) || full;
   return n === full ? esc(full) : `<span title="${esc(full)}">${esc(n)}</span>`;
 }
 // Plan rows grouped per pack: one line per pack (runs, cost, cadence) and

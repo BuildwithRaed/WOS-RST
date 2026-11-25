@@ -3196,5 +3196,14 @@
 "t:mk_hg_lock_at":"{e}+ 需精通 {n}",
 "t:mk_hg_lock_tail":"· {e}+",
 "t:mk_hg_can_to":"背包可讓強化到 {x}",
-"t:cda_hg_lock_at":"{piece} 強化 {a} → {b} · {e}+ 需精通 {n}"
+"t:cda_hg_lock_at":"{piece} 強化 {a} → {b} · {e}+ 需精通 {n}",
+"t:pur_o1_other_add":"{plan}計畫:+{v} ×{n}",
+"t:pur_tag_willbuy":"將購買",
+"t:pur_bt_switch":"已購買 ✓",
+"t:pur_bt_save":"儲存為已購買 ({n})",
+"t:pur_bt_save_mix":"儲存 ({n})",
+"t:pur_bt_n":"今天已購買 {n}",
+"t:pur_bt_will_n":"將購買 {n}",
+"t:pur_bt_hint":"勾選的今天日期儲存為已購買,之後的日期儲存為將購買。",
+"t:pur_dn_title":"已購買 · {n} · {v}"
 }

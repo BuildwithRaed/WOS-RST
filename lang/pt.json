@@ -3196,5 +3196,14 @@
 "t:mk_hg_lock_at":"Maestria {n} para {e}+",
 "t:mk_hg_lock_tail":"· {e}+",
 "t:mk_hg_can_to":"Sua Mochila pode levar o Aprimorar a {x}",
-"t:cda_hg_lock_at":"Aprimorar {piece} {a} → {b} · Maestria {n} para {e}+"
+"t:cda_hg_lock_at":"Aprimorar {piece} {a} → {b} · Maestria {n} para {e}+",
+"t:pur_o1_other_add":"Plano {plan}: +{v} ×{n}",
+"t:pur_tag_willbuy":"vou comprar",
+"t:pur_bt_switch":"Já comprado ✓",
+"t:pur_bt_save":"Salvar como comprado ({n})",
+"t:pur_bt_save_mix":"Salvar ({n})",
+"t:pur_bt_n":"{n} comprados hoje",
+"t:pur_bt_will_n":"{n} vou comprar",
+"t:pur_bt_hint":"A data de hoje marcada é salva como comprada; as datas seguintes como vou comprar.",
+"t:pur_dn_title":"Comprado · {n} · {v}"
 }

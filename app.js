@@ -1310,7 +1310,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 135; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 136; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4014,10 +4014,19 @@ const T = {
   pur_a2_less: { en: "Show less" },
   pur_a2_mark: { en: "Mark as bought" },
   pur_a2_bought_mark: { en: "Bought" },
+  pur_o1_other_add: { en: "{plan} plan: +{v} ×{n}" },
+  pur_tag_willbuy: { en: "will buy" },
+  pur_bt_switch: { en: "Already bought ✓" },
+  pur_bt_save: { en: "Save as bought ({n})" },
+  pur_bt_save_mix: { en: "Save ({n})" },
+  pur_bt_n: { en: "{n} bought today" },
+  pur_bt_will_n: { en: "{n} will buy" },
+  pur_bt_hint: { en: "Today's ticked date is saved as bought; later dates as will buy." },
   pur_a2_n_prices: { en: "{n} prices" },
   pur_a2_then: { en: "+ {days}" },
   pur_a2_none_today: { en: "Nothing to buy today — the rest comes on a later day" },
   pur_a2_unmark: { en: "Bought · tap to undo" },
+  pur_dn_title: { en: "Bought · {n} · {v}" },
   pur_o1_coming: { en: "Will buy" },
   pur_o1_box: { en: "Your packs" },
   pur_o1_none: { en: "none" },
@@ -10551,7 +10560,7 @@ function packCalModel(tablesLoaded) {
       if (!by.has(key)) by.set(key, { key, label: stem || cat || title, link: l, tables: [] });
       by.get(key).tables.push(tb);
     });
-    return [...by.values()].map((g) => (g.tables.length === 1 ? { ...g, label: g.tables[0].title || g.label } : g));
+    return [...by.values()].map((g) => (g.tables.length === 1 ? { ...g, label: packDisplayName(g.tables[0], g.tables[0].title || g.label) } : { ...g, label: packEventOfTables(g.tables) || g.label }));
   })();
   groups.forEach((gp) => {
     gp.newGen = packIsNewGen(packLinkForBase(gp.tables[0].id));
@@ -11479,10 +11488,10 @@ const SCAN_SUMMARY_ROWS = [[/\bgems?\b/i, "Gems"], [/\bmeat\b/i, "Meat"], [/\bwo
 const CODE_FILES = {
   admin: "admin.min.js?v=0a7cbbe8a6",
   scan: "scan.min.js?v=64a7ef20ff",
-  packs: "packs.min.js?v=f248b1fa8f",
+  packs: "packs.min.js?v=8c7c3e7c6f",
   gallery: "gallery.min.js?v=28a7717641",
-  purchases: "purchases.min.js?v=c400a15ad7",
-  budgets: "budgets.min.js?v=ee4063867a",
+  purchases: "purchases.min.js?v=21c5b54f97",
+  budgets: "budgets.min.js?v=0655976263",
 };
 const CODE_P = {}, CODE_OK = {};
 function loadCode(name) {
@@ -13491,6 +13500,46 @@ function packEventName(lead, tables) {
   const own = String((((PACK_LINKS || {})[String(lead.id)] || {}).eventName) || "").trim();
   return own || packEventDefault(lead, packEventFollowers(lead, tables));
 }
+// A pack's name outside the Packs page: a pack in a "Same dates as" event
+// reads "<event> · <its own name>" ("Megeventure · Fields of Gold",
+// "Megeventure · Boost"); the event name is dropped from the front of the
+// name when it is already there. A name that is only the event name, or a
+// pack in no event, is left as it is. Display only.
+function packDisplayName(tbOrId, name) {
+  const id = String(tbOrId && typeof tbOrId === "object" ? tbOrId.id : tbOrId || "");
+  const nm = String(name != null ? name : (tbOrId && tbOrId.title) || "").trim();
+  if (!id || !nm || !PACK_LINKS) return nm;
+  let lead = packDateLeader(id);
+  if (!lead && !Object.keys(PACK_LINKS).some((k) => k !== id && (PACK_LINKS[k] || {}).dateWith === id && packDateLeader(k) === id)) return nm;
+  if (!lead) lead = id;
+  const tables = Array.isArray(PACK_TABLES_CACHE) ? PACK_TABLES_CACHE : [];
+  const leadTb = tables.find((x) => String(x.id) === lead) || { id: lead, title: "" };
+  const ev = String(packEventName(leadTb, tables) || "").trim();
+  if (!ev) return nm;
+  const words = ev.split(/\s+/).filter(Boolean);
+  const pat = words.map((w) => w.replace(/s$/i, "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "s?").join("\\s+");
+  const m = new RegExp("^" + pat + "(?:\\s*[:·\\-–—]\\s*|\\s+|$)(.*)$", "i").exec(nm);
+  if (m) return m[1].trim() ? `${ev} · ${m[1].trim()}` : nm;
+  return `${ev} · ${nm}`;
+}
+// The event name of tables that are all one "Same dates as" event, else "".
+function packEventOfTables(tbs) {
+  if (!tbs.length) return "";
+  const leads = new Set(tbs.map((x) => packDateLeader(x.id) || String(x.id)));
+  if (leads.size !== 1) return "";
+  const lead = [...leads][0];
+  if (packDisplayName(lead, "\u0000") === "\u0000") return "";
+  const tables = Array.isArray(PACK_TABLES_CACHE) ? PACK_TABLES_CACHE : tbs;
+  return String(packEventName(tables.find((x) => String(x.id) === lead) || tbs.find((x) => String(x.id) === lead) || { id: lead, title: "" }, tables) || "").trim();
+}
+// The same for a plan row's title ("Events · Fields of Gold"): the one table
+// it names, if any (a set of several tables keeps its name).
+function packDisplayTitle(fullTitle, name) {
+  const full = String(fullTitle || "");
+  const tables = Array.isArray(PACK_TABLES_CACHE) ? PACK_TABLES_CACHE : [];
+  const tb = tables.find((x) => { const g = String(packLinkFor(x.id).group || ""), tt = String(x.title || ""); return (g && g !== tt ? g + " · " + tt : tt) === full; });
+  return tb ? packDisplayName(tb, name) : String(name || "");
+}
 function packLinkForBase(tableId, own) {
   const { mine, l } = packLinkRaw(tableId);
   // Templates are only there to be copied: never used by Budgets or Pack cost.
@@ -15452,7 +15501,7 @@ function g1FoldVal(key) {
 }
 function g1FoldSync(root) {
   (root || document).querySelectorAll("[data-g1fold]").forEach((b) => {
-    const folded = g1FoldVal(b.dataset.g1fold) === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc, .trd-rules");
+    const folded = g1FoldVal(b.dataset.g1fold) === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc, .trd-rules, .pur-dn");
     if (box) box.classList.toggle("g1-folded", folded);
     // Compared as text: innerHTML gives back the real arrow, not "&#9662;", so an
     // HTML compare rewrote the button every time and the #content observer looped.
@@ -15818,7 +15867,8 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       const pool = items.filter(pcaNeeded).length ? items.filter(pcaNeeded) : items;
       const main = pool.slice().sort((a, b) => share(b) - share(a))[0];
       const chips = items.sort((a, b) => (pcaNeeded(b) - pcaNeeded(a)) || share(b) - share(a)).slice(0, 4);
-      const parts = String(g.title).split(" \u00b7 "), name = parts.length >= 2 ? parts[1] : parts[0];
+      const parts = String(g.title).split(" \u00b7 "), name0 = parts.length >= 2 ? parts[1] : parts[0];
+      const tids = (g.lines[0] && g.lines[0].tables) || [], name = tids.length === 1 ? packDisplayName(tids[0], name0) : packDisplayTitle(g.title, name0);
       // (A run's left-over steps are a one-off group: say how often the pack itself comes back.)
       const rr = g.lines.find((r) => typeof r.reset === "number" && r.reset < PACK_ONE_TIME_DAYS);
       if (rr && typeof g.reset === "number" && g.reset >= PACK_ONE_TIME_DAYS) { g = { ...g, reset: rr.reset, resetDay: rr.resetDay }; }

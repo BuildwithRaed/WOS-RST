@@ -1459,6 +1459,21 @@
   .pur-op.plan .pur-ms-tick{ display:inline-flex; align-items:center; justify-content:center; }
   .pur-a2-it.done .pur-a2-tx b{ color:var(--muted); text-decoration:line-through; }
   .pur-a2-it.done .pur-a2-pr{ color:var(--muted); }
+  /* My Purchases: this week's bought packs as small cards (D), two a row (more on wide screens). */
+  .pur-dn{ border-top:1px solid var(--line); margin-top:2px; }
+  .pur-dn-hd{ display:flex; align-items:center; gap:8px; min-height:36px; padding:6px 0 4px; font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+  .pur-dn-hd .g1-fold{ margin-inline-start:auto; }
+  .pur-dn.g1-folded .pur-dn-grid{ display:none; }
+  .pur-dn-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:6px; padding:2px 0 6px; }
+  .pur-dn-c{ display:flex; align-items:center; gap:6px; min-width:0; min-height:44px; padding:4px 6px; border-radius:10px; background:var(--panel-2); border:1px solid var(--line); color:var(--muted); cursor:pointer; }
+  .pur-dn-c .pur-pic{ flex:0 0 26px; width:26px; height:26px; border-radius:6px; background:none; }
+  .pur-dn-c .pur-pic img{ width:24px; height:24px; }
+  .pur-dn-t{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; line-height:1.25; }
+  .pur-dn-t b{ display:flex; gap:3px; min-width:0; font-size:12px; font-weight:600; color:var(--frost); white-space:nowrap; }
+  .pur-dn-t b > span:first-child{ min-width:0; overflow:hidden; text-overflow:ellipsis; }
+  .pur-dn-t b .pur-a2-x{ flex:none; }
+  .pur-dn-t small{ font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pur-dn-c .pur-a2-ck.on{ flex:0 0 24px; width:24px; height:24px; border:0; background:rgba(91,201,138,.18); color:var(--good); font-size:12px; }
   .pur-a2-tag{ display:inline-block; font-size:11px; font-weight:700; padding:1px 6px; border-radius:6px; margin-inline-end:5px; }
   .pur-a2-tag.today{ background:rgba(111,211,242,.16); color:var(--ice); }
   .pur-a2-tag.end{ background:rgba(232,162,60,.16); color:#e8a23c; }
@@ -1741,6 +1756,13 @@
   .pur-op-tag.plan{ background:var(--ice-dim); color:var(--ice); border:1px solid rgba(124,196,255,.45); }
   .pur-op-tag.extra{ background:rgba(224,178,90,.12); color:#e0b25a; border:1px solid rgba(224,178,90,.5); }
   .pur-op-tag.step{ color:var(--muted); border:1px solid var(--line); }
+  /* Will buy window: "Already bought" switch on today's date, green Save when all are bought. */
+  #purSugModal .pur-m-bt{ margin:2px 0 6px; padding-inline-start:38px; cursor:pointer; }
+  #purSugModal .pur-m-bt[hidden]{ display:none; }
+  #purSugModal .pur-m-bt input.bset-sw{ width:38px !important; height:22px !important; min-width:38px; min-height:22px !important; flex:0 0 38px; margin:0; padding:0; }
+  #purSugModal .pur-m-bt .pur-cnt-l.good, #purSugModal [data-pmsum] .good{ color:var(--good); font-weight:700; }
+  #purSugModal [data-pmadd].good{ background:var(--good); border-color:var(--good); color:#0f141b; }
+  .pur-cl-n small .pur-op-tag{ margin-inline-start:0; }
   .pur-ms-g .pur-op-tag{ margin-inline-start:auto; }
   .pur-op-list{ border:1px solid var(--line); border-radius:10px; margin-bottom:8px; }
   .pur-op{ padding:7px 10px; border-top:1px solid var(--line); }
