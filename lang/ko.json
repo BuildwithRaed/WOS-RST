@@ -3191,5 +3191,10 @@
 "t:rule_hg_em_sub":"강화 100까지는 숙련이 필요 없습니다.",
 "t:rule_hg_em_from":"강화 시작",
 "t:rule_hg_em_need":"필요한 숙련",
-"t:mk_hg_step2":"{e}+ 는 숙련 {m} 필요"
+"t:mk_hg_step2":"{e}+ 는 숙련 {m} 필요",
+"t:mk_hg_lock_n":"{n} 먼저",
+"t:mk_hg_lock_at":"{e}+ 는 숙련 {n} 필요",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"배낭으로 강화 {x}까지 가능",
+"t:cda_hg_lock_at":"{piece} 강화 {a} → {b} · {e}+ 는 숙련 {n} 필요"
 }

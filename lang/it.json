@@ -3193,5 +3193,10 @@
 "t:rule_hg_em_sub":"Il Potenziamento fino a 100 non richiede Maestria.",
 "t:rule_hg_em_from":"Potenziamento da",
 "t:rule_hg_em_need":"Maestria richiesta",
-"t:mk_hg_step2":"{e}+ richiede Maestria {m}"
+"t:mk_hg_step2":"{e}+ richiede Maestria {m}",
+"t:mk_hg_lock_n":"Prima {n}",
+"t:mk_hg_lock_at":"Maestria {n} per {e}+",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"Lo Zaino può portare il Potenziamento a {x}",
+"t:cda_hg_lock_at":"Potenziamento {piece} {a} → {b} · Maestria {n} per {e}+"
 }

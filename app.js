@@ -1310,7 +1310,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 134; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 135; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -9592,7 +9592,7 @@ function mkPopOpen(m) {
   pop.className = "mk-pop";
   pop.setAttribute("role", "dialog");
   const lk = hgLockInfo(tr, MK.plan);
-  if (lk) pop.innerHTML = `<b class="t">${esc(tr.name || "")} · ${esc(t("hg_enhance"))}</b>${lk.moved ? `<div>${esc(t("mk_hg_can_to").replace("{x}", lk.stop))}</div>` : ""}<div class="mk-st">${esc(t("mk_hg_cant").replace("{x}", lk.stop))}</div>`
+  if (lk) pop.innerHTML = `<b class="t">${esc(tr.name || "")} · ${esc(t("hg_enhance"))}</b>${lk.moved ? `<div>${esc(t("mk_hg_can_to").replace("{x}", lk.stop))}</div>` : `<div class="mk-st">${esc(t("mk_hg_cant").replace("{x}", lk.stop))}</div>`}`
     + `<div>${esc(hgLockStepsText(lk.steps))} ${esc(t("mk_hg_mastery_is").replace("{piece}", tr.name || "").replace("{m}", lk.mLab))}</div>`
     + `<div class="mk-ft">${esc(t("mk_this_page"))} <a href="#" data-mkbud>${esc(t("mk_budgets_link"))}</a></div>`;
   else pop.innerHTML = `<b class="t">${esc(tr.name || "")}</b>${esc(t("mk_takes"))} <b>${esc(mkLab(tr, tr.from))} &rarr; ${esc(mkLab(tr, r))}</b> <span class="mk-tg">(${esc(t("mk_target").replace("{x}", mkLab(tr, tr.to)))})</span>`

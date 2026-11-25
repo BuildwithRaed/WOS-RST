@@ -3193,5 +3193,10 @@
 "t:rule_hg_em_sub":"Verbessern bis 100 braucht keine Meisterschaft.",
 "t:rule_hg_em_from":"Verbessern ab",
 "t:rule_hg_em_need":"Meisterschaft nötig",
-"t:mk_hg_step2":"{e}+ braucht Meisterschaft {m}"
+"t:mk_hg_step2":"{e}+ braucht Meisterschaft {m}",
+"t:mk_hg_lock_n":"Erst {n}",
+"t:mk_hg_lock_at":"Meisterschaft {n} für {e}+",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"Dein Rucksack bringt Verbessern auf {x}",
+"t:cda_hg_lock_at":"{piece} Verbessern {a} → {b} · Meisterschaft {n} für {e}+"
 }

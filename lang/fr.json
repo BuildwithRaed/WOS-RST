@@ -3193,5 +3193,10 @@
 "t:rule_hg_em_sub":"L'Amélioration jusqu'à 100 ne demande pas de Maîtrise.",
 "t:rule_hg_em_from":"Amélioration dès",
 "t:rule_hg_em_need":"Maîtrise requise",
-"t:mk_hg_step2":"{e}+ demande Maîtrise {m}"
+"t:mk_hg_step2":"{e}+ demande Maîtrise {m}",
+"t:mk_hg_lock_n":"D'abord {n}",
+"t:mk_hg_lock_at":"Maîtrise {n} pour {e}+",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"Votre Sac peut monter l'Amélioration à {x}",
+"t:cda_hg_lock_at":"Amélioration {piece} {a} → {b} · Maîtrise {n} pour {e}+"
 }
