@@ -3191,5 +3191,10 @@
 "t:rule_hg_em_sub":"Enhance sampai 100 tidak butuh Mastery.",
 "t:rule_hg_em_from":"Enhance dari",
 "t:rule_hg_em_need":"Mastery dibutuhkan",
-"t:mk_hg_step2":"{e}+ butuh Mastery {m}"
+"t:mk_hg_step2":"{e}+ butuh Mastery {m}",
+"t:mk_hg_lock_n":"{n} dulu",
+"t:mk_hg_lock_at":"Mastery {n} untuk {e}+",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"Ransel bisa menaikkan Enhance ke {x}",
+"t:cda_hg_lock_at":"Enhance {piece} {a} → {b} · Mastery {n} untuk {e}+"
 }

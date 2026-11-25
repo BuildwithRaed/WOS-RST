@@ -3193,5 +3193,10 @@
 "t:rule_hg_em_sub":"Wzmocnienie do 100 nie wymaga Mistrzostwa.",
 "t:rule_hg_em_from":"Wzmocnienie od",
 "t:rule_hg_em_need":"Wymagane Mistrzostwo",
-"t:mk_hg_step2":"{e}+ wymaga Mistrzostwa {m}"
+"t:mk_hg_step2":"{e}+ wymaga Mistrzostwa {m}",
+"t:mk_hg_lock_n":"Najpierw {n}",
+"t:mk_hg_lock_at":"Mistrzostwo {n} dla {e}+",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"Plecak podniesie Wzmocnienie do {x}",
+"t:cda_hg_lock_at":"Wzmocnienie {piece} {a} → {b} · Mistrzostwo {n} dla {e}+"
 }

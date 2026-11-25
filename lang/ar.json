@@ -3191,5 +3191,10 @@
 "t:rule_hg_em_sub":"التعزيز حتى 100 لا يحتاج إتقاناً.",
 "t:rule_hg_em_from":"التعزيز من",
 "t:rule_hg_em_need":"الإتقان المطلوب",
-"t:mk_hg_step2":"{e}+ يحتاج الإتقان {m}"
+"t:mk_hg_step2":"{e}+ يحتاج الإتقان {m}",
+"t:mk_hg_lock_n":"{n} أولاً",
+"t:mk_hg_lock_at":"الإتقان {n} لـ {e}+",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"تستطيع حقيبتك رفع التعزيز إلى {x}",
+"t:cda_hg_lock_at":"تعزيز {piece} {a} → {b} · الإتقان {n} لـ {e}+"
 }

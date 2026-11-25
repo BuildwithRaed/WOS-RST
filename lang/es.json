@@ -3193,5 +3193,10 @@
 "t:rule_hg_em_sub":"La Mejora hasta 100 no necesita Maestría.",
 "t:rule_hg_em_from":"Mejora desde",
 "t:rule_hg_em_need":"Maestría necesaria",
-"t:mk_hg_step2":"{e}+ necesita Maestría {m}"
+"t:mk_hg_step2":"{e}+ necesita Maestría {m}",
+"t:mk_hg_lock_n":"Primero {n}",
+"t:mk_hg_lock_at":"Maestría {n} para {e}+",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"Tu Mochila puede subir la Mejora a {x}",
+"t:cda_hg_lock_at":"Mejora de {piece} {a} → {b} · Maestría {n} para {e}+"
 }

@@ -3191,5 +3191,10 @@
 "t:rule_hg_em_sub":"強化到 100 不需要精通。",
 "t:rule_hg_em_from":"強化起始",
 "t:rule_hg_em_need":"所需精通",
-"t:mk_hg_step2":"{e}+ 需要精通 {m}"
+"t:mk_hg_step2":"{e}+ 需要精通 {m}",
+"t:mk_hg_lock_n":"先 {n}",
+"t:mk_hg_lock_at":"{e}+ 需精通 {n}",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"背包可讓強化到 {x}",
+"t:cda_hg_lock_at":"{piece} 強化 {a} → {b} · {e}+ 需精通 {n}"
 }
