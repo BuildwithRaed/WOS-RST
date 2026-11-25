@@ -3178,5 +3178,20 @@
 "t:bud_swap":"{h} {lv} statt {f} (Gen {g}, {flv})",
 "t:bud_swap_empty":"{h} {lv} auf einem leeren Platz der Aufstellung",
 "t:bud_swap_w":"Widget {w}",
-"t:bud_swap_note":"Zählt, sobald der Held diesen Truppenplatz in deiner Dashboard-Aufstellung einnimmt."
+"t:bud_swap_note":"Zählt, sobald der Held diesen Truppenplatz in deiner Dashboard-Aufstellung einnimmt.",
+"t:mk_hg_lock":"Erst Meisterschaft {n}",
+"t:mk_hg_cant":"Dein Rucksack bringt Verbessern noch nicht über {x}",
+"t:mk_hg_step":"Verbessern {e}+ braucht Meisterschaft {m}",
+"t:mk_hg_mastery_is":"({piece}: Meisterschaft {m})",
+"t:cda_hg_lock":"{piece} Verbessern: erst Meisterschaft {n}",
+"t:hg_em_needs":"Verbessern {e} braucht Meisterschaft {m}",
+"t:hg_em_target":"dein Meisterschaft-Ziel ist {t} (reicht bis {a})",
+"t:hg_em_stripes":"Gestreifter Teil = über dem, was Meisterschaft {t} erlaubt.",
+"t:hg_em_raise":"Meisterschaft-Ziel auf {m} anheben",
+"t:rule_hg_em":"Verbessern braucht Meisterschaft",
+"t:rule_hg_em_help":"Das Verbessern eines Teils geht nur so hoch, wenn seine Meisterschaft (ganze Stufe) mindestens die gezeigte Zahl ist. Auf den Seiten wird nichts gesperrt: Markierungen, Jetzt möglich und das Teil-Fenster folgen der Regel und warnen, wenn ein Ziel mehr Meisterschaft braucht.",
+"t:rule_hg_em_sub":"Verbessern bis 100 braucht keine Meisterschaft.",
+"t:rule_hg_em_from":"Verbessern ab",
+"t:rule_hg_em_need":"Meisterschaft nötig",
+"t:mk_hg_step2":"{e}+ braucht Meisterschaft {m}"
 }

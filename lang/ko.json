@@ -3176,5 +3176,20 @@
 "t:bud_swap":"{h} {lv}, {f} 대신 (세대 {g}, {flv})",
 "t:bud_swap_empty":"{h} {lv}, 로스터 빈자리에",
 "t:bud_swap_w":"위젯 {w}",
-"t:bud_swap_note":"영웅이 대시보드 로스터에서 그 병종 자리를 맡으면 계산됩니다."
+"t:bud_swap_note":"영웅이 대시보드 로스터에서 그 병종 자리를 맡으면 계산됩니다.",
+"t:mk_hg_lock":"숙련 {n} 먼저",
+"t:mk_hg_cant":"배낭으로는 아직 강화 {x} 이상 불가",
+"t:mk_hg_step":"강화 {e}+ 는 숙련 {m} 필요",
+"t:mk_hg_mastery_is":"({piece} 숙련 {m})",
+"t:cda_hg_lock":"{piece} 강화: 숙련 {n} 먼저",
+"t:hg_em_needs":"강화 {e} 는 숙련 {m} 필요",
+"t:hg_em_target":"숙련 목표 {t} ({a}까지 가능)",
+"t:hg_em_stripes":"줄무늬 부분 = 숙련 {t}로 갈 수 없는 구간.",
+"t:hg_em_raise":"숙련 목표를 {m}(으)로 올리기",
+"t:rule_hg_em":"강화에 필요한 숙련",
+"t:rule_hg_em_help":"장비의 강화는 숙련(정수 레벨)이 표시된 숫자 이상일 때만 이 레벨까지 올릴 수 있습니다. 페이지에서 잠기는 것은 없습니다: 표시, 지금 가능, 장비 창이 이를 따르고 목표에 숙련이 더 필요하면 알려 줍니다.",
+"t:rule_hg_em_sub":"강화 100까지는 숙련이 필요 없습니다.",
+"t:rule_hg_em_from":"강화 시작",
+"t:rule_hg_em_need":"필요한 숙련",
+"t:mk_hg_step2":"{e}+ 는 숙련 {m} 필요"
 }

@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "afc8ef38aa";
+window.ADMIN_BUILD = "0a7cbbe8a6";
 
 // ============================================================
 // ADMIN PAGE
@@ -674,7 +674,7 @@ async function renderAdminResearchLocks(body) {
 // Which rules each Admin section owns (headings: "" = none), and rules it uses
 // that are edited elsewhere (link rows). Saved data is unchanged (game_rules).
 const ADMIN_RULE_HOME = {
-  heroes: { groups: [["", ["ngPacks", "widgetCost", "heroTrades", "hallHero"]]], links: ["vipShards"] },
+  heroes: { groups: [["", ["ngPacks", "widgetCost", "heroTrades", "hallHero", "hgEnhMastery"]]], links: ["vipShards"] },
   vip: { groups: [["", ["vipShards"]]] },
   experts: { groups: [["", ["affinity"]]] },
   pets: { groups: [["", ["advancedMark"]]] },
@@ -846,6 +846,7 @@ function admRuleCard(host, key, back) {
       <button type="button" class="btn ghost small" data-ruleback style="margin-bottom:10px;">&#8249; ${esc(t("rv_back"))}</button>
       <div class="rl-card${ADM_RULE_SECTIONS[r.key] ? " rs-card" : ""}"><div class="rl-h"><b>${esc(r.label)}</b>${changed() ? ` <span class="rl-chg">changed</span>` : ` <span class="meta" style="font-size:11.5px;">${ADM_RULE_SECTIONS[r.key] ? esc(t("rs_builtin")) : "built-in values"}</span>`}${ADM_RULE_SECTIONS[r.key] && r.help ? admRsInfo(r.help) : ""}</div>
         ${ADM_RULE_SECTIONS[r.key] ? "" : `<p class="desc" style="margin:4px 0 10px;">${esc(r.help || "")}</p>`}
+        ${r.sub ? `<div class="meta" style="font-size:12px; margin:0 0 8px;">${esc(r.sub)}</div>` : ""}
         <div class="rl-ed">${r.prepare ? `<div class="meta" style="font-size:12px;">Loading…</div>` : ""}</div>
         <div class="rl-foot"><button type="button" class="btn ghost small" data-rulereset ${changed() ? "" : "disabled"}>Reset to built-in</button><span style="flex:1"></span><button type="button" class="btn small" data-rulesave>Save</button></div>
       </div>`;

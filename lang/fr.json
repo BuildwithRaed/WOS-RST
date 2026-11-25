@@ -3178,5 +3178,20 @@
 "t:bud_swap":"{h} {lv} à la place de {f} (Gen {g}, {flv})",
 "t:bud_swap_empty":"{h} {lv} sur une place vide de l'équipe",
 "t:bud_swap_w":"Widget {w}",
-"t:bud_swap_note":"Compte dès que le héros prend la place de cette troupe dans l'équipe du tableau de bord."
+"t:bud_swap_note":"Compte dès que le héros prend la place de cette troupe dans l'équipe du tableau de bord.",
+"t:mk_hg_lock":"D'abord Maîtrise {n}",
+"t:mk_hg_cant":"Votre Sac ne monte pas encore l'Amélioration au-delà de {x}",
+"t:mk_hg_step":"Amélioration {e}+ demande Maîtrise {m}",
+"t:mk_hg_mastery_is":"(Maîtrise de {piece} : {m})",
+"t:cda_hg_lock":"Amélioration {piece} : d'abord Maîtrise {n}",
+"t:hg_em_needs":"Amélioration {e} demande Maîtrise {m}",
+"t:hg_em_target":"votre objectif de Maîtrise est {t} (suffit jusqu'à {a})",
+"t:hg_em_stripes":"Partie hachurée = au-delà de ce que permet Maîtrise {t}.",
+"t:hg_em_raise":"Monter l'objectif de Maîtrise à {m}",
+"t:rule_hg_em":"L'Amélioration demande la Maîtrise",
+"t:rule_hg_em_help":"L'Amélioration d'une pièce ne monte jusque-là que si sa Maîtrise (niveau entier) atteint au moins le nombre indiqué. Rien n'est bloqué sur les pages : les marques, Possible maintenant et la fenêtre de la pièce la suivent et préviennent quand un objectif demande plus de Maîtrise.",
+"t:rule_hg_em_sub":"L'Amélioration jusqu'à 100 ne demande pas de Maîtrise.",
+"t:rule_hg_em_from":"Amélioration dès",
+"t:rule_hg_em_need":"Maîtrise requise",
+"t:mk_hg_step2":"{e}+ demande Maîtrise {m}"
 }

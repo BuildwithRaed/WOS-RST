@@ -3176,5 +3176,20 @@
 "t:bud_swap":"{h} {lv} thay cho {f} (Gen {g}, {flv})",
 "t:bud_swap_empty":"{h} {lv} ở chỗ trống trong đội hình",
 "t:bud_swap_w":"Widget {w}",
-"t:bud_swap_note":"Được tính khi tướng chiếm chỗ của binh chủng đó trong đội hình Bảng điều khiển."
+"t:bud_swap_note":"Được tính khi tướng chiếm chỗ của binh chủng đó trong đội hình Bảng điều khiển.",
+"t:mk_hg_lock":"Tinh Thông {n} trước",
+"t:mk_hg_cant":"Túi đồ chưa đưa Cường hóa vượt {x}",
+"t:mk_hg_step":"Cường hóa {e}+ cần Tinh Thông {m}",
+"t:mk_hg_mastery_is":"(Tinh Thông của {piece} là {m})",
+"t:cda_hg_lock":"Cường hóa {piece}: Tinh Thông {n} trước",
+"t:hg_em_needs":"Cường hóa {e} cần Tinh Thông {m}",
+"t:hg_em_target":"mục tiêu Tinh Thông của bạn là {t} (đủ đến {a})",
+"t:hg_em_stripes":"Phần sọc = vượt quá mức Tinh Thông {t} cho phép.",
+"t:hg_em_raise":"Nâng mục tiêu Tinh Thông lên {m}",
+"t:rule_hg_em":"Cường hóa cần Tinh Thông",
+"t:rule_hg_em_help":"Cường hóa của một món chỉ lên được đến mức này khi Tinh Thông (cấp nguyên) ít nhất bằng số hiển thị. Không có gì bị khóa trên trang: dấu, Làm được ngay và cửa sổ món đồ làm theo quy tắc này và cảnh báo khi một mục tiêu cần thêm Tinh Thông.",
+"t:rule_hg_em_sub":"Cường hóa đến 100 không cần Tinh Thông.",
+"t:rule_hg_em_from":"Cường hóa từ",
+"t:rule_hg_em_need":"Tinh Thông cần",
+"t:mk_hg_step2":"{e}+ cần Tinh Thông {m}"
 }

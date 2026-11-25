@@ -3176,5 +3176,20 @@
 "t:bud_swap":"{h} {lv} no lugar de {f} (Gen {g}, {flv})",
 "t:bud_swap_empty":"{h} {lv} num lugar vazio do elenco",
 "t:bud_swap_w":"Widget {w}",
-"t:bud_swap_note":"Conta quando o herói ocupa o lugar dessa tropa no elenco do Painel."
+"t:bud_swap_note":"Conta quando o herói ocupa o lugar dessa tropa no elenco do Painel.",
+"t:mk_hg_lock":"Primeiro Maestria {n}",
+"t:mk_hg_cant":"Sua Mochila ainda não leva o Aprimorar além de {x}",
+"t:mk_hg_step":"Aprimorar {e}+ precisa de Maestria {m}",
+"t:mk_hg_mastery_is":"(Maestria de {piece}: {m})",
+"t:cda_hg_lock":"Aprimorar {piece}: primeiro Maestria {n}",
+"t:hg_em_needs":"Aprimorar {e} precisa de Maestria {m}",
+"t:hg_em_target":"sua meta de Maestria é {t} (dá até {a})",
+"t:hg_em_stripes":"Parte listrada = além do que a Maestria {t} permite.",
+"t:hg_em_raise":"Subir a meta de Maestria para {m}",
+"t:rule_hg_em":"Aprimorar precisa de Maestria",
+"t:rule_hg_em_help":"O Aprimorar de uma peça só chega até aqui quando a Maestria (nível inteiro) é pelo menos o número mostrado. Nada é bloqueado nas páginas: marcas, Grátis agora e a janela da peça seguem a regra e avisam quando uma meta precisa de mais Maestria.",
+"t:rule_hg_em_sub":"Aprimorar até 100 não precisa de Maestria.",
+"t:rule_hg_em_from":"Aprimorar a partir de",
+"t:rule_hg_em_need":"Maestria necessária",
+"t:mk_hg_step2":"{e}+ precisa de Maestria {m}"
 }

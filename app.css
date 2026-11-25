@@ -2451,6 +2451,13 @@ input,select,textarea{
   .hw-tr2{ position:relative; height:10px; border-radius:99px; background:rgba(255,255,255,.08); }
   .hw-f{ position:absolute; top:0; bottom:0; left:0; border-radius:99px; }
   .hw-f.n{ background:var(--good); } .hw-f.t{ background:var(--ice); } .hw-f.e4-base{ background:rgba(124,196,255,.22); }
+  .hw-f.e5-warn{ background:repeating-linear-gradient(135deg, rgba(232,162,60,.85) 0 4px, rgba(232,162,60,.25) 4px 8px); }
+  .e4-in.drag .hw-f.e5-warn{ display:none; }
+  .cgw-c.need{ border-style:dashed; border-color:rgba(232,162,60,.7); color:var(--amber); }
+  .hg-emw{ margin-top:8px; padding:8px 10px; border:1px solid rgba(224,178,90,.5); border-radius:10px; background:rgba(224,178,90,.08); color:var(--frost); font-size:12.5px; line-height:1.4; }
+  .hg-emw > b{ color:#e0b25a; }
+  .hg-emw small{ display:block; color:var(--muted); font-size:11.5px; margin-top:2px; }
+  .hg-emw button.btn.ghost{ display:inline-flex; margin-top:7px; color:var(--ice); border-color:var(--ice-dim); }
   .eb-n{ position:absolute; top:-3px; bottom:-3px; width:3px; margin-left:-1.5px; border-radius:2px; background:#e0b25a; }
   .hw-th{ position:absolute; top:50%; width:24px; height:24px; margin:-12px 0 0 -12px; border:3px solid var(--good); border-radius:50%; background:#0b1220; box-sizing:border-box; }
   .hw-th.t{ border-color:var(--ice); }
@@ -5353,6 +5360,7 @@ input,select,textarea{
 .mk.full{color:#4cd18a;border:1px solid rgba(76,209,138,.6);background:rgba(76,209,138,.16)}
 .mk.part{color:#cfe6ff;border:1px solid #2f5e86;background:#2f5e86}
 .mk.part small{font-size:11px;font-weight:600;opacity:.85}
+.mk.lock{color:#e0b25a;border:1px solid rgba(224,178,90,.6);background:rgba(224,178,90,.14);white-space:normal;text-align:center;line-height:15px;padding:1px 6px}
 .ch-t-v .mk, .hg-cell .mk, .sg-t .mk{display:flex;width:max-content;max-width:100%;margin:3px auto 0}
 .pc-st > span{display:flex;align-items:center;justify-content:center;gap:4px;min-height:20px;flex-wrap:nowrap}
 .pc-st > span > .mk{display:inline-flex;margin:0;line-height:16px;padding:0 5px}
