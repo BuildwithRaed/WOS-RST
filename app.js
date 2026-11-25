@@ -2643,6 +2643,28 @@ const T = {
   b3_after: { en: "after target" },
   b3_done_on: { en: "done {date}" },
   b3_not_counted: { en: "not in this budget" },
+  b3_covered: { en: "Backpack covers it" },
+  b3_covered_s: { en: "Covered" },
+  bud_up_charm: { en: "charm" },
+  bud_up_unlock: { en: "Unlock" },
+  bud_up_widget: { en: "Widget {a} \u2192 {b}" },
+  bud_up_more: { en: "Show {n} more" },
+  bud_tr_title: { en: "Trades" },
+  bud_tr_free: { en: "Free" },
+  bud_tr_packs: { en: "From packs" },
+  bud_tr_pill_free: { en: "free" },
+  bud_tr_pill_packs: { en: "packs" },
+  bud_tr_shards_s: { en: "shards" },
+  bud_tr_more_packs: { en: "{n} more trades with pack items \u00b7 tap From packs" },
+  bud_tr_more_packs1: { en: "1 more trade with pack items \u00b7 tap From packs" },
+  bud_tr_none_packs: { en: "No trades with pack items on this page" },
+  bud_tr_more_free: { en: "{n} trades from your own items \u00b7 tap Free" },
+  bud_tr_more_free1: { en: "1 trade from your own items \u00b7 tap Free" },
+  bud_tr_none_free: { en: "No trades from your own items on this page" },
+  bud_swap: { en: "{h} {lv} in place of {f} (Gen {g}, {flv})" },
+  bud_swap_empty: { en: "{h} {lv} in an empty roster place" },
+  bud_swap_w: { en: "Widget {w}" },
+  bud_swap_note: { en: "Counts once the hero takes that troop's place in your Dashboard roster." },
   b3_nothing: { en: "nothing planned" },
   b3_tick: { en: "Count in this budget" },
   b3_pages: { en: "Pages" },
@@ -10552,7 +10574,7 @@ function heroShardCostByGen(starRows) {
 // `special` = { hero name: whole stars } from Heroes Special Skills (Natalia /
 // Jeronimo): their level is the higher of it and the saved player_heroes row
 // (roster or not); stars > 0 = unlocked. Out of the roster they get no widgets.
-function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, extra, special }) {
+function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, extra, special, order }) {
   const costByGen = heroShardCostByGen(starRows);
   const phBy = {};
   (playerHeroes || []).forEach((p) => { phBy[p.hero_id] = p; });
@@ -10565,7 +10587,16 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
   const slots = ["Infantry", "Lancers", "Marksman"].map((troop) => ({ troop, id: entry(troop), inRoster: true }));
   (extra || []).forEach((id) => { if (id && !slots.some((x) => x.id === id)) slots.push({ troop: null, id, inRoster: false }); });
   const tg = targets || {};
-  const rows = slots.map(({ troop: slotTroop, id, inRoster }) => {
+  // The shared pools (General shards, a Gen's widgets) go to the heroes in slot order:
+  // the roster (Infantry, Lancers, Marksman), then the extra heroes as added. With
+  // `order` (Budgets: the hero ids in the Order of goals) those heroes are served
+  // first, in that order; the rows still come back in slot order.
+  const ordAt = new Map();
+  (order || []).forEach((id, i) => { if (id && !ordAt.has(id)) ordAt.set(id, i); });
+  const seq = slots.map((s, i) => ({ s, i }));
+  if (ordAt.size) seq.sort((a, b) => (ordAt.has(a.s.id) ? ordAt.get(a.s.id) : 1e9 + a.i) - (ordAt.has(b.s.id) ? ordAt.get(b.s.id) : 1e9 + b.i));
+  const rows = seq.map(({ s, i }) => ({ i, row: heroRow(s) })).sort((a, b) => a.i - b.i).map((x) => x.row).filter(Boolean);
+  function heroRow({ troop: slotTroop, id, inRoster }) {
     const hero = (heroes || []).find((h) => h.id === id);
     if (!hero) return null;
     const troop = slotTroop || hero.troop_type || "";
@@ -10620,7 +10651,7 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, ex
     let wReach = wLevel, wLeft = wOwn;
     while (hasWidget && wReach < widgetMaxLevel() && wLeft >= WIDGET_LEVEL_COST[wReach + 1]) { wLeft -= WIDGET_LEVEL_COST[wReach + 1]; wReach++; }
     return { troop, inRoster, notOut: notOutInfo, tStep, tW, hero, step, unlock, need, cum, next, own, fromGeneral, short: Math.max(0, need - have), reach, rarity, hasWidget, wLevel, wNeed, wOwn, wMine, gKey, wShort, wReach, wCost: widgetCostFor(wShort) };
-  }).filter(Boolean);
+  }
   return { rows, general, generalLeft: pool, notOut };
 }
 // Widgets for each Exclusive Gear (widget) level 1..10: 5, 10 ... 50 (275 in all).
@@ -11322,7 +11353,7 @@ const CODE_FILES = {
   packs: "packs.min.js?v=f248b1fa8f",
   gallery: "gallery.min.js?v=28a7717641",
   purchases: "purchases.min.js?v=c400a15ad7",
-  budgets: "budgets.min.js?v=a42622de18",
+  budgets: "budgets.min.js?v=36b82f5a6d",
 };
 const CODE_P = {}, CODE_OK = {};
 function loadCode(name) {
@@ -17464,6 +17495,14 @@ async function ensureHeroTargets() {
 // Budgets "Hero shards & widgets": the Dashboard roster heroes' shards to 5★
 // and widgets to level 10 (same numbers as the Backpack card). Their own
 // shards and the shared General Hero Shards count as owned.
+// The hero ids / "gen<N>" groups of the hero goals, in the Order of goals (BUDGET_GOALS).
+function heroGoalOrderKeys() {
+  const out = [];
+  ((BUDGET_GOALS && BUDGET_GOALS.goals) || []).forEach((g) => { if (g.page !== "hero_shards") return; const k = String(g.key).split("|")[0]; if (k && !out.includes(k)) out.push(k); });
+  return out;
+}
+function heroGoalOrderSig() { return heroGoalOrderKeys().join(","); }
+let HERO_GOAL_ORDER_SIG = null; // the order the last hero shards plan used (a change → budgetInvalidate)
 async function heroShardBudget() {
   const [heroes, roster, playerHeroes, starRows, bp] = await Promise.all([
     dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []),
@@ -17483,7 +17522,18 @@ async function heroShardBudget() {
   noteHeroImages(heroes);
   // Each hero's own target and extra heroes (admin, Order of goals).
   const ht = visitorCan("goals") ? await ensureHeroTargets() : null;
-  const plan = heroShardPlan({ heroes, roster, playerHeroes, starRows, bp: bp || {}, targets: ht ? ht.heroes : null, extra: ht ? ht.extra : null, special });
+  // Free General shards / Gen widgets go first to the heroes in the Order of goals (Budgets only).
+  const order = [];
+  if (ht) {
+    await ensureBudgetGoals();
+    HERO_GOAL_ORDER_SIG = heroGoalOrderSig();
+    heroGoalOrderKeys().forEach((k) => {
+      const gm = /^gen(\d+)$/.exec(k);
+      if (gm) (heroes || []).filter((h) => Number(h.generation) === Number(gm[1])).forEach((h) => order.push(h.id));
+      else order.push(k);
+    });
+  }
+  const plan = heroShardPlan({ heroes, roster, playerHeroes, starRows, bp: bp || {}, targets: ht ? ht.heroes : null, extra: ht ? ht.extra : null, special, order });
   HERO_PLAN_LAST = { rows: plan.rows, heroes, roster };
   const totals = {}, owned = {}, rules = [];
   const rule = (from, to, give, get, max, more) => rules.push({ from, to, give, get, max, hidden: true, silent: true, ...(more || {}) });
@@ -17724,6 +17774,9 @@ function budgetStatDeltas(calcKey) {
 // target, read the way the Dashboard reads the current levels, so "now →
 // after" matches the Dashboard. Only Budgets asks for it (opts.stats).
 const BUDGET_STAT_MORE = new Set(["t12_research", "t11_helios", "research_center", "pets", "pets_refine", "experts", "experts_research", "hero_shards", "islands"]);
+// Budgets' hero_shards stat gain: per troop, the planned hero beyond the roster that would
+// take that troop's roster place ({ hero, stars, widget, from: { hero, stars, widget } | null }).
+let BUDGET_HERO_SWAPS = {};
 async function budgetStatDeltasMore(calcKey) {
   const out = [];
   const RAW = { Attack: "ATT", Defense: "DEF", Lethality: "DMG", Health: "HP" };
@@ -17840,6 +17893,30 @@ async function budgetStatDeltasMore(calcKey) {
           add(r.troop, "DMG", (Number(a.leth_pct) || 0) - (Number(b.leth_pct) || 0));
           add(r.troop, "HP", (Number(a.hp_pct) || 0) - (Number(b.hp_pct) || 0));
         }
+      });
+      // Heroes planned beyond the roster: per troop, the best one at its target counts
+      // when it beats that troop's roster hero (after its own plan) - it would take the
+      // roster place. The gain is on top of the roster hero's own (so in all: the extra
+      // hero at target vs the roster hero now). BUDGET_HERO_SWAPS keeps who for the note.
+      BUDGET_HERO_SWAPS = {};
+      const vals = (gen, step, wl, hasW) => { const a = star(gen, step), w = hasW && wl > 0 ? wid(gen, wl) : {}; return { ATT: Number(a.atk_pct) || 0, DEF: Number(a.def_pct) || 0, DMG: Number(w.leth_pct) || 0, HP: Number(w.hp_pct) || 0 }; };
+      const sum4 = (v) => v.ATT + v.DEF + v.DMG + v.HP;
+      const troopKey = (x) => (/^lanc/i.test(String(x || "")) ? "Lancers" : /^mark/i.test(String(x || "")) ? "Marksman" : /^inf/i.test(String(x || "")) ? "Infantry" : "");
+      ["Infantry", "Lancers", "Marksman"].forEach((tk) => {
+        const e = (last.roster || {})[tk];
+        if (e && typeof e === "object" && e.used === false) return;
+        const r0 = last.rows.find((r) => r && r.inRoster && troopKey(r.troop) === tk);
+        const base = r0 ? vals(r0.hero.generation, Math.max(r0.step, r0.tStep), Math.max(r0.wLevel, r0.hasWidget ? r0.tW : r0.wLevel), r0.hasWidget) : { ATT: 0, DEF: 0, DMG: 0, HP: 0 };
+        let best = null;
+        last.rows.forEach((r) => {
+          if (!r || r.inRoster || !r.hero || troopKey(r.hero.troop_type) !== tk) return;
+          const v = vals(r.hero.generation, r.tStep, r.hasWidget ? r.tW : 0, r.hasWidget);
+          if (!best || sum4(v) > sum4(best.v)) best = { r, v };
+        });
+        if (!best || sum4(best.v) <= sum4(base) + 1e-9) return;
+        ["ATT", "DEF", "DMG", "HP"].forEach((k) => add(tk, k, best.v[k] - base[k]));
+        const r = best.r;
+        BUDGET_HERO_SWAPS[tk] = { hero: r.hero, stars: r.tStep / 6, widget: r.hasWidget ? r.tW : null, from: r0 ? { hero: r0.hero, stars: r0.step / 6, widget: r0.hasWidget ? r0.wLevel : null } : null };
       });
     } else if (calcKey === "experts_research") {
       await ensureExpertsResearchDataGlobal();

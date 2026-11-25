@@ -5,7 +5,7 @@
 // code and the Budgets state other pages read (My Purchases, the Menu, the Dashboard,
 // recordBudgetNeeds / budgetInvalidate, admin.js / scan.js / the planner worker) stay
 // in app.js. The site loads the packed copy budgets.min.js (tools/stamp.js).
-window.BUDGETS_BUILD = "a42622de18";
+window.BUDGETS_BUILD = "36b82f5a6d";
 
 // Order of the Budgets page tiles (owner picked A, 22 Nov 2026): per person in
 // calc_state budget_page_order = { order: [calcKeys] }; display only. Pages
@@ -232,9 +232,14 @@ function goalByPopHtml(myBy, mainDay, no) {
   const lock = no ? `<div class="gbp-lock">&#128274; <b>${esc(t("gbp_lock_b").replace("{g}", no.gen).replace("{d}", md(relD)))}</b> ${esc(t("gbp_lock"))}</div>` : "";
   return `<div class="gbp${no ? " no" : ""}" role="dialog" aria-label="${esc(t("goal_by_title"))}"><div class="gbp-t">${esc(t("gbp_upcoming"))}</div><div class="gbp-l">${lock}${early ? `<div class="gbp-early">${early}</div>` : ""}${h}</div><button type="button" class="gbp-pick" data-gbpcal>&#128197; ${esc(t("gbp_pick_date"))}</button></div>`;
 }
+let BUDGET_TR_TAB = "free";    // a page sheet's trades tab: "free" | "packs" (for the visit)
 let BUDGET_HT_OPEN = false;     // Hero targets fold (for the visit)
 let BUDGET_HT_DONE_OPEN = false; // its "N heroes at target" line (for the visit)
-function saveBudgetGoals() { saveCalcState("budget_goals", BUDGET_GOALS); }
+function saveBudgetGoals() {
+  saveCalcState("budget_goals", BUDGET_GOALS);
+  // The hero goals' order decides which hero the free General shards / Gen widgets go to first.
+  if (HERO_GOAL_ORDER_SIG != null && heroGoalOrderSig() !== HERO_GOAL_ORDER_SIG) { HERO_GOAL_ORDER_SIG = heroGoalOrderSig(); budgetInvalidate(); }
+}
 // Pages whose upgrades aren't known yet (saved before per-upgrade goals): open them once.
 function goalUpMissing(keys) {
   return keys.filter((k) => GOAL_UP_SAVED.includes(k) && BUDGET_NEEDS_SNAPSHOT && BUDGET_NEEDS_SNAPSHOT[k] && !("ups" in BUDGET_NEEDS_SNAPSHOT[k]));
@@ -641,7 +646,7 @@ async function renderBudgetsPageMain(opts = {}) {
 
   // Stat increase: troop tabs, one box per stat (green gain, "now → after"
   // under it), so phones see every stat without a hidden sideways scroll.
-  const statTableHtml = (deltas, id) => {
+  const statTableHtml = (deltas, id, noteFor) => {
     if (!deltas.length) return "";
     const by = {}; deltas.forEach((d) => { by[`${d.troop}|${d.stat}`] = (by[`${d.troop}|${d.stat}`] || 0) + d.delta; });
     const stats = STAT_KEYS.filter((s) => TROOPS.some((tr) => by[`${tr}|${s}`]));
@@ -655,7 +660,7 @@ async function renderBudgetsPageMain(opts = {}) {
         return `<div class="plx-stat"><span>${esc(tStatLabel(STAT_RAW[s]))}</span>${d
           ? `<b style="color:var(--good);">${esc(bidiNum("+" + pct(d)))}</b>${cur == null ? "" : `<small>${esc(bidiNum(`${pct(cur)} \u2192`))}<br>${esc(bidiNum(pct(cur + d)))}</small>`}`
           : `<b class="meta">&mdash;</b>`}</div>`;
-      }).join("")}</div>`,
+      }).join("")}</div>${noteFor ? noteFor(tr) : ""}`,
     })));
   };
   const budgetResetText = (r, day) => {
@@ -739,33 +744,132 @@ async function renderBudgetsPageMain(opts = {}) {
     return `<details style="margin-top:4px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${n})</summary>
       ${groups.map((g, i) => `${g.title ? `<div class="bud-shg"><span class="bud-line-bar" style="background:${g.late ? "var(--danger)" : "var(--good)"};"></span><b>${esc(g.title)}</b><span>${packFmtLocal(whole[i], cur, true, smp)}</span></div>` : ""}${g.items.map(row).join("")}`).join("")}</details>`;
   };
-  // Heroes: the hidden trades the plan counts (never in the trades lists): General
-  // shards and a Gen's widgets in the Backpack going to a hero, the Backpack's Marks of
-  // Valor / Mystery Points / Widget Chests, and those the page's packs give.
-  const heroTradesHtml = (pg, sh) => {
-    if (pg.calcKey !== "hero_shards") return "";
-    // (short names: "General shards", a hero's own shards by the hero's name, "Hank widgets")
-    const heroOf = new Map(((HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || []).flatMap((r) => [[`${r.hero.name} Shards`, r.hero.name], [`${r.hero.name} Widgets`, t("bud_tr_widgets").replace("{h}", r.hero.name)]]));
-    const nm = (n) => heroOf.get(n) || (Object.values(HERO_GENERAL_SHARD).includes(n) ? t("bud_tr_general") : materialDisplayName(n));
-    const merge = (list) => { const m = new Map(); list.forEach((x) => { if (!(x.giveQty > 0)) return; const k = x.from + "|" + x.to, e = m.get(k); if (e) { e.giveQty += x.giveQty; e.getQty += x.getQty; } else m.set(k, { ...x }); }); return [...m.values()]; };
-    const txt = (list) => list.map((x) => `${qty(x.giveQty)} ${esc(nm(x.from))} \u2192 ${qty(x.getQty)} ${esc(nm(x.to))}`).join(" &middot; ");
-    const own = [];
-    ((HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || []).forEach((r) => {
-      if (r.fromGeneral > 0) own.push({ from: HERO_GENERAL_SHARD[r.rarity] || "Mythic General Hero Shard", to: `${r.hero.name} Shards`, giveQty: r.fromGeneral, getQty: r.fromGeneral });
-      const wg = (r.wOwn || 0) - (r.wMine || 0);
-      if (wg > 0) own.push({ from: r.gKey, to: `${r.hero.name} Widgets`, giveQty: wg, getQty: wg });
-    });
-    (pg.hiddenTrades || []).forEach((x) => own.push(x));
-    let bought = [];
+  // ---- A page's details sheet: "What's being upgraded", trades (Free | From packs) ----
+  const icOf = (n) => itemRegIcon(n) || (/^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: String(n).replace(/ \(minutes\)$/, "") }));
+  const icHtml = (n) => { const ic = icOf(n); return `<span class="bud-tri">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(String(materialDisplayName(n)).charAt(0))}</i>`}${heroItemMark(n)}</span>`; };
+  const heroRows = () => (HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || [];
+  const troopKeyOf = (x) => (/^lanc/i.test(String(x || "")) ? "Lancers" : /^mark/i.test(String(x || "")) ? "Marksman" : /^inf/i.test(String(x || "")) ? "Infantry" : "");
+  // One row per upgrade: { img, face, name, troop, text }.
+  const upRowsOf = (calcKey) => {
+    const out = [];
+    try {
+      if (calcKey === "chief_gear" && CHIEF_GEAR_ROWS) {
+        CHIEF_GEAR_PIECES.forEach((p) => {
+          const st = CHIEF_GEAR_STATE[p.key], to = Math.min(st.to, chiefGearLastIdx());
+          if (to > st.from) out.push({ img: chiefGearIcon(p.key, st.from), name: pieceDisplayName(p.name), troop: troopDisplayName(p.troop), text: `${chiefGearRowLabel(CHIEF_GEAR_ROWS[st.from])} → ${chiefGearRowLabel(CHIEF_GEAR_ROWS[to])}` });
+        });
+      } else if (calcKey === "charm") {
+        CHARM_PIECES.forEach((p) => {
+          const sts = CHARM_CALC_STATE[p.key] || [], ups = sts.map((x) => (Number(x.target) > Number(x.current) ? `${x.current} → ${x.target}` : null)).filter(Boolean);
+          const first = sts.find((x) => Number(x.target) > Number(x.current));
+          if (ups.length) out.push({ img: charmIconSrc(p.troop, first ? first.current : 1), name: pieceDisplayName(p.name || p.key), troop: troopDisplayName(p.troop), suf: t("bud_up_charm"), text: ups.join(", ") });
+        });
+      } else if (calcKey === "hero_gear" && HERO_GEAR_TABLES_CACHE) {
+        BUDGET_HG_SETS.forEach((sn) => {
+          const setState = HERO_GEAR_SETS[sn], pre = BUDGET_HG_SETS.length > 1 ? `${gearSetDisplayName(sn)} · ` : "";
+          if (!setState) return;
+          HERO_GEAR_TROOPS.forEach((tr) => HERO_GEAR_PIECE_NAMES.forEach((piece) => {
+            const ups = GEAR_LEVELING_TABLES.map((tname) => { const st = setState[tr][piece][tname]; return st.to > st.from ? `${st.from} → ${st.to}` : null; }).filter(Boolean);
+            if (ups.length) out.push({ img: `icons/hero-gear-icons/hero-gear-${String(tr).toLowerCase()}-${String(piece).toLowerCase()}.png`, name: `${pre}${piece}`, troop: troopDisplayName(tr), text: ups.join(" / ") });
+          }));
+        });
+      } else if (calcKey === "hero_shards") {
+        const st = (s) => (s % 6 ? `${Math.floor(s / 6)}.${s % 6}★` : `${s / 6}★`);
+        heroRows().forEach((r) => {
+          if (!r || !r.hero) return;
+          const un = r.unlock > 0 && r.step === 0, starsUp = r.tStep > r.step || un, wUp = r.hasWidget && r.wNeed > 0;
+          if (!starsUp && !wUp) return;
+          const parts = [];
+          if (starsUp) parts.push(`${un ? t("bud_up_unlock") : st(r.step)} → ${st(r.tStep)}`);
+          if (wUp) parts.push(t("bud_up_widget").replace("{a}", r.wLevel).replace("{b}", r.tW));
+          const tk = troopKeyOf(r.troop || r.hero.troop_type);
+          out.push({ img: r.hero.image_url || HERO_IMG_BY_NAME[r.hero.name] || "", face: true, name: r.hero.name, troop: tk ? troopDisplayName(tk) : "", text: parts.join(" · ") });
+        });
+      } else {
+        goalUpgrades(calcKey).forEach((u) => {
+          const last = u.levels[u.levels.length - 1];
+          if (!last) return;
+          const nw = u.now != null && u.now !== "" ? goalLvTxt(u.now) : "";
+          out.push({ img: u.img || "", face: !!u.face, name: u.name, troop: "", text: nw ? `${nw} → ${goalLvTxt(last.label)}` : `→ ${goalLvTxt(last.label)}` });
+        });
+      }
+    } catch (e) { return []; }
+    return out;
+  };
+  const upFoldHtml = (calcKey) => {
+    const rows = upRowsOf(calcKey);
+    if (!rows.length) return "";
+    const pic = budgetPagePic(calcKey);
+    const row = (r) => `<div class="bud-upr"><span class="bud-upi${r.face ? " face" : ""}">${r.img || pic ? `<img src="${esc(r.img || pic)}" alt="" loading="lazy" />` : ""}</span><span class="bud-upt"><b>${esc(r.name)}</b>${r.troop ? ` <span class="meta">(${esc(r.troop)})</span>` : ""}${r.suf ? ` ${esc(r.suf)}` : ""}: ${esc(r.text)}</span></div>`;
+    const CAP = 12, more = rows.length - CAP;
+    return `<details class="bud-up" open><summary>${esc(t("budgets_plan_detail"))} (${rows.length})</summary><div class="bud-upl">${rows.slice(0, CAP).map(row).join("")}${more > 0 ? `<details class="bud-upm"><summary class="meta">${esc(t("bud_up_more").replace("{n}", more))}</summary>${rows.slice(CAP).map(row).join("")}</details>` : ""}</div></details>`;
+  };
+  // The trades a page's plan counts, as { free, packs } lists of { from, to, giveQty, getQty }:
+  // free = made from items you own (the page's free trades; heroes: General shards and a
+  // Gen's widgets in the Backpack, the hidden rules), packs = items the packs give that are
+  // then traded. A pack-side trade whose source you partly own is split: the part your own
+  // items pay goes to free (what you own, minus what the item itself and the free trades use).
+  const tradeListsOf = (pg, sh) => {
+    const merge = (list) => { const m = new Map(); list.forEach((x) => { if (!(x.giveQty > 0)) return; const k = x.from + "|" + x.to, e = m.get(k); if (e) { e.giveQty += x.giveQty; e.getQty += x.getQty; } else m.set(k, { from: x.from, to: x.to, giveQty: x.giveQty, getQty: x.getQty }); }); return [...m.values()]; };
+    const free = [], packs = [];
+    (pg.trades || []).forEach((x) => free.push(x));
+    if (pg.calcKey === "hero_shards") {
+      heroRows().forEach((r) => {
+        // (from the Backpack's pools, handed out before planning: not part of the page's owned amounts)
+        if (r.fromGeneral > 0) free.push({ from: HERO_GENERAL_SHARD[r.rarity] || "Mythic General Hero Shard", to: `${r.hero.name} Shards`, giveQty: r.fromGeneral, getQty: r.fromGeneral, pool: true });
+        const wg = (r.wOwn || 0) - (r.wMine || 0);
+        if (wg > 0) free.push({ from: r.gKey, to: `${r.hero.name} Widgets`, giveQty: wg, getQty: wg, pool: true });
+      });
+    }
+    // Hidden rules made from what you own (General Sigils → an expert's, chests …; not the Research Lab).
+    (pg.hiddenTrades || []).forEach((x) => { if (!x.lab && !x.isl) free.push(x); });
+    ((pg.viaTrades && pg.viaTrades.conversions) || []).forEach((c) => packs.push({ from: c.from, to: c.item, giveQty: c.fromQty, getQty: c.qty }));
+    // The hidden rules the plan makes with what this page's share of the packs gives.
     if (sh && sh.rows.length && combined.chosen) {
       const rem = { ...(pg.need || {}) };
       sh.rows.forEach((r) => Object.entries(r.gives || {}).forEach(([n, v]) => { rem[n] = (rem[n] || 0) - v * r.count * (r.share || 0); }));
-      const ctx = packTradeCtx("hero_shards", combined.chosen.days || 0);
-      if (ctx) bought = packShortAfterTrades(rem, ctx).trades.filter((x) => x.silent);
+      const ctx = packTradeCtx(pg.calcKey, combined.chosen.days || 0);
+      if (ctx) packShortAfterTrades(rem, ctx).trades.filter((x) => x.silent && !x.lab && !x.isl && (Number((pg.needFull || {})[x.to]) || 0) > 0).forEach((x) => packs.push(x));
     }
-    const a = merge(own), b = merge(bought);
-    return (a.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--good);">${esc(t("trade_free"))}: ${txt(a)}</div>` : "")
-      + (b.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">${esc(t("trade_via_packs"))}: ${txt(b)}</div>` : "");
+    const fr = merge(free), pk = merge(packs);
+    const left = {};
+    const ownLeft = (n) => {
+      if (!(n in left)) {
+        const used = free.filter((x) => x.from === n && !x.pool).reduce((a, x) => a + (Number(x.giveQty) || 0), 0);
+        left[n] = Math.max(0, (Number((pg.owned || {})[n]) || 0) - (Number((pg.needFull || {})[n]) || 0) - used);
+      }
+      return left[n];
+    };
+    const outPk = [];
+    pk.forEach((x) => {
+      const give = Math.floor(Math.min(ownLeft(x.from), x.giveQty));
+      if (give > 0) {
+        const get = Math.floor((x.getQty * give) / x.giveQty);
+        left[x.from] -= give;
+        fr.push({ from: x.from, to: x.to, giveQty: give, getQty: get, split: true });
+        if (x.giveQty - give > 0) outPk.push({ ...x, giveQty: x.giveQty - give, getQty: Math.max(0, x.getQty - get) });
+      } else outPk.push(x);
+    });
+    return { free: merge(fr), packs: outPk.filter((x) => x.giveQty > 0) };
+  };
+  const tradesHtml = (pg, sh) => {
+    const { free, packs } = tradeListsOf(pg, sh);
+    if (!free.length && !packs.length) return "";
+    const heroOf = new Map(heroRows().flatMap((r) => [[`${r.hero.name} Shards`, r.hero.name], [`${r.hero.name} Widgets`, r.hero.name]]));
+    const full = (n) => heroOf.has(n) ? (/Widgets$/.test(n) ? t("bud_tr_widgets").replace("{h}", heroOf.get(n)) : `${heroOf.get(n)} ${t("bud_tr_shards_s")}`) : Object.values(HERO_GENERAL_SHARD).includes(n) ? t("bud_tr_general") : materialDisplayName(n);
+    const row = (x, kind) => {
+      const tip = `${qty(x.giveQty)} ${full(x.from)} → ${qty(x.getQty)} ${full(x.to)}`;
+      return `<div class="bud-trr" title="${esc(tip)}" aria-label="${esc(tip)}">${icHtml(x.from)}<b>${esc(qty(x.giveQty))}</b><span class="bud-tra">→</span>${icHtml(x.to)}<b>${esc(qty(x.getQty))}</b><span class="bud-trn">${heroOf.has(x.to) ? esc(heroOf.get(x.to)) : ""}</span><span class="bud-trp ${kind}">${esc(t(kind === "free" ? "bud_tr_pill_free" : "bud_tr_pill_packs"))}</span></div>`;
+    };
+    const tab = BUDGET_TR_TAB === "packs" ? (packs.length ? "packs" : "free") : free.length ? "free" : "packs";
+    const note = (k) => {
+      if (k === "free") return packs.length ? t(packs.length === 1 ? "bud_tr_more_packs1" : "bud_tr_more_packs").replace("{n}", packs.length) : t("bud_tr_none_packs");
+      return free.length ? t(free.length === 1 ? "bud_tr_more_free1" : "bud_tr_more_free").replace("{n}", free.length) : t("bud_tr_none_free");
+    };
+    const pane = (k, list) => `<div class="bud-trp-pane" data-budtrpane="${k}"${k === tab ? "" : " hidden"}>${list.length ? `<div class="bud-trl">${list.map((x) => row(x, k)).join("")}</div>` : ""}<div class="meta bud-trnote">${esc(note(k))}</div></div>`;
+    return `<div class="bud-tr"><div class="bud-trh">&#8644; ${esc(t("bud_tr_title"))}</div>
+      <div class="bud-trsw" role="tablist"><button type="button" role="tab" data-budtrtab="free" class="${tab === "free" ? "on" : ""}" aria-selected="${tab === "free"}"${free.length ? "" : " disabled"}>${esc(t("bud_tr_free"))} (${free.length})</button><button type="button" role="tab" data-budtrtab="packs" class="${tab === "packs" ? "on" : ""}" aria-selected="${tab === "packs"}"${packs.length ? "" : " disabled"}>${esc(t("bud_tr_packs"))} (${packs.length})</button></div>
+      ${pane("free", free)}${pane("packs", packs)}</div>`;
   };
   // Per-page cards.
   let grandTotal = 0, grandCurrency = null, grandDays = 0, anyPlan = false;
@@ -777,7 +881,7 @@ async function renderBudgetsPageMain(opts = {}) {
     const label = packPageLabel(pg.calcKey);
     const grp = packGroupOf(pg.calcKey);
     const inc = included(pg.calcKey);
-    const pageRow = (right, body, dim) => { B3_PAGES.push({ pg, i, inc, label, glabel: grp && grp.group ? packGroupLabel(grp) : "", right, body, dim }); return ""; };
+    const pageRow = (right, body, dim, more) => { B3_PAGES.push({ pg, i, inc, label, glabel: grp && grp.group ? packGroupLabel(grp) : "", right, body, dim, ...(more || {}) }); return ""; };
     if (pg.missing) return pageRow(`<span class="meta" style="font-size:11px;">${esc(t(pg.notCounted ? "budgets_not_counted" : pg.stale ? "budgets_open_again" : "budgets_open_once"))}</span>`, "", true);
     const hasNeed = Object.keys(pg.needFull).some((n) => pg.needFull[n] > 0);
     if (!hasNeed) return pageRow(`<span style="color:var(--good); font-size:12px;">&#10003; ${esc(t("budgets_nothing_planned"))}</span>`, "", true);
@@ -819,19 +923,29 @@ async function renderBudgetsPageMain(opts = {}) {
           <div class="meta" style="font-size:10px; margin-top:4px;">${alt.map(esc).join(" &nbsp;&middot;&nbsp; ")}</div></details>`;
     }
     const shareOf = inc && combined.inc.includes(pg.calcKey) && combined.chosen ? (combined.shares[pg.calcKey] || { total: 0, rows: [] }) : null;
-    const rowCost = !inc ? "—" : planPending && Object.keys(pg.need).length ? `<span class="bud-pending small">…</span>` : shareOf ? `<b>${packFmtLocal(Math.ceil(packSharesLocal(shareOf)), combined.chosen.rows[0]?.currency, true, combined.chosen.rows[0]?.price)}</b>` : pg.chosen ? `<b>${packFmtLocal(Math.ceil(packPlanLocal(pg.chosen)), pg.chosen.rows[0]?.currency, true, pg.chosen.rows[0]?.price)}</b>` : `<span style="color:var(--danger);">!</span>`;
+    // Ticked, nothing still needed after the Backpack and trades, no plan: the Backpack covers it.
+    const bpCovers = inc && !shareOf && !pg.chosen && !(planPending && Object.keys(pg.need).length) && !Object.values(pg.needStill || {}).some((v) => v > 0);
+    const rowCost = !inc ? "&nbsp;" : bpCovers ? "" : planPending && Object.keys(pg.need).length ? `<span class="bud-pending small">…</span>` : shareOf ? `<b>${packFmtLocal(Math.ceil(packSharesLocal(shareOf)), combined.chosen.rows[0]?.currency, true, combined.chosen.rows[0]?.price)}</b>` : pg.chosen ? `<b>${packFmtLocal(Math.ceil(packPlanLocal(pg.chosen)), pg.chosen.rows[0]?.currency, true, pg.chosen.rows[0]?.price)}</b>` : `<span style="color:var(--danger);">!</span>`;
+    // Heroes beyond the roster: who'd take each troop's roster place (stat increase note).
+    const swapNote = pg.calcKey === "hero_shards" ? (tr) => {
+      const w = BUDGET_HERO_SWAPS && BUDGET_HERO_SWAPS[tr];
+      if (!w) return "";
+      const st = (v) => { const s0 = Math.round(v * 6); return s0 % 6 ? `${Math.floor(s0 / 6)}.${s0 % 6}\u2605` : `${s0 / 6}\u2605`; };
+      const lv = (o) => `${st(o.stars)}${o.widget != null ? ` \u00b7 ${t("bud_swap_w").replace("{w}", o.widget)}` : ""}`;
+      const face = (h) => { const im = h && (h.image_url || HERO_IMG_BY_NAME[h.name]); return im ? `<img src="${esc(im)}" alt="" loading="lazy" />` : ""; };
+      const txt = w.from ? t("bud_swap").replace("{h}", w.hero.name).replace("{lv}", lv(w)).replace("{f}", w.from.hero.name).replace("{g}", w.from.hero.generation).replace("{flv}", lv(w.from)) : t("bud_swap_empty").replace("{h}", w.hero.name).replace("{lv}", lv(w));
+      return `<div class="bud-swap">${face(w.hero)}<span>${esc(txt)}</span>${w.from ? face(w.from.hero) : ""}</div><div class="meta bud-swapn">${esc(t("bud_swap_note"))}</div>`;
+    } : null;
     return pageRow(rowCost, `
-      ${pg.lines.length ? `<details style="margin-top:8px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_plan_detail"))} (${pg.lines.length})</summary><div style="font-size:11px; margin-top:4px; line-height:1.6;">${pg.lines.map(esc).join("<br>")}</div></details>` : ""}
+      ${upFoldHtml(pg.calcKey)}
       ${!pg.live ? `<div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("budgets_snapshot_note"))}</div>` : ""}
       ${((x) => (x ? `<div class="bud-partial">&#128274; ${esc(t("bud_not_open").replace("{what}", x))}</div>` : ""))(budgetNotOpenText(pg.calcKey))}
       ${pg.vip ? `<div class="bud-vip">&#127873; ${esc(t("bud_vip_note").replace("{tier}", pg.vip.tier).replace("{n}", qty(pg.vip.total)).replace("{when}", BUDGET_TARGET ? t("vip_bundle_by").replace("{date}", fmtDate(pg.vip.days)) : t("vip_bundle_30d")).replace("{d}", pg.vip.daily))}</div>` : ""}
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials"))} <span style="font-weight:400;">(${esc(t("pack_mode_still"))} / ${esc(t("pack_mode_full"))})</span></div>${matsHtml(pg.needFull, pg.needStill, pg.owned)}
-        ${pg.trades && pg.trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--good);">${esc(t("trade_free"))}: ${pg.trades.map((tr) => `${qty(tr.giveQty)} ${esc(materialDisplayName(tr.from))} → ${qty(tr.getQty)} ${esc(materialDisplayName(tr.to))}`).join(" &middot; ")}</div>` : ""}
-        ${pg.viaTrades && pg.viaTrades.conversions.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">${esc(t("trade_via_packs"))}: ${pg.viaTrades.conversions.map((c) => `${qty(c.qty)} ${esc(materialDisplayName(c.item))} ← ${qty(c.fromQty)} ${esc(materialDisplayName(c.from))}`).join(" &middot; ")}</div>` : ""}
-        ${heroTradesHtml(pg, shareOf)}</div>
+        ${tradesHtml(pg, shareOf)}</div>
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("pack_cost_title"))}</div>${costHtml}</div>
-      ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}${pg.calcKey === "hero_gear" ? ` · ${esc(t("bud_hg_set1").replace("{set}", gearSetDisplayName("Set 1")))}` : ""}</div>${statTableHtml(pg.deltas, pg.calcKey)}</div>` : ""}
-      ${pg.calcKey === "hero_gear" && hgOther.length ? `<div class="meta bud-hgnote">${esc(t("bud_hg_note").replace("{sets}", hgOther.map(gearSetDisplayName).join(" / ")))}</div>` : ""}`);
+      ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}${pg.calcKey === "hero_gear" ? ` · ${esc(t("bud_hg_set1").replace("{set}", gearSetDisplayName("Set 1")))}` : ""}</div>${statTableHtml(pg.deltas, pg.calcKey, swapNote)}</div>` : ""}
+      ${pg.calcKey === "hero_gear" && hgOther.length ? `<div class="meta bud-hgnote">${esc(t("bud_hg_note").replace("{sets}", hgOther.map(gearSetDisplayName).join(" / ")))}</div>` : ""}`, false, { bpCovers });
   });
 
   if (combined.chosen) {
@@ -1347,7 +1461,7 @@ async function renderBudgetsPageMain(opts = {}) {
   const datedSegs = datedLead ? budgetGoalSegs(datedSetup.goals, pagesRaw) : null; // (what each goal still needs: a page with nothing left has no date)
   const timing = (x) => {
     const k = x.pg.calcKey;
-    if (!x.inc) return ["mu", t("b3_not_counted")];
+    if (!x.inc) return ["mu", ""];
     if (planPending) return ["mu", "…"];
     // With the goals' dates: the day this page is planned for (its last date), "after target"
     // for a page that can't make the target, the day it is done when it can't make its own date.
@@ -1375,18 +1489,20 @@ async function renderBudgetsPageMain(opts = {}) {
     if (!ks.length) return 100;
     return Math.round((ks.reduce((a, n) => a + Math.max(0, Math.min(1, 1 - (pg.needStill[n] || 0) / pg.needFull[n])), 0) / ks.length) * 100);
   };
-  const ringHtml = (p, ok) => {
+  const ringHtml = (p, ok, green) => {
     const sz = 34, r = sz / 2 - 3, c = 2 * Math.PI * r, h = sz / 2;
-    return `<span class="b3-ring" title="${esc(ok ? t("budgets_nothing_planned") : t("b3_ring_tip").replace("{p}", p))}"><svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" aria-hidden="true"><circle cx="${h}" cy="${h}" r="${r}" fill="none" style="stroke:rgba(255,255,255,.1)" stroke-width="3.5"/><circle cx="${h}" cy="${h}" r="${r}" fill="none" style="stroke:${ok ? "var(--good)" : "var(--ice)"}" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="${((c * (ok ? 100 : p)) / 100).toFixed(2)} ${c.toFixed(2)}" transform="rotate(-90 ${h} ${h})"/></svg><b>${ok ? "&#10003;" : p}</b></span>`;
+    return `<span class="b3-ring${green ? " ok" : ""}" title="${esc(ok ? t("budgets_nothing_planned") : t("b3_ring_tip").replace("{p}", p))}"><svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" aria-hidden="true"><circle cx="${h}" cy="${h}" r="${r}" fill="none" style="stroke:rgba(255,255,255,.1)" stroke-width="3.5"/><circle cx="${h}" cy="${h}" r="${r}" fill="none" style="stroke:${ok || green ? "var(--good)" : "var(--ice)"}" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="${((c * (ok ? 100 : p)) / 100).toFixed(2)} ${c.toFixed(2)}" transform="rotate(-90 ${h} ${h})"/></svg><b>${ok ? "&#10003;" : p}</b></span>`;
   };
+  // "✓ Backpack covers it" ("✓ Covered" on narrow phones): ticked, nothing left to buy.
+  const b3CovHtml = `<span class="b3-cov" title="${esc(t("b3_covered"))}">&#10003; <span class="l">${esc(t("b3_covered"))}</span><span class="s">${esc(t("b3_covered_s"))}</span></span>`;
   const isNothing = (x) => !x.pg.missing && !Object.keys(x.pg.needFull || {}).some((n) => x.pg.needFull[n] > 0);
   const tileHtml = (x) => {
     const k = x.pg.calcKey, ic = pageIcon(x), nothing = isNothing(x);
     const [cls, sub] = nothing ? ["mu", k === "hero_gear" ? BUDGET_HG_SETS.map(gearSetDisplayName).join(" · ") : ""] : timing(x);
     return `<div class="b3-tile b3-pt${x.inc ? "" : " off"}" data-b3page="${esc(k)}" role="button" tabindex="0" aria-label="${esc(x.label)}">
       <div class="b3-pt-h">${dsHandleHtml("data-b3drag")}${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<b${B3_TILE_SHORT[k] ? ` title="${esc(x.label)}"` : ""}>${esc(B3_TILE_SHORT[k] ? t(B3_TILE_SHORT[k]) : x.label)}</b><label class="b3-tk" title="${esc(t("b3_tick"))}"><input type="checkbox" data-budgetinc="${esc(k)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" /></label></div>
-      ${nothing ? `<div class="b3-pt-p nothing">&#10003; ${esc(t("b3_nothing"))}</div>` : `<div class="b3-pt-p">${x.right}</div>`}
-      <div class="b3-pt-m ${cls}">${esc(sub)}</div>${nothing ? ringHtml(100, true) : x.inc ? ringHtml(covered(x.pg), false) : ""}</div>`;
+      ${nothing ? `<div class="b3-pt-p nothing">&#10003; ${esc(t("b3_nothing"))}</div>` : x.bpCovers ? `<div class="b3-pt-p">&nbsp;</div>` : `<div class="b3-pt-p">${x.right}</div>`}
+      ${x.bpCovers ? `<div class="b3-pt-m cov">${b3CovHtml}</div>` : `<div class="b3-pt-m ${cls}">${sub ? esc(sub) : "&nbsp;"}</div>`}${nothing ? ringHtml(100, true) : x.bpCovers ? ringHtml(100, false, true) : x.inc ? ringHtml(covered(x.pg), false) : ""}</div>`;
   };
   const missing = B3_PAGES.filter((x) => x.pg.missing);
   const tilesHtml = `<div class="b3-pgw"${arrangeHostAttr(B3_ARR_KEY)}><div class="b3-pgh"><span class="b3-lbl">${esc(t("b3_pages"))}</span>${arrangeBtnHtml(B3_ARR_KEY)}</div><div class="arr-hint b3-pghint">${esc(t("b3_arrange_hint"))}</div><div class="b3-pg">${b3PageOrdered(B3_PAGES.filter((x) => !x.pg.missing)).map(tileHtml).join("")}</div></div>`;
@@ -1431,7 +1547,7 @@ async function renderBudgetsPageMain(opts = {}) {
             })() : ""}
           </div>`;
   const missRow = (x) => { const ic = pageIcon(x); return `<div class="b3-mrow"><label><input type="checkbox" data-budgetinc="${esc(x.pg.calcKey)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" />${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<span><b>${esc(x.label)}</b>${x.right}</span></label><button type="button" class="btn small ghost" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${esc(t("budgets_open_page"))}</button></div>`; };
-  const pageSheet = (x) => `<div class="b3-ps-top"><label class="b3-ps-inc"><input type="checkbox" data-budgetinc="${esc(x.pg.calcKey)}" ${x.inc ? "checked" : ""} /> ${esc(t("b3_tick"))}</label><span class="b3-ps-v">${isNothing(x) ? `<span style="color:var(--good); font-size:12px;">&#10003; ${esc(t("budgets_nothing_planned"))}</span>` : x.right || ""}</span><button type="button" class="btn small" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${esc(t("budgets_open_page"))} &#8250;</button></div>
+  const pageSheet = (x) => `<div class="b3-ps-top"><label class="b3-ps-inc"><input type="checkbox" data-budgetinc="${esc(x.pg.calcKey)}" ${x.inc ? "checked" : ""} /> ${esc(t("b3_tick"))}</label><span class="b3-ps-v">${isNothing(x) ? `<span style="color:var(--good); font-size:12px;">&#10003; ${esc(t("budgets_nothing_planned"))}</span>` : x.bpCovers ? b3CovHtml : x.right || ""}</span><button type="button" class="btn small" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${esc(t("budgets_open_page"))} &#8250;</button></div>
       ${x.pg.calcKey === "hero_gear" ? hgSetsHtml() : ""}
       ${x.pg.sh ? shiningSkinsSheetHtml(x.pg.sh) : ""}
       ${x.body || ""}`;
@@ -1472,6 +1588,14 @@ async function renderBudgetsPageMain(opts = {}) {
     }
   }
 
+  // A page sheet's trades: Free | From packs switch in place (kept for the visit).
+  content.querySelectorAll("[data-budtrtab]").forEach((b) => b.addEventListener("click", () => {
+    if (b.disabled) return;
+    BUDGET_TR_TAB = b.dataset.budtrtab;
+    const box = b.closest(".bud-tr");
+    box.querySelectorAll("[data-budtrtab]").forEach((x) => { const on = x === b; x.classList.toggle("on", on); x.setAttribute("aria-selected", String(on)); });
+    box.querySelectorAll("[data-budtrpane]").forEach((x) => { x.hidden = x.dataset.budtrpane !== BUDGET_TR_TAB; });
+  }));
   content.querySelectorAll("[data-budgetview]").forEach((b) => b.addEventListener("click", () => {
     BUDGET_VIEW = b.dataset.budgetview;
     const y = window.scrollY;
