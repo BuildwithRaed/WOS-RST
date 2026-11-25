@@ -3193,5 +3193,19 @@
 "t:rule_hg_em_sub":"L'Amélioration jusqu'à 100 ne demande pas de Maîtrise.",
 "t:rule_hg_em_from":"Amélioration dès",
 "t:rule_hg_em_need":"Maîtrise requise",
-"t:mk_hg_step2":"{e}+ demande Maîtrise {m}"
+"t:mk_hg_step2":"{e}+ demande Maîtrise {m}",
+"t:mk_hg_lock_n":"D'abord {n}",
+"t:mk_hg_lock_at":"Maîtrise {n} pour {e}+",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"Votre Sac peut monter l'Amélioration à {x}",
+"t:cda_hg_lock_at":"Amélioration {piece} {a} → {b} · Maîtrise {n} pour {e}+",
+"t:pur_o1_other_add":"Plan {plan} : +{v} ×{n}",
+"t:pur_tag_willbuy":"vais acheter",
+"t:pur_bt_switch":"Déjà acheté ✓",
+"t:pur_bt_save":"Enregistrer comme acheté ({n})",
+"t:pur_bt_save_mix":"Enregistrer ({n})",
+"t:pur_bt_n":"{n} achetés aujourd'hui",
+"t:pur_bt_will_n":"{n} à acheter",
+"t:pur_bt_hint":"La date d'aujourd'hui cochée est enregistrée comme achetée ; les dates suivantes comme à acheter.",
+"t:pur_dn_title":"Acheté · {n} · {v}"
 }

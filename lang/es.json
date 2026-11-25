@@ -3193,5 +3193,19 @@
 "t:rule_hg_em_sub":"La Mejora hasta 100 no necesita Maestría.",
 "t:rule_hg_em_from":"Mejora desde",
 "t:rule_hg_em_need":"Maestría necesaria",
-"t:mk_hg_step2":"{e}+ necesita Maestría {m}"
+"t:mk_hg_step2":"{e}+ necesita Maestría {m}",
+"t:mk_hg_lock_n":"Primero {n}",
+"t:mk_hg_lock_at":"Maestría {n} para {e}+",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"Tu Mochila puede subir la Mejora a {x}",
+"t:cda_hg_lock_at":"Mejora de {piece} {a} → {b} · Maestría {n} para {e}+",
+"t:pur_o1_other_add":"Plan {plan}: +{v} ×{n}",
+"t:pur_tag_willbuy":"compraré",
+"t:pur_bt_switch":"Ya comprado ✓",
+"t:pur_bt_save":"Guardar como comprado ({n})",
+"t:pur_bt_save_mix":"Guardar ({n})",
+"t:pur_bt_n":"{n} comprados hoy",
+"t:pur_bt_will_n":"{n} compraré",
+"t:pur_bt_hint":"La fecha de hoy marcada se guarda como comprada; las fechas posteriores como compraré.",
+"t:pur_dn_title":"Comprado · {n} · {v}"
 }

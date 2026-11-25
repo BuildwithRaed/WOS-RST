@@ -3191,5 +3191,19 @@
 "t:rule_hg_em_sub":"Cường hóa đến 100 không cần Tinh Thông.",
 "t:rule_hg_em_from":"Cường hóa từ",
 "t:rule_hg_em_need":"Tinh Thông cần",
-"t:mk_hg_step2":"{e}+ cần Tinh Thông {m}"
+"t:mk_hg_step2":"{e}+ cần Tinh Thông {m}",
+"t:mk_hg_lock_n":"{n} trước",
+"t:mk_hg_lock_at":"Tinh Thông {n} cho {e}+",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"Túi đồ đưa được Cường hóa lên {x}",
+"t:cda_hg_lock_at":"Cường hóa {piece} {a} → {b} · Tinh Thông {n} cho {e}+",
+"t:pur_o1_other_add":"Kế hoạch {plan}: +{v} ×{n}",
+"t:pur_tag_willbuy":"sẽ mua",
+"t:pur_bt_switch":"Đã mua rồi ✓",
+"t:pur_bt_save":"Lưu là đã mua ({n})",
+"t:pur_bt_save_mix":"Lưu ({n})",
+"t:pur_bt_n":"Đã mua {n} hôm nay",
+"t:pur_bt_will_n":"Sẽ mua {n}",
+"t:pur_bt_hint":"Ngày hôm nay được đánh dấu lưu là đã mua; các ngày sau lưu là sẽ mua.",
+"t:pur_dn_title":"Đã mua · {n} · {v}"
 }

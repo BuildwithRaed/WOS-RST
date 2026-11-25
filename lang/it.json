@@ -3193,5 +3193,19 @@
 "t:rule_hg_em_sub":"Il Potenziamento fino a 100 non richiede Maestria.",
 "t:rule_hg_em_from":"Potenziamento da",
 "t:rule_hg_em_need":"Maestria richiesta",
-"t:mk_hg_step2":"{e}+ richiede Maestria {m}"
+"t:mk_hg_step2":"{e}+ richiede Maestria {m}",
+"t:mk_hg_lock_n":"Prima {n}",
+"t:mk_hg_lock_at":"Maestria {n} per {e}+",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"Lo Zaino può portare il Potenziamento a {x}",
+"t:cda_hg_lock_at":"Potenziamento {piece} {a} → {b} · Maestria {n} per {e}+",
+"t:pur_o1_other_add":"Piano {plan}: +{v} ×{n}",
+"t:pur_tag_willbuy":"comprerò",
+"t:pur_bt_switch":"Già comprato ✓",
+"t:pur_bt_save":"Salva come comprato ({n})",
+"t:pur_bt_save_mix":"Salva ({n})",
+"t:pur_bt_n":"{n} comprati oggi",
+"t:pur_bt_will_n":"{n} da comprare",
+"t:pur_bt_hint":"La data di oggi spuntata viene salvata come comprata; le date successive come da comprare.",
+"t:pur_dn_title":"Comprato · {n} · {v}"
 }

@@ -3191,5 +3191,19 @@
 "t:rule_hg_em_sub":"التعزيز حتى 100 لا يحتاج إتقاناً.",
 "t:rule_hg_em_from":"التعزيز من",
 "t:rule_hg_em_need":"الإتقان المطلوب",
-"t:mk_hg_step2":"{e}+ يحتاج الإتقان {m}"
+"t:mk_hg_step2":"{e}+ يحتاج الإتقان {m}",
+"t:mk_hg_lock_n":"{n} أولاً",
+"t:mk_hg_lock_at":"الإتقان {n} لـ {e}+",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"تستطيع حقيبتك رفع التعزيز إلى {x}",
+"t:cda_hg_lock_at":"تعزيز {piece} {a} → {b} · الإتقان {n} لـ {e}+",
+"t:pur_o1_other_add":"خطة {plan}: +{v} ×{n}",
+"t:pur_tag_willbuy":"سأشتري",
+"t:pur_bt_switch":"تم الشراء مسبقاً ✓",
+"t:pur_bt_save":"حفظ كمشترى ({n})",
+"t:pur_bt_save_mix":"حفظ ({n})",
+"t:pur_bt_n":"{n} تم شراؤها اليوم",
+"t:pur_bt_will_n":"{n} سأشتري",
+"t:pur_bt_hint":"يُحفظ تاريخ اليوم المحدد كمشترى، والتواريخ اللاحقة كـ سأشتري.",
+"t:pur_dn_title":"تم الشراء · {n} · {v}"
 }

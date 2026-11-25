@@ -3191,5 +3191,19 @@
 "t:rule_hg_em_sub":"100'e kadar Güçlendirme Ustalık istemez.",
 "t:rule_hg_em_from":"Güçlendirme şuradan",
 "t:rule_hg_em_need":"Gereken Ustalık",
-"t:mk_hg_step2":"{e}+ için Ustalık {m} gerekir"
+"t:mk_hg_step2":"{e}+ için Ustalık {m} gerekir",
+"t:mk_hg_lock_n":"Önce {n}",
+"t:mk_hg_lock_at":"{e}+ için Ustalık {n}",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"Çantan Güçlendirmeyi {x} seviyesine çıkarabilir",
+"t:cda_hg_lock_at":"{piece} Güçlendirme {a} → {b} · {e}+ için Ustalık {n}",
+"t:pur_o1_other_add":"{plan} planı: +{v} ×{n}",
+"t:pur_tag_willbuy":"alacağım",
+"t:pur_bt_switch":"Zaten alındı ✓",
+"t:pur_bt_save":"Alındı olarak kaydet ({n})",
+"t:pur_bt_save_mix":"Kaydet ({n})",
+"t:pur_bt_n":"Bugün {n} alındı",
+"t:pur_bt_will_n":"{n} alınacak",
+"t:pur_bt_hint":"İşaretli bugünkü tarih alındı, sonraki tarihler alınacak olarak kaydedilir.",
+"t:pur_dn_title":"Alındı · {n} · {v}"
 }

@@ -1310,7 +1310,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 134; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 136; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3635,6 +3635,11 @@ const T = {
   mk_target: { en: "target {x}" },
   mk_stops: { en: "Stops: {item} short" },
   mk_hg_lock: { en: "Mastery {n} first" },
+  mk_hg_lock_n: { en: "{n} first" },
+  mk_hg_lock_at: { en: "Mastery {n} for {e}+" },
+  mk_hg_lock_tail: { en: "· {e}+" },
+  mk_hg_can_to: { en: "Your Backpack can take Enhance to {x}" },
+  cda_hg_lock_at: { en: "{piece} Enhance {a} → {b} · Mastery {n} for {e}+" },
   mk_hg_cant: { en: "Your Backpack can't take Enhance past {x} yet" },
   mk_hg_step: { en: "Enhance {e}+ needs Mastery {m}" },
   mk_hg_step2: { en: "{e}+ needs Mastery {m}" },
@@ -9202,7 +9207,7 @@ function cdaCardHtml(pg, info, P) {
       <div class="cda-n">${esc(cdaPageName(pg))}</div>
       <div class="cda-u">${main}</div>
       ${info.b.note ? `<div class="cda-s cda-nt">${esc(info.b.note)}</div>` : ""}
-      ${info.locks.length ? `<div class="cda-s cda-nt">&#128274; ${esc(t("cda_hg_lock").replace("{piece}", `${info.locks[0].troop && info.locks[0].troop !== "all" ? troopDisplayName(info.locks[0].troop) + " " : ""}${info.locks[0].name || ""}`).replace("{n}", hgLockInfo(info.locks[0], plan).need))}${info.locks.length > 1 ? ` · +${info.locks.length - 1}` : ""}</div>` : ""}
+      ${info.locks.length ? `<div class="cda-s cda-nt">&#128274; ${(() => { const l0 = info.locks[0], li = hgLockInfo(l0, plan), pc = `${l0.troop && l0.troop !== "all" ? troopDisplayName(l0.troop) + " " : ""}${l0.name || ""}`; return esc(li.moved ? t("cda_hg_lock_at").replace("{piece}", pc).replace("{a}", li.from).replace("{b}", li.stop).replace("{n}", li.need).replace("{e}", li.next) : t("cda_hg_lock").replace("{piece}", pc).replace("{n}", li.need)); })()}${info.locks.length > 1 ? ` · +${info.locks.length - 1}` : ""}</div>` : ""}
       ${tags || (!open && runs) ? `<div class="cda-s">${tags}${!open ? runs : ""}</div>` : ""}
       ${!open && moreN > 0 ? `<button type="button" class="cda-more" data-cdaopen="${esc(pg.key)}" aria-expanded="false">${esc(t("cdp_more").replace("{n}", moreN))} &#9662;</button>` : !open ? `<button type="button" class="cda-more" data-cdaopen="${esc(pg.key)}" aria-expanded="false">${esc(t("cdp_details"))} &#9662;</button>` : ""}
     </div><button type="button" class="cda-go" data-cdago="${esc(pg.go || pg.tab)}">${esc(t("cdp_open"))} &#8250;</button></div>${body}</div>`;
@@ -9247,7 +9252,7 @@ function cdaGoalStates(P) {
     // Labels written differently (Pet Refine "Stage 3 23.5%" vs "23.5%"): the first step at or past the goal's number.
     if (gi < 0) { const m = String(goalLabel).match(/(-?\d+(?:\.\d+)?)\s*%\s*$/), v = m ? parseFloat(m[1]) : NaN; if (!isNaN(v)) for (let i = tr.from; i <= tr.to; i++) { if (parseFloat(lab(i)) >= v - 1e-9) { gi = i; break; } } }
     const blk = P.plan.blocker[tr.id], lk = hgLockInfo(tr, P.plan);
-    out.push({ id: "up:" + e.id, u, e, goalLabel, k: gi >= 0 && lv >= gi ? "full" : lv > tr.from ? "part" : "none", from: lab(tr.from), now: lab(lv), blk: blk ? cdaItemName(blk, tr) : "", blkIc: blk ? cdaItemIcon(blk, tr) : "", lock: lk ? lk.need : null });
+    out.push({ id: "up:" + e.id, u, e, goalLabel, k: gi >= 0 && lv >= gi ? "full" : lv > tr.from ? "part" : "none", from: lab(tr.from), now: lab(lv), blk: blk ? cdaItemName(blk, tr) : "", blkIc: blk ? cdaItemIcon(blk, tr) : "", lock: lk ? lk.need : null, lockAt: lk && lk.moved ? lk.next : null });
   });
   return out;
 }
@@ -9255,7 +9260,7 @@ function cdaGoalChipHtml(s) {
   if (!s || s.k === "?") return "";
   if (s.k === "out") return `<span class="gu-cd out">${esc(t("cdb_from").replace("{d}", s.date))}</span>`;
   if (s.k === "full") return `<span class="gu-cd full">&#10003; ${esc(t("cdb_can_now").replace("{x}", s.goalLabel))}</span>`;
-  if (s.k === "part") return `<span class="gu-cd part">${esc(t("cdb_part_now").replace("{a}", s.from).replace("{b}", s.now))}</span>`;
+  if (s.k === "part") return `<span class="gu-cd part">${esc(t("cdb_part_now").replace("{a}", s.from).replace("{b}", s.now))}${s.lockAt ? ` · &#128274; ${esc(t("mk_hg_lock_at").replace("{n}", s.lock).replace("{e}", s.lockAt))}` : ""}</span>`;
   if (s.lock) return `<span class="gu-cd none">${esc(t("cdb_not_yet"))} · &#128274; ${esc(t("mk_hg_lock").replace("{n}", s.lock))}</span>`;
   return `<span class="gu-cd none">${esc(t("cdb_not_yet"))} · ${s.blkIc ? `<img src="${esc(s.blkIc)}" alt="" />` : ""}${esc(t("cdb_short").replace("{item}", s.blk || t("cdb_items")))}</span>`;
 }
@@ -9496,7 +9501,13 @@ function mkHtml(tr, plan, k) {
   const r = plan.lv[tr.id];
   // Heroes Gears Enhance stopped because the piece's Mastery must come first.
   const lk = hgLockInfo(tr, plan);
-  if (lk) return `<span class="mk lock" role="button" tabindex="0" data-mk="${k}" title="${esc(t("mk_tip_short"))}">&#128274; ${esc(t("mk_hg_lock").replace("{n}", lk.need))}</span>`;
+  if (lk && !(r > tr.from)) return `<span class="mk lock" role="button" tabindex="0" data-mk="${k}" title="${esc(t("mk_hg_lock").replace("{n}", lk.need))}" aria-label="${esc(t("mk_hg_lock").replace("{n}", lk.need))}">&#128274; ${hgEsIcon()} ${esc(t("mk_hg_lock_n").replace("{n}", lk.need))}</span>`;
+  // Enhance goes up part way, then waits for Mastery: how far now + a smaller lock under it.
+  if (lk) {
+    const lt = t("mk_hg_lock_at").replace("{n}", lk.need).replace("{e}", lk.next);
+    return `<span class="mk mk2" role="button" tabindex="0" data-mk="${k}" title="${esc(t("mk_tip_short"))}"><span class="mk part">${MK_HALF}<small>${esc(t("mk_now"))}</small> ${esc(mkLab(tr, r))}</span>`
+      + `<span class="mk lock sm" title="${esc(lt)}" aria-label="${esc(lt)}"><span class="mk-lw"><span class="mk-lk" aria-hidden="true">&#128274;</span>${hgEsIcon()} ${esc(String(lk.need))}</span> <span class="mk-lw">${esc(t("mk_hg_lock_tail").replace("{e}", lk.next))}</span></span></span>`;
+  }
   if (!(tr.to > tr.from) || !(r > tr.from)) return "";
   const full = r >= tr.to;
   return `<span class="mk ${full ? "full" : "part"}" role="button" tabindex="0" data-mk="${k}" title="${esc(t("mk_tip_short"))}">${full ? `&#10003; ${esc(mkLab(tr, r))}` : `${MK_HALF}<small>${esc(t("mk_now"))}</small> ${esc(mkLab(tr, r))}`}</span>`;
@@ -9590,7 +9601,7 @@ function mkPopOpen(m) {
   pop.className = "mk-pop";
   pop.setAttribute("role", "dialog");
   const lk = hgLockInfo(tr, MK.plan);
-  if (lk) pop.innerHTML = `<b class="t">${esc(tr.name || "")} · ${esc(t("hg_enhance"))}</b><div class="mk-st">${esc(t("mk_hg_cant").replace("{x}", lk.stop))}</div>`
+  if (lk) pop.innerHTML = `<b class="t">${esc(tr.name || "")} · ${esc(t("hg_enhance"))}</b>${lk.moved ? `<div>${esc(t("mk_hg_can_to").replace("{x}", lk.stop))}</div>` : `<div class="mk-st">${esc(t("mk_hg_cant").replace("{x}", lk.stop))}</div>`}`
     + `<div>${esc(hgLockStepsText(lk.steps))} ${esc(t("mk_hg_mastery_is").replace("{piece}", tr.name || "").replace("{m}", lk.mLab))}</div>`
     + `<div class="mk-ft">${esc(t("mk_this_page"))} <a href="#" data-mkbud>${esc(t("mk_budgets_link"))}</a></div>`;
   else pop.innerHTML = `<b class="t">${esc(tr.name || "")}</b>${esc(t("mk_takes"))} <b>${esc(mkLab(tr, tr.from))} &rarr; ${esc(mkLab(tr, r))}</b> <span class="mk-tg">(${esc(t("mk_target").replace("{x}", mkLab(tr, tr.to)))})</span>`
@@ -9834,7 +9845,12 @@ function hgLockInfo(tr, plan) {
   const mLv = plan.lv[w[0][0]] ?? 0, mWhole = hgMastWhole(mLv);
   const rows = (HERO_GEAR_TABLES_CACHE || {})["Hero Gear Mastery Forging"] || [];
   const mLab = rows[mLv] ? String(rowLabel(rows[mLv])).replace(/^Lv\.?\s*/, "") : String(mLv);
-  return { need: hgMasteryNeededFor(hgEnhLevel(r + 1)), stop: hgEnhLevel(r), mLab, steps: hgEnhSteps(hgEnhLevel(r), hgEnhLevel(tr.to), mWhole) };
+  return { need: hgMasteryNeededFor(hgEnhLevel(r + 1)), stop: hgEnhLevel(r), next: hgEnhLevel(r + 1), moved: r > tr.from, from: hgEnhLevel(tr.from), mLab, steps: hgEnhSteps(hgEnhLevel(r), hgEnhLevel(tr.to), mWhole) };
+}
+// The Essence Stones picture used in the Mastery lock pills (Mastery is paid in Essence Stones).
+function hgEsIcon() {
+  const src = materialIconSrc("Essence Stones");
+  return src ? `<img class="mk-es" src="${esc(src)}" alt="" aria-hidden="true" />` : esc(t("hg_mastery"));
 }
 // The piece window / Set all note: an Enhance target past what the Mastery target allows.
 // mTo / eTo = row indexes. { need, eLab, mLab, allowed, warnIdx, raiseIdx } or null.

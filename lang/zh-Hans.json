@@ -3193,5 +3193,19 @@
 "t:rule_hg_em_sub":"强化到 100 不需要精通。",
 "t:rule_hg_em_from":"强化起始",
 "t:rule_hg_em_need":"所需精通",
-"t:mk_hg_step2":"{e}+ 需要精通 {m}"
+"t:mk_hg_step2":"{e}+ 需要精通 {m}",
+"t:mk_hg_lock_n":"先 {n}",
+"t:mk_hg_lock_at":"{e}+ 需精通 {n}",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"背包可让强化到 {x}",
+"t:cda_hg_lock_at":"{piece} 强化 {a} → {b} · {e}+ 需精通 {n}",
+"t:pur_o1_other_add":"{plan}计划:+{v} ×{n}",
+"t:pur_tag_willbuy":"将购买",
+"t:pur_bt_switch":"已购买 ✓",
+"t:pur_bt_save":"保存为已购买 ({n})",
+"t:pur_bt_save_mix":"保存 ({n})",
+"t:pur_bt_n":"今天已购买 {n}",
+"t:pur_bt_will_n":"将购买 {n}",
+"t:pur_bt_hint":"勾选的今天日期保存为已购买,之后的日期保存为将购买。",
+"t:pur_dn_title":"已购买 · {n} · {v}"
 }

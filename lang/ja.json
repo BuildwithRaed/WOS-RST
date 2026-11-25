@@ -3193,5 +3193,19 @@
 "t:rule_hg_em_sub":"強化 100 までは熟練不要です。",
 "t:rule_hg_em_from":"強化（から）",
 "t:rule_hg_em_need":"必要な熟練",
-"t:mk_hg_step2":"{e}+ には熟練 {m} が必要"
+"t:mk_hg_step2":"{e}+ には熟練 {m} が必要",
+"t:mk_hg_lock_n":"先に {n}",
+"t:mk_hg_lock_at":"{e}+ には熟練 {n}",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"バッグで強化 {x} まで上げられます",
+"t:cda_hg_lock_at":"{piece} 強化 {a} → {b} · {e}+ には熟練 {n}",
+"t:pur_o1_other_add":"{plan}プラン: +{v} ×{n}",
+"t:pur_tag_willbuy":"購入予定",
+"t:pur_bt_switch":"購入済み ✓",
+"t:pur_bt_save":"購入済みとして保存 ({n})",
+"t:pur_bt_save_mix":"保存 ({n})",
+"t:pur_bt_n":"今日 {n} 件購入",
+"t:pur_bt_will_n":"{n} 件購入予定",
+"t:pur_bt_hint":"チェックした今日の日付は購入済み、以降の日付は購入予定として保存されます。",
+"t:pur_dn_title":"購入済み · {n} · {v}"
 }

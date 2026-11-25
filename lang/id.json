@@ -3191,5 +3191,19 @@
 "t:rule_hg_em_sub":"Enhance sampai 100 tidak butuh Mastery.",
 "t:rule_hg_em_from":"Enhance dari",
 "t:rule_hg_em_need":"Mastery dibutuhkan",
-"t:mk_hg_step2":"{e}+ butuh Mastery {m}"
+"t:mk_hg_step2":"{e}+ butuh Mastery {m}",
+"t:mk_hg_lock_n":"{n} dulu",
+"t:mk_hg_lock_at":"Mastery {n} untuk {e}+",
+"t:mk_hg_lock_tail":"· {e}+",
+"t:mk_hg_can_to":"Ransel bisa menaikkan Enhance ke {x}",
+"t:cda_hg_lock_at":"Enhance {piece} {a} → {b} · Mastery {n} untuk {e}+",
+"t:pur_o1_other_add":"Rencana {plan}: +{v} ×{n}",
+"t:pur_tag_willbuy":"akan beli",
+"t:pur_bt_switch":"Sudah dibeli ✓",
+"t:pur_bt_save":"Simpan sebagai dibeli ({n})",
+"t:pur_bt_save_mix":"Simpan ({n})",
+"t:pur_bt_n":"{n} dibeli hari ini",
+"t:pur_bt_will_n":"{n} akan beli",
+"t:pur_bt_hint":"Tanggal hari ini yang dicentang disimpan sebagai dibeli; tanggal berikutnya sebagai akan beli.",
+"t:pur_dn_title":"Dibeli · {n} · {v}"
 }
