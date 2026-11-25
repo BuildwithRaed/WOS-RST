@@ -1310,7 +1310,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 133; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 134; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3634,6 +3634,21 @@ const T = {
   mk_takes: { en: "Backpack can take it" },
   mk_target: { en: "target {x}" },
   mk_stops: { en: "Stops: {item} short" },
+  mk_hg_lock: { en: "Mastery {n} first" },
+  mk_hg_cant: { en: "Your Backpack can't take Enhance past {x} yet" },
+  mk_hg_step: { en: "Enhance {e}+ needs Mastery {m}" },
+  mk_hg_step2: { en: "{e}+ needs Mastery {m}" },
+  mk_hg_mastery_is: { en: "({piece} Mastery is {m})" },
+  cda_hg_lock: { en: "{piece} Enhance: Mastery {n} first" },
+  hg_em_needs: { en: "Enhance {e} needs Mastery {m}" },
+  hg_em_target: { en: "your Mastery target is {t} (enough for {a})" },
+  hg_em_stripes: { en: "Striped part of the bar = past what Mastery {t} allows." },
+  hg_em_raise: { en: "Raise Mastery target to {m}" },
+  rule_hg_em: { en: "Enhance needs Mastery" },
+  rule_hg_em_help: { en: "A piece's Enhance can only go this high when its Mastery (whole level) is at least the number shown. Nothing is locked on the pages: marks, Free now and the piece window follow it, and warn when a target needs more Mastery." },
+  rule_hg_em_sub: { en: "Enhance up to 100 needs no Mastery." },
+  rule_hg_em_from: { en: "Enhance from" },
+  rule_hg_em_need: { en: "Mastery needed" },
   mk_this_page: { en: "This page only — all pages together:" },
   mk_budgets_link: { en: "Budgets → Free now ›" },
   mk_i_green: { en: "Green ✓" },
@@ -6770,7 +6785,7 @@ async function renderGearLevelingGroup(target) {
   const M_GROUPS = new Map();
   rowsOf(MF).forEach((r, i) => { const k = mMajor(i); if (!M_GROUPS.has(k)) M_GROUPS.set(k, []); M_GROUPS.get(k).push(i); });
   const mIsUp = (i) => i > heroTrackReleasedIdx(MF) || heroIdxUpcoming(MF, i);
-  const hgMastRows = (role, sel, lo, attr, rowAttr, counts) => {
+  const hgMastRows = (role, sel, lo, attr, rowAttr, counts, need) => {
     const sm = sel == null ? null : mMajor(sel);
     let prevN = null;
     const btns = [...M_GROUPS.keys()].map((k) => {
@@ -6778,7 +6793,7 @@ async function renderGearLevelingGroup(target) {
       const sep = prevN != null && prevN !== g.length ? `<i class="chw-sep"></i>` : "";
       prevN = g.length;
       let n = 0; if (counts) g.forEach((i) => { n += counts.get(i) || 0; });
-      return `${sep}<button type="button" class="cgw-c hw-m${k === sm ? " on" : ""}${up ? " up" : ""}" ${attr(role, "m", k)}${off ? " disabled" : ""}${up ? ` title="${esc(t("upcoming_tag"))}"` : ""}>${k}${salCnt(n)}</button>`;
+      return `${sep}<button type="button" class="cgw-c hw-m${k === sm ? " on" : ""}${up ? " up" : ""}${need != null && k === need && k !== sm ? " need" : ""}" ${attr(role, "m", k)}${off ? " disabled" : ""}${up ? ` title="${esc(t("upcoming_tag"))}"` : ""}>${k}${salCnt(n)}</button>`;
     }).join("");
     const g = sel == null ? [] : M_GROUPS.get(sm) || [];
     const stg = g.length > 1 ? `<div class="cgw-dots"><span class="cgw-dl">${esc(t("cgw_stage"))}</span>${g.map((i, j) => `<button type="button" class="cgw-d${i === sel ? " on" : ""}${mIsUp(i) ? " up" : ""}" ${attr(role, "i", i)}${role === "to" && i < lo ? " disabled" : ""}>.${j}</button>`).join("")}</div>` : "";
@@ -6857,12 +6872,14 @@ async function renderGearLevelingGroup(target) {
     const upCls = (tb, v) => (v > heroTrackReleasedIdx(tb) || heroIdxUpcoming(tb, v) ? ' class="up"' : "");
     // Mastery (H1): Now and Target as level buttons + stage row.
     const mc = cur(troop, piece, MF), ec = cur(troop, piece, EN), eLast = lastIdx(EN);
-    const mRow = (role, sel, lo) => `<div class="m3-row${role === "to" ? " tgt" : ""}"><div class="hw-subh"><span>${esc(role === "to" ? tgtLbl : nowLbl)}</span><b${upCls(MF, sel)}>${esc(lab(MF, sel))}</b></div>${hgMastRows(role, sel, lo, (r, k, v) => `data-hgm="${r}|${k}|${v}"`, `data-hgmrow="${role}"`)}</div>`;
+    const em = hgEmWarn(mc.to, ec.to);
+    const mRow = (role, sel, lo) => `<div class="m3-row${role === "to" ? " tgt" : ""}"><div class="hw-subh"><span>${esc(role === "to" ? tgtLbl : nowLbl)}</span><b${upCls(MF, sel)}>${esc(lab(MF, sel))}</b></div>${hgMastRows(role, sel, lo, (r, k, v) => `data-hgm="${r}|${k}|${v}"`, `data-hgmrow="${role}"`, null, role === "to" && em ? em.need : null)}</div>`;
     const mastSec = `<div class="ch-sec hw-tr"><div class="ch-sec-h"><b>${esc(trackDisplayName(MF))}</b><span class="hw-tv">${esc(lab(MF, mc.from))} &rarr; <i${upCls(MF, mc.to)}>${esc(lab(MF, mc.to))}</i></span></div>${mRow("from", mc.from, 0)}${mRow("to", mc.to, mc.from)}</div>`;
     // Enhance (T1): a bar per Now / Target with − / +, tick numbers, milestone flags.
     const enhSec = `<div class="ch-sec hw-tr e5 t1" data-hgenh><div class="ch-sec-h"><b>${esc(trackDisplayName(EN))}</b><span class="hw-tv" data-egv>${esc(lab(EN, ec.from))} &rarr; <i>${esc(lab(EN, ec.to))}</i></span></div>
       ${enhGridHtml({ T: ENH_T, labOf: (i) => lab(EN, i), flags: msFlags([piece], ec.from), hint: t("hg_enh_hint"),
-        rows: [{ role: "from", label: nowLbl, val: ec.from, lo: 0, hi: eLast }, { role: "to", label: tgtLbl, val: ec.to, base: ec.from, lo: ec.from, hi: eLast }] })}</div>`;
+        rows: [{ role: "from", label: nowLbl, val: ec.from, lo: 0, hi: eLast }, { role: "to", label: tgtLbl, val: ec.to, base: ec.from, lo: ec.from, hi: eLast, warn: em ? em.warnIdx : null }] })}
+      ${em ? hgEmWarnHtml(em, `data-hgemraise="${em.raiseIdx}"`, true) : ""}</div>`;
     const need = {};
     const cols = [["mithril", "Mithril"], ["mythic_gear", "Mythic Gear"], ["xp_component", "XP Component"], ["essence_stones", "Essence Stones"]];
     GEAR_LEVELING_TABLES.forEach((tb) => {
@@ -6925,6 +6942,8 @@ async function renderGearLevelingGroup(target) {
       if (ev.target === m || ev.target.closest("[data-gsclose]")) { sheetPiece = null; closeGearSheet(); return; }
       const nv = ev.target.closest("[data-gsnav]");
       if (nv && !nv.disabled) { const k = HERO_GEAR_PIECE_NAMES.indexOf(sheetPiece) + Number(nv.dataset.gsnav); if (HERO_GEAR_PIECE_NAMES[k]) { sheetPiece = HERO_GEAR_PIECE_NAMES[k]; drawSheet(); } return; }
+      const rb = ev.target.closest("[data-hgemraise]");
+      if (rb) { if (setLv(heroGearActiveTroop, sheetPiece, MF, "to", Number(rb.dataset.hgemraise))) changed(); return; }
       const mb = ev.target.closest("[data-hgm]");
       if (mb && !mb.disabled) {
         const [role, kind, val] = mb.dataset.hgm.split("|"), c = cur(heroGearActiveTroop, sheetPiece, MF);
@@ -6978,6 +6997,14 @@ async function renderGearLevelingGroup(target) {
             });
           }) },
       ],
+      // One note for the ticked pieces whose Enhance target needs more Mastery than their Mastery target.
+      warn: (resOf, ids) => {
+        const bad = ids.map((pc) => ({ pc, w: hgEmWarn(resOf(pc, "m").to, resOf(pc, "e").to) })).filter((x) => x.w);
+        if (!bad.length) return "";
+        const top = bad.reduce((a, b) => (b.w.need > a.w.need || (b.w.need === a.w.need && b.w.allowed < a.w.allowed) ? b : a)), w = top.w;
+        const ok = w.raiseIdx >= 0 && ids.every((pc) => resOf(pc, "m").to <= w.raiseIdx);
+        return hgEmWarnHtml(w, ok ? `data-salp="m|to|i|${w.raiseIdx}"` : "", false, bad.map((x) => pieceDisplayName(x.pc)).join(", "));
+      },
       apply: (list) => {
         list.forEach(({ id, lv }) => [[MF, "m"], [EN, "e"]].forEach(([tb, k]) => { const st = activeState[troop][id][tb]; st.from = lv[k].from; st.to = lv[k].to; }));
         changed();
@@ -7974,8 +8001,22 @@ function advFromTracks(out, tracks, o) {
   tracks.forEach((tr) => advEach(tr.from, tr.top, (lo, hi, nth) => {
     const g0 = tr.gain(lo, { ...lv, [tr.id]: lo }) || {}, g1 = tr.gain(hi, { ...lv, [tr.id]: hi }) || {}, g = {};
     ADV_STATS.forEach((k) => advGain(g, tr.troop || "all", [k], (Number(g1[k]) || 0) - (Number(g0[k]) || 0)));
+    // A step that needs another track first (Heroes Gears Enhance → Mastery): that track's
+    // missing levels are paid with this step (only the first step that needs them).
+    let items = tr.cost(hi) || {}, note = "";
+    const need = tr.needs ? tr.needs(hi) : null, req = need && need[0] && need[0][0] && need[0][0][0];
+    if (req) {
+      const [rid, rl] = req, rt = tracks.find((x) => x.id === rid);
+      const prev = tr.needs(lo), pl = prev && prev[0] && prev[0][0] && prev[0][0][0] ? prev[0][0][0][1] : -1;
+      const start = rt ? Math.max(rt.from, pl) : 0;
+      if (rt && Number.isFinite(rl) && rl > start) {
+        items = { ...items };
+        for (let i = start + 1; i <= rl; i++) Object.entries(rt.cost(i) || {}).forEach(([k, v]) => { items[k] = (items[k] || 0) + v; });
+        note = t("adv_n_waits").replace("{what}", `${rt.short === "M" ? t("hg_mastery") : rt.name} ${rt.lab ? rt.lab(rl) : rl}`);
+      }
+    }
     out.push({ id: `${o.type}|${tr.id}|${hi}`, track: `${o.type}|${tr.id}`, nth, page: o.page, type: o.type, base: tr.name, la: tr.lab ? tr.lab(lo) : String(lo), lb: tr.lab ? tr.lab(hi) : String(hi), hi, tgt: tr.tgt != null ? tr.tgt : null, name: `${tr.name} ${tr.lab ? tr.lab(lo) : lo} \u2192 ${tr.lab ? tr.lab(hi) : hi}`,
-      img: (o.pic && o.pic(tr)) || QUICK_ICONS[advPageOf(o.page).tab], items: tr.cost(hi) || {}, gain: g, kind: "buy", note: "" });
+      img: (o.pic && o.pic(tr)) || QUICK_ICONS[advPageOf(o.page).tab], items, gain: g, kind: "buy", note });
   }));
 }
 // T11 tracks (Flame Squad and the Helios Unlock / Training path are in "Priority first").
@@ -8786,7 +8827,8 @@ const CDA_PAGES = [
       // Other sets: ids carry the set, so a piece's Mastery / Enhance read their own set's levels.
       const views = new WeakMap(), view = (lv) => { let v = views.get(lv); if (!v) { v = new Proxy({}, { get: (_, k) => lv[`${n}|${String(k)}`] }); views.set(lv, v); } return v; };
       return heroGearReachTracks(HERO_GEAR_SETS[n]).map((tr) => ({ ...tr, id: `${n}|${tr.id}`, ...(tr.grp != null ? { grp: `${n}|${tr.grp}` } : {}), name: `${tr.name} · ${gearSetDisplayName(n)}`,
-        gain: (i, lv) => tr.gain(i, lv ? view(lv) : lv) }));
+        gain: (i, lv) => tr.gain(i, lv ? view(lv) : lv),
+        needs: tr.needs ? (k) => { const r = tr.needs(k); return r && r.map((req) => req.map((opt) => opt.map(([x, l]) => [`${n}|${x}`, l]))); } : undefined }));
     });
     return tracks.length ? { tracks, bar: "hero_gear" } : null;
   } },
@@ -9103,7 +9145,8 @@ function cdaPageInfo(pg, P) {
   const firstTr = firstItem ? todo.find((tr) => plan.blocker[tr.id] === firstItem) : null;
   const trades = up.some((tr) => (plan.trades[tr.id] || []).length);
   const packs = !!(P.base && todo.some((tr) => (P.base.plan.lv[tr.id] ?? tr.from) !== plan.lv[tr.id]));
-  return { b, todo, up, left, firstItem, firstTr, trades, packs, st: !todo.length ? "done" : up.length ? "up" : "none" };
+  const locks = todo.filter((tr) => !CDA_SET.skip.has(tr.id) && hgLockInfo(tr, plan));
+  return { b, todo, up, left, firstItem, firstTr, trades, packs, locks, st: !todo.length ? "done" : up.length ? "up" : "none" };
 }
 function cdaPageName(pg) { return pg.label ? pg.label() : navLabel(pg.tab); }
 function cdaPagePic(pg) { return pg.icon ? pg.icon() : QUICK_ICONS[pg.tab] || ""; }
@@ -9150,6 +9193,7 @@ function cdaCardHtml(pg, info, P) {
       <div class="cda-n">${esc(cdaPageName(pg))}</div>
       <div class="cda-u">${main}</div>
       ${info.b.note ? `<div class="cda-s cda-nt">${esc(info.b.note)}</div>` : ""}
+      ${info.locks.length ? `<div class="cda-s cda-nt">&#128274; ${esc(t("cda_hg_lock").replace("{piece}", `${info.locks[0].troop && info.locks[0].troop !== "all" ? troopDisplayName(info.locks[0].troop) + " " : ""}${info.locks[0].name || ""}`).replace("{n}", hgLockInfo(info.locks[0], plan).need))}${info.locks.length > 1 ? ` · +${info.locks.length - 1}` : ""}</div>` : ""}
       ${tags || (!open && runs) ? `<div class="cda-s">${tags}${!open ? runs : ""}</div>` : ""}
       ${!open && moreN > 0 ? `<button type="button" class="cda-more" data-cdaopen="${esc(pg.key)}" aria-expanded="false">${esc(t("cdp_more").replace("{n}", moreN))} &#9662;</button>` : !open ? `<button type="button" class="cda-more" data-cdaopen="${esc(pg.key)}" aria-expanded="false">${esc(t("cdp_details"))} &#9662;</button>` : ""}
     </div><button type="button" class="cda-go" data-cdago="${esc(pg.go || pg.tab)}">${esc(t("cdp_open"))} &#8250;</button></div>${body}</div>`;
@@ -9193,8 +9237,8 @@ function cdaGoalStates(P) {
     for (let i = tr.from; i <= tr.to; i++) if (lab(i) === goalLabel) gi = i;
     // Labels written differently (Pet Refine "Stage 3 23.5%" vs "23.5%"): the first step at or past the goal's number.
     if (gi < 0) { const m = String(goalLabel).match(/(-?\d+(?:\.\d+)?)\s*%\s*$/), v = m ? parseFloat(m[1]) : NaN; if (!isNaN(v)) for (let i = tr.from; i <= tr.to; i++) { if (parseFloat(lab(i)) >= v - 1e-9) { gi = i; break; } } }
-    const blk = P.plan.blocker[tr.id];
-    out.push({ id: "up:" + e.id, u, e, goalLabel, k: gi >= 0 && lv >= gi ? "full" : lv > tr.from ? "part" : "none", from: lab(tr.from), now: lab(lv), blk: blk ? cdaItemName(blk, tr) : "", blkIc: blk ? cdaItemIcon(blk, tr) : "" });
+    const blk = P.plan.blocker[tr.id], lk = hgLockInfo(tr, P.plan);
+    out.push({ id: "up:" + e.id, u, e, goalLabel, k: gi >= 0 && lv >= gi ? "full" : lv > tr.from ? "part" : "none", from: lab(tr.from), now: lab(lv), blk: blk ? cdaItemName(blk, tr) : "", blkIc: blk ? cdaItemIcon(blk, tr) : "", lock: lk ? lk.need : null });
   });
   return out;
 }
@@ -9203,6 +9247,7 @@ function cdaGoalChipHtml(s) {
   if (s.k === "out") return `<span class="gu-cd out">${esc(t("cdb_from").replace("{d}", s.date))}</span>`;
   if (s.k === "full") return `<span class="gu-cd full">&#10003; ${esc(t("cdb_can_now").replace("{x}", s.goalLabel))}</span>`;
   if (s.k === "part") return `<span class="gu-cd part">${esc(t("cdb_part_now").replace("{a}", s.from).replace("{b}", s.now))}</span>`;
+  if (s.lock) return `<span class="gu-cd none">${esc(t("cdb_not_yet"))} · &#128274; ${esc(t("mk_hg_lock").replace("{n}", s.lock))}</span>`;
   return `<span class="gu-cd none">${esc(t("cdb_not_yet"))} · ${s.blkIc ? `<img src="${esc(s.blkIc)}" alt="" />` : ""}${esc(t("cdb_short").replace("{item}", s.blk || t("cdb_items")))}</span>`;
 }
 function cdaPatchGoals(box) {
@@ -9440,6 +9485,9 @@ const MK_SLOTS = {
 function mkLab(tr, i) { try { return tr.lab ? String(tr.lab(i)) : String(i); } catch (e) { return String(i); } }
 function mkHtml(tr, plan, k) {
   const r = plan.lv[tr.id];
+  // Heroes Gears Enhance stopped because the piece's Mastery must come first.
+  const lk = hgLockInfo(tr, plan);
+  if (lk) return `<span class="mk lock" role="button" tabindex="0" data-mk="${k}" title="${esc(t("mk_tip_short"))}">&#128274; ${esc(t("mk_hg_lock").replace("{n}", lk.need))}</span>`;
   if (!(tr.to > tr.from) || !(r > tr.from)) return "";
   const full = r >= tr.to;
   return `<span class="mk ${full ? "full" : "part"}" role="button" tabindex="0" data-mk="${k}" title="${esc(t("mk_tip_short"))}">${full ? `&#10003; ${esc(mkLab(tr, r))}` : `${MK_HALF}<small>${esc(t("mk_now"))}</small> ${esc(mkLab(tr, r))}`}</span>`;
@@ -9532,7 +9580,11 @@ function mkPopOpen(m) {
   const pop = document.createElement("div");
   pop.className = "mk-pop";
   pop.setAttribute("role", "dialog");
-  pop.innerHTML = `<b class="t">${esc(tr.name || "")}</b>${esc(t("mk_takes"))} <b>${esc(mkLab(tr, tr.from))} &rarr; ${esc(mkLab(tr, r))}</b> <span class="mk-tg">(${esc(t("mk_target").replace("{x}", mkLab(tr, tr.to)))})</span>`
+  const lk = hgLockInfo(tr, MK.plan);
+  if (lk) pop.innerHTML = `<b class="t">${esc(tr.name || "")} · ${esc(t("hg_enhance"))}</b><div class="mk-st">${esc(t("mk_hg_cant").replace("{x}", lk.stop))}</div>`
+    + `<div>${esc(hgLockStepsText(lk.steps))} ${esc(t("mk_hg_mastery_is").replace("{piece}", tr.name || "").replace("{m}", lk.mLab))}</div>`
+    + `<div class="mk-ft">${esc(t("mk_this_page"))} <a href="#" data-mkbud>${esc(t("mk_budgets_link"))}</a></div>`;
+  else pop.innerHTML = `<b class="t">${esc(tr.name || "")}</b>${esc(t("mk_takes"))} <b>${esc(mkLab(tr, tr.from))} &rarr; ${esc(mkLab(tr, r))}</b> <span class="mk-tg">(${esc(t("mk_target").replace("{x}", mkLab(tr, tr.to)))})</span>`
     + (r < tr.to && f ? `<div class="mk-st">${esc(t("mk_stops").replace("{item}", cdaItemName(f, tr)))}</div>` : "")
     + `<div class="mk-ft">${esc(t("mk_this_page"))} <a href="#" data-mkbud>${esc(t("mk_budgets_link"))}</a></div>`;
   document.body.appendChild(pop);
@@ -9734,6 +9786,67 @@ function fillHeroGearPieceStats() {
 }
 // Heroes Gears "can reach" marks: the set on screen,
 // all 3 troops, spending the Backpack boxes' amounts.
+// ---- Enhance needs Mastery (owner, 25 Nov 2026) ----
+// A piece's Enhance can only go this high when its Mastery (whole level: 9.4 is not 10)
+// is at least the number: [Enhance from, Mastery needed]. Enhance up to 100 needs nothing.
+// Game rule "hgEnhMastery" (Admin → Heroes → Rules). Nothing is locked on the pages: the
+// marks / Free now pay the Mastery first, the piece / Set all windows warn about targets.
+const HG_ENH_MASTERY = [[101, 10], [120, 11], [140, 12], [160, 13], [180, 14], [200, 15]];
+// Mastery (whole level) needed for Enhance level `enh` (0 = none).
+function hgMasteryNeededFor(enh) {
+  let m = 0;
+  HG_ENH_MASTERY.forEach(([e, n]) => { if (enh >= e && n > m) m = n; });
+  return m;
+}
+// Highest Enhance level a whole Mastery level allows (Infinity = no limit).
+function hgEnhanceAllowed(mWhole) {
+  let a = Infinity;
+  HG_ENH_MASTERY.forEach(([e, n]) => { if (n > mWhole && e - 1 < a) a = e - 1; });
+  return a;
+}
+const hgRowNum = (tb, i) => { const r = ((HERO_GEAR_TABLES_CACHE || {})[tb] || [])[i]; return r ? parseFloat(String(rowLabel(r)).replace(/^Lv\.?\s*/, "")) || 0 : i; };
+const hgEnhLevel = (i) => hgRowNum("Enhance Combined", i);
+const hgMastWhole = (i) => Math.floor(hgRowNum("Hero Gear Mastery Forging", i));
+// The first Mastery row of whole level m (-1 = the table doesn't reach it).
+function hgMastIdxFor(m) {
+  const rows = (HERO_GEAR_TABLES_CACHE || {})["Hero Gear Mastery Forging"] || [];
+  for (let i = 0; i < rows.length; i++) if (hgMastWhole(i) >= m) return i;
+  return -1;
+}
+// The rule's steps between two Enhance levels a Mastery level doesn't reach ("140+ needs 12").
+function hgEnhSteps(fromEnh, toEnh, mWhole) {
+  return HG_ENH_MASTERY.filter(([e, n]) => e > fromEnh && e <= toEnh && n > mWhole).sort((a, b) => a[0] - b[0]);
+}
+// A Heroes Gears Enhance track the plan stopped for Mastery: { need, stop, mLab, steps } or null.
+function hgLockInfo(tr, plan) {
+  if (!tr || !tr.hgEnh || !plan || !plan.waits) return null;
+  const w = plan.waits[tr.id], r = plan.lv[tr.id];
+  if (!w || !w.length || !(r < tr.to)) return null;
+  const mLv = plan.lv[w[0][0]] ?? 0, mWhole = hgMastWhole(mLv);
+  const rows = (HERO_GEAR_TABLES_CACHE || {})["Hero Gear Mastery Forging"] || [];
+  const mLab = rows[mLv] ? String(rowLabel(rows[mLv])).replace(/^Lv\.?\s*/, "") : String(mLv);
+  return { need: hgMasteryNeededFor(hgEnhLevel(r + 1)), stop: hgEnhLevel(r), mLab, steps: hgEnhSteps(hgEnhLevel(r), hgEnhLevel(tr.to), mWhole) };
+}
+// The piece window / Set all note: an Enhance target past what the Mastery target allows.
+// mTo / eTo = row indexes. { need, eLab, mLab, allowed, warnIdx, raiseIdx } or null.
+function hgEmWarn(mTo, eTo) {
+  const eLv = hgEnhLevel(eTo), need = hgMasteryNeededFor(eLv), mW = hgMastWhole(mTo);
+  if (!(need > mW)) return null;
+  const allowed = hgEnhanceAllowed(mW), enhRows = (HERO_GEAR_TABLES_CACHE || {})["Enhance Combined"] || [];
+  let warnIdx = 0;
+  enhRows.forEach((r, i) => { if (hgEnhLevel(i) <= allowed) warnIdx = i; });
+  const mRows = (HERO_GEAR_TABLES_CACHE || {})["Hero Gear Mastery Forging"] || [];
+  const mLab = mRows[mTo] ? String(rowLabel(mRows[mTo])).replace(/^Lv\.?\s*/, "") : String(mTo);
+  return { need, eLv, mLab, allowed, warnIdx, raiseIdx: hgMastIdxFor(need) };
+}
+function hgEmWarnHtml(w, btnAttr, stripes, who) {
+  return `<div class="hg-emw">&#9888; ${who ? `<b>${esc(who)}</b>: ` : ""}<b>${esc(t("hg_em_needs").replace("{e}", w.eLv).replace("{m}", w.need))}</b> · ${esc(t("hg_em_target").replace("{t}", w.mLab).replace("{a}", w.allowed))}`
+    + `${stripes ? `<small>${esc(t("hg_em_stripes").replace("{t}", w.mLab))}</small>` : ""}`
+    + `${btnAttr && w.raiseIdx >= 0 ? `<button type="button" class="btn ghost small" ${btnAttr}>${esc(t("hg_em_raise").replace("{m}", w.need))}</button>` : ""}</div>`;
+}
+function hgLockStepsText(steps) {
+  return steps.slice(0, 2).map(([e, n], i) => t(i ? "mk_hg_step2" : "mk_hg_step").replace("{e}", e).replace("{m}", n)).join(", ") + (steps.length > 2 ? " …" : "");
+}
 function heroGearReachTracks(state) {
   const mfRows = HERO_GEAR_TABLES_CACHE["Hero Gear Mastery Forging"] || [], enhRows = HERO_GEAR_TABLES_CACHE["Enhance Combined"] || [];
   if (!mfRows.length || !enhRows.length) return [];
@@ -9762,7 +9875,10 @@ function heroGearReachTracks(state) {
       const st = state[troop][piece][tn], rows = HERO_GEAR_TABLES_CACHE[tn] || [];
       const to = Math.min(Number(st.to) || 0, rows.length - 1);
       const rl = (i) => { const r = rows[i]; return r ? String(rowLabel(r)).replace(/^Lv\./, "") : String(i); };
-      out.push({ id: id(tn), troop, from: Number(st.from) || 0, to, cost: (i) => costs[tn][i] || {},
+      // Enhance: a level past what the piece's Mastery allows needs that Mastery first
+      // (reachPlan raises it inside its target, like research unlock rules).
+      const needs = tn === EN ? (k) => { const m = hgMasteryNeededFor(hgEnhLevel(k)); if (!(m > 0)) return null; const mi = hgMastIdxFor(m); return [[[[id(MF), mi < 0 ? Infinity : mi]]]]; } : undefined;
+      out.push({ id: id(tn), troop, from: Number(st.from) || 0, to, cost: (i) => costs[tn][i] || {}, needs, ...(tn === EN ? { hgEnh: true } : {}),
         name: pieceDisplayName(piece), short: tn === MF ? "M" : "E", grp: `${troop}|${piece}`, lab: rl,
         gain: (i, lv) => (tn === MF ? stats(i, lv[id(EN)] ?? state[troop][piece][EN].from) : stats(lv[id(MF)] ?? state[troop][piece][MF].from, i)) });
     });
@@ -11345,7 +11461,7 @@ const SCAN_SUMMARY_ROWS = [[/\bgems?\b/i, "Gems"], [/\bmeat\b/i, "Meat"], [/\bwo
 // running mismatched code; if it still doesn't match, the promise fails with
 // err.stale and the caller says so.
 const CODE_FILES = {
-  admin: "admin.min.js?v=afc8ef38aa",
+  admin: "admin.min.js?v=0a7cbbe8a6",
   scan: "scan.min.js?v=64a7ef20ff",
   packs: "packs.min.js?v=f248b1fa8f",
   gallery: "gallery.min.js?v=28a7717641",
@@ -11951,6 +12067,7 @@ function openSetAllSheet(o) {
       <div class="cgw-top" data-cgwgrab><div class="cgw-grab" title="${esc(t("cgw_swipe"))}"></div>
       <div class="gs-head"><span class="sal-ic">&#8645;</span><div style="flex:1; min-width:0;"><b>${esc(o.title)}</b><div class="meta">${esc(o.meta)}</div></div>${closeXHtml("data-salclose", "rfa-x sal-x")}</div></div>
       ${pcs}${sec("from")}${sec("to")}
+      ${o.warn ? o.warn((id, key) => res(id, trOf(key)), ticked()) : ""}
       <div class="sal-sum">${sumHtml()}</div>
       <div class="gs-foot ch-foot"><button type="button" class="btn ghost" data-salclose>${esc(t("cancel"))}</button><button type="button" class="btn" data-salapply${changedIds().length ? "" : " disabled"}>${esc(word("sal_apply"))}</button></div>
     </div>`;
@@ -12036,7 +12153,9 @@ function enhGridHtml(o) {
   const notch = o.flags.map((f) => `<i class="eb-n" style="left:${p(f.v)};"></i>`).join("");
   const row = (r) => {
     const st = enhRowStyle(o.T, r.role, r.val, r.base), isT = r.role === "to";
-    const fills = isT ? `<i class="hw-f e4-base" data-egf="b" style="${st.b}"></i><i class="hw-f t" data-egf="t" style="${st.t}"></i>` : `<i class="hw-f n" data-egf="n" style="${st.n}"></i>`;
+    // warn: past this level the target needs more Mastery than its Mastery target (amber stripes).
+    const warn = isT && r.warn != null && r.val != null && r.val > r.warn ? `<i class="hw-f e5-warn" style="left:${p(r.warn)};width:calc(${p(r.val)} - ${p(r.warn)});"></i>` : "";
+    const fills = isT ? `<i class="hw-f e4-base" data-egf="b" style="${st.b}"></i><i class="hw-f t" data-egf="t" style="${st.t}"></i>${warn}` : `<i class="hw-f n" data-egf="n" style="${st.n}"></i>`;
     const ghosts = r.val == null ? [...new Set(r.ghosts || [])].map((v) => `<span class="hw-th ghost${isT ? " t" : ""}" style="left:${p(v)};"></span>`).join("") : "";
     const v = r.val;
     return `<div class="e5-l${isT ? " tgt" : ""}">${esc(r.label)}<b data-egl="${r.role}">${v == null ? "&mdash;" : esc(o.labOf(v))}</b></div>
@@ -27668,6 +27787,10 @@ function gameRules() {
     { key: "heroTrades", group: "heroes", label: "Hero shard & widget trades", type: "fields", help: "How Marks of Valor, Widget Chests and Mystery Points turn into shards / widgets in Budgets.",
       fields: [num("marksPerGeneral", "Marks of Valor for 1 Mythic General shard"), num("marksGeneralWeekly", "…weekly limit (shards)"), num("hallMarksPerShard", "Marks for 1 newest-Gen hero shard"), num("hallWeekly", "…weekly limit (shards)"), num("widgetChestGives", "Widgets from 1 Widget Chest"), num("mysteryGive", "Mystery Points…"), num("mysteryGet", "…for this many widgets"), num("mysteryDaily", "Free Mystery Points a day")],
       get: () => ({ ...HERO_RULES }), set: (v) => { Object.keys(HERO_RULES).forEach((k) => { if (Number.isFinite(Number(v[k]))) HERO_RULES[k] = Number(v[k]); }); } },
+    { key: "hgEnhMastery", group: "heroes", label: t("rule_hg_em"), help: t("rule_hg_em_help"), sub: t("rule_hg_em_sub"),
+      cols: [{ key: "enh", label: t("rule_hg_em_from"), type: "num" }, { key: "mastery", label: t("rule_hg_em_need"), type: "num" }],
+      get: () => HG_ENH_MASTERY.map(([e, m]) => ({ enh: e, mastery: m })),
+      set: (rows) => ruleSetArray(HG_ENH_MASTERY, rows.filter((r) => Number(r.enh) > 0 && Number(r.mastery) > 0).map((r) => [Math.round(Number(r.enh)), Math.round(Number(r.mastery))]).sort((a, b) => a[0] - b[0])) },
     { key: "widgetCost", group: "heroes", label: "Widgets per widget level", help: "Widgets needed to go from the level before to this level.",
       cols: [{ key: "level", label: "Level", type: "auto" }, { key: "cost", label: "Widgets", type: "num" }],
       get: () => WIDGET_LEVEL_COST.slice(1).map((c, i) => ({ level: i + 1, cost: c })),

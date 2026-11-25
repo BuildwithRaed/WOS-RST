@@ -3176,5 +3176,20 @@
 "t:bud_swap":"{h} {lv} menggantikan {f} (Gen {g}, {flv})",
 "t:bud_swap_empty":"{h} {lv} di tempat kosong roster",
 "t:bud_swap_w":"Widget {w}",
-"t:bud_swap_note":"Dihitung saat hero mengambil tempat pasukan itu di roster Dasbor."
+"t:bud_swap_note":"Dihitung saat hero mengambil tempat pasukan itu di roster Dasbor.",
+"t:mk_hg_lock":"Mastery {n} dulu",
+"t:mk_hg_cant":"Ransel belum bisa menaikkan Enhance melewati {x}",
+"t:mk_hg_step":"Enhance {e}+ butuh Mastery {m}",
+"t:mk_hg_mastery_is":"(Mastery {piece} = {m})",
+"t:cda_hg_lock":"Enhance {piece}: Mastery {n} dulu",
+"t:hg_em_needs":"Enhance {e} butuh Mastery {m}",
+"t:hg_em_target":"target Mastery kamu {t} (cukup sampai {a})",
+"t:hg_em_stripes":"Bagian bergaris = melewati batas Mastery {t}.",
+"t:hg_em_raise":"Naikkan target Mastery ke {m}",
+"t:rule_hg_em":"Enhance butuh Mastery",
+"t:rule_hg_em_help":"Enhance sebuah gear hanya bisa setinggi ini bila Mastery-nya (level bulat) minimal angka yang ditampilkan. Tidak ada yang dikunci di halaman: tanda, Bisa sekarang dan jendela gear mengikutinya, dan memberi peringatan bila target butuh Mastery lebih.",
+"t:rule_hg_em_sub":"Enhance sampai 100 tidak butuh Mastery.",
+"t:rule_hg_em_from":"Enhance dari",
+"t:rule_hg_em_need":"Mastery dibutuhkan",
+"t:mk_hg_step2":"{e}+ butuh Mastery {m}"
 }

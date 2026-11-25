@@ -3178,5 +3178,20 @@
 "t:bud_swap":"{h} {lv} al posto di {f} (Gen {g}, {flv})",
 "t:bud_swap_empty":"{h} {lv} in un posto vuoto della squadra",
 "t:bud_swap_w":"Widget {w}",
-"t:bud_swap_note":"Conta quando l'eroe prende il posto di quella truppa nella squadra della Dashboard."
+"t:bud_swap_note":"Conta quando l'eroe prende il posto di quella truppa nella squadra della Dashboard.",
+"t:mk_hg_lock":"Prima Maestria {n}",
+"t:mk_hg_cant":"Lo Zaino non porta ancora il Potenziamento oltre {x}",
+"t:mk_hg_step":"Potenziamento {e}+ richiede Maestria {m}",
+"t:mk_hg_mastery_is":"(Maestria di {piece}: {m})",
+"t:cda_hg_lock":"Potenziamento {piece}: prima Maestria {n}",
+"t:hg_em_needs":"Potenziamento {e} richiede Maestria {m}",
+"t:hg_em_target":"il tuo obiettivo di Maestria è {t} (basta fino a {a})",
+"t:hg_em_stripes":"Parte a righe = oltre ciò che consente Maestria {t}.",
+"t:hg_em_raise":"Alza l'obiettivo di Maestria a {m}",
+"t:rule_hg_em":"Il Potenziamento richiede Maestria",
+"t:rule_hg_em_help":"Il Potenziamento di un pezzo arriva fin qui solo se la sua Maestria (livello intero) è almeno il numero indicato. Nulla viene bloccato nelle pagine: segni, Fattibile ora e la finestra del pezzo la seguono e avvisano quando un obiettivo richiede più Maestria.",
+"t:rule_hg_em_sub":"Il Potenziamento fino a 100 non richiede Maestria.",
+"t:rule_hg_em_from":"Potenziamento da",
+"t:rule_hg_em_need":"Maestria richiesta",
+"t:mk_hg_step2":"{e}+ richiede Maestria {m}"
 }

@@ -3178,5 +3178,20 @@
 "t:bud_swap":"{h} {lv} en lugar de {f} (Gen {g}, {flv})",
 "t:bud_swap_empty":"{h} {lv} en un hueco vacío de la plantilla",
 "t:bud_swap_w":"Widget {w}",
-"t:bud_swap_note":"Cuenta cuando el héroe ocupa el puesto de esa tropa en tu plantilla del Panel."
+"t:bud_swap_note":"Cuenta cuando el héroe ocupa el puesto de esa tropa en tu plantilla del Panel.",
+"t:mk_hg_lock":"Primero Maestría {n}",
+"t:mk_hg_cant":"Tu Mochila aún no sube la Mejora más allá de {x}",
+"t:mk_hg_step":"Mejora {e}+ necesita Maestría {m}",
+"t:mk_hg_mastery_is":"(Maestría de {piece}: {m})",
+"t:cda_hg_lock":"Mejora de {piece}: primero Maestría {n}",
+"t:hg_em_needs":"Mejora {e} necesita Maestría {m}",
+"t:hg_em_target":"tu objetivo de Maestría es {t} (alcanza hasta {a})",
+"t:hg_em_stripes":"Parte rayada = más de lo que permite Maestría {t}.",
+"t:hg_em_raise":"Subir objetivo de Maestría a {m}",
+"t:rule_hg_em":"La Mejora necesita Maestría",
+"t:rule_hg_em_help":"La Mejora de una pieza solo llega hasta aquí cuando su Maestría (nivel entero) es al menos el número indicado. Nada se bloquea en las páginas: las marcas, Gratis ahora y la ventana de la pieza la siguen y avisan cuando un objetivo necesita más Maestría.",
+"t:rule_hg_em_sub":"La Mejora hasta 100 no necesita Maestría.",
+"t:rule_hg_em_from":"Mejora desde",
+"t:rule_hg_em_need":"Maestría necesaria",
+"t:mk_hg_step2":"{e}+ necesita Maestría {m}"
 }

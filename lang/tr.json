@@ -3176,5 +3176,20 @@
 "t:bud_swap":"{h} {lv}, {f} yerine (Nesil {g}, {flv})",
 "t:bud_swap_empty":"{h} {lv}, kadroda boş bir yerde",
 "t:bud_swap_w":"Parçacık {w}",
-"t:bud_swap_note":"Kahraman, Pano kadrosunda o birliğin yerini alınca sayılır."
+"t:bud_swap_note":"Kahraman, Pano kadrosunda o birliğin yerini alınca sayılır.",
+"t:mk_hg_lock":"Önce Ustalık {n}",
+"t:mk_hg_cant":"Çantan Güçlendirmeyi henüz {x} üstüne çıkaramaz",
+"t:mk_hg_step":"Güçlendirme {e}+ için Ustalık {m} gerekir",
+"t:mk_hg_mastery_is":"({piece} Ustalığı {m})",
+"t:cda_hg_lock":"{piece} Güçlendirme: önce Ustalık {n}",
+"t:hg_em_needs":"Güçlendirme {e} için Ustalık {m} gerekir",
+"t:hg_em_target":"Ustalık hedefin {t} ({a} için yeterli)",
+"t:hg_em_stripes":"Çizgili kısım = Ustalık {t} izin verdiğinin ötesi.",
+"t:hg_em_raise":"Ustalık hedefini {m} yap",
+"t:rule_hg_em":"Güçlendirme Ustalık ister",
+"t:rule_hg_em_help":"Bir parçanın Güçlendirmesi ancak Ustalığı (tam seviye) en az gösterilen sayıdaysa bu kadar yükselir. Sayfalarda hiçbir şey kilitlenmez: işaretler, Şimdi yapılabilir ve parça penceresi buna uyar ve bir hedef daha fazla Ustalık istediğinde uyarır.",
+"t:rule_hg_em_sub":"100'e kadar Güçlendirme Ustalık istemez.",
+"t:rule_hg_em_from":"Güçlendirme şuradan",
+"t:rule_hg_em_need":"Gereken Ustalık",
+"t:mk_hg_step2":"{e}+ için Ustalık {m} gerekir"
 }

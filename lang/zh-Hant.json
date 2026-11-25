@@ -3176,5 +3176,20 @@
 "t:bud_swap":"{h} {lv} 替換 {f}（第 {g} 代，{flv}）",
 "t:bud_swap_empty":"{h} {lv} 放在陣容空位",
 "t:bud_swap_w":"專屬裝備 {w}",
-"t:bud_swap_note":"英雄在儀表板陣容中佔據該兵種位置後才計算。"
+"t:bud_swap_note":"英雄在儀表板陣容中佔據該兵種位置後才計算。",
+"t:mk_hg_lock":"先精通 {n}",
+"t:mk_hg_cant":"背包暫時無法讓強化超過 {x}",
+"t:mk_hg_step":"強化 {e}+ 需要精通 {m}",
+"t:mk_hg_mastery_is":"（{piece} 精通為 {m}）",
+"t:cda_hg_lock":"{piece} 強化：先精通 {n}",
+"t:hg_em_needs":"強化 {e} 需要精通 {m}",
+"t:hg_em_target":"你的精通目標是 {t}（夠到 {a}）",
+"t:hg_em_stripes":"條紋部分 = 超出精通 {t} 允許的範圍。",
+"t:hg_em_raise":"把精通目標提高到 {m}",
+"t:rule_hg_em":"強化需要精通",
+"t:rule_hg_em_help":"裝備的強化只有在精通（整數等級）至少為所示數字時才能到這一級。頁面上不會鎖定任何東西：標記、現在可做和裝備視窗會遵循此規則，並在目標需要更多精通時提醒。",
+"t:rule_hg_em_sub":"強化到 100 不需要精通。",
+"t:rule_hg_em_from":"強化起始",
+"t:rule_hg_em_need":"所需精通",
+"t:mk_hg_step2":"{e}+ 需要精通 {m}"
 }

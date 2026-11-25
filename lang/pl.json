@@ -3178,5 +3178,20 @@
 "t:bud_swap":"{h} {lv} zamiast {f} (Gen {g}, {flv})",
 "t:bud_swap_empty":"{h} {lv} na pustym miejscu w składzie",
 "t:bud_swap_w":"Widżet {w}",
-"t:bud_swap_note":"Liczy się, gdy bohater zajmie miejsce tej formacji w składzie na Pulpicie."
+"t:bud_swap_note":"Liczy się, gdy bohater zajmie miejsce tej formacji w składzie na Pulpicie.",
+"t:mk_hg_lock":"Najpierw Mistrzostwo {n}",
+"t:mk_hg_cant":"Plecak nie podniesie jeszcze Wzmocnienia powyżej {x}",
+"t:mk_hg_step":"Wzmocnienie {e}+ wymaga Mistrzostwa {m}",
+"t:mk_hg_mastery_is":"(Mistrzostwo {piece}: {m})",
+"t:cda_hg_lock":"Wzmocnienie {piece}: najpierw Mistrzostwo {n}",
+"t:hg_em_needs":"Wzmocnienie {e} wymaga Mistrzostwa {m}",
+"t:hg_em_target":"twój cel Mistrzostwa to {t} (wystarczy do {a})",
+"t:hg_em_stripes":"Część w paski = ponad to, na co pozwala Mistrzostwo {t}.",
+"t:hg_em_raise":"Podnieś cel Mistrzostwa do {m}",
+"t:rule_hg_em":"Wzmocnienie wymaga Mistrzostwa",
+"t:rule_hg_em_help":"Wzmocnienie elementu może sięgnąć tak wysoko tylko, gdy jego Mistrzostwo (pełny poziom) wynosi co najmniej podaną liczbę. Nic nie jest blokowane na stronach: znaczniki, Możliwe teraz i okno elementu stosują tę zasadę i ostrzegają, gdy cel wymaga więcej Mistrzostwa.",
+"t:rule_hg_em_sub":"Wzmocnienie do 100 nie wymaga Mistrzostwa.",
+"t:rule_hg_em_from":"Wzmocnienie od",
+"t:rule_hg_em_need":"Wymagane Mistrzostwo",
+"t:mk_hg_step2":"{e}+ wymaga Mistrzostwa {m}"
 }

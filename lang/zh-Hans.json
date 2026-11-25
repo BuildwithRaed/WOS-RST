@@ -3178,5 +3178,20 @@
 "t:bud_swap":"{h} {lv} 替换 {f}（第 {g} 代，{flv}）",
 "t:bud_swap_empty":"{h} {lv} 放在阵容空位",
 "t:bud_swap_w":"专属装备 {w}",
-"t:bud_swap_note":"英雄在仪表盘阵容中占据该兵种位置后才计算。"
+"t:bud_swap_note":"英雄在仪表盘阵容中占据该兵种位置后才计算。",
+"t:mk_hg_lock":"先精通 {n}",
+"t:mk_hg_cant":"背包暂时无法让强化超过 {x}",
+"t:mk_hg_step":"强化 {e}+ 需要精通 {m}",
+"t:mk_hg_mastery_is":"（{piece} 精通为 {m}）",
+"t:cda_hg_lock":"{piece} 强化：先精通 {n}",
+"t:hg_em_needs":"强化 {e} 需要精通 {m}",
+"t:hg_em_target":"你的精通目标是 {t}（够到 {a}）",
+"t:hg_em_stripes":"条纹部分 = 超出精通 {t} 允许的范围。",
+"t:hg_em_raise":"把精通目标提高到 {m}",
+"t:rule_hg_em":"强化需要精通",
+"t:rule_hg_em_help":"装备的强化只有在精通（整数等级）至少为所示数字时才能到这一级。页面上不会锁定任何东西：标记、现在可做和装备窗口会遵循此规则，并在目标需要更多精通时提醒。",
+"t:rule_hg_em_sub":"强化到 100 不需要精通。",
+"t:rule_hg_em_from":"强化起始",
+"t:rule_hg_em_need":"所需精通",
+"t:mk_hg_step2":"{e}+ 需要精通 {m}"
 }
