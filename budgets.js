@@ -5,7 +5,7 @@
 // code and the Budgets state other pages read (My Purchases, the Menu, the Dashboard,
 // recordBudgetNeeds / budgetInvalidate, admin.js / scan.js / the planner worker) stay
 // in app.js. The site loads the packed copy budgets.min.js (tools/stamp.js).
-window.BUDGETS_BUILD = "36b82f5a6d";
+window.BUDGETS_BUILD = "ee4063867a";
 
 // Order of the Budgets page tiles (owner picked A, 22 Nov 2026): per person in
 // calc_state budget_page_order = { order: [calcKeys] }; display only. Pages
@@ -793,7 +793,7 @@ async function renderBudgetsPageMain(opts = {}) {
           out.push({ img: u.img || "", face: !!u.face, name: u.name, troop: "", text: nw ? `${nw} → ${goalLvTxt(last.label)}` : `→ ${goalLvTxt(last.label)}` });
         });
       }
-    } catch (e) { return []; }
+    } catch { return []; }
     return out;
   };
   const upFoldHtml = (calcKey) => {

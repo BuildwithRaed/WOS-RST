@@ -1310,7 +1310,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 132; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 133; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2642,7 +2642,6 @@ const T = {
   b3_by: { en: "by {date}" },
   b3_after: { en: "after target" },
   b3_done_on: { en: "done {date}" },
-  b3_not_counted: { en: "not in this budget" },
   b3_covered: { en: "Backpack covers it" },
   b3_covered_s: { en: "Covered" },
   bud_up_charm: { en: "charm" },
@@ -2764,9 +2763,7 @@ const T = {
   trd_calc: { en: "Calculator" },
   trade_apply: { en: "Use my spare items (trades) in pack cost" },
   trade_rates: { en: "Trade rates" },
-  trade_free: { en: "Free from your spare items (trade, no purchase)" },
   trade_then: { en: "Then trade" },
-  trade_via_packs: { en: "Bought as packs then traded" },
   trade_left_over: { en: "left over" },
   pack_group_placeholder: { en: "Group…" },
   pack_group_title: { en: "Main name this table sits under. Tables with the same group name are shown together." },
@@ -11353,7 +11350,7 @@ const CODE_FILES = {
   packs: "packs.min.js?v=f248b1fa8f",
   gallery: "gallery.min.js?v=28a7717641",
   purchases: "purchases.min.js?v=c400a15ad7",
-  budgets: "budgets.min.js?v=36b82f5a6d",
+  budgets: "budgets.min.js?v=ee4063867a",
 };
 const CODE_P = {}, CODE_OK = {};
 function loadCode(name) {
@@ -17962,30 +17959,6 @@ async function budgetStatDeltasMore(calcKey) {
   } catch (e) { return []; }
   return out;
 }
-// Short "what changes" lines for a page's plan (e.g. "Helmet: T5 ★0.4 → T6").
-function budgetPlanLines(calcKey) {
-  const lines = [];
-  if (calcKey === "chief_gear" && CHIEF_GEAR_ROWS) {
-    CHIEF_GEAR_PIECES.forEach((p) => {
-      const st = CHIEF_GEAR_STATE[p.key], to = Math.min(st.to, chiefGearLastIdx());
-      if (to > st.from) lines.push(`${pieceDisplayName(p.name)} (${troopDisplayName(p.troop)}): ${chiefGearRowLabel(CHIEF_GEAR_ROWS[st.from])} → ${chiefGearRowLabel(CHIEF_GEAR_ROWS[to])}`);
-    });
-  } else if (calcKey === "charm") {
-    CHARM_PIECES.forEach((p) => {
-      const ups = CHARM_CALC_STATE[p.key].map((s, i) => Number(s.target) > Number(s.current) ? `${s.current}→${s.target}` : null).filter(Boolean);
-      if (ups.length) lines.push(`${pieceDisplayName(p.name || p.key)} (${troopDisplayName(p.troop)}): ${ups.join(", ")}`);
-    });
-  } else if (calcKey === "hero_gear" && HERO_GEAR_TABLES_CACHE) {
-    BUDGET_HG_SETS.forEach((sn) => {
-      const setState = HERO_GEAR_SETS[sn], pre = BUDGET_HG_SETS.length > 1 ? `${gearSetDisplayName(sn)} · ` : "";
-      HERO_GEAR_TROOPS.forEach((tr) => HERO_GEAR_PIECE_NAMES.forEach((piece) => {
-        const ups = GEAR_LEVELING_TABLES.map((tname) => { const st = setState[tr][piece][tname]; return st.to > st.from ? `${st.from}→${st.to}` : null; }).filter(Boolean);
-        if (ups.length) lines.push(`${pre}${troopDisplayName(tr)} ${piece}: ${ups.join(" / ")}`);
-      }));
-    });
-  }
-  return lines;
-}
 // Everything the Budgets page needs for one calculator page.
 async function budgetForPage(calcKey, targetDays, opts = {}) {
   await ensurePackLinks();
@@ -18041,7 +18014,6 @@ async function budgetForPage(calcKey, targetDays, opts = {}) {
     }
   }
   res.deltas = BUDGET_STAT_MORE.has(calcKey) ? (opts.stats ? await budgetStatDeltasMore(calcKey) : []) : budgetStatDeltas(calcKey);
-  res.lines = budgetPlanLines(calcKey);
   return res;
 }
 // ---- Combined Budgets plan ----
