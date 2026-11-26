@@ -5,7 +5,7 @@
 // live here; anything another page (Budgets, the Menu, the Dashboard, admin.js /
 // scan.js / the planner worker) uses stays in app.js. The site loads the packed copy
 // purchases.min.js (tools/stamp.js).
-window.PURCHASES_BUILD = "dc4091f97b";
+window.PURCHASES_BUILD = "9586be8a45";
 
 function packOpenSettingsOnPacks(id) {
   PACK_SETTINGS_FOCUS = String(id);
@@ -232,8 +232,8 @@ let PUR_SUG_WEEK = 0; // My Purchases: the suggestions' chosen week tab (0 = thi
 let PUR_SUG_KEEP = null; // My Purchases: the suggestions box's height / scroll before a redraw
 // The pack picker's All tab: category groups folded (kept for the visit and in this browser).
 const PUR_PICK_FOLD = new Set((() => { try { const v = JSON.parse(localStorage.getItem("pur_pick_fold") || "[]"); return Array.isArray(v) ? v.map(String) : []; } catch { return []; } })());
-let PUR_PICK_TAB = "on"; // Add a pack: the pack picker's tab ("on" / "soon" / "all"), kept for the visit
-let PUR_PICK_GROUP = (() => { try { const v = localStorage.getItem("pur_pick_group"); return v === "date" || v === "month" ? v : "cat"; } catch { return "cat"; } })(); // pack picker's All tab: by category, date or month
+const PUR_PICK_MORE = new Set(); // pack picker: folds showing every row ("Show N more" tapped), for the visit
+let PUR_PICK_GROUP = (() => { try { const v = localStorage.getItem("pur_pick_group"); return v === "cat" || v === "month" ? v : "date"; } catch { return "date"; } })(); // pack picker: by date (default), category or month
 // Your packs → Will buy (R3): which dates show and how ({ by: "month" | "week",
 // preset: "all" | "this" | "next" | "target" | "custom", from, to }), for the
 // visit and in this browser.
@@ -2058,7 +2058,9 @@ async function renderPurchasesPageMain() {
     if (!modal) { modal = document.createElement("div"); modal.id = "purPickModal"; modal.className = "modal-overlay pur-pk-ov"; document.body.appendChild(modal); }
     let q = "";
     const close = () => { modal.style.display = "none"; };
-    const inTab = (i, tab) => (tab === "on" ? i.on : tab === "soon" ? !i.on && i.next != null : true);
+    // Date view leaves out packs that won't be on sale again (a dated pack with no
+    // window left, a first-buy pack already used).
+    const notPast = (i) => !((i.sale.kind === "dated" && !packSaleWinAt(i.sale, 0)) || (i.first && !i.on));
     const match = (i) => !q || i.words.includes(q);
     // All: grouped by category in the Packs page's order (saved order first,
     // then first appearance; "Not assigned" last).
@@ -2069,12 +2071,19 @@ async function renderPurchasesPageMain() {
       return [...saved.filter((g) => seen.includes(g)), ...seen.filter((g) => !saved.includes(g)), ""];
     })();
     // D1: name, when it is on sale, how often + its price.
-    const rowHtml = (i) => { const sl = pkSaleHtml(i); return `<button type="button" class="pur-pk-row pur-pk-row3${i.id === String(PUR_FORM.table) ? " on" : ""}" data-ppkid="${esc(i.id)}"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${i.plan ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span> ` : ""}${esc(i.name)}</b>${sl ? `<small>${sl}</small>` : ""}<small class="pur-pk-of"><span>${esc(i.sale.kind === "trigger" ? "" : i.sale.often)}</span><span class="pur-pk-pr">${esc(i.price)}</span></small></span></button>`; };
+    // A pack not on sale today: the date box goes to its next sale day.
+    const nextDay = (i) => { const w = packSaleWinAt(i.sale, 0); return w && !w.in ? ` data-ppkday="${packDayKey(new Date(packStartOfToday().getTime() + w.s * 86400000))}"` : ""; };
+    const rowHtml = (i) => { const sl = pkSaleHtml(i); return `<button type="button" class="pur-pk-row pur-pk-row3${i.id === String(PUR_FORM.table) ? " on" : ""}" data-ppkid="${esc(i.id)}"${nextDay(i)}><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${i.plan ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span> ` : ""}${esc(i.name)}</b>${sl ? `<small>${sl}</small>` : ""}<small class="pur-pk-of"><span>${esc(i.sale.kind === "trigger" ? "" : i.sale.often)}</span><span class="pur-pk-pr">${esc(i.price)}</span></small></span></button>`; };
     // All: by category (Packs page order) or by date (D2: On now / This week / Next week / Later).
     const wk0 = (packStartOfToday().getUTCDay() + 6) % 7;
+    const PK_FIRST = 6;
+    const moreHtml = (g, n) => `<button type="button" class="pur-pk-more" data-ppkmore="${esc(g)}">${esc(t("pkb_show_more").replace("{n}", n))} &#9662;</button>`;
+    const rowsOf = (g, its, one) => { const all = q || PUR_PICK_MORE.has(g) || its.length <= PK_FIRST + 1, sh = all ? its : its.slice(0, PK_FIRST); return sh.map(one).join("") + (all ? "" : moreHtml(g, its.length - PK_FIRST)); };
+    // A folded heading shows the first few packs' pictures.
+    const stripHtml = (its) => { const ics = its.map((x) => (x.i || x).icon).filter(Boolean).slice(0, 4); return ics.length ? `<span class="pur-pk-stk" aria-hidden="true">${ics.map((h) => `<span>${h}</span>`).join("")}</span>` : ""; };
     const dateGroups = [["on", t("pur_pk_d_on"), ""], ["this", t("pur_pk_d_this"), `${pkDay(0)} – ${pkDay(6 - wk0)}`], ["next", t("pur_pk_d_next"), `${pkDay(7 - wk0)} – ${pkDay(13 - wk0)}`], ["later", t("pur_pk_d_later"), ""]];
     const groupsOf = (list) => (PUR_PICK_GROUP === "date"
-      ? dateGroups.map(([k, label, range]) => ({ g: "d:" + k, label, range, its: list.filter((i) => pkDateGrp(i) === k) }))
+      ? dateGroups.map(([k, label, range]) => ({ g: "d:" + k, label, range, its: list.filter((i) => notPast(i) && pkDateGrp(i) === k) }))
       : catOrder.map((g) => ({ g, label: g || t("packs_filter_none"), range: "", its: list.filter((i) => (catOrder.includes(i.cat) ? i.cat : "") === g) }))).filter((x) => x.its.length);
     // Month (L3): "‹ December 2026 Today ›", then each game week of the month
     // with its events and every pack on sale that week (their days on the right;
@@ -2118,38 +2127,35 @@ async function renderPurchasesPageMain() {
         const evs = [];
         GAME_EVENTS.forEach((ev) => gameEventStarts(ev, dOf(ws), dOf(we)).forEach(() => { if (!evs.includes(ev)) evs.push(ev); }));
         const evHtml = evs.map((ev) => `<span class="pur-pk-ev" style="background:${esc(gameEventColor(ev.key))}">${esc(ev.name)}</span>`).join("");
-        html += `<button type="button" class="pur-pk-wh" data-ppkwk="${esc(w.key)}" aria-expanded="${!f}"><span><b>${esc(t("pur_pk_week_n").replace("{n}", n))}</b> · ${esc(range(ws, we))}${evHtml}</span><small>${esc(its.length === 1 ? t("pur_pk_1pack") : t("pur_pk_npacks").replace("{n}", its.length))} <i aria-hidden="true">${f ? "&#9656;" : "&#9662;"}</i></small></button>`
-          + (f ? "" : its.map(({ i, s, e }) => `<button type="button" class="pur-pk-row pur-pk-row3 pur-pk-rowm${i.id === String(PUR_FORM.table) ? " on" : ""}" data-ppkid="${esc(i.id)}" data-ppkday="${packDayKey(dOf(s))}"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${i.plan ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span> ` : ""}${esc(i.name)}</b><small class="pur-pk-of"><span>${esc(i.sale.often)}</span><span class="pur-pk-pr">${esc(i.price)}</span></small></span><span class="pur-pk-wd"><b>${esc(s === e ? wd(s) : `${wd(s)}–${wd(e)}`)}</b><small>${esc(range(s, e))}</small></span></button>`).join(""));
+        const rowM = ({ i, s, e }) => `<button type="button" class="pur-pk-row pur-pk-row3 pur-pk-rowm${i.id === String(PUR_FORM.table) ? " on" : ""}" data-ppkid="${esc(i.id)}" data-ppkday="${packDayKey(dOf(s))}"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${i.plan ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span> ` : ""}${esc(i.name)}</b><small class="pur-pk-of"><span>${esc(i.sale.often)}</span><span class="pur-pk-pr">${esc(i.price)}</span></small></span><span class="pur-pk-wd"><b>${esc(s === e ? wd(s) : `${wd(s)}–${wd(e)}`)}</b><small>${esc(range(s, e))}</small></span></button>`;
+        html += `<button type="button" class="pur-pk-wh" data-ppkwk="${esc(w.key)}" aria-expanded="${!f}"><span><b>${esc(t("pur_pk_week_n").replace("{n}", n))}</b> · ${esc(range(ws, we))}${w.now ? `<span class="pur-pk-now">${esc(t("pcl_this_week"))}</span>` : ""}${evHtml}</span><span class="pur-pk-gr">${f ? stripHtml(its) : ""}<small>${esc(its.length === 1 ? t("pur_pk_1pack") : t("pur_pk_npacks").replace("{n}", its.length))} <i aria-hidden="true">${f ? "&#9656;" : "&#9662;"}</i></small></span></button>`
+          + (f ? "" : rowsOf("w:" + w.key, its, rowM));
       });
       return head + bar + html;
     };
+    // Date: On now open, This week / Next week / Later folded until opened ("o:<g>" = opened).
+    const defShut = (g) => g === "d:this" || g === "d:next" || g === "d:later";
+    const isShut = (g) => (defShut(g) ? !PUR_PICK_FOLD.has("o:" + g) : PUR_PICK_FOLD.has(g));
+    const setShut = (g, shut) => { PUR_PICK_FOLD.delete(g); PUR_PICK_FOLD.delete("o:" + g); if (defShut(g) ? !shut : shut) PUR_PICK_FOLD.add(defShut(g) ? "o:" + g : g); };
     const listHtml = () => {
-      const tab = PUR_PICK_TAB, list = infos.filter((i) => match(i) && inTab(i, tab));
-      if (tab === "all" && PUR_PICK_GROUP === "month") return monthHtml(list);
-      if (tab === "all" && list.length) {
-        const ngNote = ngHidden ? `<div class="pur-pk-ngnote">${esc(t("pur_pk_ng_later"))}</div>` : "";
-        // Each heading folds its group (kept for the visit and in this browser); searching opens every group with matches.
-        const groups = groupsOf(list);
-        const folded = (g) => !q && PUR_PICK_FOLD.has(g);
-        const allShut = groups.every((x) => folded(x.g));
-        const bar = q ? "" : `<div class="pur-pk-allbar"><button type="button" data-ppkall>${esc(t(allShut ? "pur_pk_show_all" : "pur_pk_hide_all"))}</button></div>`;
-        return bar + groups.map(({ g, label, range, its }) => { const f = folded(g); return `<button type="button" class="pur-pk-gh" data-ppkgrp="${esc(g)}" aria-expanded="${!f}"><span>${esc(label)}${range ? ` <small class="pur-pk-rg">${esc(range)}</small>` : ""} <small>${its.length}</small></span><i aria-hidden="true">${f ? "&#9656;" : "&#9662;"}</i></button>${f ? "" : its.map((i) => rowHtml(i)).join("")}`; }).join("") + ngNote;
-      }
+      const list = infos.filter(match);
+      if (PUR_PICK_GROUP === "month") return monthHtml(list);
       const ngNote = ngHidden ? `<div class="pur-pk-ngnote">${esc(t("pur_pk_ng_later"))}</div>` : "";
-      return (list.length ? list.map((i) => rowHtml(i)).join("") : `<div class="meta pur-pk-none">${esc(t("pur_pk_none"))}</div>`) + ngNote;
+      const groups = groupsOf(list);
+      if (!groups.length) return `<div class="meta pur-pk-none">${esc(t("pur_pk_none"))}</div>` + ngNote;
+      // Each heading folds its group (kept for the visit and in this browser); searching opens every group with matches.
+      const folded = (g) => !q && isShut(g);
+      const allShut = groups.every((x) => folded(x.g));
+      const bar = q ? "" : `<div class="pur-pk-allbar"><button type="button" data-ppkall>${esc(t(allShut ? "pur_pk_show_all" : "pur_pk_hide_all"))}</button></div>`;
+      return bar + groups.map(({ g, label, range, its }) => { const f = folded(g); return `<button type="button" class="pur-pk-gh" data-ppkgrp="${esc(g)}" aria-expanded="${!f}"><span>${esc(label)}${range ? ` <small class="pur-pk-rg">${esc(range)}</small>` : ""}</span><span class="pur-pk-gr">${f ? stripHtml(its) : ""}<small>${its.length}</small><i aria-hidden="true">${f ? "&#9656;" : "&#9662;"}</i></span></button>${f ? "" : rowsOf(g, its, rowHtml)}`; }).join("") + ngNote;
     };
-    const segHtml = () => ["on", "soon", "all"].map((k) => `<button type="button" data-ppktab="${k}" class="${PUR_PICK_TAB === k ? "on" : ""}" aria-pressed="${PUR_PICK_TAB === k}">${esc(t("pur_pk_tab_" + k))} · ${infos.filter((i) => match(i) && inTab(i, k)).length}</button>`).join("");
     const fill = () => {
-      modal.querySelector(".pur-pk-seg").innerHTML = segHtml();
-      modal.querySelector(".pur-pk-note").textContent = t("pur_pk_note_" + PUR_PICK_TAB);
-      const gb = modal.querySelector(".pur-pk-grp");
-      gb.hidden = PUR_PICK_TAB !== "all";
-      gb.innerHTML = `<span class="meta">${esc(t("pur_pk_group"))}</span><span class="pur-pk-seg pur-pk-gseg" role="group">${["cat", "date", "month"].map((k) => `<button type="button" data-ppkgby="${k}" class="${PUR_PICK_GROUP === k ? "on" : ""}" aria-pressed="${PUR_PICK_GROUP === k}">${esc(t("pur_pk_group_" + k))}</button>`).join("")}</span>`;
+      modal.querySelector(".pur-pk-seg").innerHTML = ["date", "cat", "month"].map((k) => `<button type="button" data-ppkgby="${k}" class="${PUR_PICK_GROUP === k ? "on" : ""}" aria-pressed="${PUR_PICK_GROUP === k}">${esc(t("pur_pk_group_" + k))}</button>`).join("");
       const l = modal.querySelector(".pur-pk-list"); l.innerHTML = listHtml(); l.scrollTop = 0;
     };
     modal.innerHTML = `<div class="modal-box pur-pk-box"><div class="pur-m-head"><h2>${esc(t("pur_pk_title"))}</h2>${closeXHtml("data-ppkclose")}</div>
       <label class="pur-pk-search"><span aria-hidden="true">&#128269;</span><input type="search" data-ppkq placeholder="${esc(t("pur_pk_search"))}" aria-label="${esc(t("pur_pk_search"))}" autocomplete="off" /></label>
-      <div class="pur-pk-seg" role="group"></div><div class="pur-pk-grp" hidden></div><div class="meta pur-pk-note"></div><div class="pur-pk-list"></div></div>`;
+      <div class="pur-pk-seg" role="group" aria-label="${esc(t("pur_pk_group"))}"></div><div class="pur-pk-note">${esc(t("pur_pk_hint").replace("{cur}", packConvert(4.99, "USD").code))}</div><div class="pur-pk-list"></div></div>`;
     modal.style.display = "flex";
     fill();
     modal.onclick = (ev) => {
@@ -2157,20 +2163,20 @@ async function renderPurchasesPageMain() {
       const gh = ev.target.closest("[data-ppkgrp]"), ab = ev.target.closest("[data-ppkall]");
       if (gh || ab) {
         const l = modal.querySelector(".pur-pk-list"), top = l.scrollTop;
-        if (gh) { const g = gh.dataset.ppkgrp; if (PUR_PICK_FOLD.has(g)) PUR_PICK_FOLD.delete(g); else PUR_PICK_FOLD.add(g); }
-        else { const gs = groupsOf(infos.filter((i) => match(i))).map((x) => x.g); if (gs.every((g) => PUR_PICK_FOLD.has(g))) gs.forEach((g) => PUR_PICK_FOLD.delete(g)); else gs.forEach((g) => PUR_PICK_FOLD.add(g)); }
+        if (gh) { const g = gh.dataset.ppkgrp; setShut(g, !isShut(g)); }
+        else { const gs = groupsOf(infos.filter(match)).map((x) => x.g), shut = gs.every(isShut); gs.forEach((g) => setShut(g, !shut)); }
         try { localStorage.setItem("pur_pick_fold", JSON.stringify([...PUR_PICK_FOLD])); } catch { /* blocked */ }
         l.innerHTML = listHtml(); l.scrollTop = top;
         return;
       }
-      const tb2 = ev.target.closest("[data-ppktab]");
-      if (tb2) { PUR_PICK_TAB = tb2.dataset.ppktab; fill(); return; }
+      const mo = ev.target.closest("[data-ppkmore]");
+      if (mo) { const l = modal.querySelector(".pur-pk-list"), top = l.scrollTop; PUR_PICK_MORE.add(mo.dataset.ppkmore); l.innerHTML = listHtml(); l.scrollTop = top; return; }
       const gby = ev.target.closest("[data-ppkgby]");
       if (gby) { PUR_PICK_GROUP = gby.dataset.ppkgby; try { localStorage.setItem("pur_pick_group", PUR_PICK_GROUP); } catch { /* blocked */ } fill(); return; }
       const wh = ev.target.closest("[data-ppkwk]"), wa = ev.target.closest("[data-ppkwkall]");
       if (wh || wa) {
         const l = modal.querySelector(".pur-pk-list"), top = l.scrollTop;
-        const weeks = monthWeeks(infos.filter((i) => match(i) && inTab(i, PUR_PICK_TAB))).weeks;
+        const weeks = monthWeeks(infos.filter(match)).weeks;
         if (wh) { const w = weeks.find((x) => x.key === wh.dataset.ppkwk); if (w) wkSet(w, !wkFolded(w)); }
         else { const shut = weeks.every((w) => wkFolded(w)); weeks.forEach((w) => wkSet(w, !shut)); }
         try { localStorage.setItem("pur_pick_fold", JSON.stringify([...PUR_PICK_FOLD])); } catch { /* blocked */ }
@@ -2182,7 +2188,7 @@ async function renderPurchasesPageMain() {
       const row = ev.target.closest("[data-ppkid]");
       if (row && sel) {
         close();
-        // Month view: the date box goes to the pack's first sale day of that week.
+        // The date box goes to the pack's first sale day (Month: of that week).
         const day = packValidDay(row.dataset.ppkday);
         if (day) PUR_FORM.date = day;
         if (sel.value !== row.dataset.ppkid) { sel.value = row.dataset.ppkid; sel.dispatchEvent(new Event("change", { bubbles: true })); }
