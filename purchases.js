@@ -676,7 +676,6 @@ async function renderPurchasesPageMain() {
     return `<div class="pur-o1-list" data-purscroll="${kind}">${html}</div>${more}`;
   };
   // R3: the Will buy dates shown (a date button + its sheet) and the list by month.
-  const wbDayAdd = (k, n) => { const d = packParseDay(k); return d ? packDayKey(new Date(d.getTime() + n * 86400000)) : k; };
   const wbRange = (st, arr) => {
     const t0 = packStartOfToday(), y = t0.getUTCFullYear(), m = t0.getUTCMonth(), dk = (d) => packDayKey(d);
     const ds = arr.filter((x) => !purTriggerWaiting(x)).map((x) => x.date).sort();
