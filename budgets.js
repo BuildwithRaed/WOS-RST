@@ -5,7 +5,7 @@
 // code and the Budgets state other pages read (My Purchases, the Menu, the Dashboard,
 // recordBudgetNeeds / budgetInvalidate, admin.js / scan.js / the planner worker) stay
 // in app.js. The site loads the packed copy budgets.min.js (tools/stamp.js).
-window.BUDGETS_BUILD = "458fd17947";
+window.BUDGETS_BUILD = "43358ef991";
 
 // Order of the Budgets page tiles (owner picked A, 22 Nov 2026): per person in
 // calc_state budget_page_order = { order: [calcKeys] }; display only. Pages
@@ -599,6 +599,7 @@ function wireBudgetGoals(box) {
 // A Budgets page's picture: its Menu page's quick picture; Hero shards & widgets (whose page is
 // the Backpack, an emoji there) the Mythic General Hero Shard.
 // Shorter names on the Budgets page tiles only (full name in the tile's title / aria-label).
+let B3_START_MORE = false; // "Start here": every page chip shown (for the visit)
 const B3_TILE_SHORT = { research_center: "b3_tile_research_center", hero_shards: "b3_tile_hero_shards" };
 let BUDGET_PLAN_RUNNING = null; // "targetDays|ticks|cands|data gen" of the packs plan being worked out in the background
 let BUDGET_PLAN_FAILED = null; // the same key when that plan failed (cleared by ↻ Recalculate)
@@ -1654,9 +1655,14 @@ async function renderBudgetsPageMain(opts = {}) {
       ${nothing ? `<div class="b3-pt-p nothing">&#10003; ${esc(t("b3_nothing"))}</div>` : x.bpCovers ? `<div class="b3-pt-p">&nbsp;</div>` : `<div class="b3-pt-p">${x.right}</div>`}
       ${x.bpCovers ? `<div class="b3-pt-m cov">${b3CovHtml}</div>` : `<div class="b3-pt-m ${cls}">${sub ? esc(sub) : "&nbsp;"}</div>`}${nothing ? ringHtml(100, true) : x.bpCovers ? ringHtml(100, false, true) : x.inc ? ringHtml(covered(x.pg), false) : ""}</div>`;
   };
-  const missing = B3_PAGES.filter((x) => x.pg.missing);
-  const tilesHtml = `<div class="b3-pgw"${arrangeHostAttr(B3_ARR_KEY)}><div class="b3-pgh"><span class="b3-lbl">${esc(t("b3_pages"))}</span>${arrangeBtnHtml(B3_ARR_KEY)}</div><div class="arr-hint b3-pghint">${esc(t("b3_arrange_hint"))}</div><div class="b3-pg">${b3PageOrdered(B3_PAGES.filter((x) => !x.pg.missing)).map(tileHtml).join("")}</div></div>`;
-  const missHtml = missing.length ? `<button type="button" class="b3-tile b3-np" data-b3sheet="missing"><span>${esc(t("b3_missing").replace("{n}", missing.length))}</span><span class="b3-ics">${missing.slice(0, 6).map((x) => { const ic = pageIcon(x); return ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""; }).join("")}</span><span class="b3-go">&#8250;</span></button>` : "";
+  // Pages the person hasn't set up (no own levels / picks, `budgetPageSetUp`) join the pages
+  // with no saved plan in one line; with none set up the "Start here" card shows instead.
+  const setUp = (x) => budgetPageSetUp(x.pg.calcKey);
+  const startMode = !B3_PAGES.some(setUp);
+  const missing = B3_PAGES.filter((x) => x.pg.missing || !setUp(x));
+  const missLabel = t(missing.every((x) => x.pg.missing) ? "b3_missing" : "b3_not_setup").replace("{n}", missing.length);
+  const tilesHtml = `<div class="b3-pgw"${arrangeHostAttr(B3_ARR_KEY)}><div class="b3-pgh"><span class="b3-lbl">${esc(t("b3_pages"))}</span>${arrangeBtnHtml(B3_ARR_KEY)}</div><div class="arr-hint b3-pghint">${esc(t("b3_arrange_hint"))}</div><div class="b3-pg">${b3PageOrdered(B3_PAGES.filter((x) => !x.pg.missing && setUp(x))).map(tileHtml).join("")}</div></div>`;
+  const missHtml = missing.length ? `<button type="button" class="b3-tile b3-np" data-b3sheet="missing"><span>${esc(missLabel)}</span><span class="b3-ics">${missing.slice(0, 6).map((x) => { const ic = pageIcon(x); return ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""; }).join("")}</span><span class="b3-go">&#8250;</span></button>` : "";
   // This week (Monday – Sunday): the shown plan's packs; opens My Purchases.
   const wkData = (() => {
     const pl = combined.chosen;
@@ -1674,13 +1680,38 @@ async function renderBudgetsPageMain(opts = {}) {
   const wkTab = "purchases";
   // Settings sits beside ↻ at the top; This week has the bottom row.
   // Title-row button: "⚙ <target date> · <currency>", opens the Settings sheet.
-  const setBtnHtml = `<button type="button" class="b3-setb hd-btn" data-b3sheet="settings" title="${esc(t("t12x_settings"))}" aria-label="${esc(t("t12x_settings"))}">&#9881; ${esc(targetDays != null ? shortDay(targetDays) : t("pack_no_date"))} · ${esc(DISPLAY_CURRENCY || "USD")}</button>`;
+  // No target yet: amber "⚙ Set a target · USD"; it opens Settings on the target fold.
+  const setBtnHtml = `<button type="button" class="b3-setb hd-btn${targetDays == null ? " need" : ""}" data-b3sheet="settings"${targetDays == null ? " data-b3settarget" : ""} title="${esc(t("t12x_settings"))}" aria-label="${esc(t("t12x_settings"))}">&#9881; ${esc(targetDays != null ? shortDay(targetDays) : t("b3_set_a_target"))} · ${esc(DISPLAY_CURRENCY || "USD")}</button>`;
   const lrHtml = `<div class="b3-lr">
       <button type="button" class="b3-tile wk" data-gototab="${wkTab}"><img src="${esc(QUICK_ICONS[wkTab])}" alt="" /><span class="b3-lr-t"><b>${esc(t("b3_week").replace("{v}", wkData ? b3Money(wkData.money) : "…"))}</b><small>${esc(t("b3_week_n").replace("{n}", wkData ? wkData.n : "…"))} · ${esc(navLabel(wkTab))}</small></span><span class="b3-go">&#8250;</span></button>
     </div>`;
+  // "Start here" (owner picked V1, 26 Nov 2026): while no page is set up, one card with three
+  // steps replaces the total, Free now, goal flags, This week and the page tiles.
+  const startHtml = (() => {
+    if (!startMode) return "";
+    const chipPages = B3_PAGES.filter((x) => x.pg.calcKey !== "shining_skins");
+    const nSet = chipPages.filter(setUp).length;
+    const goalsOn = visitorCan("goals");
+    const nGoals = goalsOn && BUDGET_GOALS ? (BUDGET_GOALS.goals || []).length : 0;
+    const step = (n, done, title, sub, body) => `<div class="b3-st-s${done ? " done" : ""}"><span class="b3-st-n">${done ? "&#10003;" : n}</span><div class="b3-st-b"><b>${title}</b><small>${esc(sub)}</small>${body || ""}</div></div>`;
+    const chip = (x) => { const ic = pageIcon(x), k = x.pg.calcKey; return `<button type="button" class="b3-st-c" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<b>${esc(B3_TILE_SHORT[k] ? t(B3_TILE_SHORT[k]) : x.label)}</b>${setUp(x) ? "" : `<em>${esc(t("b3_not_setup_s"))}</em>`}</button>`; };
+    const sh = B3_PAGES.find((x) => x.pg.calcKey === "shining_skins");
+    const shPic = sh ? pageIcon(sh) : "";
+    return `<div class="b3-start">
+      <div class="b3-tile b3-st">
+        <div class="b3-st-h"><b>${esc(t("b3_st_title"))}</b><small>${esc(t("b3_st_sub"))}</small></div>
+        ${step(1, targetDays != null, esc(t("b3_st1")), targetDays != null ? t("b3_st1_done").replace("{d}", shortDay(targetDays)) : t("b3_st1_sub"), `<button type="button" class="btn small b3-st-go" data-b3sheet="settings" data-b3settarget>&#9881; ${esc(t("b3_st1_btn"))}</button>`)}
+        ${step(2, nSet > 0, esc(t("b3_st2")), t("b3_st2_sub").replace("{n}", nSet).replace("{m}", chipPages.length), `<div class="b3-st-cs">${(B3_START_MORE ? chipPages : chipPages.slice(0, 6)).map(chip).join("")}${!B3_START_MORE && chipPages.length > 6 ? `<button type="button" class="b3-st-c more" data-b3startmore>+ ${esc(t("b3_st_more").replace("{n}", chipPages.length - 6))} &#8250;</button>` : ""}</div>`)}
+        ${goalsOn ? step(3, nGoals > 0, `${esc(t("b3_st3"))} <span class="b3-st-o">· ${esc(t("b3_st3_opt"))}</span>`, t("b3_st3_sub"), `<button type="button" class="btn small ghost b3-st-go" data-b3startgoal>${esc(t("gu_add"))}</button>`) : ""}
+      </div>
+      ${sh ? `<button type="button" class="b3-tile b3-st-l" data-gototab="${esc(BUDGET_PAGES[sh.i].tab)}">${shPic ? `<img src="${esc(shPic)}" alt="" loading="lazy" />` : ""}<span class="b3-st-t"><b>${esc(sh.label)}</b> · ${esc(t("b3_st_sh_none"))}</span><span class="b3-st-a">${esc(t("b3_st_sh_pick"))} &#8250;</span></button>` : ""}
+      <button type="button" class="b3-tile b3-st-l" data-gototab="backpack"><span class="b3-st-em" aria-hidden="true">&#127890;</span><span class="b3-st-t"><b>${esc(t("b3_st_bp"))}</b> · ${esc(t("b3_st_bp_sub"))}</span><span class="b3-go">&#8250;</span></button>
+      <div class="meta b3-st-f">${esc(t("b3_st_foot"))}</div>
+    </div>`;
+  })();
   // The sheet's content.
   const settingsHtml = budgetSettingsHtml(targetDays);
-  const missRow = (x) => { const ic = pageIcon(x); return `<div class="b3-mrow"><label><input type="checkbox" data-budgetinc="${esc(x.pg.calcKey)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" />${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<span><b>${esc(x.label)}</b>${x.right}</span></label><button type="button" class="btn small ghost" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${esc(t("budgets_open_page"))}</button></div>`; };
+  const missRow = (x) => { const ic = pageIcon(x); return `<div class="b3-mrow"><label><input type="checkbox" data-budgetinc="${esc(x.pg.calcKey)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" />${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<span><b>${esc(x.label)}</b>${x.pg.missing ? x.right : `<span class="meta" style="font-size:11px;">${esc(t("b3_not_setup_s"))}</span>`}</span></label><button type="button" class="btn small ghost" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${esc(t("budgets_open_page"))}</button></div>`; };
   const pageSheet = (x) => `<div class="b3-ps-top"><label class="b3-ps-inc"><input type="checkbox" data-budgetinc="${esc(x.pg.calcKey)}" ${x.inc ? "checked" : ""} /> ${esc(t("b3_tick"))}</label><span class="b3-ps-v">${isNothing(x) ? `<span style="color:var(--good); font-size:12px;">&#10003; ${esc(t("budgets_nothing_planned"))}</span>` : x.bpCovers ? b3CovHtml : x.right || ""}</span><button type="button" class="btn small" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${esc(t("budgets_open_page"))} &#8250;</button></div>
       ${x.pg.calcKey === "hero_gear" ? hgSetsHtml() : ""}
       ${x.pg.sh ? shiningSkinsSheetHtml(x.pg.sh) : ""}
@@ -1693,7 +1724,7 @@ async function renderBudgetsPageMain(opts = {}) {
     if (sh === "goals" && visitorCan("goals") && goalsCardHtml) return { title: t("goals_title"), info: goalsInfoHtml, html: goalsCardHtml };
     if (sh === "settings") return { title: t("t12x_settings"), html: settingsHtml };
     if (sh === "cando" && visitorCan("cando")) return { title: t("cdb_sheet_title"), html: `<div data-cdasheet>${cdaSheetInner()}</div>` };
-    if (sh === "missing" && missing.length) return { title: t("b3_missing").replace("{n}", missing.length), html: missing.map(missRow).join("") };
+    if (sh === "missing" && missing.length && !startMode) return { title: missLabel, html: missing.map(missRow).join("") };
     if (sh.startsWith("page:")) { const x = B3_PAGES.find((y) => "page:" + y.pg.calcKey === sh); if (x) return { title: x.pg.calcKey === "shining_skins" ? t("sh_title") : (x.glabel ? `${x.glabel} · ` : "") + x.label, html: pageSheet(x) }; }
     return null;
   })();
@@ -1705,8 +1736,8 @@ async function renderBudgetsPageMain(opts = {}) {
       <div class="plx-head b3-head"><h2>${esc(t("budgets_title"))}</h2>${setBtnHtml}<button type="button" class="b3-sq hd-btn" data-budgetrecalc title="${esc(t("budgets_recalc_hint"))}" aria-label="${esc(t("budgets_recalc"))}">&#8635;</button></div>
       <p class="desc">${esc(t("budgets_desc"))}</p>
       <div class="b3-cols">
-        <div class="b3-left">${totalHtml}${cdaTileHtml()}${goalFlagsHtml}${lrHtml}</div>
-        <div class="b3-right">${tilesHtml}${missHtml}</div>
+        ${startMode ? startHtml : `<div class="b3-left">${totalHtml}${cdaTileHtml()}${goalFlagsHtml}${lrHtml}</div>
+        <div class="b3-right">${tilesHtml}${missHtml}</div>`}
       </div>
       ${sheetHtml}
     </div>`; });
@@ -1789,7 +1820,10 @@ async function renderBudgetsPageMain(opts = {}) {
   if (goalsBox) wireBudgetGoals(goalsBox);
   // B3: sheets, page tiles, goal flags.
   const b3Redraw = () => keepPlace(() => renderBudgetsPage());
-  content.querySelectorAll("[data-b3sheet]").forEach((b) => b.addEventListener("click", () => { BUDGET_SHEET = b.dataset.b3sheet; b3Redraw(); }));
+  content.querySelectorAll("[data-b3sheet]").forEach((b) => b.addEventListener("click", () => { BUDGET_SHEET = b.dataset.b3sheet; if (b.hasAttribute("data-b3settarget")) BUDGET_SET_OPEN = "target"; b3Redraw(); }));
+  // "Start here" step 3: the Order of goals sheet with its add-goal form open.
+  content.querySelectorAll("[data-b3startmore]").forEach((b) => b.addEventListener("click", () => { B3_START_MORE = true; b3Redraw(); }));
+  content.querySelectorAll("[data-b3startgoal]").forEach((b) => b.addEventListener("click", () => { BUDGET_SHEET = "goals"; BUDGET_GOAL_ADD = {}; b3Redraw(); }));
   const b3bg = content.querySelector("[data-b3bg]");
   if (b3bg) b3bg.addEventListener("click", (e) => { if (e.target === b3bg || e.target.closest("[data-b3close]")) { BUDGET_SHEET = null; b3bg.remove(); } });
   content.querySelectorAll("[data-b3page]").forEach((el) => {

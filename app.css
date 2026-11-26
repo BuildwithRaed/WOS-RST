@@ -1929,6 +1929,30 @@
   .b3-lr .b3-tile img{ width:26px; height:26px; object-fit:contain; flex:none; }
   .b3-lr .b3-tile.wk{ border-color:var(--ice-dim); background:rgba(44,85,104,.28); }
   .b3-head .b3-setb{ display:flex; align-items:center; gap:8px; width:auto; max-width:62%; min-height:42px; padding:3px 12px 3px 10px; flex:0 1 auto; }
+  /* No target yet: amber Settings button. "Start here" card (no page set up yet). */
+  #content .hd-btn.b3-setb.need{ color:var(--amber); border-color:rgba(232,162,60,.6); }
+  .b3-start{ display:flex; flex-direction:column; gap:8px; max-width:640px; }
+  .b3-st{ padding:12px 14px 6px; border-color:rgba(111,211,242,.45); }
+  .b3-st-h{ padding-bottom:10px; border-bottom:1px solid var(--line); }
+  .b3-st-h b{ display:block; font-size:17px; } .b3-st-h small{ display:block; color:var(--muted); font-size:12.5px; margin-top:2px; }
+  .b3-st-s{ display:flex; gap:10px; padding:12px 0; border-top:1px solid var(--line); }
+  .b3-st-h + .b3-st-s{ border-top:0; }
+  .b3-st-n{ width:28px; height:28px; flex:none; border-radius:50%; border:2px solid var(--ice); color:var(--ice); display:grid; place-items:center; font-weight:800; font-size:13px; }
+  .b3-st-s.done .b3-st-n{ border-color:var(--good); color:#0d1a12; background:var(--good); }
+  .b3-st-b{ flex:1; min-width:0; }
+  .b3-st-b > b{ display:block; font-size:14.5px; } .b3-st-o{ color:var(--muted); font-weight:500; font-size:12.5px; }
+  .b3-st-b > small{ display:block; color:var(--muted); font-size:12.5px; margin-top:2px; }
+  .b3-st-go{ margin-top:8px; }
+  .b3-st-cs{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  #content .b3-st-c{ display:inline-flex; width:auto; flex:0 1 auto; align-items:center; gap:6px; min-height:36px; padding:3px 10px 3px 6px; border:1px solid var(--line); border-radius:10px; background:rgba(255,255,255,.03); color:var(--frost); font:inherit; font-size:12.5px; cursor:pointer; max-width:100%; }
+  .b3-st-c img{ width:22px; height:22px; object-fit:contain; flex:none; }
+  #content .b3-st-c.more{ color:var(--ice); font-weight:700; padding-inline-start:10px; }
+  .b3-st-c em{ font-style:normal; color:var(--amber); font-size:11.5px; font-weight:600; }
+  .b3-st-l{ display:flex; align-items:center; gap:8px; min-height:50px; padding:6px 12px; font-size:13px; }
+  .b3-st-l img{ width:26px; height:26px; object-fit:contain; flex:none; } .b3-st-em{ font-size:20px; flex:none; }
+  .b3-st-t{ flex:1; min-width:0; color:var(--muted); font-size:13px; line-height:1.35; } .b3-st-t b{ color:var(--frost); font-weight:700; }
+  .b3-st-a{ color:var(--ice); font-weight:700; white-space:nowrap; }
+  .b3-st-f{ text-align:center; font-size:12px; padding:2px 8px; }
   .b3-gear{ flex:none; font-size:19px; }
   .b3-lr-t{ display:flex; flex-direction:column; min-width:0; line-height:1.25; }
   .b3-lr-t b{ font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
