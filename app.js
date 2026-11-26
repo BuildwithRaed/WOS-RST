@@ -1310,7 +1310,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 136; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 138; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3968,8 +3968,6 @@ const T = {
   pur_pk_show_all: { en: "Show all" },
   pur_pk_ng_later: { en: "Hero packs for later Gens show when their Gen is next" },
   pur_pk_plan: { en: "plan" },
-  pur_pk_on_now: { en: "on now" },
-  pur_pk_next: { en: "next {date}" },
   pur_pk_stacks: { en: "any time · stacks" },
   pur_pk_change: { en: "Change" },
   pur_sale_trig: { en: "Appears at a level" },
