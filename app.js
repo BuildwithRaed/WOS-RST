@@ -3961,10 +3961,6 @@ const T = {
   pur_wb_show: { en: "Show" },
   pur_wb_none: { en: "Nothing to buy in these dates." },
   pur_pk_group_month: { en: "Month" },
-  pur_pk_all_month: { en: "All month:" },
-  pur_pk_daily_s: { en: "daily" },
-  pur_pk_weekly_s: { en: "weekly" },
-  pur_pk_n_more: { en: "+{n} more" },
   pur_pk_week_n: { en: "Week {n}" },
   pur_pk_1pack: { en: "1 pack" },
   pur_pk_npacks: { en: "{n} packs" },
@@ -11547,7 +11543,7 @@ const CODE_FILES = {
   scan: "scan.min.js?v=64a7ef20ff",
   packs: "packs.min.js?v=d85801810c",
   gallery: "gallery.min.js?v=28a7717641",
-  purchases: "purchases.min.js?v=ea4ef6a9d4",
+  purchases: "purchases.min.js?v=dc4091f97b",
   budgets: "budgets.min.js?v=0655976263",
 };
 const CODE_P = {}, CODE_OK = {};
