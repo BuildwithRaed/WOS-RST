@@ -3207,5 +3207,10 @@
 "t:pur_bt_n":"{n} comprati oggi",
 "t:pur_bt_will_n":"{n} da comprare",
 "t:pur_bt_hint":"La data di oggi spuntata viene salvata come comprata; le date successive come da comprare.",
-"t:pur_dn_title":"Comprato · {n} · {v}"
+"t:pur_dn_title":"Comprato · {n} · {v}",
+"t:cda_s_hero_shards":"Eroi",
+"t:cdb_sub_packs":"dal tuo Zaino + pacchetti della settimana · {n} pagine",
+"t:cdb_sub_wait_packs":"dal tuo Zaino + pacchetti della settimana",
+"t:pur_wk_to_target":"Fino all'obiettivo",
+"t:gu_part_fully":"completo il {d}"
 }

@@ -3205,5 +3205,10 @@
 "t:pur_bt_n":"오늘 {n}개 구매함",
 "t:pur_bt_will_n":"{n}개 구매 예정",
 "t:pur_bt_hint":"체크한 오늘 날짜는 구매함으로, 이후 날짜는 구매 예정으로 저장됩니다.",
-"t:pur_dn_title":"구매함 · {n} · {v}"
+"t:pur_dn_title":"구매함 · {n} · {v}",
+"t:cda_s_hero_shards":"영웅",
+"t:cdb_sub_packs":"배낭 + 이번 주 패키지에서 · 페이지 {n}개",
+"t:cdb_sub_wait_packs":"배낭 + 이번 주 패키지에서",
+"t:pur_wk_to_target":"목표까지",
+"t:gu_part_fully":"완료 {d}"
 }

@@ -3207,5 +3207,10 @@
 "t:pur_bt_n":"今天已购买 {n}",
 "t:pur_bt_will_n":"将购买 {n}",
 "t:pur_bt_hint":"勾选的今天日期保存为已购买,之后的日期保存为将购买。",
-"t:pur_dn_title":"已购买 · {n} · {v}"
+"t:pur_dn_title":"已购买 · {n} · {v}",
+"t:cda_s_hero_shards":"英雄",
+"t:cdb_sub_packs":"来自背包 + 本周礼包 · {n} 个页面",
+"t:cdb_sub_wait_packs":"来自背包 + 本周礼包",
+"t:pur_wk_to_target":"到目标",
+"t:gu_part_fully":"全部完成 {d}"
 }

@@ -3207,5 +3207,10 @@
 "t:pur_bt_n":"{n} kupione dziś",
 "t:pur_bt_will_n":"{n} do kupienia",
 "t:pur_bt_hint":"Zaznaczona dzisiejsza data zapisuje się jako kupione, późniejsze daty jako do kupienia.",
-"t:pur_dn_title":"Kupione · {n} · {v}"
+"t:pur_dn_title":"Kupione · {n} · {v}",
+"t:cda_s_hero_shards":"Bohaterowie",
+"t:cdb_sub_packs":"z Twojego plecaka + paczki z tego tygodnia · stron: {n}",
+"t:cdb_sub_wait_packs":"z Twojego plecaka + paczki z tego tygodnia",
+"t:pur_wk_to_target":"Do celu",
+"t:gu_part_fully":"w pełni {d}"
 }

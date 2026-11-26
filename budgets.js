@@ -5,7 +5,7 @@
 // code and the Budgets state other pages read (My Purchases, the Menu, the Dashboard,
 // recordBudgetNeeds / budgetInvalidate, admin.js / scan.js / the planner worker) stay
 // in app.js. The site loads the packed copy budgets.min.js (tools/stamp.js).
-window.BUDGETS_BUILD = "0655976263";
+window.BUDGETS_BUILD = "c0bdf4be6e";
 
 // Order of the Budgets page tiles (owner picked A, 22 Nov 2026): per person in
 // calc_state budget_page_order = { order: [calcKeys] }; display only. Pages
@@ -1018,8 +1018,11 @@ async function renderBudgetsPageMain(opts = {}) {
     // own plan's packs join the dates below).
     const droppedKeys = (combinedRaw.dropped || []).filter((k) => included(k) && !planKeys.includes(k));
     const incKeys = planKeys.concat(droppedKeys);
-    const keys = planPending ? pagesRaw.filter((pg) => included(pg.calcKey) && !pg.missing && Object.keys(pg.need || {}).length).map((pg) => pg.calcKey) : incKeys;
-    const goals = budgetGoalList(pagesRaw, keys);
+    const keys0 = planPending ? pagesRaw.filter((pg) => included(pg.calcKey) && !pg.missing && Object.keys(pg.need || {}).length).map((pg) => pg.calcKey) : incKeys;
+    // Ticked pages with nothing to buy (the Backpack covers them): their picked goals are listed too, reached "Now".
+    const covKeys = pagesRaw.filter((pg) => included(pg.calcKey) && !pg.missing && !keys0.includes(pg.calcKey) && !Object.values(pg.needStill || {}).some((v) => v > 0) && !(planPending && Object.keys(pg.need || {}).length)).map((pg) => pg.calcKey);
+    const keys = keys0.concat(covKeys);
+    const goals = budgetGoalList(pagesRaw, keys0, false, covKeys);
     const nGoals = goals.filter((g) => !g.rest).length;
     if (!nGoals && !keys.length && !included("hero_shards")) return "";
     const ck = "__budget:" + incKeys.join(",");
@@ -1153,8 +1156,8 @@ async function renderBudgetsPageMain(opts = {}) {
     // level up to the page's target), the page's target, "By", date ✓ / ⚠.
     const rowHtml = (g, i) => {
       if (g.rest) return "";
-      const u = g.up, dt = dates && dates[i], d = due[i], myBy = by[g.id] || "", dIn = goalDeadlineDay(myBy);
-      const own = !planPending && !incKeys.includes(g.page), lim = d != null ? d : targetDays, last = u.levels.length - 1;
+      const u = g.up, dt = (dates && dates[i]) || (covKeys.includes(g.page) && !planPending ? { day: 0, spent: 0, done: true } : null), d = due[i], myBy = by[g.id] || "", dIn = goalDeadlineDay(myBy);
+      const own = !planPending && !incKeys.includes(g.page) && !covKeys.includes(g.page), lim = d != null ? d : targetDays, last = u.levels.length - 1;
       const pending = planPending || (dlPending && d != null);
       const dTxt = pending ? workHtml("span", "small") : own ? esc(t("gd_own")) : esc(gdTxt(dt));
       const kind = goalByKind(myBy) === "date" ? " date" : myBy ? " ev" : "";
@@ -1164,8 +1167,10 @@ async function renderBudgetsPageMain(opts = {}) {
         if (pending || own || !dt || dt.done || lim == null || !(dt.day > lim) || !(dt.needDue > 0) || dt.gotDue == null) return "";
         const it = dt.items || [], unit = it.length && it.every((n) => / Shards$/.test(n)) ? t("gu_u_shards") : it.length && it.every((n) => / Widgets$/.test(n)) ? t("gu_u_widgets") : it.length === 1 ? itemShortName(it[0]) : "";
         const dd = gdTxt({ day: lim });
-        return unit ? t("gu_part_by").replace("{d}", dd).replace("{a}", Math.floor(dt.gotDue + 1e-6).toLocaleString()).replace("{b}", Math.round(dt.needDue).toLocaleString()).replace("{u}", unit)
-          : t("gu_part_pct").replace("{d}", dd).replace("{p}", Math.floor(100 * dt.gotDue / dt.needDue));
+        // (and the day it is fully done, when the plan gets there)
+        const fully = dt.day > lim ? ` · ${t("gu_part_fully").replace("{d}", gdTxt(dt))}` : "";
+        return (unit ? t("gu_part_by").replace("{d}", dd).replace("{a}", Math.floor(dt.gotDue + 1e-6).toLocaleString()).replace("{b}", Math.round(dt.needDue).toLocaleString()).replace("{u}", unit)
+          : t("gu_part_pct").replace("{d}", dd).replace("{p}", Math.floor(100 * dt.gotDue / dt.needDue))) + fully;
       })();
       const partH = partTxt ? `<small class="gu-part">&#9888; ${esc(partTxt)}</small>` : "";
       const no = u.notOut || null;

@@ -1310,7 +1310,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 136; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 137; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3261,6 +3261,7 @@ const T = {
   gu_unlocked: { en: "Unlocked" },
   gu_part_by: { en: "By {d}: {a} of {b} {u}" },
   gu_part_pct: { en: "By {d}: {p}% of it" },
+  gu_part_fully: { en: "fully {d}" },
   gu_u_shards: { en: "shards" },
   gu_u_widgets: { en: "widgets" },
   bud_dates_part: { en: "\u26A0 only {p}% by then" },
@@ -3491,6 +3492,7 @@ const T = {
   pur_wait_note: { en: "still counted" },
   pur_1_pack: { en: "1 pack" },
   pur_wk_target: { en: "Target week" },
+  pur_wk_to_target: { en: "To target" },
   pur_wk_after: { en: "After target" },
   pur_wk_later: { en: "Later" },
   pur_wk_none: { en: "Nothing to buy this week." },
@@ -3608,6 +3610,8 @@ const T = {
   cdb_working: { en: "working out…" },
   cdb_sub: { en: "from your Backpack · {n} pages · no packs" },
   cdb_sub_wait: { en: "from your Backpack · no packs" },
+  cdb_sub_packs: { en: "from your Backpack + this week's packs · {n} pages" },
+  cdb_sub_wait_packs: { en: "from your Backpack + this week's packs" },
   cdb_goals_up: { en: "{n} of {m} goals can go up now" },
   cdb_sheet_title: { en: "Free now · from your Backpack" },
   cdb_your_goals: { en: "Your goals" },
@@ -3832,6 +3836,7 @@ const T = {
   cda_s_experts_research: { en: "Exp. Research" },
   cda_s_islands: { en: "Islands" },
   cda_s_shining_skins: { en: "Skins" },
+  cda_s_hero_shards: { en: "Heroes" },
   cando_order: { en: "Your upgrade order" },
   cando_drag_hint: { en: "Drag ⋮⋮ to move a row. Same order on every page." },
   cg_pieces: { en: "Pieces" },
@@ -9092,12 +9097,19 @@ let CDA_PLAN_MEMO = null;
 async function cdaLoadSettings() {
   if (CDA_SET) return CDA_SET;
   const v = (await loadCalcState("cando_pages").catch(() => null)) || {};
-  CDA_SET = { off: new Set(Array.isArray(v.off) ? v.off : []), skip: new Set(Array.isArray(v.skip) ? v.skip : []), packs: v.packs === true };
+  const offOwn = new Set(Array.isArray(v.off) ? v.off : []);
+  // Pages: the ones ticked in Budgets until the person ticks Free now's own
+  // ("own"; an older saved list with pages left out counts as their own).
+  CDA_SET = { offOwn, own: v.own === true || offOwn.size > 0, skip: new Set(Array.isArray(v.skip) ? v.skip : []), packs: v.packs === true,
+    get off() { return this.own ? this.offOwn : new Set(CDA_PAGES.filter((pg) => BUDGET_SELECTED && BUDGET_SELECTED[pg.key] === false).map((pg) => pg.key)); },
+    set off(x) { this.offOwn = x; this.own = true; } };
   return CDA_SET;
 }
+// Before the person's first own tick: start from the pages Budgets has ticked.
+function cdaOwnTicks() { if (!CDA_SET.own) CDA_SET.off = new Set(CDA_SET.off); }
 function cdaSaveSettings() {
   CDA_PLAN_MEMO = null;
-  saveCalcState("cando_pages", { off: [...CDA_SET.off], skip: [...CDA_SET.skip], packs: CDA_SET.packs });
+  saveCalcState("cando_pages", { off: CDA_SET.own ? [...CDA_SET.offOwn] : [], skip: [...CDA_SET.skip], packs: CDA_SET.packs, ...(CDA_SET.own ? { own: true } : {}) });
 }
 // This week's packs (My Purchases): bought or will buy, dated Monday – Sunday of the game week.
 async function cdaWeekPacks() {
@@ -9235,12 +9247,15 @@ function cdaGoalTrackKey(page, key) {
 // The picked upgrade goals (Order of goals, U2) with what the Backpack does for them now.
 function cdaGoalStates(P) {
   const out = [];
+  const seen = new Set();
   ((BUDGET_GOALS && BUDGET_GOALS.goals) || []).forEach((e) => {
-    if (!e || !e.page) return;
+    // (the same goals as Order of goals: pages ticked in Budgets, one goal per upgrade + level)
+    if (!e || !e.page || (BUDGET_SELECTED && BUDGET_SELECTED[e.page] === false)) return;
     const u = goalUpgrades(e.page).find((x) => x.id === `${e.page}|${e.key}`);
     if (!u) return;
     const li = goalUpLevelIdx(u, e.level);
-    if (li < 0) return;
+    if (li < 0 || seen.has(`${u.id}#${li}`)) return;
+    seen.add(`${u.id}#${li}`);
     const goalLabel = u.levels[li] ? u.levels[li].label : "";
     // A hero not out yet: nothing can go up before its release (shown grey, "from Dec 21").
     if (u.notOut) { out.push({ id: "up:" + e.id, u, e, goalLabel, k: "out", from: u.now, now: u.now, date: goalDayShort(u.notOut.rel) }); return; }
@@ -9249,6 +9264,9 @@ function cdaGoalStates(P) {
     const lab = (i) => (tr.lab ? tr.lab(i) : String(i)), lv = P.plan.lv[tr.id];
     let gi = -1;
     for (let i = tr.from; i <= tr.to; i++) if (lab(i) === goalLabel) gi = i;
+    // Labels written differently on the two sides (Chief Gear goal "Red T6 ★0" vs step "T6 ★0"):
+    // the goal's own ladder, when it counts the same steps as the track.
+    if (gi < 0 && u.ladder && u.nowAt === tr.from) for (let i = tr.from; i <= tr.to; i++) if (u.ladder[i] === goalLabel) gi = i;
     // Labels written differently (Pet Refine "Stage 3 23.5%" vs "23.5%"): the first step at or past the goal's number.
     if (gi < 0) { const m = String(goalLabel).match(/(-?\d+(?:\.\d+)?)\s*%\s*$/), v = m ? parseFloat(m[1]) : NaN; if (!isNaN(v)) for (let i = tr.from; i <= tr.to; i++) { if (parseFloat(lab(i)) >= v - 1e-9) { gi = i; break; } } }
     const blk = P.plan.blocker[tr.id], lk = hgLockInfo(tr, P.plan);
@@ -9289,7 +9307,7 @@ function cdaTileInner() {
   const ready = cdaReady(), P = ready ? cdaPlan() : null, c = P ? cdaCounts(P) : null;
   const gs = P ? cdaGoalStates(P).filter((s) => s.k !== "?") : [];
   const gl = gs.length ? `<small class="gl">${esc(t("cdb_goals_up").replace("{n}", gs.filter((s) => s.k === "full" || s.k === "part").length).replace("{m}", gs.length))}</small>` : "";
-  return `<span class="fz-ic">&#10003;</span><span class="b3-lr-t"><b>${esc(t("cdb_free"))} · <em>${c ? esc(t("cdb_ups").replace("{n}", c.ups.toLocaleString())) : esc(t("cdb_working"))}</em></b><small>${c ? esc(t("cdb_sub").replace("{n}", c.pages)) : esc(t("cdb_sub_wait"))}</small>${gl}</span><span class="b3-go">&#8250;</span>`;
+  return `<span class="fz-ic">&#10003;</span><span class="b3-lr-t"><b>${esc(t("cdb_free"))} · <em>${c ? esc(t("cdb_ups").replace("{n}", c.ups.toLocaleString())) : esc(t("cdb_working"))}</em></b><small>${c ? esc(t(CDA_SET && CDA_SET.packs ? "cdb_sub_packs" : "cdb_sub").replace("{n}", c.pages)) : esc(t(CDA_SET && CDA_SET.packs ? "cdb_sub_wait_packs" : "cdb_sub_wait"))}</small>${gl}</span><span class="b3-go">&#8250;</span>`;
 }
 // The sheet: the Can do settings and answer, the goals in order, then everything else.
 function cdaSheetInner() {
@@ -9398,8 +9416,8 @@ function cdaClick(ev) {
   if (ev.target.closest("[data-cdaorder]")) { cdaOrderSheet(); return; }
   if (!cdaReady()) return;
   const pgb = ev.target.closest("[data-cdapage]");
-  if (pgb) { const k = pgb.dataset.cdapage; if (CDA_SET.off.has(k)) CDA_SET.off.delete(k); else CDA_SET.off.add(k); CDA_NOTE = null; cdaSaveSettings(); cdaRedraw(); return; }
-  if (ev.target.closest("[data-cdaall]")) { const all = CDA_SET.off.size === 0; CDA_SET.off = new Set(all ? CDA_PAGES.map((p) => p.key) : []); CDA_NOTE = null; cdaSaveSettings(); cdaRedraw(); return; }
+  if (pgb) { cdaOwnTicks(); const k = pgb.dataset.cdapage; if (CDA_SET.off.has(k)) CDA_SET.off.delete(k); else CDA_SET.off.add(k); CDA_NOTE = null; cdaSaveSettings(); cdaRedraw(); return; }
+  if (ev.target.closest("[data-cdaall]")) { cdaOwnTicks(); const all = CDA_SET.off.size === 0; CDA_SET.off = new Set(all ? CDA_PAGES.map((p) => p.key) : []); CDA_NOTE = null; cdaSaveSettings(); cdaRedraw(); return; }
   if (ev.target.closest("[data-cdatickall]")) { CDA_SET.off = new Set(); cdaSaveSettings(); cdaRedraw(); return; }
   const cb = ev.target.closest("[data-cdaskip]");
   if (cb) { ev.preventDefault(); cdaToggleSkip(cb.dataset.cdaskip); return; }
@@ -11490,8 +11508,8 @@ const CODE_FILES = {
   scan: "scan.min.js?v=64a7ef20ff",
   packs: "packs.min.js?v=8c7c3e7c6f",
   gallery: "gallery.min.js?v=28a7717641",
-  purchases: "purchases.min.js?v=21c5b54f97",
-  budgets: "budgets.min.js?v=0655976263",
+  purchases: "purchases.min.js?v=a4bd112b49",
+  budgets: "budgets.min.js?v=c0bdf4be6e",
 };
 const CODE_P = {}, CODE_OK = {};
 function loadCode(name) {
@@ -19678,12 +19696,14 @@ function goalUpLevelIdx(u, level) {
 // The goals in order: the picked upgrades on the ticked pages (incKeys), then
 // "Rest of the plan": what is left of each page after its picked upgrades, one
 // entry per page ("rest:<page>", each with its own "By").
-function budgetGoalList(pages, incKeys, defaultOrder) {
+// `goalOnly` (optional): more pages whose picked goals are listed (nothing to buy on them), without a "rest" row.
+function budgetGoalList(pages, incKeys, defaultOrder, goalOnly) {
   const G = BUDGET_GOALS || { goals: [] }, ups = new Map(), pageIdx = (k) => BUDGET_PAGES.findIndex((p) => p.key === k);
-  incKeys.forEach((k) => goalUpgrades(k).forEach((u) => ups.set(u.id, u)));
+  const goalKeys = incKeys.concat(goalOnly || []);
+  goalKeys.forEach((k) => goalUpgrades(k).forEach((u) => ups.set(u.id, u)));
   const seen = new Set();
   const list = (G.goals || []).map((e) => {
-    if (!incKeys.includes(e.page)) return null;
+    if (!goalKeys.includes(e.page)) return null;
     const u = ups.get(`${e.page}|${e.key}`);
     if (!u) return null;
     const li = goalUpLevelIdx(u, e.level);

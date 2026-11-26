@@ -3207,5 +3207,10 @@
 "t:pur_bt_n":"{n} heute gekauft",
 "t:pur_bt_will_n":"{n} werde kaufen",
 "t:pur_bt_hint":"Das angehakte heutige Datum wird als gekauft gespeichert, spätere Daten als werde kaufen.",
-"t:pur_dn_title":"Gekauft · {n} · {v}"
+"t:pur_dn_title":"Gekauft · {n} · {v}",
+"t:cda_s_hero_shards":"Helden",
+"t:cdb_sub_packs":"aus deinem Rucksack + Pakete dieser Woche · {n} Seiten",
+"t:cdb_sub_wait_packs":"aus deinem Rucksack + Pakete dieser Woche",
+"t:pur_wk_to_target":"Bis zum Ziel",
+"t:gu_part_fully":"komplett {d}"
 }

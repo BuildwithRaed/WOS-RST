@@ -3207,5 +3207,10 @@
 "t:pur_bt_n":"{n} comprados hoy",
 "t:pur_bt_will_n":"{n} compraré",
 "t:pur_bt_hint":"La fecha de hoy marcada se guarda como comprada; las fechas posteriores como compraré.",
-"t:pur_dn_title":"Comprado · {n} · {v}"
+"t:pur_dn_title":"Comprado · {n} · {v}",
+"t:cda_s_hero_shards":"Héroes",
+"t:cdb_sub_packs":"con tu Mochila + paquetes de esta semana · {n} páginas",
+"t:cdb_sub_wait_packs":"con tu Mochila + paquetes de esta semana",
+"t:pur_wk_to_target":"Hasta el objetivo",
+"t:gu_part_fully":"completo el {d}"
 }

@@ -3205,5 +3205,10 @@
 "t:pur_bt_n":"Bugün {n} alındı",
 "t:pur_bt_will_n":"{n} alınacak",
 "t:pur_bt_hint":"İşaretli bugünkü tarih alındı, sonraki tarihler alınacak olarak kaydedilir.",
-"t:pur_dn_title":"Alındı · {n} · {v}"
+"t:pur_dn_title":"Alındı · {n} · {v}",
+"t:cda_s_hero_shards":"Kahramanlar",
+"t:cdb_sub_packs":"çantandan + bu haftanın paketleri · {n} sayfa",
+"t:cdb_sub_wait_packs":"çantandan + bu haftanın paketleri",
+"t:pur_wk_to_target":"Hedefe kadar",
+"t:gu_part_fully":"tamamı {d}"
 }

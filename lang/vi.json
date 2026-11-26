@@ -3205,5 +3205,10 @@
 "t:pur_bt_n":"Đã mua {n} hôm nay",
 "t:pur_bt_will_n":"Sẽ mua {n}",
 "t:pur_bt_hint":"Ngày hôm nay được đánh dấu lưu là đã mua; các ngày sau lưu là sẽ mua.",
-"t:pur_dn_title":"Đã mua · {n} · {v}"
+"t:pur_dn_title":"Đã mua · {n} · {v}",
+"t:cda_s_hero_shards":"Anh hùng",
+"t:cdb_sub_packs":"từ Túi đồ + gói tuần này · {n} trang",
+"t:cdb_sub_wait_packs":"từ Túi đồ + gói tuần này",
+"t:pur_wk_to_target":"Đến mục tiêu",
+"t:gu_part_fully":"đủ vào {d}"
 }

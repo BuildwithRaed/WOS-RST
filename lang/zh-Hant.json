@@ -3205,5 +3205,10 @@
 "t:pur_bt_n":"今天已購買 {n}",
 "t:pur_bt_will_n":"將購買 {n}",
 "t:pur_bt_hint":"勾選的今天日期儲存為已購買,之後的日期儲存為將購買。",
-"t:pur_dn_title":"已購買 · {n} · {v}"
+"t:pur_dn_title":"已購買 · {n} · {v}",
+"t:cda_s_hero_shards":"英雄",
+"t:cdb_sub_packs":"來自背包 + 本週禮包 · {n} 個頁面",
+"t:cdb_sub_wait_packs":"來自背包 + 本週禮包",
+"t:pur_wk_to_target":"到目標",
+"t:gu_part_fully":"全部完成 {d}"
 }

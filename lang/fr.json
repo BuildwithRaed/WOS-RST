@@ -3207,5 +3207,10 @@
 "t:pur_bt_n":"{n} achetés aujourd'hui",
 "t:pur_bt_will_n":"{n} à acheter",
 "t:pur_bt_hint":"La date d'aujourd'hui cochée est enregistrée comme achetée ; les dates suivantes comme à acheter.",
-"t:pur_dn_title":"Acheté · {n} · {v}"
+"t:pur_dn_title":"Acheté · {n} · {v}",
+"t:cda_s_hero_shards":"Héros",
+"t:cdb_sub_packs":"avec votre Sac + packs de la semaine · {n} pages",
+"t:cdb_sub_wait_packs":"avec votre Sac + packs de la semaine",
+"t:pur_wk_to_target":"Jusqu'à la cible",
+"t:gu_part_fully":"complet le {d}"
 }
