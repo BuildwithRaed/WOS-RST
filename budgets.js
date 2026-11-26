@@ -5,7 +5,7 @@
 // code and the Budgets state other pages read (My Purchases, the Menu, the Dashboard,
 // recordBudgetNeeds / budgetInvalidate, admin.js / scan.js / the planner worker) stay
 // in app.js. The site loads the packed copy budgets.min.js (tools/stamp.js).
-window.BUDGETS_BUILD = "c0bdf4be6e";
+window.BUDGETS_BUILD = "333742f6d7";
 
 // Order of the Budgets page tiles (owner picked A, 22 Nov 2026): per person in
 // calc_state budget_page_order = { order: [calcKeys] }; display only. Pages
@@ -231,6 +231,155 @@ function goalByPopHtml(myBy, mainDay, no) {
   early += earlyEv.slice(-2).join(""); // (the last two before the release are enough to show why)
   const lock = no ? `<div class="gbp-lock">&#128274; <b>${esc(t("gbp_lock_b").replace("{g}", no.gen).replace("{d}", md(relD)))}</b> ${esc(t("gbp_lock"))}</div>` : "";
   return `<div class="gbp${no ? " no" : ""}" role="dialog" aria-label="${esc(t("goal_by_title"))}"><div class="gbp-t">${esc(t("gbp_upcoming"))}</div><div class="gbp-l">${lock}${early ? `<div class="gbp-early">${early}</div>` : ""}${h}</div><button type="button" class="gbp-pick" data-gbpcal>&#128197; ${esc(t("gbp_pick_date"))}</button></div>`;
+}
+// ---- Budgets Settings sheet = T2 "Summary first" ----
+// "Your plan" card on top, then folds that open one at a time (kept for the
+// visit): Target date (quick chips, the K4-style list and a mini month),
+// Currency, My budget (admin unless Visibility opens it), New hero packs first.
+let BUDGET_SET_OPEN = "target"; // the open fold: "target" | "cur" | "spend" | "ngf" | null
+let BUDGET_TGT_POP = null;      // the date list under "Done by": { cal: null | { m, sel } }
+let BUDGET_SET_SAVED = 0;       // when the target was last saved here (the green "Saved" pill)
+function bstMd(d) { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); }
+// The new heroes "New hero packs first" covers (faces), whether it is on or not.
+function bstNgHeroes() {
+  const seen = new Set(), out = [];
+  ngFirstVirtual(true).forEach((p) => { if (!seen.has(p.hero)) { seen.add(p.hero); out.push(p.hero); } });
+  return out;
+}
+function bstFacesHtml(names) {
+  return names.length ? `<div class="bst-faces">${names.map((n) => { const im = HERO_IMG_BY_NAME[n]; return `<span>${im ? `<img src="${esc(im)}" alt="" loading="lazy" />` : ""}${esc(n)}</span>`; }).join("")}</div>` : "";
+}
+function bstNextDays() {
+  const t0 = packStartOfToday(), DAY = 86400000, end = new Date(t0.getTime() + 200 * DAY);
+  const sv = (GAME_EVENTS || []).find((e) => e.key === "svs");
+  const svs = sv ? gameEventStarts(sv, t0, end).find((d) => d > t0) : null;
+  const gen = (newGenStarts(newGenBaseDay(), 6) || []).find((d) => d > t0) || null;
+  return { svs, gen };
+}
+function bstTargetPopHtml(targetDays) {
+  const t0 = packStartOfToday(), DAY = 86400000;
+  const P = BUDGET_TGT_POP || {};
+  if (P.cal) {
+    const keep = BUDGET_BY_CAL;
+    BUDGET_BY_CAL = P.cal;
+    let h;
+    try { h = goalByPopHtml("", targetDays, null); } finally { BUDGET_BY_CAL = keep; }
+    const sd = P.cal.sel ? packParseDay(P.cal.sel) : null, n = sd ? Math.round((sd - t0) / DAY) : 0;
+    const use = `<div class="gbp-use"><span>${sd ? `<b>${esc(bstMd(sd))}</b> · ${esc(t("gbp_in_days").replace("{n}", n))}` : esc(t("gbp_tap_day"))}</span><span class="bst-use-b"><button type="button" class="btn small ghost" data-bstback>${esc(t("bst_cancel"))}</button><button type="button" class="btn small" data-bstuse ${sd ? "" : "disabled"}>${esc(sd ? t("bst_set_d").replace("{d}", bstMd(sd)) : t("gbp_use_x"))}</button></span></div>`;
+    return h.replace(/<div class="gbp-use">[\s\S]*?<\/div>\s*<\/div>\s*$/, use + "</div>")
+      .replace('class="gbp cal"', 'class="gbp cal bst-pop"')
+      .replace(/data-gbpday=/g, "data-bstday=").replace(/data-gbpmon=/g, "data-bstmon=").replace(/data-gbpback/g, "data-bstback");
+  }
+  const tg = targetDays != null ? new Date(t0.getTime() + targetDays * DAY) : null;
+  const row = (key, dot, name, when, on, sub) => `<button type="button" class="gbp-r${on ? " on" : ""}" data-bstset="${esc(key)}">${dot}<span class="gbp-n">${esc(name)}${sub ? ` <small>${esc(sub)}</small>` : ""}</span><span class="gbp-w">${esc(when)}</span>${on ? '<span class="gbp-ok">&#10003;</span>' : ""}</button>`;
+  let h = "";
+  if (tg) h += row(packDayKey(tg), '<span class="gbp-ic">&#128197;</span>', t("gbp_your_date"), bstMd(tg), true);
+  h += `<div class="bst-wks">${[2, 4, 8].map((w) => { const d = new Date(t0.getTime() + w * 7 * DAY); return `<button type="button" data-bstset="${packDayKey(d)}"><b>${esc(t("bst_plus_w").replace("{n}", w))}</b><small>${esc(bstMd(d))}</small></button>`; }).join("")}</div>`;
+  const rng = (a, b) => (b.getTime() === a.getTime() ? bstMd(a) : a.getUTCMonth() === b.getUTCMonth() ? `${bstMd(a)} – ${b.getUTCDate()}` : `${bstMd(a)} – ${bstMd(b)}`);
+  const list = goalByEvents().slice();
+  // The next Exclusive Gear Forge (widgets) after each new heroes day.
+  const gens = list.filter((e) => e.kind === "gen");
+  gens.forEach((e) => { const fd = new Date(e.a.getTime() + ngForgeDays() * DAY); list.push({ kind: "forge", a: fd, b: fd, name: t("bst_forge_opens"), sub: t("ht_widgets"), col: "#e8b44c" }); });
+  const cut = new Date(t0.getTime() + 183 * DAY);
+  let mon = "";
+  list.filter((e) => e.a <= cut).sort((x, y) => x.a - y.a || x.name.localeCompare(y.name)).forEach((e) => {
+    const mm = e.a.toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "long", ...(e.a.getUTCFullYear() !== t0.getUTCFullYear() ? { year: "numeric" } : {}), timeZone: "UTC" });
+    if (mm !== mon) { mon = mm; h += `<div class="gbp-hd">${esc(mm)}</div>`; }
+    const dot = e.star ? '<span class="gbp-ic st">&#11088;</span>' : `<i class="gbp-dot" style="background:${e.col}"></i>`;
+    const gen = e.kind === "gen" ? (() => { const g = newGenGen(); const k = (newGenStarts(newGenBaseDay(), 6) || []).findIndex((d) => d.getTime() === e.a.getTime()); return g && k >= 0 ? `Gen ${g + k}` : ""; })() : e.sub;
+    h += row(packDayKey(e.a), dot, e.name, rng(e.a, e.b), false, gen);
+  });
+  return `<div class="gbp bst-pop" role="dialog" aria-label="${esc(t("bst_upcoming"))}"><div class="gbp-t">${esc(t("bst_upcoming"))}</div><div class="gbp-l">${h}</div><button type="button" class="gbp-pick" data-bstcal>&#128197; ${esc(t("gbp_pick_date"))}</button></div>`;
+}
+function budgetSettingsHtml(targetDays) {
+  const t0 = packStartOfToday(), DAY = 86400000;
+  const tg = targetDays != null ? new Date(t0.getTime() + targetDays * DAY) : null;
+  const saved = Date.now() - BUDGET_SET_SAVED < 6000;
+  const cur = DISPLAY_CURRENCY || "USD";
+  const spOn = spendFeatureOn(), sp = spOn ? spendSettings() : null, amt = spOn ? spendAmountLocal() : 0;
+  const perTxt = (sp && sp.per === "week") ? t("spend_week_s") : t("spend_month_s");
+  const ngOn = ngFirstOn(), ngH = bstNgHeroes();
+  const pills = [`<span>${esc(cur)}</span>`];
+  if (spOn && amt > 0) pills.push(`<span>${esc(t("bst_budget_pill").replace("{v}", Math.round(amt).toLocaleString()).replace("{per}", perTxt))}</span>`);
+  if (ngOn) pills.push(`<span>${esc(t("bst_ngf_pill"))} &#10003;</span>`);
+  const sumTitle = tg ? (targetDays < 0 ? t("bst_planning_over").replace("{d}", bstMd(tg)) : t("bst_planning_to").replace("{d}", bstMd(tg)).replace("{n}", targetDays)) : t("pack_no_date");
+  const sum = `<div class="bst-sum"><div class="bst-k">${esc(t("bst_your_plan"))}</div><div class="bst-v${saved ? " ok" : ""}">${esc(sumTitle)}</div><div class="bst-pills">${pills.join("")}</div></div>`;
+  const fold = (key, ic, title, sub, body, tag) => {
+    const open = BUDGET_SET_OPEN === key;
+    return `<div class="bst-f${open ? " open" : ""}" data-bstfold="${key}"><button type="button" class="bst-fh" data-bstf="${key}" aria-expanded="${open}"><span class="bst-ic">${ic}</span><span class="bst-ft"><b>${esc(title)}${tag || ""}</b><small>${sub}</small></span><span class="bst-ar">${open ? "&#9652;" : "&#9662;"}</span></button>${open ? `<div class="bst-fb">${body}</div>` : ""}</div>`;
+  };
+  // Target date
+  const nx = bstNextDays();
+  const dateTxt = tg ? tg.toLocaleDateString(LANG === "en" ? "en-GB" : LANG, { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" }) : "—";
+  const tgSub = tg ? `${esc(tg.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }))} · ${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}` : esc(t("pack_no_date"));
+  const chip = (cls, d, label) => (d ? `<button type="button" class="bst-chip ${cls}" data-bstset="${packDayKey(d)}" title="${esc(bstMd(d))}">${esc(label)}</button>` : "");
+  const tgBody = `<div class="bset-row bst-dr"><span class="bset-l">${esc(t("bst_done_by"))}</span><span class="bset-c"><button type="button" class="bst-date${BUDGET_TGT_POP ? " on" : ""}" data-bstdate aria-expanded="${!!BUDGET_TGT_POP}">${esc(dateTxt)} <span aria-hidden="true">&#128197;</span></button>${BUDGET_TARGET ? `<button type="button" class="btn small ghost bset-x" data-budgettargetclear title="${esc(t("pack_no_date"))}">&times;</button>` : ""}</span></div>
+    ${BUDGET_TGT_POP ? bstTargetPopHtml(targetDays) : ""}
+    <div class="bst-chips">${chip("sv", nx.svs, t("bst_next_svs"))}${chip("gen", nx.gen, t("bst_new_gen"))}${chip("", new Date(t0.getTime() + 28 * DAY), t("bst_plus_w").replace("{n}", 4))}</div>`;
+  let h = sum + fold("target", "&#127919;", t("bst_target"), tgSub, tgBody, saved ? ` <span class="bst-saved">&#10003; ${esc(t("bst_saved"))}</span>` : "");
+  // Currency
+  h += fold("cur", "&#128177;", t("bst_currency"), esc(cur), `<div class="bset-row"><span class="bset-l">${esc(t("show_prices_in"))}</span><span class="bset-c">${currencySelectHtml(`id="budgetsCurrency" aria-label="${esc(t("show_prices_in"))}"`)}</span></div><div class="meta bset-note">${esc(t("bst_cur_note"))}</div>`);
+  // My budget
+  if (spOn) {
+    const visitorsToo = !!((siteConfig("visitor_access", {}) || {}).spendbudget === true);
+    const adminOnly = IS_OWNER && !visitorsToo;
+    const tag = adminOnly ? ` <span class="bset-tag" title="${esc(t("spend_admin_only"))}">&#128274; ${esc(t("spend_admin_tag"))}</span>` : "";
+    const sub = amt > 0 ? esc(t("bst_spend_sub").replace("{v}", `${Math.round(amt).toLocaleString()} ${packLocalCode("USD", 4.99)}`).replace("{per}", perTxt)) + (sp.carry ? ` · ${esc(t("bst_spend_keep"))}` : "") : esc(t("bst_spend_off"));
+    const body = `<div class="bud-spend">
+      <div class="bset-row"><span class="bset-l">${esc(t("spend_amount"))}</span><span class="bset-c"><input type="number" min="0" step="1" inputmode="decimal" data-spendamt value="${amt > 0 ? Math.round(amt) : ""}" placeholder="0" aria-label="${esc(t("spend_title"))}" /><span class="meta">${esc(packLocalCode("USD", 4.99))}</span><span class="bud-spend-per"><button type="button" data-spendper="week" class="${sp.per === "week" ? "on" : ""}">${esc(t("spend_week_s"))}</button><button type="button" data-spendper="month" class="${sp.per === "month" ? "on" : ""}">${esc(t("spend_month_s"))}</button></span></span></div>
+      <label class="bset-row" style="cursor:pointer;"><span class="bset-l">${esc(t("spend_carry_short"))}<small>${esc(t("spend_carry_sub"))}</small></span><input type="checkbox" class="bset-sw" data-spendcarry ${sp.carry ? "checked" : ""} aria-label="${esc(t("spend_carry"))}" /></label>
+      ${amt > 0 ? "" : `<div class="meta bset-note">${esc(t("spend_hint"))}</div>`}
+      ${adminOnly ? `<div class="meta bset-note">${esc(t("spend_visitors_note"))}</div>` : ""}
+    </div>`;
+    h += fold("spend", "&#128176;", t("spend_title"), sub, body, tag);
+  }
+  // New hero packs first
+  const ngSub = `${esc(ngOn ? t("bst_ngf_on") : t("bst_ngf_off"))}${ngH.length ? ` · ${esc(ngH.join(" · "))}` : ""}`;
+  const ngBody = `<label class="bset-row" style="cursor:pointer;"><span class="bset-l">${esc(t("bst_ngf_row"))}<small>${esc(t("bst_ngf_desc"))}</small></span><input type="checkbox" class="bset-sw" data-bstngf ${ngOn ? "checked" : ""} aria-label="${esc(t("bst_ngf"))}" /></label>${ngH.length ? bstFacesHtml(ngH) : `<div class="meta bset-note">${esc(t("bst_ngf_none"))}</div>`}`;
+  h += fold("ngf", "&#129464;", t("bst_ngf"), ngSub, ngBody, ` <span class="bst-new">${esc(t("bst_new"))}</span>`);
+  h += `<button type="button" class="bst-rc" data-budgetrecalc>&#8635; ${esc(t("bst_recalc"))}</button>`;
+  return `<div class="t12x-settings b3-set bst">${h}</div>`;
+}
+// The sheet's own taps (the date list, the folds, the switch); the rest keep their handlers.
+function wireBudgetSettings(content, redraw) {
+  const box = content.querySelector(".bst");
+  if (!box) return;
+  const saveTarget = (v) => {
+    BUDGET_TARGET = v || "";
+    saveCalcState("pack_target_budgets", { date: BUDGET_TARGET });
+    BUDGET_TGT_POP = null; BUDGET_SET_SAVED = Date.now();
+    redraw();
+  };
+  box.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b || !box.contains(b)) return;
+    if (b.dataset.bstf) { BUDGET_SET_OPEN = BUDGET_SET_OPEN === b.dataset.bstf ? null : b.dataset.bstf; if (BUDGET_SET_OPEN !== "target") BUDGET_TGT_POP = null; redraw(); return; }
+    if (b.hasAttribute("data-bstdate")) { BUDGET_TGT_POP = BUDGET_TGT_POP ? null : { cal: null }; redraw(); return; }
+    if (b.dataset.bstset) { saveTarget(b.dataset.bstset); return; }
+    if (b.hasAttribute("data-bstcal")) { const sel = BUDGET_TARGET || null; BUDGET_TGT_POP = { cal: { m: (sel || packDayKey(packStartOfToday())).slice(0, 7), sel } }; redraw(); return; }
+    if (b.hasAttribute("data-bstback")) { BUDGET_TGT_POP = { cal: null }; redraw(); return; }
+    if (b.dataset.bstmon && BUDGET_TGT_POP && BUDGET_TGT_POP.cal) { const [y, m] = BUDGET_TGT_POP.cal.m.split("-").map(Number), d = new Date(Date.UTC(y, m - 1 + Number(b.dataset.bstmon), 1)); BUDGET_TGT_POP = { cal: { ...BUDGET_TGT_POP.cal, m: packDayKey(d).slice(0, 7) } }; redraw(); return; }
+    if (b.dataset.bstday && BUDGET_TGT_POP && BUDGET_TGT_POP.cal) { BUDGET_TGT_POP = { cal: { ...BUDGET_TGT_POP.cal, sel: b.dataset.bstday } }; redraw(); return; }
+    if (b.hasAttribute("data-bstuse") && BUDGET_TGT_POP && BUDGET_TGT_POP.cal && BUDGET_TGT_POP.cal.sel) { saveTarget(BUDGET_TGT_POP.cal.sel); return; }
+  });
+  const ng = box.querySelector("[data-bstngf]");
+  if (ng) ng.addEventListener("change", () => {
+    saveCalcState("budget_prefs", { ...budgetPrefs(), ngFirst: ng.checked });
+    if (typeof PACK_PLAN_CACHE !== "undefined") { PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); }
+    budgetInvalidate();
+    redraw();
+  });
+}
+// Heroes page window: what "New hero packs first" counted as bought.
+function ngFirstNoteHtml() {
+  if (!ngFirstOn()) return "";
+  const v = ngFirstVirtual();
+  if (!v.length) return "";
+  const hs = [...new Set(v.map((p) => p.hero))];
+  const fw = v.find((p) => p.kind === "w"), parts = [];
+  if (fw) parts.push(t("bud_ngf_forge").replace("{n}", (Number(fw.row) || 0) + 1));
+  if (v.some((p) => p.kind === "s")) parts.push(t("bud_ngf_value"));
+  return `<div class="bud-vip bud-ngf">&#129464; ${esc(t("bud_ngf_note").replace("{h}", hs.join(", ")).replace("{w}", parts.join(" + ")))}</div>`;
 }
 let BUDGET_TR_TAB = "free";    // a page sheet's trades tab: "free" | "packs" (for the visit)
 let BUDGET_HT_OPEN = false;     // Hero targets fold (for the visit)
@@ -940,6 +1089,7 @@ async function renderBudgetsPageMain(opts = {}) {
       ${upFoldHtml(pg.calcKey)}
       ${!pg.live ? `<div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("budgets_snapshot_note"))}</div>` : ""}
       ${((x) => (x ? `<div class="bud-partial">&#128274; ${esc(t("bud_not_open").replace("{what}", x))}</div>` : ""))(budgetNotOpenText(pg.calcKey))}
+      ${pg.calcKey === "hero_shards" ? ngFirstNoteHtml() : ""}
       ${pg.vip ? `<div class="bud-vip">&#127873; ${esc(t("bud_vip_note").replace("{tier}", pg.vip.tier).replace("{n}", qty(pg.vip.total)).replace("{when}", BUDGET_TARGET ? t("vip_bundle_by").replace("{date}", fmtDate(pg.vip.days)) : t("vip_bundle_30d")).replace("{d}", pg.vip.daily))}</div>` : ""}
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials"))} <span style="font-weight:400;">(${esc(t("pack_mode_still"))} / ${esc(t("pack_mode_full"))})</span></div>${matsHtml(pg.needFull, pg.needStill, pg.owned)}
         ${tradesHtml(pg, shareOf)}</div>
@@ -1378,7 +1528,7 @@ async function renderBudgetsPageMain(opts = {}) {
   // goals as flags (admin), the pages as tiles, then Settings and This week.
   // The details (materials, stat gain, goal order, settings, a page's packs)
   // open in a sheet over the page (BUDGET_SHEET, kept across redraws).
-  if (BUDGET_FOCUS_SPEND === true && spendFeatureOn()) BUDGET_SHEET = "settings";
+  if (BUDGET_FOCUS_SPEND === true && spendFeatureOn()) { BUDGET_SHEET = "settings"; BUDGET_SET_OPEN = "spend"; }
   const ticked = pagesRaw.filter((pg) => included(pg.calcKey));
   // The phone Menu's Budgets tile shows this total (mmBudgetSet; nothing worked out for it).
   if (!planPending) mmBudgetSet(anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : null);
@@ -1534,23 +1684,7 @@ async function renderBudgetsPageMain(opts = {}) {
       <button type="button" class="b3-tile wk" data-gototab="${wkTab}"><img src="${esc(QUICK_ICONS[wkTab])}" alt="" /><span class="b3-lr-t"><b>${esc(t("b3_week").replace("{v}", wkData ? b3Money(wkData.money) : "…"))}</b><small>${esc(t("b3_week_n").replace("{n}", wkData ? wkData.n : "…"))} · ${esc(navLabel(wkTab))}</small></span><span class="b3-go">&#8250;</span></button>
     </div>`;
   // The sheet's content.
-  const settingsHtml = `<div class="t12x-settings b3-set">
-            <div class="bset-row"><span class="bset-l">${esc(t("pack_target_by"))}${targetDays != null ? `<small style="color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</small>` : `<small>${esc(t("pack_no_date"))}</small>`}</span>
-              <span class="bset-c"><input type="date" data-budgettarget value="${esc(BUDGET_TARGET)}" aria-label="${esc(t("pack_target_by"))}" />${BUDGET_TARGET ? `<button type="button" class="btn small ghost bset-x" data-budgettargetclear title="${esc(t("pack_no_date"))}">&times;</button>` : ""}</span></div>
-            <div class="bset-row"><span class="bset-l">${esc(t("show_prices_in"))}</span><span class="bset-c">${currencySelectHtml(`id="budgetsCurrency" aria-label="${esc(t("show_prices_in"))}"`)}</span></div>
-            ${spendFeatureOn() ? (() => {
-              const sp = spendSettings(), amt = spendAmountLocal();
-              const visitorsToo = !!((siteConfig("visitor_access", {}) || {}).spendbudget === true);
-              const adminOnly = IS_OWNER && !visitorsToo;
-              return `<div class="bud-spend">
-                <div class="bset-sec"><b>${esc(t("spend_title"))}</b>${adminOnly ? `<span class="bset-tag" title="${esc(t("spend_admin_only"))}">&#128274; ${esc(t("spend_admin_tag"))}</span>` : ""}</div>
-                <div class="bset-row"><span class="bset-l">${esc(t("spend_amount"))}</span><span class="bset-c"><input type="number" min="0" step="1" inputmode="decimal" data-spendamt value="${amt > 0 ? Math.round(amt) : ""}" placeholder="0" aria-label="${esc(t("spend_title"))}" /><span class="meta">${esc(packLocalCode("USD", 4.99))}</span><span class="bud-spend-per"><button type="button" data-spendper="week" class="${sp.per === "week" ? "on" : ""}">${esc(t("spend_week_s"))}</button><button type="button" data-spendper="month" class="${sp.per === "month" ? "on" : ""}">${esc(t("spend_month_s"))}</button></span></span></div>
-                <label class="bset-row" style="cursor:pointer;"><span class="bset-l">${esc(t("spend_carry_short"))}<small>${esc(t("spend_carry_sub"))}</small></span><input type="checkbox" class="bset-sw" data-spendcarry ${sp.carry ? "checked" : ""} aria-label="${esc(t("spend_carry"))}" /></label>
-                ${amt > 0 ? "" : `<div class="meta bset-note">${esc(t("spend_hint"))}</div>`}
-                ${adminOnly ? `<div class="meta bset-note">${esc(t("spend_visitors_note"))}</div>` : ""}
-              </div>`;
-            })() : ""}
-          </div>`;
+  const settingsHtml = budgetSettingsHtml(targetDays);
   const missRow = (x) => { const ic = pageIcon(x); return `<div class="b3-mrow"><label><input type="checkbox" data-budgetinc="${esc(x.pg.calcKey)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" />${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<span><b>${esc(x.label)}</b>${x.right}</span></label><button type="button" class="btn small ghost" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${esc(t("budgets_open_page"))}</button></div>`; };
   const pageSheet = (x) => `<div class="b3-ps-top"><label class="b3-ps-inc"><input type="checkbox" data-budgetinc="${esc(x.pg.calcKey)}" ${x.inc ? "checked" : ""} /> ${esc(t("b3_tick"))}</label><span class="b3-ps-v">${isNothing(x) ? `<span style="color:var(--good); font-size:12px;">&#10003; ${esc(t("budgets_nothing_planned"))}</span>` : x.bpCovers ? b3CovHtml : x.right || ""}</span><button type="button" class="btn small" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${esc(t("budgets_open_page"))} &#8250;</button></div>
       ${x.pg.calcKey === "hero_gear" ? hgSetsHtml() : ""}
@@ -1655,6 +1789,7 @@ async function renderBudgetsPageMain(opts = {}) {
     const btn = document.querySelector(`.topnav-groups [data-tab="${b.dataset.gototab}"]`);
     if (btn) btn.click();
   }));
+  wireBudgetSettings(content, () => keepPlace(() => renderBudgetsPage()));
   const goalsBox = content.querySelector(".bud-goals");
   if (goalsBox) wireBudgetGoals(goalsBox);
   // B3: sheets, page tiles, goal flags.

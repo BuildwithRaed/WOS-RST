@@ -4,7 +4,7 @@
 // its functions and variables join app.js's. Only names used by these pages alone
 // live here; anything another page (or admin.js / scan.js / the planner worker) uses
 // stays in app.js. The site loads the packed copy packs.min.js (tools/stamp.js).
-window.PACKS_BUILD = "8c7c3e7c6f";
+window.PACKS_BUILD = "d85801810c";
 
 // A one-time flag ("…_seeded"): like loadCalcState, but a failed read counts
 // as "already done", so a network error can never make the Packs pages
@@ -3823,14 +3823,6 @@ function packTablesStash() {
 //          number      - resets every N days; `buys` per row per reset
 //                        (a ladder can be run once per reset)
 // ------------------------------------------------------------
-// "Every 4 weeks" rather than "Every 28 days" (owner, 16 Nov 2026: events cycle in weeks).
-function packEveryText(r, day) {
-  const n = Number(r);
-  if (n === 30) { const d = packParseDay(packValidDay(day)); if (!d) return t("pk_every_month_date"); const n2 = d.getUTCDate(), ord = LANG === "en" ? n2 + ([11, 12, 13].includes(n2 % 100) ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[n2 % 10] || "th")) : String(n2); return t("pk_every_month_on").replace("{d}", ord); }
-  if (n === 7) return t("pk_every_week");
-  if (n > 0 && n % 7 === 0) return t("pk_every_weeks").replace("{n}", n / 7);
-  return t("pk_every_days").replace("{n}", n);
-}
 function setMyStorePrice(code, slot, value) {
   const all = myStorePrices();
   all[code] = all[code] || {};
