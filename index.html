@@ -60,7 +60,7 @@
      first requests don't also wait for DNS + TLS set-up. -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 <link rel="preconnect" href="https://hzourauekkiorojrhpko.supabase.co" crossorigin />
-<link rel="stylesheet" href="app.min.css?v=02aa975870" />
+<link rel="stylesheet" href="app.min.css?v=57a199d9d8" />
 <!-- supabase-js runs at the end of the page (see there); fetch it now, as it was
      when it sat here. Same address, integrity and crossorigin as the script tag,
      so the browser uses this copy for it. -->
@@ -70,13 +70,13 @@
      app.js can take more than 10 s, and Chrome closes an unused preconnect
      after 10 s, so the one above is often gone before the first request.
      (crossorigin = the way the site's requests to the database are made.) -->
-<link rel="preload" href="app.min.js?v=81606d0bd3" as="script" onload="var l=document.createElement('link');l.rel='preconnect';l.href='https://hzourauekkiorojrhpko.supabase.co';l.crossOrigin='anonymous';document.head.appendChild(l)" />
+<link rel="preload" href="app.min.js?v=edd2f75a59" as="script" onload="var l=document.createElement('link');l.rel='preconnect';l.href='https://hzourauekkiorojrhpko.supabase.co';l.crossOrigin='anonymous';document.head.appendChild(l)" />
 <!-- Some pages' code is in a file of its own (packs.js, gallery.js, purchases.js, budgets.js), which app.js loads
      when the page opens. When the page last open is one of them, fetch its file now,
      alongside app.js. tools/stamp.js keeps these "?v=" the same as app.js's (CODE_FILES). -->
 <script>
 (function () {
-  var files = { packs: "packs.min.js?v=d85801810c", gallery: "gallery.min.js?v=28a7717641", purchases: "purchases.min.js?v=9586be8a45", budgets: "budgets.min.js?v=458fd17947" };
+  var files = { packs: "packs.min.js?v=d85801810c", gallery: "gallery.min.js?v=28a7717641", purchases: "purchases.min.js?v=eaa3ea6342", budgets: "budgets.min.js?v=59ded96db9" };
   var pages = { packs: "packs", mypacks: "packs", packcalendar: "packs", skingallery: "gallery", islandgallery: "gallery", facilitypage: "gallery", purchases: "purchases", budgets: "budgets" };
   try {
     var tab = localStorage.getItem("last_tab");
@@ -435,7 +435,7 @@
      vendor/ folder is used, so the site still opens. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js" integrity="sha384-BWcjm9OdFth9TbhCxZPdm+gAOUMAzQy9nmTs12ioXdCcbVnJaPMn+fMUoQCLt60R" crossorigin="anonymous"></script>
 <script>if (!window.supabase) document.write('<script src="vendor/supabase-js-2.117.3.js"><\/script>');</script>
-<script src="app.min.js?v=81606d0bd3"></script>
+<script src="app.min.js?v=edd2f75a59"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "32f8c9acc17048f7941762223c2739e3"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

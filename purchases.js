@@ -5,7 +5,7 @@
 // live here; anything another page (Budgets, the Menu, the Dashboard, admin.js /
 // scan.js / the planner worker) uses stays in app.js. The site loads the packed copy
 // purchases.min.js (tools/stamp.js).
-window.PURCHASES_BUILD = "9586be8a45";
+window.PURCHASES_BUILD = "eaa3ea6342";
 
 function packOpenSettingsOnPacks(id) {
   PACK_SETTINGS_FOCUS = String(id);
@@ -917,8 +917,8 @@ async function renderPurchasesPageMain() {
       it.step = st.replace(/^\((.*)\)/, "$1").trim();
     });
     const all = items.concat(restList);
-    const total = all.reduce((a, x) => a + x.local, 0), doneV = items.reduce((a, x) => a + x.local, 0);
-    const nAll = all.length, nDone = items.length;
+    const doneV = items.reduce((a, x) => a + x.local, 0);
+    const nAll = all.length;
     // Answer card
     const left = 6 - monW;
     const leftTxt = left <= 0 ? t("pur_a2_last_day") : left === 1 ? t("pur_a2_day_left") : t("pur_a2_days_left").replace("{n}", left);
@@ -928,13 +928,21 @@ async function renderPurchasesPageMain() {
     const doneDay = pl && pl.days != null && (pl.rows || []).length ? fmtDay(packDayKey(offDate(Math.max(0, pl.days)))) : "";
     const per = plan && plan.spend ? t(plan.spend.per === "week" ? "pur_a2_per_week" : "pur_a2_per_month") : "";
     const tDay = packValidDay(BUDGET_TARGET);
-    const sw = cmp ? `<div class="pur-a2-sw" role="group">${["budget", "target"].map((k) => `<button type="button" data-purfollow="${k}" class="${follow === k ? "on" : ""}" aria-pressed="${follow === k}">${esc(k === "budget" ? t("pur_a2_budget_sw").replace("{v}", packFmtLocal(plan.spend.amount, cur0, true, smp) + per) : (cmp.targetPlan.dated ? (cmp.targetPlan.nextDay != null ? t("pur_a2_dates_sw").replace("{date}", shortDay(packDayKey(offDate(cmp.targetPlan.nextDay))).replace(/ /g, "\u00a0")) : t("budgets_view_dates")) : t("pur_a2_target_sw").replace("{date}", tDay ? shortDay(tDay) : "—")))}</button>`).join("")}</div>`
-      : plan && plan.spend ? `<div class="pur-following" data-purgospend role="button" tabindex="0">${esc(t("pur_following"))} <b>${esc(t("budgets_view_budget"))}</b> <span class="meta">(${esc(packFmtLocal(plan.spend.amount, cur0, true, smp))}${esc(per)})</span> <span class="pur-go">${esc(t("pur_go_spend"))}</span></div>` : "";
-    const pct = nAll ? Math.round((nDone / nAll) * 100) : 0;
+    // The plan followed is picked on Budgets (one plan for both pages): a chip
+    // names it and opens Budgets at its plan switch.
+    const fv = plan ? plan.followView || "main" : null;
+    const fName = !plan ? "" : fv === "budget" ? t("budgets_view_budget") : fv === "fastest" ? t("budgets_view_fastest") : fv === "cheapest" ? t("budgets_view_cheapest") : plan.dated ? t("budgets_view_dates") : tDay ? t("budgets_view_target") : t("budgets_view_cheapest");
+    const fSub = !plan ? "" : plan.dated && plan.nextDay != null ? t("pur_a2_next").replace("{date}", shortDay(packDayKey(offDate(plan.nextDay)))) : fv === "budget" && plan.spend ? packFmtLocal(plan.spend.amount, cur0, true, smp) + per : fv === "main" && tDay ? shortDay(tDay) : "";
+    const sw = plan ? `<div class="pur-following pur-a2-fol" data-purgoview role="button" tabindex="0"><span>${esc(t("pur_a2_following"))} <b>${esc(fName)}</b>${fSub ? ` <span class="meta">· ${esc(fSub)}</span>` : ""}</span><span class="pur-a2-lk">${esc(t("pur_a2_change"))} &#8250;</span></div>` : "";
+    // Still to buy / Bought this week: the same numbers as Budgets' This week tile (budgetWeekSums).
+    const ws = budgetWeekSums(plan && P.rows ? plan : null, P && P.rows ? P.rows.slice(0, P.nFollow) : null, P && P.sched ? P.sched.slice(0, P.nFollow) : null);
+    const nB = ws.boughtN, nT = ws.todoN + ws.boughtN;
+    const pct = nT ? Math.round((nB / nT) * 100) : 0;
+    const boxN = (n) => (n === 1 ? t("pur_1_pack") : t("pur_n_packs").replace("{n}", n));
     ans.innerHTML = `<div class="pur-a2-wk"><span>${esc(t("pur_a2_week").replace("{range}", range))}</span><span class="meta">${esc(leftTxt)}</span></div>
-      <div class="pur-a2-big">${pending && !nAll ? `<span class="bud-pending small">${esc(t("budgets_working"))}</span>` : `<b>${nAll ? esc(fmt(total)) : "—"}</b><span class="meta">${esc(t("pur_n_packs").replace("{n}", nAll))}</span>`}</div>
+      <div class="pur-a2-two"><div class="pur-a2-bx"><small>${esc(t("pur_a2_todo"))}</small>${pending && !nAll ? `<span class="bud-pending small">${esc(t("budgets_working"))}</span>` : `<b>${esc(fmt(ws.todo))}</b><span class="meta">${esc(boxN(ws.todoN))}</span>`}</div><div class="pur-a2-bx done"><small>${esc(t("pur_a2_bought"))}</small><b>${nB ? "&#10003; " : ""}${esc(fmt(ws.bought))}</b><span class="meta">${esc(boxN(nB))}</span></div></div>
       <span class="pur-a2-bar"><i style="width:${pct}%;"></i></span>
-      <div class="pur-a2-sub">${nDone ? `<span class="good">&#10003; ${esc(t("pur_a2_bought_of").replace("{a}", nDone).replace("{b}", nAll).replace("{v}", fmt(doneV)))}</span>` : nAll ? `<span class="meta">${esc(t("pur_a2_bought_of").replace("{a}", 0).replace("{b}", nAll).replace("{v}", fmt(0)))}</span>` : "<span></span>"}${doneDay ? `<span class="meta">${esc(t("pur_a2_done").replace("{date}", doneDay))}</span>` : pending ? `<span class="meta bud-pending small">${esc(t("budgets_working"))}</span>` : ""}</div>
+      <div class="pur-a2-sub">${nT ? `<span class="${nB ? "good" : "meta"}">${nB ? "&#10003; " : ""}${esc(t("pur_a2_bought_n").replace("{a}", nB).replace("{b}", nT))}</span>` : "<span></span>"}${doneDay ? `<span class="meta">${esc(t("pur_a2_done").replace("{date}", doneDay))}</span>` : pending ? `<span class="meta bud-pending small">${esc(t("budgets_working"))}</span>` : ""}</div>
       ${sw}`;
     // Checklist
     const rowHtml = (it, k) => {
@@ -1043,9 +1051,8 @@ async function renderPurchasesPageMain() {
     const moreB = chk.querySelector("[data-pura2more]");
     if (moreB) moreB.addEventListener("click", () => { PUR_CHK_ALL = !PUR_CHK_ALL; drawWeek(P, pending); });
     // Taps
-    ans.querySelectorAll("[data-purfollow]").forEach((b) => b.addEventListener("click", () => { if (b.classList.contains("on")) return; try { localStorage.setItem("pur_follow", b.dataset.purfollow); } catch (e) { /* blocked */ } redraw(); }));
-    ans.querySelectorAll("[data-purgospend]").forEach((b) => {
-      const go = () => { BUDGET_FOCUS_SPEND = true; goToTab("budgets"); };
+    ans.querySelectorAll("[data-purgoview]").forEach((b) => {
+      const go = () => { BUDGET_FOCUS_VIEW = true; goToTab("budgets"); };
       b.addEventListener("click", go);
       b.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
     });
@@ -1134,8 +1141,8 @@ async function renderPurchasesPageMain() {
     // follows one plan (switch, kept in this browser) and labels every pack
     // "both" / "target" / "budget"; the other plan's packs are listed too.
     const cmp = plan && plan.spend && plan.targetPlan && (plan.targetPlan.rows || []).length ? plan : null;
+    // (one plan is followed, picked on Budgets: budgetSuggestOf)
     let follow = "budget";
-    try { if (localStorage.getItem("pur_follow") === "target") follow = "target"; } catch (e) { /* blocked */ }
     if (!cmp) follow = "budget";
     const budRows = plan && plan.rows ? plan.rows.filter((r) => r.count > 0) : [];
     const tgtRows = cmp ? cmp.targetPlan.rows.filter((r) => r.count > 0) : [];
@@ -1417,11 +1424,12 @@ async function renderPurchasesPageMain() {
         </div>${open ? `<div class="pur-cl-ex">${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}${kidsR.map((k) => `<div>${esc(whenShort(k.vr.xs))} · ${esc(k.vr.r.label)}${cmp ? ` ${tagHtml(k.i, k.n)}` : ""}</div>`).join("")}${u.coming.map((p) => `<div>${willTag} ${esc(whenTxt(Math.max(0, dOff(p.date))))} · ${esc(purTierText(byId.get(String(p.table)) || tb0, p.row, Number(p.from) || 0, p.choice, p.extra) || packFmtMoney(purchasePrice(p, byId.get(String(p.table)) || tb0), packLinkFor(p.table).currency))} ${bidiNum("× " + cntNow(p))}</div>`).join("")}${u.oth.map(([j, xs]) => `<div>${esc(whenShort(xs))} · ${esc(rows[j].label)} <span class="pur-cmp pur-cmp-${otherName}">${esc(tagTxt(otherName))}</span></div>`).join("")}</div>` : ""}`;
       };
       // Week strip (box 1, Option 1): This week · Next week · Week 3 … This week = the ✓ checklist below.
-      const boxes = `<div class="pur-wbs pur-o1-wbs">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wb${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${tOff != null && k === lastWeek ? "&#127919; " : ""}${esc(wkName(k))}</span><b>${b && b.cost ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<i class="pur-cmp-${otherName}">${esc(tagTxt(otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</i>` : ""}</button>`; }).join("")}</div>`;
-      const per = plan.spend ? t(plan.spend.per === "week" ? "spend_week" : "spend_month") : "";
+      // (This week: still to buy, the same number as the answer card and Budgets' This week tile)
+      const wk0 = budgetWeekSums(plan, rows.slice(0, nFollow), sched.slice(0, nFollow)).todo;
+      const boxes = `<div class="pur-wbs pur-o1-wbs">${keys.map((k) => { const b = buckets.get(k), c = k === 0 ? wk0 : b && b.cost; return `<button type="button" class="pur-wb${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${tOff != null && k === lastWeek ? "&#127919; " : ""}${esc(wkName(k))}</span><b>${c ? esc(money(c)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<i class="pur-cmp-${otherName}">${esc(tagTxt(otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</i>` : ""}</button>`; }).join("")}</div>`;
       const followLine = cmp
         ? `<div class="pur-o1-fl"><span class="pur-o1-flt">${esc(t("pur_o1_following"))} <b>${esc(followName)}</b> <span class="meta">· ${esc(t("pur_o1_other_plan").replace("{plan}", tagTxt(otherName)).replace("{v}", money(sel ? sel.alt || 0 : 0)))}</span></span><button type="button" class="pur-o1-sw" data-purfollow="${otherName}" title="${esc(t("pur_follow_line"))}">&#8644; ${esc(t("pur_o1_switch"))}</button></div>`
-        : plan.spend ? `<div class="pur-o1-fl" data-purgospend role="button" tabindex="0"><span class="pur-o1-flt">${esc(t("pur_o1_following"))} <b>${esc(followName)}</b> <span class="meta">(${esc(money(plan.spend.amount))} ${esc(per)})</span></span><span class="pur-go">${esc(t("pur_go_spend"))}</span></div>` : "";
+        : ""; // (the plan followed is named in the answer card above)
       const budLine = bi ? `<div class="pur-o1-bud"><span style="color:${bi.spent > bi.avail + 0.5 ? "var(--danger)" : "var(--good)"};">${bi.spent > bi.avail + 0.5 ? "&#9888;" : "&#10003;"} ${esc(bi.name)}</span> <span class="meta">${esc(money(bi.spent))} / ${esc(money(bi.avail))}</span></div>`
         : di ? `<div class="pur-o1-bud"><span style="color:${di.spent > di.avail + 0.5 ? "var(--amber)" : "var(--good)"};">${di.spent > di.avail + 0.5 ? "&#9888;" : "&#10003;"} ${esc(di.name)}</span> <span class="meta">${esc(money(di.spent))} / ${esc(money(di.avail))}${di.spent > di.avail + 0.5 ? ` \u00b7 ${esc(t("pur_o1_over").replace("{v}", money(di.spent - di.avail)))}` : ""}</span></div>` : "";
       // First 5 lines, then "Show N more" (the + Will buy button counts every ticked pack).
