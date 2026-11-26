@@ -5,7 +5,7 @@
 // live here; anything another page (Budgets, the Menu, the Dashboard, admin.js /
 // scan.js / the planner worker) uses stays in app.js. The site loads the packed copy
 // purchases.min.js (tools/stamp.js).
-window.PURCHASES_BUILD = "ea4ef6a9d4";
+window.PURCHASES_BUILD = "dc4091f97b";
 
 function packOpenSettingsOnPacks(id) {
   PACK_SETTINGS_FOCUS = String(id);
@@ -2076,41 +2076,52 @@ async function renderPurchasesPageMain() {
     const groupsOf = (list) => (PUR_PICK_GROUP === "date"
       ? dateGroups.map(([k, label, range]) => ({ g: "d:" + k, label, range, its: list.filter((i) => pkDateGrp(i) === k) }))
       : catOrder.map((g) => ({ g, label: g || t("packs_filter_none"), range: "", its: list.filter((i) => (catOrder.includes(i.cat) ? i.cat : "") === g) }))).filter((x) => x.its.length);
-    // Month (L3): "‹ December 2026 Today ›", the packs on sale all month in one
-    // dashed line, then each game week of the month with its events and the
-    // packs on sale that week (their days on the right). A tap picks the pack
-    // with the date box on its first sale day of that week.
-    let amAll = false;
-    const monthHtml = (list) => {
+    // Month (L3): "‹ December 2026 Today ›", then each game week of the month
+    // with its events and every pack on sale that week (their days on the right;
+    // packs on sale all month / every day are listed in each week). Each week
+    // folds (current week open first, kept for the visit and in this browser);
+    // searching opens every week with matches. A tap picks the pack with the
+    // date box on its first sale day of that week.
+    const monthWeeks = (list) => {
       const t0 = packStartOfToday(), y = t0.getUTCFullYear(), m = t0.getUTCMonth() + PUR_PICK_MON;
       const ms = new Date(Date.UTC(y, m, 1)), me = new Date(Date.UTC(y, m + 1, 0));
       const off = (d) => Math.round((d - t0) / 86400000), dOf = (o) => new Date(t0.getTime() + o * 86400000);
-      const a = off(ms), b = off(me), lo = Math.max(a, 0);
-      const wd = (o) => { try { return dOf(o).toLocaleDateString(pkLoc, { weekday: "short", timeZone: "UTC" }); } catch { return ""; } };
-      const range = (s, e) => { if (s === e) return pkDay(s); const ds = dOf(s), de = dOf(e); return ds.getUTCMonth() === de.getUTCMonth() ? `${pkDay(s)}–${de.getUTCDate()}` : `${pkDay(s)} – ${pkDay(e)}`; };
-      let mName = "";
-      try { mName = ms.toLocaleDateString(pkLoc, { month: "long", year: "numeric", timeZone: "UTC" }); } catch { mName = packDayKey(ms).slice(0, 7); }
-      const head = `<div class="pur-pk-mh"><button type="button" class="pur-pk-mb" data-ppkmon="-1"${PUR_PICK_MON <= 0 ? " disabled" : ""} aria-label="&#8249;">&#8249;</button><b>${esc(mName)}</b>${PUR_PICK_MON ? `<button type="button" class="pur-pk-mt" data-ppkmon="0">${esc(t("pcl_today"))}</button>` : ""}<button type="button" class="pur-pk-mb" data-ppkmon="1"${PUR_PICK_MON >= 11 ? " disabled" : ""} aria-label="&#8250;">&#8250;</button></div>`;
-      const allMonth = list.filter((i) => { const s = i.sale; if (s.kind === "daily") return true; if (s.kind !== "dated") return s.kind === "any" && (i.first ? i.on : true); for (let d = lo; d <= b; d++) if (!s.wins.some((w) => w.s <= d && w.e >= d)) return false; return true; });
-      // Planned packs first; the first 6, then "+N more" (a tap shows them all).
-      allMonth.sort((x, y) => (y.plan ? 1 : 0) - (x.plan ? 1 : 0));
-      const amMore = amAll ? 0 : Math.max(0, allMonth.length - 6);
-      const am = allMonth.length ? `<div class="pur-pk-am"><span class="meta">${esc(t("pur_pk_all_month"))}</span> ${allMonth.slice(0, allMonth.length - amMore).map((i) => `<button type="button" class="pur-pk-amc" data-ppkid="${esc(i.id)}" data-ppkday="${packDayKey(dOf(lo))}">${((i.icon || "").match(/<img[^>]*>/) || [""])[0]}<b>${esc(i.name)}</b>${i.sale.kind === "daily" ? ` <small class="meta">${esc(t("pur_pk_daily_s"))}</small>` : packLinkFor(i.id).reset === 7 ? ` <small class="meta">${esc(t("pur_pk_weekly_s"))}</small>` : ""}</button>`).join("")}${amMore ? `<button type="button" class="pur-pk-amm" data-ppkammore>${esc(t("pur_pk_n_more").replace("{n}", amMore))}</button>` : ""}</div>` : "";
-      const rest = list.filter((i) => i.sale.kind === "dated" && !allMonth.includes(i));
-      let html = "", n = 0;
+      const a = off(ms), b = off(me);
+      const shown = list.filter((i) => { const s = i.sale; return s.kind === "dated" || s.kind === "daily" || (s.kind === "any" && (i.first ? i.on : true)); });
+      const weeks = [];
+      let n = 0;
       for (let ws = a - ((ms.getUTCDay() + 6) % 7); ws <= b; ws += 7) {
         n++;
         const we = ws + 6;
         if (we < 0) continue;
         const wlo = Math.max(ws, 0);
-        const its = rest.map((i) => { const w = i.sale.wins.find((x) => x.e >= wlo && x.s <= we); return w ? { i, s: Math.max(w.s, wlo), e: Math.min(w.e, we) } : null; }).filter(Boolean).sort((x, y) => x.s - y.s || x.i.name.localeCompare(y.i.name, pkLoc));
+        const its = shown.map((i) => { if (i.sale.kind !== "dated") return { i, s: wlo, e: we }; const w = i.sale.wins.find((x) => x.e >= wlo && x.s <= we); return w ? { i, s: Math.max(w.s, wlo), e: Math.min(w.e, we) } : null; }).filter(Boolean).sort((x, y) => x.s - y.s || x.i.name.localeCompare(y.i.name, pkLoc));
+        // "w:<Monday>" = folded, "wo:<Monday>" = opened (weeks start folded, this week open).
+        weeks.push({ n, ws, we, its, key: packDayKey(dOf(ws)), now: ws <= 0 && we >= 0 });
+      }
+      return { t0, ms, a, b, dOf, weeks };
+    };
+    const wkFolded = (w) => (q ? !w.its.length : w.now ? PUR_PICK_FOLD.has("w:" + w.key) : !PUR_PICK_FOLD.has("wo:" + w.key));
+    const wkSet = (w, fold) => { PUR_PICK_FOLD.delete("w:" + w.key); PUR_PICK_FOLD.delete("wo:" + w.key); if (w.now && fold) PUR_PICK_FOLD.add("w:" + w.key); if (!w.now && !fold) PUR_PICK_FOLD.add("wo:" + w.key); };
+    const monthHtml = (list) => {
+      const { ms, dOf, weeks } = monthWeeks(list);
+      const wd = (o) => { try { return dOf(o).toLocaleDateString(pkLoc, { weekday: "short", timeZone: "UTC" }); } catch { return ""; } };
+      const range = (s, e) => { if (s === e) return pkDay(s); const ds = dOf(s), de = dOf(e); return ds.getUTCMonth() === de.getUTCMonth() ? `${pkDay(s)}–${de.getUTCDate()}` : `${pkDay(s)} – ${pkDay(e)}`; };
+      let mName = "";
+      try { mName = ms.toLocaleDateString(pkLoc, { month: "long", year: "numeric", timeZone: "UTC" }); } catch { mName = packDayKey(ms).slice(0, 7); }
+      const head = `<div class="pur-pk-mh"><button type="button" class="pur-pk-mb" data-ppkmon="-1"${PUR_PICK_MON <= 0 ? " disabled" : ""} aria-label="&#8249;">&#8249;</button><b>${esc(mName)}</b>${PUR_PICK_MON ? `<button type="button" class="pur-pk-mt" data-ppkmon="0">${esc(t("pcl_today"))}</button>` : ""}<button type="button" class="pur-pk-mb" data-ppkmon="1"${PUR_PICK_MON >= 11 ? " disabled" : ""} aria-label="&#8250;">&#8250;</button></div>`;
+      const allShut = weeks.every((w) => wkFolded(w));
+      const bar = q || !weeks.length ? "" : `<div class="pur-pk-allbar"><button type="button" data-ppkwkall>${esc(t(allShut ? "pur_pk_show_all" : "pur_pk_hide_all"))}</button></div>`;
+      let html = "";
+      weeks.forEach((w) => {
+        const { n, ws, we, its } = w, f = wkFolded(w);
         const evs = [];
         GAME_EVENTS.forEach((ev) => gameEventStarts(ev, dOf(ws), dOf(we)).forEach(() => { if (!evs.includes(ev)) evs.push(ev); }));
         const evHtml = evs.map((ev) => `<span class="pur-pk-ev" style="background:${esc(gameEventColor(ev.key))}">${esc(ev.name)}</span>`).join("");
-        html += `<div class="pur-pk-wh"><span><b>${esc(t("pur_pk_week_n").replace("{n}", n))}</b> · ${esc(range(ws, we))}${evHtml}</span><small>${esc(its.length === 1 ? t("pur_pk_1pack") : t("pur_pk_npacks").replace("{n}", its.length))}</small></div>`
-          + its.map(({ i, s, e }) => `<button type="button" class="pur-pk-row pur-pk-row3 pur-pk-rowm${i.id === String(PUR_FORM.table) ? " on" : ""}" data-ppkid="${esc(i.id)}" data-ppkday="${packDayKey(dOf(s))}"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${i.plan ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span> ` : ""}${esc(i.name)}</b><small class="pur-pk-of"><span>${esc(i.sale.often)}</span><span class="pur-pk-pr">${esc(i.price)}</span></small></span><span class="pur-pk-wd"><b>${esc(s === e ? wd(s) : `${wd(s)}–${wd(e)}`)}</b><small>${esc(range(s, e))}</small></span></button>`).join("");
-      }
-      return head + am + html;
+        html += `<button type="button" class="pur-pk-wh" data-ppkwk="${esc(w.key)}" aria-expanded="${!f}"><span><b>${esc(t("pur_pk_week_n").replace("{n}", n))}</b> · ${esc(range(ws, we))}${evHtml}</span><small>${esc(its.length === 1 ? t("pur_pk_1pack") : t("pur_pk_npacks").replace("{n}", its.length))} <i aria-hidden="true">${f ? "&#9656;" : "&#9662;"}</i></small></button>`
+          + (f ? "" : its.map(({ i, s, e }) => `<button type="button" class="pur-pk-row pur-pk-row3 pur-pk-rowm${i.id === String(PUR_FORM.table) ? " on" : ""}" data-ppkid="${esc(i.id)}" data-ppkday="${packDayKey(dOf(s))}"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${i.plan ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span> ` : ""}${esc(i.name)}</b><small class="pur-pk-of"><span>${esc(i.sale.often)}</span><span class="pur-pk-pr">${esc(i.price)}</span></small></span><span class="pur-pk-wd"><b>${esc(s === e ? wd(s) : `${wd(s)}–${wd(e)}`)}</b><small>${esc(range(s, e))}</small></span></button>`).join(""));
+      });
+      return head + bar + html;
     };
     const listHtml = () => {
       const tab = PUR_PICK_TAB, list = infos.filter((i) => match(i) && inTab(i, tab));
@@ -2156,7 +2167,16 @@ async function renderPurchasesPageMain() {
       if (tb2) { PUR_PICK_TAB = tb2.dataset.ppktab; fill(); return; }
       const gby = ev.target.closest("[data-ppkgby]");
       if (gby) { PUR_PICK_GROUP = gby.dataset.ppkgby; try { localStorage.setItem("pur_pick_group", PUR_PICK_GROUP); } catch { /* blocked */ } fill(); return; }
-      if (ev.target.closest("[data-ppkammore]")) { amAll = true; const l = modal.querySelector(".pur-pk-list"), top = l.scrollTop; l.innerHTML = listHtml(); l.scrollTop = top; return; }
+      const wh = ev.target.closest("[data-ppkwk]"), wa = ev.target.closest("[data-ppkwkall]");
+      if (wh || wa) {
+        const l = modal.querySelector(".pur-pk-list"), top = l.scrollTop;
+        const weeks = monthWeeks(infos.filter((i) => match(i) && inTab(i, PUR_PICK_TAB))).weeks;
+        if (wh) { const w = weeks.find((x) => x.key === wh.dataset.ppkwk); if (w) wkSet(w, !wkFolded(w)); }
+        else { const shut = weeks.every((w) => wkFolded(w)); weeks.forEach((w) => wkSet(w, !shut)); }
+        try { localStorage.setItem("pur_pick_fold", JSON.stringify([...PUR_PICK_FOLD])); } catch { /* blocked */ }
+        l.innerHTML = listHtml(); l.scrollTop = top;
+        return;
+      }
       const mb = ev.target.closest("[data-ppkmon]");
       if (mb) { const d = Number(mb.dataset.ppkmon); PUR_PICK_MON = d ? Math.max(0, Math.min(11, PUR_PICK_MON + d)) : 0; const l = modal.querySelector(".pur-pk-list"); l.innerHTML = listHtml(); l.scrollTop = 0; return; }
       const row = ev.target.closest("[data-ppkid]");
