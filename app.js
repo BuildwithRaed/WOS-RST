@@ -1310,7 +1310,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 136; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 137; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -1583,6 +1583,37 @@ const T = {
   your_backpack: { en: "Your backpack" },
   backpack_desc: { en: "Every item the site uses. Tap an item to type how many you have." },
   t12x_settings: { en: "Settings" },
+  bst_your_plan: { en: "Your plan" },
+  bst_planning_to: { en: "Planning to {d} · {n} days" },
+  bst_planning_over: { en: "Planning to {d} · date passed" },
+  bst_budget_pill: { en: "Budget {v} / {per}" },
+  bst_ngf_pill: { en: "New hero packs first" },
+  bst_target: { en: "Target date" },
+  bst_done_by: { en: "Done by" },
+  bst_saved: { en: "Saved" },
+  bst_next_svs: { en: "Next SvS" },
+  bst_new_gen: { en: "New Gen" },
+  bst_plus_w: { en: "+{n} weeks" },
+  bst_upcoming: { en: "Done by · upcoming" },
+  bst_set_d: { en: "Set {d}" },
+  bst_cancel: { en: "Cancel" },
+  bst_forge_opens: { en: "Forge opens" },
+  bst_currency: { en: "Currency" },
+  bst_cur_note: { en: "Pack prices use your store's price when you typed one (Packs → Prices), else the US $ price × the rate." },
+  bst_spend_sub: { en: "{v} a {per}" },
+  bst_spend_keep: { en: "keep what's left" },
+  bst_spend_off: { en: "Not set" },
+  bst_ngf: { en: "New hero packs first" },
+  bst_new: { en: "NEW" },
+  bst_ngf_on: { en: "On" },
+  bst_ngf_off: { en: "Off" },
+  bst_ngf_row: { en: "Count them as bought" },
+  bst_ngf_desc: { en: "Forge widgets + Value Hero Pack counted as bought for every new hero" },
+  bst_ngf_none: { en: "No new hero packs on sale for the heroes in your plan right now." },
+  bst_recalc: { en: "Recalculate plan" },
+  bud_ngf_note: { en: "New hero packs first: {h} · {w}" },
+  bud_ngf_forge: { en: "Forge Tiers 1–{n}" },
+  bud_ngf_value: { en: "Value Hero Pack" },
   t12x_covered: { en: "covered by your speedups" },
   t12x_done: { en: "done" },
   t12x_not_planned: { en: "not planned" },
@@ -3914,17 +3945,63 @@ const T = {
   pur_pk_hide_all: { en: "Hide all" },
   pur_pk_show_all: { en: "Show all" },
   pur_pk_ng_later: { en: "Hero packs for later Gens show when their Gen is next" },
-  pur_pk_tab_on: { en: "On now" },
-  pur_pk_tab_soon: { en: "Coming" },
-  pur_pk_tab_all: { en: "All" },
-  pur_pk_note_on: { en: "Packs you can buy today, ★ = in your plan" },
-  pur_pk_note_soon: { en: "Packs that come back later, ★ = in your plan" },
-  pur_pk_note_all: { en: "Every pack, ★ = in your plan" },
   pur_pk_plan: { en: "plan" },
-  pur_pk_on_now: { en: "on now" },
-  pur_pk_next: { en: "next {date}" },
   pur_pk_stacks: { en: "any time · stacks" },
   pur_pk_change: { en: "Change" },
+  pur_sale_trig: { en: "Appears at a level" },
+  pur_sale_daily: { en: "Every day" },
+  pur_sale_on_until: { en: "On now · until {d}" },
+  pur_sale_on_tonight: { en: "On now · until tonight" },
+  pur_sale_on: { en: "On now" },
+  pur_sale_next: { en: "Next: {a} – {b}" },
+  pur_sale_next1: { en: "Next: {a}" },
+  pur_sale_days: { en: "({n} days)" },
+  pur_sale_day1: { en: "(1 day)" },
+  pur_sale_weeks: { en: "({n} weeks)" },
+  pur_sale_week1: { en: "(1 week)" },
+  pur_sale_hint: { en: "This pack is on sale {a} – {b} · tap a day:" },
+  pur_sale_hint1: { en: "This pack is on sale {a} · tap the day:" },
+  pur_sale_warn: { en: "Not on sale that day · next {d}" },
+  pur_sale_warn_none: { en: "Not on sale that day" },
+  pur_sale_any: { en: "On sale any time" },
+  pur_sale_any_daily: { en: "On sale every day" },
+  pur_sale_once_any: { en: "One-time pack · any day" },
+  pur_sale_trig_hint: { en: "Appears when its level is reached, so any date can be planned" },
+  pur_pk_group: { en: "Group:" },
+  pur_pk_hint: { en: "★ = in your plan · prices in {cur}" },
+  pur_pk_group_cat: { en: "Category" },
+  pur_wb_week: { en: "Week" },
+  pur_wb_month: { en: "Month" },
+  pur_wb_title: { en: "Dates to show" },
+  pur_wb_p_this: { en: "This month" },
+  pur_wb_p_next: { en: "Next month" },
+  pur_wb_p_target: { en: "Until target" },
+  pur_wb_p_custom: { en: "Custom" },
+  pur_wb_p_all: { en: "All" },
+  pur_wb_from: { en: "From" },
+  pur_wb_to: { en: "To" },
+  pur_wb_live: { en: "{n} packs · {v} in these dates" },
+  pur_wb_reset: { en: "Reset" },
+  pur_wb_show: { en: "Show" },
+  pur_wb_none: { en: "Nothing to buy in these dates." },
+  pur_pk_group_month: { en: "Month" },
+  pur_pk_week_n: { en: "Week {n}" },
+  pur_pk_1pack: { en: "1 pack" },
+  pur_pk_npacks: { en: "{n} packs" },
+  pur_pk_group_date: { en: "Date" },
+  pur_pk_d_on: { en: "On now" },
+  pur_pk_d_this: { en: "This week" },
+  pur_pk_d_next: { en: "Next week" },
+  pur_pk_d_later: { en: "Later" },
+  pur_chall: { en: "Change date for all" },
+  pur_chall_apply: { en: "Apply to {n}" },
+  pur_chall_note: { en: "On sale {a} – {b} · all prices move together" },
+  pur_chall_note_d: { en: "On sale {a} – {b} · all dates move to it" },
+  pur_chall_note_x: { en: "Not on sale that day · next {a} – {b}" },
+  pur_chall_note_any: { en: "All prices move together" },
+  pur_chall_done: { en: "Date changed" },
+  pur_ed_date_all: { en: "Date for all" },
+  pur_ed_date_keep: { en: "each keeps its own" },
   pur_pk_none: { en: "No pack found." },
   pur_tier: { en: "Tier" },
   pur_upto: { en: "Tiers 1–{tier} ({price})" },
@@ -10023,7 +10100,7 @@ function packCurrentCycleStart(reset, resetDay) {
   return new Date(today.getTime() - since * 86400000);
 }
 function packPurchaseUse(groups) {
-  const list = (PACK_PURCHASES.list || []).filter((p) => packPurchaseUsesLimit(p, packLinkFor(p.table)));
+  const list = purListEff().filter((p) => packPurchaseUsesLimit(p, packLinkFor(p.table)));
   if (!list.length) return groups;
   // A pick-one set bought as several prices in one purchase (Benefit Card
   // $4.99 + $9.99 saved together as its last price, the choice price = the
@@ -10167,14 +10244,15 @@ function packPurchaseUse(groups) {
 }
 function packActiveCardSupply(calcKey, tables) {
   const out = {}, used = [];
-  // Packs you plan to buy (My Purchases): their items count as coming.
-  (PACK_PURCHASES.list || []).forEach((p) => {
+  // Packs you plan to buy (My Purchases): their items count as coming
+  // (with "New hero packs first" on, the new heroes' packs too).
+  purListEff().forEach((p) => {
     if (!purPlannedCounts(p)) return;
     const tb = (tables || []).find((x) => String(x.id) === String(p.table));
     if (!tb || !packTableServesPage(tb, calcKey)) return;
     const n = Math.max(1, Math.floor(Number(p.count) || 1));
     Object.entries(purchaseGives(p, tb)).forEach(([k, v]) => { out[k] = (out[k] || 0) + v * n; });
-    used.push({ title: `${tb.title || ""} × ${n} (${t("pur_planned_short")} ${p.date})` });
+    if (!p.virtual) used.push({ title: `${tb.title || ""} × ${n} (${t("pur_planned_short")} ${p.date})` });
   });
   (tables || []).forEach((tb) => {
     const l = packLinkFor(tb.id);
@@ -11488,10 +11566,10 @@ const SCAN_SUMMARY_ROWS = [[/\bgems?\b/i, "Gems"], [/\bmeat\b/i, "Meat"], [/\bwo
 const CODE_FILES = {
   admin: "admin.min.js?v=0a7cbbe8a6",
   scan: "scan.min.js?v=64a7ef20ff",
-  packs: "packs.min.js?v=8c7c3e7c6f",
+  packs: "packs.min.js?v=d85801810c",
   gallery: "gallery.min.js?v=28a7717641",
-  purchases: "purchases.min.js?v=21c5b54f97",
-  budgets: "budgets.min.js?v=0655976263",
+  purchases: "purchases.min.js?v=9586be8a45",
+  budgets: "budgets.min.js?v=458fd17947",
 };
 const CODE_P = {}, CODE_OK = {};
 function loadCode(name) {
@@ -13344,6 +13422,106 @@ function vipFirstBuyOpen() {
   const rows = (HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || [];
   return rows.some((r) => r.hero && r.hero.name === VIP_FIRST_BUY_HERO && r.unlock > 0);
 }
+// ---- New hero packs first (Budgets Settings; per person, calc_state "budget_prefs" = { ngFirst }) ----
+// On: every new hero the hero plan covers gets its Value Hero Pack and its
+// Exclusive Gear Forge widget ladder (all steps) counted as bought on their
+// first sale day, like a My Purchases "will buy": their shards / widgets come
+// as supply and the packs' limits are used up (virtual purchases, never saved),
+// so the planner buys other packs only for what is still missing; their price
+// is added to every plan as rows of their own (ngFirstApply). A hero's pack the
+// person already has a real purchase of is left alone.
+function budgetPrefs() {
+  const v = CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID ? CALC_STATE_CACHE.budget_prefs : null;
+  return v && typeof v === "object" ? v : {};
+}
+function ngFirstOn() { return budgetPrefs().ngFirst === true; }
+// (force: the packs it would count, switch on or off; for the Settings faces)
+function ngFirstVirtual(force) {
+  if ((!force && !ngFirstOn()) || !HERO_PLAN_LAST || !Array.isArray(PACK_TABLES_CACHE)) return [];
+  if (typeof BUDGET_SELECTED !== "undefined" && BUDGET_SELECTED && BUDGET_SELECTED.hero_shards === false) return [];
+  const real = new Set((PACK_PURCHASES.list || []).map((p) => String(p.table)));
+  const today = packDayKey(packStartOfToday()), out = [];
+  (HERO_PLAN_LAST.rows || []).forEach((r) => {
+    if (!r.hero) return;
+    [["s", r.need > 0], ["w", r.wNeed > 0]].forEach(([k, want]) => {
+      if (!want) return;
+      const id = `ng-${k}-${Number(r.hero.generation)}-${r.hero.id}`;
+      const tb = PACK_TABLES_CACHE.find((x) => String(x.id) === id);
+      if (!tb || real.has(id) || !packInBudgets(id)) return;
+      const lk = packLinkFor(id), offers = packOffersFor(tb, true);
+      if (!offers.length) return;
+      const row = lk.sequential ? Math.max(...offers.map((o) => Number(o.row) || 0)) : Number(offers[0].row) || 0;
+      const st = packParseDay(lk.resetDay), sk = st ? packDayKey(st) : today;
+      out.push({ id: "ngv-" + id, table: id, row, from: 0, count: 1, date: sk > today ? sk : today, status: "planned", virtual: true, hero: r.hero.name, kind: k });
+    });
+  });
+  return out;
+}
+// The purchases the planner counts: the saved ones, plus the virtual ones above.
+function purListEff() {
+  const v = ngFirstVirtual();
+  return v.length ? (PACK_PURCHASES.list || []).concat(v) : (PACK_PURCHASES.list || []);
+}
+function ngFirstSig() { return ngFirstOn() ? ngFirstVirtual().map((p) => `${p.table}:${p.row}:${p.date}`).join(",") || "on" : ""; }
+// The virtual purchases as plan rows (the same fields as the planner's rows).
+function ngFirstRows() {
+  const strip = !packGemsCountFor("hero_shards");
+  return ngFirstVirtual().map((p) => {
+    const tb = PACK_TABLES_CACHE.find((x) => String(x.id) === p.table);
+    const gs = tb ? packGroupsForBuild([tb], strip) : [];
+    const g = gs[0];
+    if (!g) return null;
+    const o = g.ladder ? g.offers.filter((x) => !x.extra).pop() : g.offers.find((x) => x.row === p.row) || g.offers[0];
+    if (!o) return null;
+    return { grp: "ngf:" + p.table, title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: 1, subtotal: o.price, reset: g.reset, resetDay: g.resetDay, cycles: 1, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: g.ladder ? 0 : o.from, window: g.window, tables: g.tables, usedNow: 0, usedAt: null, ngFirst: true, hero: p.hero, kind: p.kind };
+  }).filter(Boolean);
+}
+// Adds those rows (once: plans carry ngFirst) to every plan of a combined plan
+// answer that covers the hero page, and to the hero page's share.
+function ngFirstApply(res) {
+  if (!res || typeof res !== "object" || !ngFirstOn()) return res;
+  const rows = ngFirstRows();
+  if (!rows.length) return res;
+  const sum = rows.reduce((a, r) => a + r.subtotal, 0);
+  const addTo = (pl) => {
+    if (!pl || typeof pl !== "object" || !Array.isArray(pl.rows) || typeof pl.total !== "number" || pl.ngFirst) return;
+    pl.rows = pl.rows.concat(rows.map((r) => ({ ...r })));
+    pl.total += sum; pl.ngFirst = true;
+  };
+  const seen = new Set();
+  const walk = (x, depth) => {
+    if (!x || typeof x !== "object" || seen.has(x) || depth > 6) return;
+    seen.add(x);
+    if (Array.isArray(x)) { x.forEach((y) => walk(y, depth + 1)); return; }
+    if (Array.isArray(x.rows) && typeof x.total === "number") { addTo(x); return; }
+    Object.keys(x).forEach((k) => { if (k !== "shares" && k !== "split" && k !== "droppedPlans" && k !== "groups") walk(x[k], depth + 1); });
+  };
+  const dropped = (res.dropped || []).includes("hero_shards");
+  if (dropped) walk(res.droppedPlans && res.droppedPlans.hero_shards, 0);
+  else walk(res, 0);
+  const sp = res.split;
+  if (sp && sp.target) {
+    const inLate = sp.late && (sp.late.keys || []).includes("hero_shards");
+    if (inLate) walk(sp.late, 0); else walk(sp.target, 0);
+  }
+  if (res.shares && !dropped) {
+    const sh = res.shares.hero_shards || (res.shares.hero_shards = { total: 0, rows: [] });
+    if (!sh.ngFirst) { sh.rows = sh.rows.concat(rows.map((r) => ({ ...r, share: 1, shareCost: r.subtotal, unitFrac: [] }))); sh.total += sum; sh.ngFirst = true; }
+  }
+  return res;
+}
+// The dated plan: the whole plan and its first dated part.
+function ngFirstApplyDated(res) {
+  if (!res || !res.plan || !ngFirstOn() || res.plan.ngFirst) return res;
+  const rows = ngFirstRows();
+  if (!rows.length) return res;
+  const sum = rows.reduce((a, r) => a + r.subtotal, 0);
+  res.plan.rows = res.plan.rows.concat(rows.map((r) => ({ ...r, stage: 0 })));
+  res.plan.total += sum; res.plan.ngFirst = true;
+  const p0 = (res.parts || []).find((p) => !p.late) || (res.parts || [])[0];
+  if (p0) { p0.rows = (p0.rows || []).concat(rows.map((r) => ({ ...r, stage: 0 }))); p0.total = (p0.total || 0) + sum; }
+  return res;
+}
 // What the built pack list depends on besides the tables (new heroes' copies,
 // the VIP tier for the VIP rows).
 function packBuiltSig() { return `${ngHeroSig()}|vip${vipTierNow()}`; }
@@ -13858,6 +14036,65 @@ function packResetOffsets(reset, day, horizon, win) {
   }
   for (let d = 0; d <= horizon; d += reset) out.push(d);
   return out;
+}
+// "Every 4 weeks" rather than "Every 28 days" (owner, 16 Nov 2026: events cycle in weeks).
+function packEveryText(r, day) {
+  const n = Number(r);
+  if (n === 30) { const d = packParseDay(packValidDay(day)); if (!d) return t("pk_every_month_date"); const n2 = d.getUTCDate(), ord = LANG === "en" ? n2 + ([11, 12, 13].includes(n2 % 100) ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[n2 % 10] || "th")) : String(n2); return t("pk_every_month_on").replace("{d}", ord); }
+  if (n === 7) return t("pk_every_week");
+  if (n > 0 && n % 7 === 0) return t("pk_every_weeks").replace("{n}", n / 7);
+  return t("pk_every_days").replace("{n}", n);
+}
+// When a pack is on sale, read the way the planner reads it (packResetOffsets
+// + its "Lasts" window): { kind, wins: [{ s, e }] (days from today, e = its
+// last day), often: "Every week · Sun–Tue" }. kind: "any" (any time:
+// stacking cards, no limit, the first-buy reward), "daily", "trigger"
+// (appears at a level), "once" (one-time, no date), "dated" (wins).
+function packSaleInfo(id, horizon) {
+  const H = horizon || 400, lk = packLinkFor(id), r = lk.reset, out = { kind: "dated", wins: [], often: "" };
+  if (lk.trigger) { out.kind = "trigger"; out.often = t("pur_sale_trig"); return out; }
+  if (lk.firstBuy) { out.kind = "any"; out.often = t("pack_reset_once"); return out; }
+  if (packStackInfo(r)) { out.kind = "any"; out.often = t("pur_pk_stacks"); return out; }
+  if (r == null || r === "" || r === "unlimited") { out.kind = "any"; out.often = t("pack_reset_unlimited"); return out; }
+  const t0 = packStartOfToday(), anchor = packParseDay(packValidDay(lk.resetDay));
+  const aOff = anchor ? Math.round((anchor - t0) / 86400000) : null;
+  const win = Number(lk.window) > 0 ? Math.floor(Number(lk.window)) : 0;
+  if (r === "once" || Number(r) >= PACK_ONE_TIME_DAYS) {
+    out.often = t("pack_reset_once");
+    if (aOff == null) { out.kind = "once"; return out; }
+    const e = win ? aOff + win - 1 : H;
+    if (e >= 0) out.wins.push({ s: aOff, e });
+    return out;
+  }
+  const n = Number(r);
+  if (!(n > 0)) { out.kind = "any"; return out; }
+  if (n === 1) { out.kind = "daily"; out.often = t("pur_sale_daily"); return out; }
+  const starts = [];
+  if (n === 30 && anchor) {
+    for (let m = -2; m < 40; m++) { const s = Math.round((new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + m, anchor.getUTCDate())) - t0) / 86400000); if (s > H) break; starts.push(s); }
+  } else {
+    let s;
+    if (aOff != null) { s = aOff; while (s > -n) s -= n; } else if (n === 7 || n === 14) s = -((t0.getUTCDay() + 6) % 7); else s = 0;
+    for (; s <= H; s += n) starts.push(s);
+  }
+  starts.forEach((s, i) => {
+    const nx = i + 1 < starts.length ? starts[i + 1] : s + n;
+    const e = Math.min(s + (win || nx - s) - 1, nx - 1);
+    if (e >= 0) out.wins.push({ s, e });
+  });
+  const parts = [packEveryText(n, lk.resetDay)];
+  if (anchor && win > 0 && win < 7 && n % 7 === 0) {
+    const wd = (d) => { try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { weekday: "short", timeZone: "UTC" }); } catch (e) { return ""; } };
+    parts.push(win === 1 ? wd(anchor) : `${wd(anchor)}–${wd(new Date(anchor.getTime() + (win - 1) * 86400000))}`);
+  }
+  out.often = parts.join(" · ");
+  return out;
+}
+// The sale window on or after day `d` (days from today): { s, e, in } or null.
+function packSaleWinAt(info, d) {
+  if (!info || info.kind !== "dated") return null;
+  const w = info.wins.find((x) => x.e >= d);
+  return w ? { s: w.s, e: w.e, in: w.s <= d } : null;
 }
 const PACK_HORIZON_DAYS = 1095;
 
@@ -18865,7 +19102,7 @@ const BUDGET_PLANS_INDEX = "budget_plans_v2", BUDGET_PLAN_ITEM = "budget_plan_v2
 const BUDGET_PLANS_KEPT = 5;
 function budgetPlanFingerprint(payload) {
   tradeExtraSync();
-  const str = JSON.stringify({ v: 8, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
+  const str = JSON.stringify({ v: 8, user: USER_ID || "", day: packDayKey(packStartOfToday()), ...(ngFirstOn() ? { ngf: ngFirstSig() } : {}), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
   // cyrb53: a quick 53-bit hash of the text, plus its length.
   let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
   for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
@@ -18937,7 +19174,7 @@ async function budgetCombinedPlanAsync(pages, selected, targetDays, more) {
   try {
     key = budgetPlanFingerprint(payload);
     const kept = budgetPlanKept(key);
-    if (kept) return withCands(kept);
+    if (kept) return ngFirstApply(withCands(kept));
   } catch (e) { /* storage blocked: work it out */ }
   // Two planners side by side when the device can: the first works the whole
   // plan out (Fastest, Cheapest, My budget), the second the split around the
@@ -18957,9 +19194,9 @@ async function budgetCombinedPlanAsync(pages, selected, targetDays, more) {
     const splitIn = acc.splitDone || acc.splitEarly;
     // (A split that is in before the plan itself is passed on as it is; the plan then says if it's wanted.)
     const split = !two ? ((acc.main && acc.main.split) || (acc.splitEarly ? acc.split : acc.target ? { target: acc.target } : null)) : splitIn ? (!m || wantsSplit(m) ? acc.split : null) : acc.target ? { target: acc.target } : null;
-    more.onPart({ chosen: null, shares: {}, dropped: [], inc: [], views: {}, byTarget: null, ...(m || {}), split, pending: true,
+    more.onPart(ngFirstApply({ chosen: null, shares: {}, dropped: [], inc: [], views: {}, byTarget: null, ...(m || {}), split, pending: true,
       have: { set: !!acc.main, fast: !!(m && m.views && m.views.fastest && m.views.fastest.plan), views: acc.step === "views" || acc.step === "done",
-        split: two ? (splitIn ? true : acc.target ? "target" : false) : ((acc.main && !acc.early) || acc.splitEarly ? true : acc.target ? "target" : false) } });
+        split: two ? (splitIn ? true : acc.target ? "target" : false) : ((acc.main && !acc.early) || acc.splitEarly ? true : acc.target ? "target" : false) } }));
   };
   // A part of the split: its by-target part, or the whole of it handed over early.
   const splitPart = (p) => { if (p.split.late) { acc.split = p.split; acc.splitEarly = true; } else if (p.split.target) acc.target = p.split.target; else return; tell(); };
@@ -18994,7 +19231,7 @@ async function budgetCombinedPlanAsync(pages, selected, targetDays, more) {
     }
   }
   if (key) budgetPlanKeep(key, res);
-  return withCands(res);
+  return ngFirstApply(withCands(res));
 }
 // Each page's own plan, added together as one plan over the combined packs.
 // Valid only if the packs' limits allow those purchases together and they
@@ -19996,7 +20233,9 @@ function budgetDeadlineDrop() {
 // without a date for the main target - or, on a page the plan knows can't make
 // the target (lateKeys), the cheapest way after it. `peek` = only what is
 // already worked out (in memory or kept on the phone); nothing is asked.
-function budgetDeadlineFor(pages, selected, goals, due, mainDay, keys, onReady, lateKeys, peek) {
+// ("New hero packs first": their rows are added to the dated plan too.)
+function budgetDeadlineFor(...a) { return ngFirstApplyDated(budgetDeadlineForRaw(...a)); }
+function budgetDeadlineForRaw(pages, selected, goals, due, mainDay, keys, onReady, lateKeys, peek) {
   const segs = budgetGoalSegs(goals, pages), byDay = new Map(), late = { need: {}, pages: {} };
   const put = (m, seg) => Object.entries(seg || {}).forEach(([n, q]) => { m[n] = (m[n] || 0) + q; });
   // (each part also keeps every page's own share, so a leftover stays with its page)
