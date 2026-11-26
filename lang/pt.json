@@ -3282,5 +3282,10 @@
 "t:pur_chall_note_any":"Todos os preços se movem juntos",
 "t:pur_chall_done":"Data alterada",
 "t:pur_ed_date_all":"Data para todos",
-"t:pur_ed_date_keep":"cada um mantém a sua"
+"t:pur_ed_date_keep":"cada um mantém a sua",
+"t:cda_s_hero_shards":"Heróis",
+"t:cdb_sub_packs":"da sua Mochila + pacotes desta semana · {n} páginas",
+"t:cdb_sub_wait_packs":"da sua Mochila + pacotes desta semana",
+"t:pur_wk_to_target":"Até o objetivo",
+"t:gu_part_fully":"completo em {d}"
 }

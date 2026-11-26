@@ -3282,5 +3282,10 @@
 "t:pur_chall_note_any":"ราคาทั้งหมดย้ายด้วยกัน",
 "t:pur_chall_done":"เปลี่ยนวันแล้ว",
 "t:pur_ed_date_all":"วันสำหรับทั้งหมด",
-"t:pur_ed_date_keep":"แต่ละรายการคงวันเดิม"
+"t:pur_ed_date_keep":"แต่ละรายการคงวันเดิม",
+"t:cda_s_hero_shards":"ฮีโร่",
+"t:cdb_sub_packs":"จากกระเป๋า + แพ็กสัปดาห์นี้ · {n} หน้า",
+"t:cdb_sub_wait_packs":"จากกระเป๋า + แพ็กสัปดาห์นี้",
+"t:pur_wk_to_target":"ถึงเป้าหมาย",
+"t:gu_part_fully":"ครบ {d}"
 }

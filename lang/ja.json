@@ -3284,5 +3284,10 @@
 "t:pur_chall_note_any":"すべての価格が一緒に移動",
 "t:pur_chall_done":"日付を変更しました",
 "t:pur_ed_date_all":"全体の日付",
-"t:pur_ed_date_keep":"それぞれの日付のまま"
+"t:pur_ed_date_keep":"それぞれの日付のまま",
+"t:cda_s_hero_shards":"英雄",
+"t:cdb_sub_packs":"バッグ + 今週のパックから · {n}ページ",
+"t:cdb_sub_wait_packs":"バッグ + 今週のパックから",
+"t:pur_wk_to_target":"目標まで",
+"t:gu_part_fully":"完了 {d}"
 }

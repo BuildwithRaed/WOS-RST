@@ -3284,5 +3284,10 @@
 "t:pur_chall_note_any":"Tous les prix bougent ensemble",
 "t:pur_chall_done":"Date changée",
 "t:pur_ed_date_all":"Date pour tous",
-"t:pur_ed_date_keep":"chacun garde la sienne"
+"t:pur_ed_date_keep":"chacun garde la sienne",
+"t:cda_s_hero_shards":"Héros",
+"t:cdb_sub_packs":"avec votre Sac + packs de la semaine · {n} pages",
+"t:cdb_sub_wait_packs":"avec votre Sac + packs de la semaine",
+"t:pur_wk_to_target":"Jusqu'à la cible",
+"t:gu_part_fully":"complet le {d}"
 }

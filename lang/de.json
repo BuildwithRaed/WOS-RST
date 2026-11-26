@@ -3284,5 +3284,10 @@
 "t:pur_chall_note_any":"Alle Preise ziehen mit",
 "t:pur_chall_done":"Datum geändert",
 "t:pur_ed_date_all":"Datum für alle",
-"t:pur_ed_date_keep":"jedes behält seins"
+"t:pur_ed_date_keep":"jedes behält seins",
+"t:cda_s_hero_shards":"Helden",
+"t:cdb_sub_packs":"aus deinem Rucksack + Pakete dieser Woche · {n} Seiten",
+"t:cdb_sub_wait_packs":"aus deinem Rucksack + Pakete dieser Woche",
+"t:pur_wk_to_target":"Bis zum Ziel",
+"t:gu_part_fully":"komplett {d}"
 }

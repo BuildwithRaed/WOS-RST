@@ -3282,5 +3282,10 @@
 "t:pur_chall_note_any":"Tüm fiyatlar birlikte kayar",
 "t:pur_chall_done":"Tarih değişti",
 "t:pur_ed_date_all":"Hepsi için tarih",
-"t:pur_ed_date_keep":"her biri kendi tarihinde"
+"t:pur_ed_date_keep":"her biri kendi tarihinde",
+"t:cda_s_hero_shards":"Kahramanlar",
+"t:cdb_sub_packs":"çantandan + bu haftanın paketleri · {n} sayfa",
+"t:cdb_sub_wait_packs":"çantandan + bu haftanın paketleri",
+"t:pur_wk_to_target":"Hedefe kadar",
+"t:gu_part_fully":"tamamı {d}"
 }

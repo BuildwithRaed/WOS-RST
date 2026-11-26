@@ -3284,5 +3284,10 @@
 "t:pur_chall_note_any":"Tutti i prezzi si spostano insieme",
 "t:pur_chall_done":"Data cambiata",
 "t:pur_ed_date_all":"Data per tutti",
-"t:pur_ed_date_keep":"ognuno tiene la sua"
+"t:pur_ed_date_keep":"ognuno tiene la sua",
+"t:cda_s_hero_shards":"Eroi",
+"t:cdb_sub_packs":"dal tuo Zaino + pacchetti della settimana · {n} pagine",
+"t:cdb_sub_wait_packs":"dal tuo Zaino + pacchetti della settimana",
+"t:pur_wk_to_target":"Fino all'obiettivo",
+"t:gu_part_fully":"completo il {d}"
 }

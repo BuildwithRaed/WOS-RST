@@ -3284,5 +3284,10 @@
 "t:pur_chall_note_any":"Wszystkie ceny przesuwają się razem",
 "t:pur_chall_done":"Data zmieniona",
 "t:pur_ed_date_all":"Data dla wszystkich",
-"t:pur_ed_date_keep":"każda zostaje swoja"
+"t:pur_ed_date_keep":"każda zostaje swoja",
+"t:cda_s_hero_shards":"Bohaterowie",
+"t:cdb_sub_packs":"z Twojego plecaka + paczki z tego tygodnia · stron: {n}",
+"t:cdb_sub_wait_packs":"z Twojego plecaka + paczki z tego tygodnia",
+"t:pur_wk_to_target":"Do celu",
+"t:gu_part_fully":"w pełni {d}"
 }

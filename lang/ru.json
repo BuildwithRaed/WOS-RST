@@ -3284,5 +3284,10 @@
 "t:pur_chall_note_any":"Все цены сдвигаются вместе",
 "t:pur_chall_done":"Дата изменена",
 "t:pur_ed_date_all":"Дата для всех",
-"t:pur_ed_date_keep":"у каждого своя"
+"t:pur_ed_date_keep":"у каждого своя",
+"t:cda_s_hero_shards":"Герои",
+"t:cdb_sub_packs":"из рюкзака + наборы этой недели · страниц: {n}",
+"t:cdb_sub_wait_packs":"из рюкзака + наборы этой недели",
+"t:pur_wk_to_target":"До цели",
+"t:gu_part_fully":"полностью {d}"
 }

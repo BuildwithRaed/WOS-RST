@@ -3282,5 +3282,10 @@
 "t:pur_chall_note_any":"모든 가격이 함께 이동",
 "t:pur_chall_done":"날짜 변경됨",
 "t:pur_ed_date_all":"전체 날짜",
-"t:pur_ed_date_keep":"각자 날짜 유지"
+"t:pur_ed_date_keep":"각자 날짜 유지",
+"t:cda_s_hero_shards":"영웅",
+"t:cdb_sub_packs":"배낭 + 이번 주 패키지에서 · 페이지 {n}개",
+"t:cdb_sub_wait_packs":"배낭 + 이번 주 패키지에서",
+"t:pur_wk_to_target":"목표까지",
+"t:gu_part_fully":"완료 {d}"
 }

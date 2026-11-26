@@ -3282,5 +3282,10 @@
 "t:pur_chall_note_any":"Semua harga pindah bersama",
 "t:pur_chall_done":"Tanggal diubah",
 "t:pur_ed_date_all":"Tanggal untuk semua",
-"t:pur_ed_date_keep":"masing-masing tetap"
+"t:pur_ed_date_keep":"masing-masing tetap",
+"t:cda_s_hero_shards":"Pahlawan",
+"t:cdb_sub_packs":"dari Ranselmu + paket minggu ini · {n} halaman",
+"t:cdb_sub_wait_packs":"dari Ranselmu + paket minggu ini",
+"t:pur_wk_to_target":"Sampai target",
+"t:gu_part_fully":"penuh {d}"
 }

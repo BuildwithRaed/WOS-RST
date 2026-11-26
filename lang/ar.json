@@ -3282,5 +3282,10 @@
 "t:pur_chall_note_any":"كل الأسعار تنتقل معًا",
 "t:pur_chall_done":"تم تغيير التاريخ",
 "t:pur_ed_date_all":"تاريخ للكل",
-"t:pur_ed_date_keep":"كلٌّ يبقى على تاريخه"
+"t:pur_ed_date_keep":"كلٌّ يبقى على تاريخه",
+"t:cda_s_hero_shards":"الأبطال",
+"t:cdb_sub_packs":"من حقيبتك + حزم هذا الأسبوع · {n} صفحات",
+"t:cdb_sub_wait_packs":"من حقيبتك + حزم هذا الأسبوع",
+"t:pur_wk_to_target":"حتى الهدف",
+"t:gu_part_fully":"بالكامل {d}"
 }

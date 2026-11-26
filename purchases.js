@@ -5,7 +5,7 @@
 // live here; anything another page (Budgets, the Menu, the Dashboard, admin.js /
 // scan.js / the planner worker) uses stays in app.js. The site loads the packed copy
 // purchases.min.js (tools/stamp.js).
-window.PURCHASES_BUILD = "9586be8a45";
+window.PURCHASES_BUILD = "e4c1c5a25e";
 
 function packOpenSettingsOnPacks(id) {
   PACK_SETTINGS_FOCUS = String(id);
@@ -1239,7 +1239,9 @@ async function renderPurchasesPageMain() {
     }
     const money = (v) => packFmtLocal(v, rows[0].currency, true, rows[0].price);
     const wkStart = (w) => new Date(packStartOfToday().getTime() + (w * 7 - monIdx) * 86400000);
-    const wkName = (k) => (k === "after" ? t(tOff != null && tOff >= 0 ? "pur_wk_after" : "pur_wk_later") : k === 0 ? t("pur_wk_this") : k === 1 ? t("pur_wk_next") : tOff != null && k === lastWeek ? t("pur_wk_target") : t("pur_wk_n").replace("{n}", k + 1));
+    // (a week cut short by the target, after this one: "To target")
+    const wkCut = (k) => tOff != null && k !== "after" && k > 0 && k === lastWeek && !!tDay && tDay < new Date(wkStart(k).getTime() + 6 * 86400000);
+    const wkName = (k) => (k === "after" ? t(tOff != null && tOff >= 0 ? "pur_wk_after" : "pur_wk_later") : k === 0 ? t("pur_wk_this") : wkCut(k) ? t("pur_wk_to_target") : k === 1 ? t("pur_wk_next") : tOff != null && k === lastWeek ? t("pur_wk_target") : t("pur_wk_n").replace("{n}", k + 1));
     const short = (d) => fmtDay(packDayKey(d)).replace(/,? \d{4}$/, "");
     const wkRange = (k) => {
       if (k === "after") return tOff != null && tOff >= 0 ? `${short(new Date(tDay.getTime() + 86400000))} →` : `${short(wkStart(lastWeek + 1))} →`;

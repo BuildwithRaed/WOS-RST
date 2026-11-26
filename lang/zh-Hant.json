@@ -3282,5 +3282,10 @@
 "t:pur_chall_note_any":"所有價格一起移動",
 "t:pur_chall_done":"日期已變更",
 "t:pur_ed_date_all":"全部日期",
-"t:pur_ed_date_keep":"各自保留日期"
+"t:pur_ed_date_keep":"各自保留日期",
+"t:cda_s_hero_shards":"英雄",
+"t:cdb_sub_packs":"來自背包 + 本週禮包 · {n} 個頁面",
+"t:cdb_sub_wait_packs":"來自背包 + 本週禮包",
+"t:pur_wk_to_target":"到目標",
+"t:gu_part_fully":"全部完成 {d}"
 }
