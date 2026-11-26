@@ -3925,6 +3925,63 @@ const T = {
   pur_pk_next: { en: "next {date}" },
   pur_pk_stacks: { en: "any time · stacks" },
   pur_pk_change: { en: "Change" },
+  pur_sale_trig: { en: "Appears at a level" },
+  pur_sale_daily: { en: "Every day" },
+  pur_sale_on_until: { en: "On now · until {d}" },
+  pur_sale_on_tonight: { en: "On now · until tonight" },
+  pur_sale_on: { en: "On now" },
+  pur_sale_next: { en: "Next: {a} – {b}" },
+  pur_sale_next1: { en: "Next: {a}" },
+  pur_sale_days: { en: "({n} days)" },
+  pur_sale_day1: { en: "(1 day)" },
+  pur_sale_weeks: { en: "({n} weeks)" },
+  pur_sale_week1: { en: "(1 week)" },
+  pur_sale_hint: { en: "This pack is on sale {a} – {b} · tap a day:" },
+  pur_sale_hint1: { en: "This pack is on sale {a} · tap the day:" },
+  pur_sale_warn: { en: "Not on sale that day · next {d}" },
+  pur_sale_warn_none: { en: "Not on sale that day" },
+  pur_sale_any: { en: "On sale any time" },
+  pur_sale_any_daily: { en: "On sale every day" },
+  pur_sale_once_any: { en: "One-time pack · any day" },
+  pur_sale_trig_hint: { en: "Appears when its level is reached, so any date can be planned" },
+  pur_pk_group: { en: "Group:" },
+  pur_pk_group_cat: { en: "Category" },
+  pur_wb_week: { en: "Week" },
+  pur_wb_month: { en: "Month" },
+  pur_wb_title: { en: "Dates to show" },
+  pur_wb_p_this: { en: "This month" },
+  pur_wb_p_next: { en: "Next month" },
+  pur_wb_p_target: { en: "Until target" },
+  pur_wb_p_custom: { en: "Custom" },
+  pur_wb_p_all: { en: "All" },
+  pur_wb_from: { en: "From" },
+  pur_wb_to: { en: "To" },
+  pur_wb_live: { en: "{n} packs · {v} in these dates" },
+  pur_wb_reset: { en: "Reset" },
+  pur_wb_show: { en: "Show" },
+  pur_wb_none: { en: "Nothing to buy in these dates." },
+  pur_pk_group_month: { en: "Month" },
+  pur_pk_all_month: { en: "All month:" },
+  pur_pk_daily_s: { en: "daily" },
+  pur_pk_weekly_s: { en: "weekly" },
+  pur_pk_n_more: { en: "+{n} more" },
+  pur_pk_week_n: { en: "Week {n}" },
+  pur_pk_1pack: { en: "1 pack" },
+  pur_pk_npacks: { en: "{n} packs" },
+  pur_pk_group_date: { en: "Date" },
+  pur_pk_d_on: { en: "On now" },
+  pur_pk_d_this: { en: "This week" },
+  pur_pk_d_next: { en: "Next week" },
+  pur_pk_d_later: { en: "Later" },
+  pur_chall: { en: "Change date for all" },
+  pur_chall_apply: { en: "Apply to {n}" },
+  pur_chall_note: { en: "On sale {a} – {b} · all prices move together" },
+  pur_chall_note_d: { en: "On sale {a} – {b} · all dates move to it" },
+  pur_chall_note_x: { en: "Not on sale that day · next {a} – {b}" },
+  pur_chall_note_any: { en: "All prices move together" },
+  pur_chall_done: { en: "Date changed" },
+  pur_ed_date_all: { en: "Date for all" },
+  pur_ed_date_keep: { en: "each keeps its own" },
   pur_pk_none: { en: "No pack found." },
   pur_tier: { en: "Tier" },
   pur_upto: { en: "Tiers 1–{tier} ({price})" },
@@ -11488,9 +11545,9 @@ const SCAN_SUMMARY_ROWS = [[/\bgems?\b/i, "Gems"], [/\bmeat\b/i, "Meat"], [/\bwo
 const CODE_FILES = {
   admin: "admin.min.js?v=0a7cbbe8a6",
   scan: "scan.min.js?v=64a7ef20ff",
-  packs: "packs.min.js?v=8c7c3e7c6f",
+  packs: "packs.min.js?v=d85801810c",
   gallery: "gallery.min.js?v=28a7717641",
-  purchases: "purchases.min.js?v=21c5b54f97",
+  purchases: "purchases.min.js?v=ea4ef6a9d4",
   budgets: "budgets.min.js?v=0655976263",
 };
 const CODE_P = {}, CODE_OK = {};
@@ -13858,6 +13915,65 @@ function packResetOffsets(reset, day, horizon, win) {
   }
   for (let d = 0; d <= horizon; d += reset) out.push(d);
   return out;
+}
+// "Every 4 weeks" rather than "Every 28 days" (owner, 16 Nov 2026: events cycle in weeks).
+function packEveryText(r, day) {
+  const n = Number(r);
+  if (n === 30) { const d = packParseDay(packValidDay(day)); if (!d) return t("pk_every_month_date"); const n2 = d.getUTCDate(), ord = LANG === "en" ? n2 + ([11, 12, 13].includes(n2 % 100) ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[n2 % 10] || "th")) : String(n2); return t("pk_every_month_on").replace("{d}", ord); }
+  if (n === 7) return t("pk_every_week");
+  if (n > 0 && n % 7 === 0) return t("pk_every_weeks").replace("{n}", n / 7);
+  return t("pk_every_days").replace("{n}", n);
+}
+// When a pack is on sale, read the way the planner reads it (packResetOffsets
+// + its "Lasts" window): { kind, wins: [{ s, e }] (days from today, e = its
+// last day), often: "Every week · Sun–Tue" }. kind: "any" (any time:
+// stacking cards, no limit, the first-buy reward), "daily", "trigger"
+// (appears at a level), "once" (one-time, no date), "dated" (wins).
+function packSaleInfo(id, horizon) {
+  const H = horizon || 400, lk = packLinkFor(id), r = lk.reset, out = { kind: "dated", wins: [], often: "" };
+  if (lk.trigger) { out.kind = "trigger"; out.often = t("pur_sale_trig"); return out; }
+  if (lk.firstBuy) { out.kind = "any"; out.often = t("pack_reset_once"); return out; }
+  if (packStackInfo(r)) { out.kind = "any"; out.often = t("pur_pk_stacks"); return out; }
+  if (r == null || r === "" || r === "unlimited") { out.kind = "any"; out.often = t("pack_reset_unlimited"); return out; }
+  const t0 = packStartOfToday(), anchor = packParseDay(packValidDay(lk.resetDay));
+  const aOff = anchor ? Math.round((anchor - t0) / 86400000) : null;
+  const win = Number(lk.window) > 0 ? Math.floor(Number(lk.window)) : 0;
+  if (r === "once" || Number(r) >= PACK_ONE_TIME_DAYS) {
+    out.often = t("pack_reset_once");
+    if (aOff == null) { out.kind = "once"; return out; }
+    const e = win ? aOff + win - 1 : H;
+    if (e >= 0) out.wins.push({ s: aOff, e });
+    return out;
+  }
+  const n = Number(r);
+  if (!(n > 0)) { out.kind = "any"; return out; }
+  if (n === 1) { out.kind = "daily"; out.often = t("pur_sale_daily"); return out; }
+  const starts = [];
+  if (n === 30 && anchor) {
+    for (let m = -2; m < 40; m++) { const s = Math.round((new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + m, anchor.getUTCDate())) - t0) / 86400000); if (s > H) break; starts.push(s); }
+  } else {
+    let s;
+    if (aOff != null) { s = aOff; while (s > -n) s -= n; } else if (n === 7 || n === 14) s = -((t0.getUTCDay() + 6) % 7); else s = 0;
+    for (; s <= H; s += n) starts.push(s);
+  }
+  starts.forEach((s, i) => {
+    const nx = i + 1 < starts.length ? starts[i + 1] : s + n;
+    const e = Math.min(s + (win || nx - s) - 1, nx - 1);
+    if (e >= 0) out.wins.push({ s, e });
+  });
+  const parts = [packEveryText(n, lk.resetDay)];
+  if (anchor && win > 0 && win < 7 && n % 7 === 0) {
+    const wd = (d) => { try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { weekday: "short", timeZone: "UTC" }); } catch (e) { return ""; } };
+    parts.push(win === 1 ? wd(anchor) : `${wd(anchor)}–${wd(new Date(anchor.getTime() + (win - 1) * 86400000))}`);
+  }
+  out.often = parts.join(" · ");
+  return out;
+}
+// The sale window on or after day `d` (days from today): { s, e, in } or null.
+function packSaleWinAt(info, d) {
+  if (!info || info.kind !== "dated") return null;
+  const w = info.wins.find((x) => x.e >= d);
+  return w ? { s: w.s, e: w.e, in: w.s <= d } : null;
 }
 const PACK_HORIZON_DAYS = 1095;
 
