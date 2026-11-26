@@ -1310,7 +1310,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 137; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 139; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2703,8 +2703,27 @@ const T = {
   b3_tile_hero_shards: { en: "Heroes" },
   b3_ring_tip: { en: "You already have {p}% of what this page needs (Backpack + trades)" },
   b3_missing: { en: "{n} pages not in the plan yet" },
-  b3_week: { en: "This week {v}" },
-  b3_week_n: { en: "{n} packs" },
+  b3_not_setup: { en: "{n} pages not set up yet" },
+  b3_not_setup_s: { en: "not set up" },
+  b3_set_a_target: { en: "Set a target" },
+  b3_st_title: { en: "Start here" },
+  b3_st_sub: { en: "Your total shows once one page is set up." },
+  b3_st1: { en: "Set your target date" },
+  b3_st1_sub: { en: "When do you want your upgrades done? (e.g. next SvS)" },
+  b3_st1_done: { en: "Target: {d}" },
+  b3_st1_btn: { en: "Open Settings" },
+  b3_st2: { en: "Open your pages and set levels" },
+  b3_st2_sub: { en: "Set Now and Target on each page. {n} of {m} set up." },
+  b3_st3: { en: "Add goals" },
+  b3_st3_opt: { en: "optional" },
+  b3_st3_sub: { en: "Pick single upgrades and when you want them." },
+  b3_st_sh_none: { en: "no skins picked" },
+  b3_st_more: { en: "{n} more" },
+  b3_st_sh_pick: { en: "Pick skins" },
+  b3_st_bp: { en: "Fill your Backpack" },
+  b3_st_bp_sub: { en: "makes the plan cheaper" },
+  b3_st_foot: { en: "Free now, goal flags and This week appear once there is something to show." },
+  cda_not_setup_l: { en: "Not set up:" },
   budgets_desc: { en: "Every upgrade plan in one place: materials still needed, what the assigned packs cost, and the stat increase you'd get." },
   budgets_working: { en: "Working out the cheapest packs…" },
   budgets_plan_failed: { en: "Couldn't work it out" },
@@ -2733,8 +2752,6 @@ const T = {
   pur_a2_following: { en: "Following:" },
   pur_a2_next: { en: "next {date}" },
   spend_title: { en: "My budget" },
-  spend_week: { en: "a week" },
-  spend_month: { en: "a month" },
   spend_carry: { en: "Keep what I don't spend for next time" },
   spend_hint: { en: "Type what you can spend: Budgets shows the plan that finishes soonest without going over it." },
   spend_admin_only: { en: "Only you see this. Visitors get it when you tick it in Admin → Visibility." },
@@ -3536,8 +3553,6 @@ const T = {
   pur_wk_later: { en: "Later" },
   pur_wk_none: { en: "Nothing to buy this week." },
   pur_follow_line: { en: "The list follows this plan · tap to switch" },
-  pur_following: { en: "Following:" },
-  pur_go_spend: { en: "Change ›" },
   pur_wc_title: { en: "Weekly cards" },
   pur_wc_running_n: { en: "{n} running" },
   pur_wc_notbought_n: { en: "{n} not bought" },
@@ -3873,6 +3888,7 @@ const T = {
   cda_s_experts_research: { en: "Exp. Research" },
   cda_s_islands: { en: "Islands" },
   cda_s_shining_skins: { en: "Skins" },
+  cda_s_hero_shards: { en: "Heroes" },
   cando_order: { en: "Your upgrade order" },
   cando_drag_hint: { en: "Drag ⋮⋮ to move a row. Same order on every page." },
   cg_pieces: { en: "Pieces" },
@@ -4075,13 +4091,9 @@ const T = {
   pur_a2_days_left: { en: "{n} days left" },
   pur_a2_day_left: { en: "1 day left" },
   pur_a2_last_day: { en: "Last day" },
-  pur_a2_bought_of: { en: "{a} of {b} bought · {v}" },
   pur_a2_done: { en: "All done {date}" },
-  pur_a2_budget_sw: { en: "My budget · {v}" },
   pur_a2_per_month: { en: "/mo" },
   pur_a2_per_week: { en: "/wk" },
-  pur_a2_target_sw: { en: "By target · {date}" },
-  pur_a2_dates_sw: { en: "By your dates · next\u00a0{date}" },
   pur_follow_dates: { en: "your dates" },
   pur_tag_dates: { en: "dates" },
   pur_o1_over: { en: "{v} over" },
@@ -9429,13 +9441,17 @@ function cdaBodyHtml(mid) {
   };
   const cards = P ? P.pages.filter((pg) => infos[pg.key].st === "up").map((pg) => cdaCardHtml(pg, infos[pg.key], P)).join("") : "";
   const offNames = CDA_PAGES.filter((pg) => CDA_SET.off.has(pg.key)).map(cdaPageName);
-  const noneP = P ? P.pages.filter((pg) => infos[pg.key].st === "none") : [];
-  const doneP = P ? P.pages.filter((pg) => infos[pg.key].st === "done").map(cdaPageName) : [];
+  // A page never set up (`budgetPageSetUp`) with nothing to raise says "Not set up", not "At target".
+  const notSet = (pg) => infos[pg.key].st !== "up" && !budgetPageSetUp(pg.key);
+  const noneP = P ? P.pages.filter((pg) => infos[pg.key].st === "none" && !notSet(pg)) : [];
+  const doneP = P ? P.pages.filter((pg) => infos[pg.key].st === "done" && !notSet(pg)).map(cdaPageName) : [];
+  const unsetP = P ? P.pages.filter(notSet).map(cdaPageName) : [];
   const naP = ready ? ticked.filter((pg) => !avail(pg)).map(cdaPageName) : [];
   const foot = !P ? "" : `<div class="cda-off">
       ${offNames.length ? `<div>${esc(t("cda_not_ticked"))} ${esc(offNames.join(", "))} · <button type="button" class="cda-gm" data-cdatickall>${esc(t("cda_tick"))} &#8250;</button></div>` : ""}
       ${noneP.length ? `<div>${esc(t("cda_nothing_yet"))} ${noneP.map((pg) => { const i = infos[pg.key]; return `${esc(cdaPageName(pg))}${i.firstItem ? ` (${esc(t("cdp_short").replace("{item}", cdaItemName(i.firstItem, i.firstTr)))} · ${cdaGetMoreHtml(pg)})` : ""}`; }).join(", ")}</div>` : ""}
       ${doneP.length ? `<div>${esc(t("cda_at_target_l"))} ${esc(doneP.join(", "))}</div>` : ""}
+      ${unsetP.length ? `<div>${esc(t("cda_not_setup_l"))} ${esc(unsetP.join(", "))}</div>` : ""}
       ${naP.length ? `<div>${esc(t("cda_not_avail"))} ${esc(naP.join(", "))}</div>` : ""}
     </div>`;
   return `<div class="cdp cda">
@@ -11579,7 +11595,7 @@ const CODE_FILES = {
   packs: "packs.min.js?v=d85801810c",
   gallery: "gallery.min.js?v=28a7717641",
   purchases: "purchases.min.js?v=eaa3ea6342",
-  budgets: "budgets.min.js?v=66b92a8a60",
+  budgets: "budgets.min.js?v=59ded96db9",
 };
 const CODE_P = {}, CODE_OK = {};
 function loadCode(name) {
@@ -17910,6 +17926,23 @@ const BUDGET_PAGES = [
   // Shining City: Glorious Tomes for the City Skins picked on the Skin Gallery page.
   { key: "shining_skins", tab: "skingallery" },
 ];
+// A Budgets page is "set up" once the person saved its levels / picks of their own (owner,
+// 26 Nov 2026): the live pages by their own calc_state (Chief Gear, Charms, Heroes Gears sets,
+// heroes: roster / hero targets / a hero plan with rows), Shining City by own picked skins (the
+// owner: the default list), every other page by a saved Budgets needs entry (budget_needs).
+// Display only: the plan itself is unchanged. Budgets shows a "Start here" card while none is.
+const BUDGET_SETUP_STATES = { chief_gear: ["chief_gear"], charm: ["charm"], hero_gear: ["hero_gear", "hero_gear_set2", "hero_gear_set3"], hero_shards: ["dashboard_roster", "hero_targets"] };
+function calcStateHas(n) { return !!(CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID && CALC_STATE_CACHE[n] != null); }
+function budgetPageSetUp(calcKey) {
+  if (calcKey === "shining_skins") {
+    if (IS_OWNER) return shiningSkinsDefault().length > 0;
+    const v = calcStateHas("shining_skins") ? CALC_STATE_CACHE.shining_skins : null;
+    return !!(v && Array.isArray(v.list) && v.list.length);
+  }
+  const st = BUDGET_SETUP_STATES[calcKey];
+  if (st) return st.some(calcStateHas) || (calcKey === "hero_shards" && !!(HERO_PLAN_LAST && HERO_PLAN_LAST.rows && HERO_PLAN_LAST.rows.length));
+  return !!(BUDGET_NEEDS_SNAPSHOT && BUDGET_NEEDS_SNAPSHOT[calcKey]);
+}
 // Hero targets: calc_state "hero_targets" =
 // { heroes: { heroId: { push, stars, widget, later, wNow } }, extra: [heroId], pushGen }.
 let HERO_TARGETS = null;
@@ -22227,7 +22260,9 @@ const shiningTomesPer = () => Number(ISL_RULES.skinTomes) || 10000;
 const shiningTomesIn = (bp) => (Number((bp || {})["Glorious Tome"]) || 0) + (Number((bp || {})["Lucky Glorious Tome Chest"]) || 0) * (Number(chestGives("Lucky Glorious Tome Chest")["Glorious Tome"]) || 0);
 function shiningSkinsDefault() { const v = siteConfig("shining_skins", null); return Array.isArray(v) ? v.map(String) : []; }
 // The list in use: the owner's own view is the default; others their own list, else the default.
-function shiningSkinsListOf(saved) { if (IS_OWNER) return shiningSkinsDefault(); return saved && Array.isArray(saved.list) ? saved.list.map(String) : shiningSkinsDefault(); }
+// (Since 26 Nov 2026 the owner's default picks no longer count for a person who never picked:
+// they start with none, so Budgets / My Purchases don't plan skins they didn't choose.)
+function shiningSkinsListOf(saved) { if (IS_OWNER) return shiningSkinsDefault(); return saved && Array.isArray(saved.list) ? saved.list.map(String) : []; }
 // The picked skins (rows), in pick order.
 // Globe Level skins (Frost Spheres and each level's extra skins) are never Shining City skins.
 const shiningGlobeSkin = (n) => !!(typeof ALL_GLOBE_WIRED_NAMES_GLOBAL !== "undefined" && ALL_GLOBE_WIRED_NAMES_GLOBAL && ALL_GLOBE_WIRED_NAMES_GLOBAL.has(n));
