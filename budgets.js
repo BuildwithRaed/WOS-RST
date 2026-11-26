@@ -5,7 +5,7 @@
 // code and the Budgets state other pages read (My Purchases, the Menu, the Dashboard,
 // recordBudgetNeeds / budgetInvalidate, admin.js / scan.js / the planner worker) stay
 // in app.js. The site loads the packed copy budgets.min.js (tools/stamp.js).
-window.BUDGETS_BUILD = "458fd17947";
+window.BUDGETS_BUILD = "8d5af57344";
 
 // Order of the Budgets page tiles (owner picked A, 22 Nov 2026): per person in
 // calc_state budget_page_order = { order: [calcKeys] }; display only. Pages
@@ -160,7 +160,7 @@ function budgetForceRecalc() {
   budgetInvalidate();
   dashDataChanged();
 }
-let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" | "cheapest" (not saved)
+let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" | "cheapest" (saved: budgetFollowView, also followed by My Purchases)
 let BUDGET_GOALS_OPEN = true; // the card's fold (kept for the visit)
 let BUDGET_GOAL_ADD = null;   // { page } while "+ Add mini target" is open
 // Upcoming dates a goal can be "By" (about 6 months): game events (SvS, KOI, the admin's),
@@ -739,10 +739,7 @@ async function renderBudgetsPageMain(opts = {}) {
   // card only changes what's shown below; nothing is saved.
   const split = combinedRaw.split && combinedRaw.split.target && combinedRaw.split.late ? combinedRaw.split : null;
   const splitLate = split ? (split.late[BUDGET_SPLIT_LATE] || split.late.cheapest) : null;
-  const splitMain = split ? {
-    plan: { rows: split.target.plan.rows.concat(splitLate.plan.rows), total: split.target.plan.total + splitLate.plan.total, days: Math.max(split.target.plan.days || 0, splitLate.plan.days || 0), trades: (split.target.plan.trades || []).concat(splitLate.plan.trades || []), split: true },
-    shares: { ...split.target.shares, ...splitLate.shares },
-  } : null;
+  const splitMain = split ? budgetSplitMain(combinedRaw) : null;
   // The target is out of every page's reach and only the Fastest card is in so
   // far (the plan itself, the Cheapest card, is still being worked out): the
   // split around the target is the plan to show, as soon as it is in.
@@ -756,7 +753,9 @@ async function renderBudgetsPageMain(opts = {}) {
   const views = combinedRaw.views || {};
   const spendBest = wantCands && !have ? budgetSpendBest(combinedRaw) : null;
   const viewKeys = ["fastest", "main"].concat(reachable ? ["cheapest"] : []).filter((k) => k === "main" ? !!combinedRaw.chosen || startOnly : viewsWait || !!(views[k] && views[k].plan)).concat(spendBest ? ["budget"] : []);
+  // The saved plan (one for Budgets and My Purchases, budgetFollowView);
   // (kept on "My budget" while its plans are still being worked out)
+  BUDGET_VIEW = budgetFollowView();
   if (!viewKeys.includes(BUDGET_VIEW) && !(BUDGET_VIEW === "budget" && wantCands && pendingAll)) BUDGET_VIEW = "main";
   const planPending = pendingAll && !viewReady(BUDGET_VIEW);
   const pickDropped = (pg, k) => k === "fastest" ? (pg.fastest || pg.chosen) : k === "cheapest" ? (pg.cheapest || pg.chosen) : pg.chosen;
@@ -1145,8 +1144,10 @@ async function renderBudgetsPageMain(opts = {}) {
       const v = viewData(k), late = targetDays != null && v.days > targetDays;
       return `<button type="button" data-budgetview="${k}" class="${k === BUDGET_VIEW ? "on" : ""}${late ? " late" : ""}" title="${esc(`${title(k)} · ${fmtDate(v.days)}`)}">${esc(title(k))}<b>${packFmtLocal(Math.ceil(v.total), v.sample?.currency, true, v.sample?.price)}</b><span>${v.days === 0 ? esc(t("pack_ready_now")) : esc(shortDate(v.days))}</span></button>`;
     };
+    // My Purchases follows the plan picked here (one plan for both pages).
+    const fol = BUDGET_FOCUS_VIEW ? `<div class="meta b3-fol pick">&#8593; ${esc(t("b3_follow_both"))}</div>` : `<div class="meta b3-fol"><span class="good">&#10003; ${esc(t("b3_follow"))}</span> · ${esc(t("b3_follow_pick"))}</div>`;
     return `${targetDays != null && !reachable ? `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--danger);">${esc(t("budgets_cant_target").replace("{date}", fmtDate(targetDays)))}</div>` : ""}
-      <div class="bud-seg">${viewKeys.map(seg).join("")}</div>`;
+      <div class="bud-seg${BUDGET_FOCUS_VIEW ? " flash" : ""}">${viewKeys.map(seg).join("")}</div>${fol}`;
   })();
   // Items shared by pages from one Backpack amount count it once (see budgetSharedOwnedExtra).
   Object.values(budgetSharedOwnedExtra(pagesRaw.filter((pg) => !pg.missing && included(pg.calcKey)))).forEach((m) => Object.entries(m).forEach(([n, q]) => { grandMats[n] = (grandMats[n] || 0) + q; }));
@@ -1529,7 +1530,6 @@ async function renderBudgetsPageMain(opts = {}) {
   if (!planPending) mmBudgetSet(anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : null);
   const lateAll = targetDays != null && grandDays > targetDays;
   const shortDay = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000); return x.toLocaleDateString(LANG === "en" ? undefined : LANG, x.getUTCFullYear() !== new Date().getUTCFullYear() ? { month: "short", year: "numeric", timeZone: "UTC" } : { day: "numeric", month: "short", timeZone: "UTC" }); };
-  const b3Money = (v) => packFmtLocal(Math.ceil(v), (combined.chosen && combined.chosen.rows[0] && combined.chosen.rows[0].currency) || grandCurrency, true, combined.chosen && combined.chosen.rows[0] ? combined.chosen.rows[0].price : undefined);
   // The plan's parts as compact lines (bar, title, price, "N packs ▸"); which
   // pages are in each part shows on the tiles (and in the line's tooltip).
   const b3Line = (color, title, names, pl, shown) => {
@@ -1658,25 +1658,15 @@ async function renderBudgetsPageMain(opts = {}) {
   const tilesHtml = `<div class="b3-pgw"${arrangeHostAttr(B3_ARR_KEY)}><div class="b3-pgh"><span class="b3-lbl">${esc(t("b3_pages"))}</span>${arrangeBtnHtml(B3_ARR_KEY)}</div><div class="arr-hint b3-pghint">${esc(t("b3_arrange_hint"))}</div><div class="b3-pg">${b3PageOrdered(B3_PAGES.filter((x) => !x.pg.missing)).map(tileHtml).join("")}</div></div>`;
   const missHtml = missing.length ? `<button type="button" class="b3-tile b3-np" data-b3sheet="missing"><span>${esc(t("b3_missing").replace("{n}", missing.length))}</span><span class="b3-ics">${missing.slice(0, 6).map((x) => { const ic = pageIcon(x); return ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""; }).join("")}</span><span class="b3-go">&#8250;</span></button>` : "";
   // This week (Monday – Sunday): the shown plan's packs; opens My Purchases.
-  const wkData = (() => {
-    const pl = combined.chosen;
-    if (planPending) return null;
-    if (!pl || !pl.rows) return { money: 0, n: 0 };
-    const sched = packPlanSchedule(pl.rows), dow = (packStartOfToday().getUTCDay() + 6) % 7, names = new Set();
-    let m = 0;
-    pl.rows.forEach((r, i) => (sched[i] || []).forEach((sl) => {
-      if (Math.floor((sl.off + dow) / 7) !== 0) return;
-      m += r.count ? (packRowLocal(r) / r.count) * sl.count : 0;
-      names.add(purShortName(purPackName(r.title, (r.tables || []).map((id) => ({ id })))));
-    }));
-    return { money: m, n: names.size };
-  })();
+  // The same numbers as My Purchases' answer card (budgetWeekSums of the followed plan).
+  const wkData = planPending ? null : budgetWeekSums(budgetSuggestOf(combinedRaw, dlPlan ? { res: dl, setup: datedSetup } : null, BUDGET_VIEW));
   const wkTab = "purchases";
+  const wkMoney = (v) => { const r0 = combined.chosen && combined.chosen.rows[0]; return packFmtLocal(v, (r0 && r0.currency) || grandCurrency, false, r0 ? r0.price : undefined); };
   // Settings sits beside ↻ at the top; This week has the bottom row.
   // Title-row button: "⚙ <target date> · <currency>", opens the Settings sheet.
   const setBtnHtml = `<button type="button" class="b3-setb hd-btn" data-b3sheet="settings" title="${esc(t("t12x_settings"))}" aria-label="${esc(t("t12x_settings"))}">&#9881; ${esc(targetDays != null ? shortDay(targetDays) : t("pack_no_date"))} · ${esc(DISPLAY_CURRENCY || "USD")}</button>`;
   const lrHtml = `<div class="b3-lr">
-      <button type="button" class="b3-tile wk" data-gototab="${wkTab}"><img src="${esc(QUICK_ICONS[wkTab])}" alt="" /><span class="b3-lr-t"><b>${esc(t("b3_week").replace("{v}", wkData ? b3Money(wkData.money) : "…"))}</b><small>${esc(t("b3_week_n").replace("{n}", wkData ? wkData.n : "…"))} · ${esc(navLabel(wkTab))}</small></span><span class="b3-go">&#8250;</span></button>
+      <button type="button" class="b3-tile wk" data-gototab="${wkTab}"><img src="${esc(QUICK_ICONS[wkTab])}" alt="" /><span class="b3-lr-t"><b>${esc(t("b3_week_todo").replace("{v}", wkData ? wkMoney(wkData.todo) : "…"))}</b><small>${esc(t("b3_week_sub").replace("{n}", wkData ? wkData.todoN : "…").replace("{v}", wkData ? wkMoney(wkData.bought) : "…"))} · ${esc(navLabel(wkTab))}</small></span><span class="b3-go">&#8250;</span></button>
     </div>`;
   // The sheet's content.
   const settingsHtml = budgetSettingsHtml(targetDays);
@@ -1711,6 +1701,11 @@ async function renderBudgetsPageMain(opts = {}) {
       ${sheetHtml}
     </div>`; });
   if (!planPending) holdPageHeight(false);
+  // My Purchases' "Following: … change ›": the plan switch, scrolled to once.
+  if (BUDGET_FOCUS_VIEW === true) {
+    const sg = content.querySelector(".bud-seg");
+    if (sg) { sg.scrollIntoView({ block: "center" }); BUDGET_FOCUS_VIEW = "scrolled"; }
+  }
   if (BUDGET_FOCUS_SPEND) {
     const sb = content.querySelector(".bud-spend");
     if (sb) {
@@ -1732,6 +1727,8 @@ async function renderBudgetsPageMain(opts = {}) {
   }));
   content.querySelectorAll("[data-budgetview]").forEach((b) => b.addEventListener("click", () => {
     BUDGET_VIEW = b.dataset.budgetview;
+    BUDGET_FOCUS_VIEW = false;
+    budgetFollowSet(BUDGET_VIEW);
     const y = window.scrollY;
     { const sq = RENDER_SEQ; renderBudgetsPage().then(() => window.scrollTo(0, y)).catch((e) => pageRedrawFailed(e, sq)); }
   }));
@@ -1758,7 +1755,7 @@ async function renderBudgetsPageMain(opts = {}) {
     BUDGET_SPEND = { ...(BUDGET_SPEND || {}), ...patch };
     saveCalcState("budget_spend", BUDGET_SPEND);
     PUR_SUGGEST = null;
-    if (show && spendActive()) BUDGET_VIEW = "budget";
+    if (show && spendActive()) { BUDGET_VIEW = "budget"; budgetFollowSet("budget"); }
     const y = window.scrollY;
     { const sq = RENDER_SEQ; renderBudgetsPage().then(() => window.scrollTo(0, y)).catch((e) => pageRedrawFailed(e, sq)); }
   };

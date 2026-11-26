@@ -2722,6 +2722,16 @@ const T = {
   budgets_view_fastest: { en: "Fastest" },
   budgets_view_cheapest: { en: "Cheapest" },
   budgets_view_budget: { en: "My budget" },
+  b3_follow: { en: "My Purchases follows this plan" },
+  b3_follow_pick: { en: "pick it here" },
+  b3_follow_both: { en: "Pick the plan both pages follow" },
+  b3_week_todo: { en: "This week · still to buy {v}" },
+  b3_week_sub: { en: "{n} packs · bought {v}" },
+  pur_a2_todo: { en: "Still to buy" },
+  pur_a2_bought: { en: "Bought" },
+  pur_a2_bought_n: { en: "{a} of {b} bought" },
+  pur_a2_following: { en: "Following:" },
+  pur_a2_next: { en: "next {date}" },
   spend_title: { en: "My budget" },
   spend_week: { en: "a week" },
   spend_month: { en: "a month" },
@@ -4648,7 +4658,7 @@ function goToTab(tab, opts = {}) {
   holdPageHeight(false);
   // Leaving Admin: drop data copies kept for the visit so pages show the edits.
   if (TAB === "adminpage" && tab !== "adminpage" && typeof dropKeptGameData === "function") dropKeptGameData();
-  if (tab !== "budgets") BUDGET_FOCUS_SPEND = false;
+  if (tab !== "budgets") { BUDGET_FOCUS_SPEND = false; BUDGET_FOCUS_VIEW = false; }
   BUDGET_SHEET = null;
   TAB = tab;
   localStorage.setItem("last_tab", TAB);
@@ -11570,8 +11580,8 @@ const CODE_FILES = {
   scan: "scan.min.js?v=64a7ef20ff",
   packs: "packs.min.js?v=d85801810c",
   gallery: "gallery.min.js?v=28a7717641",
-  purchases: "purchases.min.js?v=9586be8a45",
-  budgets: "budgets.min.js?v=458fd17947",
+  purchases: "purchases.min.js?v=eaa3ea6342",
+  budgets: "budgets.min.js?v=8d5af57344",
 };
 const CODE_P = {}, CODE_OK = {};
 function loadCode(name) {
@@ -19541,20 +19551,109 @@ let PUR_SUGGEST = null; // { key, promise | plan }
 // `dated` (budgetDatedPlan): goals / pages with their own dates - the plan
 // bought for those dates takes the "By target" plan's place ("By your dates").
 const BUDGET_DATED_WRAP = new WeakMap(); // the dated plan as My Purchases gets it (one object per plan)
-function budgetSuggestOf(combined, dated) {
-  const sb_ = spendActive() ? budgetSpendBest(combined) : null;
-  let dp = null;
-  if (combined && dated && dated.res && dated.res.plan) {
-    const pl = dated.res.plan;
-    if (!BUDGET_DATED_WRAP.has(pl)) { const ds = dated.setup.due.filter((d) => d != null && d >= 0); BUDGET_DATED_WRAP.set(pl, { ...pl, need: combined.need, dated: true, nextDay: ds.length ? Math.min(...ds) : null }); }
-    dp = BUDGET_DATED_WRAP.get(pl);
+// ---- One followed plan (owner, 26 Nov 2026) ----
+// The plan picked on Budgets' plan switch (Fastest / By target or By your
+// dates / Cheapest / My budget) is saved per person (calc_state
+// "budget_prefs".view) and My Purchases follows the same plan. Before it was
+// saved, My Purchases' own old switch (localStorage "pur_follow") is the start.
+const BUDGET_VIEWS = ["fastest", "main", "cheapest", "budget"];
+function budgetFollowView() {
+  const v = budgetPrefs().view;
+  if (BUDGET_VIEWS.includes(v)) return v;
+  let old = null;
+  try { old = localStorage.getItem("pur_follow"); } catch (e) { /* blocked */ }
+  return old === "budget" ? "budget" : "main";
+}
+function budgetFollowSet(view) {
+  if (!BUDGET_VIEWS.includes(view) || budgetPrefs().view === view) return;
+  saveCalcState("budget_prefs", { ...budgetPrefs(), view });
+  PUR_SUGGEST = null; PUR_SUGGEST_DONE = null; PUR_SUG_OVERLAY = null;
+}
+let BUDGET_FOCUS_VIEW = false; // set by My Purchases' "Following: … change ›": show Budgets' plan switch once
+// The plain plan "By your target": the part by the target and the late pages' part, as one plan.
+const BUDGET_SPLIT_MAIN = new WeakMap();
+function budgetSplitMain(combined) {
+  const split = combined && combined.split && combined.split.target && combined.split.late ? combined.split : null;
+  if (!split) return null;
+  const late = split.late[BUDGET_SPLIT_LATE] || split.late.cheapest;
+  const kept = BUDGET_SPLIT_MAIN.get(split);
+  if (kept && kept.late === late) return kept.v;
+  const v = {
+    plan: { rows: split.target.plan.rows.concat(late.plan.rows), total: split.target.plan.total + late.plan.total, days: Math.max(split.target.plan.days || 0, late.plan.days || 0), trades: (split.target.plan.trades || []).concat(late.plan.trades || []), split: true },
+    shares: { ...split.target.shares, ...late.shares },
+  };
+  BUDGET_SPLIT_MAIN.set(split, { late, v });
+  return v;
+}
+// The followed plan (one object per plan and view, so My Purchases can tell it is the same one).
+const BUDGET_FOLLOW_WRAP = new WeakMap();
+function budgetFollowWrap(pl, view, extra) {
+  if (!BUDGET_FOLLOW_WRAP.has(pl)) BUDGET_FOLLOW_WRAP.set(pl, new Map());
+  const m = BUDGET_FOLLOW_WRAP.get(pl);
+  if (!m.has(view)) m.set(view, { ...pl, ...extra, followView: view });
+  return m.get(view);
+}
+// `view`: the saved one unless given. A view the plan doesn't have (no My
+// budget, no Cheapest card) falls back to the main plan, as on Budgets.
+function budgetSuggestOf(combined, dated, view) {
+  if (!combined) return null;
+  const v = view || budgetFollowView();
+  const need = combined.need;
+  if (v === "budget") {
+    const sb_ = spendActive() ? budgetSpendBest(combined) : null;
+    if (sb_ && sb_.ok) return budgetFollowWrap(sb_.plan, "budget", { spendSched: sb_.sched, spend: sb_, need });
   }
-  // (the admin also gets the "By target" plan to compare: My Purchases labels)
-  const tp = dp || (combined ? (combined.byTarget || (combined.split && combined.split.target && combined.split.target.plan) || null) : null);
-  if (sb_ && sb_.ok) return { ...sb_.plan, spendSched: sb_.sched, spend: sb_, targetPlan: tp, need: combined.need };
-  if (dp) return dp;
-  if (combined && combined.chosen && combined.need && !combined.chosen.need) combined.chosen.need = combined.need;
-  return (combined && combined.chosen) || null;
+  if (v === "fastest" || v === "cheapest") {
+    const vw = combined.views && combined.views[v];
+    const ok = vw && vw.plan && (v === "fastest" || !!combined.byTarget || !!combined.split);
+    if (ok) return budgetFollowWrap(vw.plan, v, { need });
+  }
+  if (dated && dated.res && dated.res.plan) {
+    const pl = dated.res.plan;
+    if (!BUDGET_DATED_WRAP.has(pl)) { const ds = dated.setup.due.filter((d) => d != null && d >= 0); BUDGET_DATED_WRAP.set(pl, { ...pl, need, dated: true, nextDay: ds.length ? Math.min(...ds) : null, followView: "main" }); }
+    return BUDGET_DATED_WRAP.get(pl);
+  }
+  const sm = budgetSplitMain(combined);
+  const pl = sm ? sm.plan : combined.chosen;
+  return pl ? budgetFollowWrap(pl, "main", { need }) : null;
+}
+// This week (Monday – Sunday) of the followed plan, the same on Budgets' This
+// week tile and My Purchases' answer card: bought this week (My Purchases),
+// still to buy = "will buy" dated this week or passed + the plan's buys from
+// today to Sunday. Money in store prices; packs counted once per pack.
+// `rows` / `sched`: the plan's rows and days (My Purchases passes its own,
+// without the picks it already took from the plan).
+function budgetWeekSums(plan, rows, sched) {
+  const t0 = packStartOfToday(), monW = (t0.getUTCDay() + 6) % 7;
+  const today = packDayKey(t0), mon = packDayKey(new Date(t0.getTime() - monW * 86400000)), sun = packDayKey(new Date(t0.getTime() + (6 - monW) * 86400000));
+  const tables = Array.isArray(PACK_TABLES_CACHE) ? PACK_TABLES_CACHE : [];
+  const byId = new Map(tables.map((tb) => [String(tb.id), tb]));
+  const keyOf = (tid) => { const tb = byId.get(String(tid)); if (!tb) return "id:" + tid; const l = packLinkFor(tb.id); return l.option && l.linkSet ? "set:" + l.linkSet : "id:" + tb.id; };
+  const out = { todo: 0, bought: 0, todoN: 0, boughtN: 0 };
+  const todoK = new Set(), boughtK = new Set();
+  const pLocal = (p) => { const tb = byId.get(String(p.table)); return packConvert(purchasePrice(p, tb) * Math.max(1, Math.floor(Number(p.count) || 1)), packLinkFor(p.table).currency || "USD").n; };
+  (PACK_PURCHASES.list || []).forEach((p) => {
+    if (!byId.has(String(p.table))) return;
+    if (p.status === "bought") {
+      if (p.hidden || !(p.date >= mon && p.date <= today)) return;
+      out.bought += pLocal(p); boughtK.add(keyOf(p.table));
+    } else if (p.date <= sun && !purTriggerWaiting(p)) {
+      out.todo += pLocal(p); todoK.add(keyOf(p.table));
+    }
+  });
+  if (plan && plan.rows) {
+    const rs = rows || plan.rows.filter((r) => r.count > 0);
+    const sc = sched || plan.spendSched || packPlanSchedule(rs);
+    rs.forEach((r, i) => {
+      const n = (sc[i] || []).filter((x) => Math.max(0, x.off) <= 6 - monW).reduce((a, x) => a + x.count, 0);
+      if (!(n > 0)) return;
+      out.todo += packRowLocalUnits(r).reduce((a, x) => a + x, 0) * n;
+      const tid = (r.tables || [])[0];
+      todoK.add(tid != null ? keyOf(tid) : "t:" + r.title);
+    });
+  }
+  out.todoN = todoK.size; out.boughtN = boughtK.size;
+  return out;
 }
 // The dated plan can be asked for once the plain plan it is made from is in:
 // all of it, or - while the rest is still being worked out - the plan on

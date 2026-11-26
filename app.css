@@ -5770,3 +5770,15 @@ span.mk.mk svg{flex:none}
 .bst-faces img{ width:24px; height:24px; border-radius:50%; object-fit:cover; border:1px solid var(--line); }
 .bst-rc{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; height:40px; margin-top:12px; border:1px solid var(--line); border-radius:12px; background:var(--panel); color:var(--ice); font:inherit; font-size:13.5px; cursor:pointer; }
 .bud-ngf{ border-color:rgba(80,200,120,.35); }
+  /* One followed plan: My Purchases' Still to buy / Bought boxes, Budgets' "follows this plan" line. */
+  .pur-a2-two{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  .pur-a2-bx{ display:flex; flex-direction:column; min-width:0; padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); }
+  .pur-a2-bx small{ font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--muted); }
+  .pur-a2-bx b{ font-size:24px; font-weight:800; letter-spacing:-.4px; line-height:1.2; overflow-wrap:anywhere; }
+  .pur-a2-bx.done b{ font-size:19px; color:var(--good); }
+  .pur-a2-bx .meta{ font-size:12px; }
+  .pur-a2-fol{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:10px 0 0; cursor:pointer; }
+  .pur-a2-fol .pur-a2-lk{ padding:0; }
+  .b3-fol{ font-size:12px; margin-top:6px; }
+  .b3-fol.pick{ color:var(--ice); font-weight:600; }
+  .bud-seg.flash{ box-shadow:0 0 0 2px var(--ice); border-radius:10px; }
