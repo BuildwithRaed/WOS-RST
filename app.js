@@ -3621,7 +3621,7 @@ const T = {
   bsx_lab: { en: "Research Lab" },
   bsx_trade: { en: "Trade {n}" },
   bsx_covered: { en: "Covered by your Backpack" },
-  bsx_cando: { en: "Can do now:" },
+  bsx_cando: { en: "Free now:" },
   bsx_cando_none: { en: "Nothing yet" },
   bsx_cov_trades: { en: "Covered with trades" },
   bsx_still_short: { en: "Still {n} short after trades" },
@@ -3685,8 +3685,8 @@ const T = {
   rule_hg_em_sub: { en: "Enhance up to 100 needs no Mastery." },
   rule_hg_em_from: { en: "Enhance from" },
   rule_hg_em_need: { en: "Mastery needed" },
-  mk_this_page: { en: "This page only — all pages together:" },
-  mk_budgets_link: { en: "Budgets → Free now ›" },
+  mk_this_page: { en: "This page only." },
+  mk_budgets_link: { en: "See in Budgets › Free now" },
   mk_i_green: { en: "Green ✓" },
   mk_i_green_d: { en: "= your Backpack reaches this level now." },
   mk_i_blue: { en: "Blue “now 16.1”" },
@@ -3768,8 +3768,8 @@ const T = {
   adv_gap_none: { en: "Open the Dashboard once to see how far each troop is from max." },
   adv_open_dash: { en: "Open Dashboard" },
   adv_sort: { en: "Sort by" },
-  adv_prio: { en: "Priority" },
-  adv_pure: { en: "Pure value" },
+  adv_prio: { en: "My order" },
+  adv_pure: { en: "Best value" },
   adv_sort_prio_sub: { en: "your upgrade order counts" },
   adv_sort_pure_sub: { en: "every stat the same" },
   adv_ranked: { en: "Ranked by cost per 1%" },
@@ -3848,6 +3848,24 @@ const T = {
   adv_better_else: { en: "Better value on another page: {name} at {v} per 1%." },
   adv_all_best: { en: "All best upgrades" },
   adv_best_here: { en: "Best next here" },
+  adv_same_free: { en: "Same setting as" },
+  adv_same_free_l: { en: "Budgets › Free now" },
+  cda_same_best: { en: "Same setting as" },
+  cda_same_best_l: { en: "Best upgrades" },
+  adv_cov_tag: { en: "in your Backpack" },
+  adv_cov_tag_do: { en: "in your Backpack · do in game" },
+  adv_cov_part: { en: "{v} (of {all}) · {n} of {m} steps in your Backpack" },
+  adv_cov_line: { en: "Your Backpack covers it · do it in the game" },
+  adv_cost_now: { en: "Cost now" },
+  adv_pack_value: { en: "Pack value" },
+  adv_have: { en: "have {n}" },
+  adv_add_goal: { en: "Add as goal" },
+  adv_goal_added: { en: "Goal added" },
+  adv_goal_had: { en: "Already a goal" },
+  adv_goal_toast: { en: "Added as a goal in Budgets" },
+  adv_see_free: { en: "See in Free now" },
+  adv_pack_cost: { en: "Pack cost" },
+  adv_budgets_link: { en: "Planned with your Budgets goals" },
   adv_see_all: { en: "See all" },
   cda_owned: { en: "owned" },
   cda_buy_skin: { en: "buy with Glorious Tomes" },
@@ -7506,6 +7524,11 @@ async function ensureUpgradeOrder() {
     const ok = Array.isArray(s.rows) && s.rows.length === UPGRADE_ORDER_DEFAULT.length && s.rows.every((r) => Array.isArray(r) && UPGRADE_ORDER_DEFAULT.some((d) => d[0] === r[0] && d[1] === r[1]));
     UPGRADE_ORDER = { mode: s.mode === "best" ? "best" : "order", rows: ok ? s.rows.map((r) => r.slice()) : UPGRADE_ORDER_DEFAULT.map((r) => r.slice()) };
   }
+  // One setting for Free now and Best upgrades: with no mode saved yet, Best upgrades' old
+  // sort choice in this browser (localStorage adv_set, "pure" = Best value) is the start.
+  if (!(s && (s.mode === "best" || s.mode === "order"))) {
+    try { const v = JSON.parse(localStorage.getItem("adv_set") || "{}"); if (v.mode === "pure") UPGRADE_ORDER.mode = "best"; } catch (e) { /* none */ }
+  }
   return UPGRADE_ORDER;
 }
 function saveUpgradeOrder() { saveCalcState("upgrade_order", UPGRADE_ORDER); }
@@ -8183,6 +8206,50 @@ async function advStepsSkins(out) {
       items: { "Glorious Tome": shiningTomesPer() }, gain: g, kind: "buy", note: t("adv_n_shining") });
   });
 }
+// What the Backpack already pays for: each page alone, like the page marks (Backpack + this
+// week's trades, never packs; reachPlan in the shared My order / Best value, up to each
+// target). Result: { cov: { advisor track id: level the Backpack reaches }, have: { page: amounts } }.
+const ADV_COV_PRE = { chief_gear: "cg", charm: "ch", t12_research: "t12", t11_helios: "t11", research_center: "rc", hero_gear: "hero_gear", pets: "pets", experts_research: "exr", islands: "isl", shining_skins: "sk" };
+const ADV_COV_PAGE = { chief_gear: "chief_gear", charm: "charm", t12_research: "t12", t11_helios: "t11", research_center: "rc", hero_gear: "hero_gear", pets: "pets", experts: "experts", experts_research: "experts_research", islands: "islands", shining_skins: "skins" };
+function advCovTrack(pk, raw) {
+  if (pk === "experts") { const p = String(raw).split("|"); return `${p[0] === "exp" ? "exl" : "exs"}|${p.slice(1).join("|")}`; }
+  return ADV_COV_PRE[pk] ? `${ADV_COV_PRE[pk]}|${raw}` : null;
+}
+async function advCoverage() {
+  await Promise.all([ensureUpgradeOrder(), cdaLoadSettings()]);
+  const cov = {}, have = {};
+  await Promise.all(CDA_PAGES.filter((pg) => ADV_COV_PAGE[pg.key]).map(async (pg) => {
+    try {
+      const b = pg.key === "hero_gear"
+        ? await ensureHeroGearData().then(() => cdaBuildPage({ ...pg, build: async () => { const st = HERO_GEAR_SETS && HERO_GEAR_SETS["Set 1"], tracks = st && HERO_GEAR_TABLES_CACHE ? heroGearReachTracks(st) : []; return tracks.length ? { tracks, bar: "hero_gear" } : null; } }))
+        : await cdaBuildPage(pg);
+      if (!b || !b.tracks) return;
+      const ap = ADV_COV_PAGE[pg.key];
+      have[ap] = { ...(have[ap] || {}), ...(b.have || {}) };
+      // Like the advisor: troop unlocks and march capacity first (T12 / T11 / Research Center),
+      // then the % upgrades from what is left.
+      const prio = (tr) => (pg.key === "t12_research" ? ADV_T12_PRIO.includes(String(tr.raw).split("|")[1]) : pg.key === "t11_helios" ? /\|(Helios .* (Unlock|Training)|Flame Squad)$/.test(String(tr.raw)) : pg.key === "research_center" ? /^Regimental Expansion /.test(String(tr.raw)) : false);
+      let have0 = { ...(b.have || {}) }, tracks = b.tracks;
+      const lv0 = {};
+      if (tracks.some(prio)) {
+        // Unlock / march nodes give no % themselves: a stand-in gain lets the plan take them
+        // (with the research they wait for); then only the research they need is kept.
+        const fake = (tr) => ({ ...tr, gain: (i) => ({ Attack: i }) }), zero = (tr) => ({ ...tr, gain: () => ({}) });
+        const p0 = reachPlan(tracks.map((tr) => (prio(tr) ? fake(tr) : zero(tr))), have0, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, b.conv || []);
+        const req = {};
+        tracks.filter(prio).forEach((tr) => { for (let l = tr.from + 1; l <= (p0.lv[tr.id] || tr.from); l++) ((tr.needs && tr.needs(l)) || []).forEach((g) => (g[0] || []).forEach(([id, n]) => { req[id] = Math.max(req[id] || 0, n); })); });
+        const p1 = reachPlan(tracks.map((tr) => (prio(tr) ? { ...fake(tr), to: p0.lv[tr.id] || tr.from } : { ...zero(tr), to: Math.min(tr.to, Math.max(tr.from, req[tr.id] || 0)) })), have0, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, b.conv || []);
+        tracks.forEach((tr) => { if (p1.lv[tr.id] > tr.from) lv0[tr.id] = p1.lv[tr.id]; });
+        have0 = { ...p1.left };
+        tracks = tracks.map((tr) => (lv0[tr.id] != null ? { ...tr, from: lv0[tr.id], to: Math.max(lv0[tr.id], tr.to) } : prio(tr) ? { ...tr, to: tr.from } : tr));
+      }
+      const plan = reachPlan(tracks, have0, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, b.conv || []);
+      b.tracks.forEach((tr) => { const lv = Math.max(plan.lv[tr.id] || 0, lv0[tr.id] || 0), k = advCovTrack(pg.key, tr.raw); if (k && lv > tr.from) cov[k] = lv; });
+    } catch (e) { console.warn("best upgrades: backpack", pg.key, e); }
+  }));
+  return { cov, have };
+}
+const advIsCov = (cov, s) => !!(cov && s && s.track && cov[s.track] != null && s.hi <= cov[s.track]);
 // The steps, worked out once per visit; any save (calc_state) or skins change starts again.
 let ADV_STEPS = null;   // { seq, p }
 let ADV_BUILDING = false;
@@ -8191,7 +8258,7 @@ function advSteps() {
   if (ADV_STEPS && ADV_STEPS.seq === CALC_SAVE_SEQ) return ADV_STEPS.p;
   const seq = CALC_SAVE_SEQ, out = [];
   ADV_BUILDING = true;
-  const p = Promise.all([advOwnValues().catch((e) => console.warn("best upgrades: pack values", e)), advStepsChiefGear, advStepsCharm, advStepsT12, advStepsExperts, advStepsExpertsResearch, advStepsIslands, advStepsSkins, advStepsMore]
+  const p = Promise.all([advOwnValues().catch((e) => console.warn("best upgrades: pack values", e)), advCoverage().then((c) => { out.cov = c.cov; out.covHave = c.have; }).catch((e) => console.warn("best upgrades: backpack", e)), advStepsChiefGear, advStepsCharm, advStepsT12, advStepsExperts, advStepsExpertsResearch, advStepsIslands, advStepsSkins, advStepsMore]
     .map((f) => (typeof f === "function" ? f(out).catch((e) => console.warn("best upgrades", f.name, e)) : f)))
     .then(() => out).finally(() => { ADV_BUILDING = false; });
   ADV_STEPS = { seq, p };
@@ -8199,8 +8266,11 @@ function advSteps() {
   return p;
 }
 // Settings, kept in this browser: value basis and sort.
-let ADV_SET = (() => { try { const v = JSON.parse(localStorage.getItem("adv_set") || "{}"); return { mode: v.mode === "pure" ? "pure" : "prio", view: v.view === "target" ? "target" : "next", page: "all" }; } catch (e) { return { mode: "prio", view: "next", page: "all" }; } })();
-function advSaveSet() { try { localStorage.setItem("adv_set", JSON.stringify({ mode: ADV_SET.mode, view: ADV_SET.view })); } catch (e) { /* not kept */ } }
+// The sort ("My order | Best value") is the shared calc_state upgrade_order.mode (Free now's own):
+// mode "prio" = "order", "pure" = "best". Only the view is kept in this browser.
+let ADV_SET = (() => { let v = {}; try { v = JSON.parse(localStorage.getItem("adv_set") || "{}") || {}; } catch (e) { v = {}; } return { view: v.view === "target" ? "target" : "next", page: "all" }; })();
+Object.defineProperty(ADV_SET, "mode", { get: () => (UPGRADE_ORDER.mode === "best" ? "pure" : "prio"), set: (m) => { UPGRADE_ORDER.mode = m === "pure" ? "best" : "order"; saveUpgradeOrder(); }, enumerable: true });
+function advSaveSet() { try { localStorage.setItem("adv_set", JSON.stringify({ view: ADV_SET.view })); } catch (e) { /* not kept */ } }
 function advWeights() {
   const W = {};
   (UPGRADE_ORDER.rows || UPGRADE_ORDER_DEFAULT).forEach(([tr, st], i) => { W[`${reachTroopKey(tr)}|${st}`] = 1.5 - i / 11; });
@@ -8214,14 +8284,14 @@ function advRank(steps) {
   const score = (s) => {
     const g = Object.values(s.gain).reduce((a, v) => a + v, 0), wg = Object.entries(s.gain).reduce((a, [k, v]) => a + v * (W[k] || 1), 0);
     const usd = advUsd(s);
-    return { ...s, usd, g, wg, pp: g > 0 ? usd / g : Infinity, wpp: wg > 0 ? usd / wg : Infinity };
+    return { ...s, usd, g, wg, pp: g > 0 ? usd / g : Infinity, wpp: wg > 0 ? usd / wg : Infinity, cov: advIsCov(steps.cov, s) };
   };
   const next = new Map();
   steps.filter((s) => s.nth === 1).map(score).forEach((s) => next.set(s.track, s));
   const all = steps.filter((s) => !s.nth).map(score).filter((s) => s.g > 1e-9), grp = new Map(), buy = [];
   all.forEach((s) => {
     if (s.page === "skins") {
-      const key = `${s.cat}|${s.usd}|${Object.keys(s.gain).sort().map((k) => `${k}:${Math.round(s.gain[k] * 1000)}`).join(",")}`;
+      const key = `${s.cov ? 1 : 0}|${s.cat}|${s.usd}|${Object.keys(s.gain).sort().map((k) => `${k}:${Math.round(s.gain[k] * 1000)}`).join(",")}`;
       const g = grp.get(key);
       if (g) { g.members.push(s); return; }
       const row = { ...s, members: [s] };
@@ -8232,8 +8302,10 @@ function advRank(steps) {
   });
   buy.forEach((r) => { if (r.members && r.members.length > 1) { r.id = `grp|${r.members[0].id}`; r.name = t("adv_group").replace("{cat}", dataName(r.cat)).replace("{n}", r.members.length); r.sub = t("adv_group_sub").replace("{name}", r.members[0].name.split(": ").slice(1).join(": ")).replace("{n}", r.members.length - 1); } });
   const key = ADV_SET.mode === "pure" ? "pp" : "wpp";
-  buy.sort((a, b) => a[key] - b[key] || a.usd - b.usd);
-  buy.forEach((r, i) => { r.rank = i + 1; });
+  // Steps the Backpack already covers go first; ranks (#1, #2 …) only for steps you buy.
+  buy.sort((a, b) => (b.cov ? 1 : 0) - (a.cov ? 1 : 0) || a[key] - b[key] || a.usd - b.usd);
+  let rk = 0;
+  buy.forEach((r) => { r.rank = r.cov ? null : ++rk; });
   const types = ADV_TYPES.filter((ty) => buy.some((r) => r.type === ty.key));
   // To target: each track's steps up to its target (no target saved = the page's open max).
   const byTrack = new Map();
@@ -8249,13 +8321,14 @@ function advRank(steps) {
     st.forEach((x) => Object.entries(x.gain).forEach(([k, v]) => { g[k] = (g[k] || 0) + v; }));
     const gs = st.reduce((s, x) => s + x.g, 0), wg = st.reduce((s, x) => s + x.wg, 0);
     if (!(gs > 1e-9)) return;
-    const from = first.hi - 1, lastHi = st[st.length - 1].hi;
-    tracks.push({ id: `tt|${first.track}`, track: first.track, page: first.page, type: first.type, img: first.img, single: !!first.single, tomes: first.tomes, base: first.base || first.name, la: first.la, lb: st[st.length - 1].lb,
+    const from = first.hi - 1, lastHi = st[st.length - 1].hi, covN = st.filter((x) => x.cov).length, usdNow = st.reduce((s2, x) => s2 + (x.cov ? 0 : x.usd), 0);
+    tracks.push({ covN, cov: covN === st.length, usdNow, id: `tt|${first.track}`, track: first.track, page: first.page, type: first.type, img: first.img, single: !!first.single, tomes: first.tomes, base: first.base || first.name, la: first.la, lb: st[st.length - 1].lb,
       name: first.single ? t("adv_buy_name").replace("{name}", first.base) : first.base ? `${first.base} ${first.la} \u2192 ${st[st.length - 1].lb}` : first.name, steps: st, n: st.length, usd, gain: g, g: gs, wg, pp: usd / gs, wpp: wg > 0 ? usd / wg : Infinity,
       bar: { now: top > 0 ? Math.max(0, Math.min(1, (from + 1 - (list[0].hi - list[0].nth - 1) * 0) / (top + 1))) : 0, from, to: lastHi, top } });
   });
-  tracks.sort((x, y) => x[key] - y[key] || x.usd - y.usd);
-  tracks.forEach((r, i) => { r.rank = i + 1; });
+  tracks.sort((x, y) => (y.cov ? 1 : 0) - (x.cov ? 1 : 0) || x[key] - y[key] || x.usd - y.usd);
+  let rt = 0;
+  tracks.forEach((r) => { r.rank = r.cov ? null : ++rt; });
   return { buy, key, next, types, tracks };
 }
 // ---- Look ----
@@ -8273,6 +8346,9 @@ function advCcHtml(usdTxt, per, avg) {
   const cls = per < 5 ? "g" : per <= 20 ? "a" : "r";
   return `<span class="adv-cc"><b>${bidiNum(usdTxt)}</b>${Number.isFinite(per) ? `<em class="${cls}">${avg ? `${esc(t("adv_avg"))} ` : ""}${bidiNum(`$${per.toFixed(2)}/1%`)}</em>` : ""}</span>`;
 }
+// A step the Backpack already pays for: $0 big, the pack value struck through under it.
+const advCovTagHtml = (k) => `<span class="pur-cmp pur-cmp-budget">&#10003; ${esc(t(k || "adv_cov_tag"))}</span>`;
+const advCovCcHtml = (usd) => `<span class="adv-cc"><b style="color:var(--good);">$0</b><s class="meta" style="font-size:11px; margin-top:3px;">${bidiNum(advMoney(usd))}</s></span>`;
 function advGivesText(gain) {
   const by = {};
   Object.entries(gain).forEach(([k, v]) => { const [tr, st] = k.split("|"), r = Math.round(v * 100) / 100; const kk = `${st}|${r}`; (by[kk] = by[kk] || []).push(tr); });
@@ -8286,8 +8362,8 @@ function advRowHtml(r, o = {}) {
     r = { ...r, name: grp ? r.name : t("adv_buy_name").replace("{name}", r.base || r.name), usdTxt: grp ? `${price} ${t("adv_each")}` : price };
   }
   const grp = r.members && r.members.length > 1;
-  const sub = [o.rank ? `#${r.rank}` : "", r.sub || "", o.page ? advTypeName(r.type) : "", `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`, advSetTxt(r), r.usdTxt && r.page === "skins" ? r.usdTxt.replace(/ \(\$[^)]*\)/, "") : grp ? t("adv_each") : ""].filter(Boolean).join(" · ");
-  return `<details class="pca-pk"><summary data-advrow="${esc(r.id)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span></span>${advCcHtml(advMoney(r.usd), per, false)}</summary></details>`;
+  const sub = [o.rank && r.rank ? `#${r.rank}` : "", r.sub || "", o.page ? advTypeName(r.type) : "", `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`, advSetTxt(r), r.usdTxt && r.page === "skins" ? r.usdTxt.replace(/ \(\$[^)]*\)/, "") : grp ? t("adv_each") : ""].filter(Boolean).join(" · ");
+  return `<details class="pca-pk"><summary data-advrow="${esc(r.id)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span>${r.cov ? `<span class="pca-sb">${advCovTagHtml()}</span>` : ""}</span>${r.cov ? advCovCcHtml(r.usd) : advCcHtml(advMoney(r.usd), per, false)}</summary></details>`;
 }
 // The Dashboard's numbers (now / max per troop + stat), kept when the Dashboard draws.
 let ADV_GAP = null;
@@ -8315,21 +8391,31 @@ let ADV_MORE = false;  // "Show N more" opened (for the visit)
 function advPageHtml(steps) {
   const R = advRank(steps), shown = ADV_SET.page === "all" ? R.buy : R.buy.filter((r) => r.type === ADV_SET.page);
   ADV_LAST = { steps, R };
-  const P = ADV_PRIO || [], best = R.buy[0], then = R.buy.slice(1, 4);
-  const answer = P.length ? `<div class="panel">
+  // Best next: what the Backpack already pays for first (unlocks / march, then % steps), then
+  // what you buy (unlocks / march first, then % steps by cost per 1%).
+  const P = ADV_PRIO || [];
+  const seqL = [...P.filter((x) => x.cov).map((p) => ({ p })), ...R.buy.filter((r) => r.cov).map((r) => ({ r })), ...P.filter((x) => !x.cov).map((p) => ({ p })), ...R.buy.filter((r) => !r.cov).map((r) => ({ r }))];
+  const head = seqL[0], then = seqL.slice(1, 4);
+  const bigPrice = (usd, per, lab, cov) => (cov ? `<span style="text-align:end; display:flex; flex-direction:column; align-items:flex-end;"><b class="pca-big" style="color:var(--good);">$0</b><s class="meta" style="font-size:11px;">${bidiNum(advMoney(usd))}</s></span>` : `<span style="text-align:end;"><b class="pca-big"${lab === "adv_per_1" ? ' style="color:var(--good);"' : ""}>${bidiNum(per)}</b><small class="meta">${esc(t(lab))}</small></span>`);
+  let headHtml = "";
+  if (head && head.p) {
+    const x = head.p;
+    headHtml = `<div class="pca-sum" data-advprio="${esc(x.key)}" data-advprionext="1" role="button" tabindex="0" style="cursor:pointer; margin-top:4px;${x.cov ? " border-color:rgba(91,201,138,.5);" : ""}">${advPic(x.img)}<span class="pca-mid"><span class="pca-nm">${esc(x.name)}</span>${x.cov ? `<span class="pca-sb">${esc(x.subBase || "")}</span><span class="pca-sb">${advCovTagHtml("adv_cov_tag_do")}</span>` : `<span class="pca-sb">${esc(x.sub)}</span>`}</span>${bigPrice(x.usd, x.per != null ? `$${x.per.toFixed(2)}` : advMoney(x.usd), x.per != null ? "adv_p_per100" : "adv_p_cost", x.cov)}</div>`;
+  } else if (head) {
+    const best = head.r;
+    headHtml = `<div class="pca-sum" data-advrow="${esc(best.id)}" role="button" tabindex="0" style="cursor:pointer; margin-top:4px;${best.cov ? " border-color:rgba(91,201,138,.5);" : ""}">${advPic(best.img, best.page)}<span class="pca-mid"><span class="pca-nm">${esc(best.name)}</span><span class="pca-sb">${esc([best.sub || "", advGivesText(best.gain), best.cov ? "" : advMoney(best.usd) + (best.members && best.members.length > 1 ? ` ${t("adv_each")}` : "")].filter(Boolean).join(" · "))}</span>${best.cov ? `<span class="pca-sb">${advCovTagHtml()}</span>` : ""}</span>${bigPrice(best.usd, `$${advPer(best).toFixed(2)}`, "adv_per_1", best.cov)}</div>`;
+  }
+  const answer = head ? `<div class="panel">
       <div class="pca-h">${esc(t("adv_best_next"))}</div>
-      <div class="pca-sum" data-advprio="${esc(P[0].key)}" data-advprionext="1" role="button" tabindex="0" style="cursor:pointer; margin-top:4px;">${advPic(P[0].img)}<span class="pca-mid"><span class="pca-nm">${esc(P[0].name)}</span><span class="pca-sb">${esc(P[0].sub)}</span></span><span style="text-align:end;"><b class="pca-big">${bidiNum(P[0].per != null ? `$${P[0].per.toFixed(2)}` : advMoney(P[0].usd))}</b><small class="meta">${esc(P[0].per != null ? t("adv_p_per100") : t("adv_p_cost"))}</small></span></div>
-      <div class="pca-h">${esc(t("adv_then"))}</div>${P.slice(1, 4).map(advPrioRowHtml).join("")}${P.length < 4 ? R.buy.slice(0, 4 - P.length).map((r) => advRowHtml(r, { rank: true })).join("") : ""}
-    </div>` : best ? `<div class="panel">
-      <div class="pca-h">${esc(t("adv_best_next"))}</div>
-      <div class="pca-sum" data-advrow="${esc(best.id)}" role="button" tabindex="0" style="cursor:pointer; margin-top:4px;">${advPic(best.img, best.page)}<span class="pca-mid"><span class="pca-nm">${esc(best.name)}</span><span class="pca-sb">${esc([best.sub || "", advGivesText(best.gain), advMoney(best.usd) + (best.members && best.members.length > 1 ? ` ${t("adv_each")}` : "")].filter(Boolean).join(" · "))}</span></span><span style="text-align:end;"><b class="pca-big" style="color:var(--good);">${bidiNum(`$${advPer(best).toFixed(2)}`)}</b><small class="meta">${esc(t("adv_per_1"))}</small></span></div>
-      ${then.length ? `<div class="pca-h">${esc(t("adv_then"))}</div>${then.map((r) => advRowHtml(r, { rank: true })).join("")}` : ""}
+      ${headHtml}
+      ${then.length ? `<div class="pca-h">${esc(t("adv_then"))}</div>${then.map((y) => (y.p ? advPrioRowHtml(y.p) : advRowHtml(y.r, { rank: true }))).join("")}` : ""}
     </div>` : `<div class="panel"><div class="empty">${esc(t("adv_nothing"))}</div></div>`;
   const chips = `<div class="cat-tabs pk-cat-row" data-advchips style="margin:2px 0 10px;"><button type="button" data-advpage="all" class="${ADV_SET.page === "all" ? "active" : ""}">${esc(t("adv_all"))}</button>${R.types.map((ty) => `<button type="button" data-advpage="${ty.key}" class="${ADV_SET.page === ty.key ? "active" : ""}">${esc(advTypeName(ty.key))}</button>`).join("")}</div>`;
   const typesCard = `<div class="panel" data-advtypes><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span class="pca-mid"><span class="pca-nm">${esc(t("adv_types"))}</span><span class="pca-sb">${esc(t("adv_types_desc"))}</span></span><button type="button" class="pca-n" data-advtypesmore>${esc(t("adv_open"))} &#8250;</button></div></div>`;
   const settings = `<div class="panel">
       <div class="bset-row" style="border-top:0;"><span class="bset-l">${esc(t("adv_show"))}<small>${esc(t(ADV_SET.view === "target" ? "adv_show_target_sub" : "adv_show_next_sub"))}</small></span><span class="bset-c"><span class="seg"><button type="button" data-advview="next" class="${ADV_SET.view === "next" ? "active" : ""}">${esc(t("adv_view_next"))}</button><button type="button" data-advview="target" class="${ADV_SET.view === "target" ? "active" : ""}">${esc(t("adv_view_target"))}</button></span></span></div>
       <div class="bset-row"><span class="bset-l">${esc(t("adv_sort"))}<small>${esc(t(ADV_SET.mode === "pure" ? "adv_sort_pure_sub" : "adv_sort_prio_sub"))}</small></span><span class="bset-c"><span class="seg"><button type="button" data-advmode="prio" class="${ADV_SET.mode === "prio" ? "active" : ""}">${esc(t("adv_prio"))}</button><button type="button" data-advmode="pure" class="${ADV_SET.mode === "pure" ? "active" : ""}">${esc(t("adv_pure"))}</button></span><button type="button" class="btn ghost small" data-advorder>&#8645; ${esc(t("adv_order"))}</button></span></div>
+      <p class="pca-sb" style="margin:6px 0 0; text-align:end;">${esc(t("adv_same_free"))} ${visitorCan("cando") ? `<a href="#" data-advfree style="color:var(--ice); font-weight:700; text-decoration:none;">${esc(t("adv_same_free_l"))}</a>` : `<b>${esc(t("adv_same_free_l"))}</b>`}</p>
     </div>`;
   const TT = ADV_SET.view === "target", shownT = TT ? (ADV_SET.page === "all" ? R.tracks : R.tracks.filter((r) => r.type === ADV_SET.page)) : null;
   const N = 8, list = TT ? (ADV_MORE ? shownT : shownT.slice(0, N)) : ADV_MORE ? shown : shown.slice(0, N);
@@ -8343,7 +8429,8 @@ function advPageHtml(steps) {
       ${(TT ? shownT : shown).length > N ? purMoreBtnHtml("data-advmore", ADV_MORE, (TT ? shownT : shown).length - N) : ""}
       <p class="pca-sb" style="margin:10px 0 0;">${esc(t("adv_legend"))}</p>
     </div>`;
-  return `<div class="page-head"><div><h2>${esc(t("adv_title"))}</h2><p class="desc">${esc(t("adv_desc"))}</p></div></div>${answer}${typesCard}${advGapHtml()}${settings}${listCard}`;
+  const budLink = visitorCan("budgets") ? `<div class="panel" style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:10px; padding-bottom:10px;"><span class="pca-sb" style="margin:0;">${esc(t("adv_budgets_link"))}</span><a href="#" data-advopen="budgets" style="color:var(--ice); font-weight:700; text-decoration:none; white-space:nowrap;">${esc(navLabel("budgets"))} &#8250;</a></div>` : "";
+  return `<div class="page-head"><div><h2>${esc(t("adv_title"))}</h2><p class="desc">${esc(t("adv_desc"))}</p></div></div>${budLink}${answer}${typesCard}${advGapHtml()}${settings}${listCard}`;
 }
 function advDraw() {
   const content = document.getElementById("content");
@@ -8371,9 +8458,10 @@ async function renderBestUpgradesPage() {
   await ensureUpgradeOrder();
   const [steps, prio] = await Promise.all([advSteps(), advPriority().catch((e) => { console.warn("best upgrades: priority", e); return []; })]);
   if (seq !== RENDER_SEQ) return;
-  ADV_PRIO = prio;
   ADV_PRIO_TT = await advPriorityTracks().catch(() => []);
   if (seq !== RENDER_SEQ) return;
+  ADV_PRIO_RAW = prio;
+  ADV_PRIO = advPrioCov(prio, ADV_PRIO_TT, steps.cov);
   content.innerHTML = advPageHtml(steps);
 }
 // ---- "Priority first": troop unlocks and march size, before any % upgrade ----
@@ -8450,9 +8538,10 @@ function advTrackRowHtml(r, showPage) {
   const b = r.bar, w = (x) => Math.max(0, Math.min(100, (x / Math.max(1, b.top)) * 100));
   const one = r.single || r.n === 1, g = `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`;
   const price = r.single && r.tomes ? t("adv_tomes_price").replace("{n}", r.tomes.toLocaleString("en-US")).replace("{v}", advMoney(r.usd)) : advMoney(r.usd);
-  const sub = [`#${r.rank}`, showPage ? advTypeName(r.type) : "", g, price === advMoney(r.usd) ? "" : price.replace(/ \(\$[^)]*\)/, ""), one ? "" : t("adv_n_steps").replace("{n}", r.n)].filter(Boolean).join(" \u00b7 ");
+  const sub = [r.rank ? `#${r.rank}` : "", showPage ? advTypeName(r.type) : "", g, price === advMoney(r.usd) ? "" : price.replace(/ \(\$[^)]*\)/, ""), one ? "" : t("adv_n_steps").replace("{n}", r.n)].filter(Boolean).join(" \u00b7 ");
+  const part = !r.cov && r.covN > 0 ? `<span class="pca-sb" style="color:var(--good);">&#10003; ${esc(t("adv_cov_part").replace("{v}", advMoney(r.usdNow)).replace("{all}", advMoney(r.usd)).replace("{n}", r.covN).replace("{m}", r.n))}</span>` : "";
   const bar = one ? "" : `<span style="display:flex; align-items:center; gap:6px;"><span class="pc-bar" style="flex:1; margin-top:0;"><i style="width:${w(b.from)}%;"></i><i style="width:${w(b.to) - w(b.from)}%;"></i></span><small class="meta">&rarr; ${esc(r.lb)}</small></span>`;
-  return `<details class="pca-pk"><summary data-advtrack="${esc(r.track)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span>${bar}</span>${advCcHtml(advMoney(r.usd), advPer(r), !one)}</summary></details>`;
+  return `<details class="pca-pk"><summary data-advtrack="${esc(r.track)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span>${r.cov ? `<span class="pca-sb">${advCovTagHtml()}</span>` : part}${bar}</span>${r.cov ? advCovCcHtml(r.usd) : advCcHtml(advMoney(r.covN ? r.usdNow : r.usd), advPer(r), !one)}</summary></details>`;
 }
 // To target sheet: totals, then every step with its own $ and $ per 1%; long middles fold.
 let ADV_TT_ALL = false;
@@ -8488,25 +8577,25 @@ function advOpenPrioSheet(key, view) {
   (whole ? tt.steps : [{ items: r.items || {} }]).forEach((s) => advAddItems(items, s.items || {}));
   const add = whole ? tt.add : r.add || 0, usd = whole ? tt.usd : r.usd, per = add > 0 ? (usd / add) * 100 : null;
   const label = r.subBase || (add ? t("adv_p_march").replace("{n}", add.toLocaleString("en-US")) : "");
-  const itemRows = Object.entries(items).filter(([, q]) => q > 0.5).map(([n, q]) => {
-    const v = q * advVal(n), src = materialIconSrc(n);
-    return `<div class="bset-row"><span class="bset-l" style="flex-direction:row; align-items:center; gap:8px;">${src ? `<img src="${esc(src)}" alt="" style="width:24px; height:24px; object-fit:contain;" />` : ""}<span>${esc(materialDisplayName(n))} <small>&times;${esc(shortAmount(q))}</small>${ADV_OWN_FROM[advItemKey(n)] ? `<small class="meta" style="display:block;">${esc(t("adv_valued_from").replace("{pack}", ADV_OWN_FROM[advItemKey(n)]))}</small>` : ""}</span></span><b class="bset-c">${v > 0 ? advMoney(v) : "\u2014"}</b></div>`;
-  }).join("");
+  const covd = !whole && !!r.cov, apg = ADV_PAGES.find((q) => q.tab === r.tab), have = apg && ADV_LAST && ADV_LAST.steps && ADV_LAST.steps.covHave ? ADV_LAST.steps.covHave[apg.key] : null;
+  const itemRows = Object.entries(items).filter(([, q]) => q > 0.5).map(([n, q]) => advItemRowHtml(n, q, whole ? null : have, covd)).join("");
+  const rkey = String(r.key || "").replace(/^cov\|/, ""), goal = advGoalOf(rkey, whole ? tt.to : r.lvTo, String(whole ? tt.to : r.lvTo), null);
   const stepRow = (s) => `<div class="bset-row"><span class="bset-l">Lv ${esc(String(s.lv))}${s.add ? ` <small>${esc(t("adv_p_march").replace("{n}", s.add.toLocaleString("en-US")))}</small>` : ""}</span><span class="bset-c"><b>${advMoney(s.usd)}</b>${s.add ? `<span class="pur-cmp pur-cmp-both">${bidiNum(`$${((s.usd / s.add) * 100).toFixed(2)}`)} / +100</span>` : ""}</span></div>`;
-  const after = !whole && tt && tt.steps && tt.steps[1] ? tt.steps[1] : null;
+  const after = !whole && tt && tt.steps ? tt.steps.find((y) => y.lv === r.lvTo + 1) || null : null;
   m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw" role="dialog" aria-modal="true" aria-label="${esc(r.name)}">
     <div class="cgw-top" data-cgwgrab><div class="cgw-grab"></div>
     <div class="gs-head">${advPic(r.img)}<div style="flex:1; min-width:0;"><b>${esc(r.name)}</b><div class="meta">${esc([navLabel(pg.tab), whole ? t(tt.n === 1 ? "adv_n_step1" : "adv_n_steps").replace("{n}", tt.n) : ""].filter(Boolean).join(" \u00b7 "))}</div></div>${closeXHtml("data-advclose")}</div></div>
-    <div class="cgw-nd" style="grid-template-columns:repeat(3, minmax(0, 1fr));">
-      <div class="cgw-nb"><small>${esc(t(whole ? "adv_total" : "adv_cost"))}</small><b>${advMoney(usd)}</b></div>
+    ${whole ? `<div class="cgw-nd" style="grid-template-columns:repeat(3, minmax(0, 1fr));">
+      <div class="cgw-nb"><small>${esc(t("adv_total"))}</small><b>${advMoney(usd)}</b></div>
       <div class="cgw-nb"><small>${esc(t("adv_gives"))}</small><b style="color:var(--good);">${esc(add ? `+${add.toLocaleString("en-US")}` : t("adv_p_unlock"))}</b></div>
       <div class="cgw-nb"><small>${esc(t("adv_p_per100"))}</small><b>${per != null ? bidiNum(`$${per.toFixed(2)}`) : "\u2014"}</b></div>
-    </div>
+    </div>` : advBoxesHtml(usd, add ? `+${add.toLocaleString("en-US")}` : t("adv_p_unlock"), covd)}
+    ${!whole && !covd && per != null ? `<p class="pca-sb" style="margin:6px 0 0;">${esc(t("adv_p_per").replace("{v}", `$${per.toFixed(2)}`))}</p>` : ""}
     ${label ? `<p class="pca-sb" style="margin:8px 0 0;">${esc(label)}</p>` : ""}
     ${whole && tt.steps.length > 1 ? `<div class="cgw-nh">${esc(t("adv_steps_h_march"))}</div>${tt.steps.map(stepRow).join("")}` : ""}
     ${itemRows ? `<div class="cgw-nh">${esc(t("adv_items"))}</div>${itemRows}` : ""}
     ${after ? `<p class="pca-sb" style="margin:8px 0 0;">${esc(t("adv_p_after").replace("{lv}", after.lv).replace("{v}", advMoney(after.usd)))}</p>` : ""}
-    <div style="display:flex; gap:8px; margin-top:14px;"><button type="button" class="btn ghost" style="flex:1;" data-advclose>${esc(t("close_button"))}</button><button type="button" class="btn" style="flex:1;" data-advopen="${esc(pg.tab)}">${esc(t("adv_open_named").replace("{page}", navLabel(pg.tab)))} &#8250;</button></div>
+    ${advSheetBtnsHtml(goal, covd, apg || pg)}
   </div>`;
   advWireSheet(m);
 }
@@ -8534,9 +8623,35 @@ async function advPriorityTracks() {
   return unl.concat(cap);
 }
 function advPrioRowHtml(x) {
-  return `<details class="pca-pk"><summary data-advprio="${esc(x.key)}">${advPic(x.img)}<span class="pca-mid"><span class="pca-nm">${esc(x.name)}</span><span class="pca-sb">${esc([x.per != null ? x.extra : x.sub, x.per != null ? advMoney(x.usd) : ""].filter(Boolean).join(" \u00b7 "))}</span></span><b class="pca-pr">${advPrioPill(x)}</b></summary></details>`;
+  const sb = esc([x.per != null ? x.extra : x.sub, x.per != null && !x.cov ? advMoney(x.covN ? x.usdNow : x.usd) : ""].filter(Boolean).join(" \u00b7 "));
+  const part = !x.cov && x.covN > 0 ? `<span class="pca-sb" style="color:var(--good);">&#10003; ${esc(t("adv_cov_part").replace("{v}", advMoney(x.usdNow)).replace("{all}", advMoney(x.usd)).replace("{n}", x.covN).replace("{m}", x.n))}</span>` : "";
+  return `<details class="pca-pk"><summary data-advprio="${esc(x.key)}">${advPic(x.img)}<span class="pca-mid"><span class="pca-nm">${esc(x.name)}</span>${sb ? `<span class="pca-sb">${sb}</span>` : ""}${x.cov ? `<span class="pca-sb">${advCovTagHtml("adv_cov_tag_do")}</span>` : part}</span>${x.cov ? advCovCcHtml(x.usd) : `<b class="pca-pr">${advPrioPill(x)}</b>`}</summary></details>`;
+}
+// The unlock / march lines with the Backpack: levels it already pays for become one line
+// "$0 · in your Backpack" at the top, the next level to buy stays a line of its own.
+function advPrioCov(P, TT, cov) {
+  const covRows = [], unl = [], cap = [], march = (n) => t("adv_p_march").replace("{n}", n.toLocaleString("en-US"));
+  const put = (x) => (x.per != null ? cap : unl).push(x);
+  (TT || []).forEach((tt) => { const c = cov && cov[tt.key]; tt.covN = c != null ? tt.steps.filter((y) => y.lv <= c).length : 0; tt.cov = tt.covN > 0 && tt.covN === tt.steps.length; tt.usdNow = tt.steps.reduce((a, y) => a + (c != null && y.lv <= c ? 0 : y.usd), 0); });
+  (P || []).forEach((x) => {
+    const c = cov && cov[x.key], tt = (TT || []).find((y) => y.key === x.key);
+    if (c == null || c < x.lvTo || !tt) { put(x); return; }
+    const st = tt.steps.filter((y) => y.lv <= c), items = {};
+    st.forEach((y) => advAddItems(items, y.items || {}));
+    const add = st.reduce((a, y) => a + (y.add || 0), 0), usd = st.reduce((a, y) => a + y.usd, 0);
+    covRows.push({ ...x, key: `cov|${x.key}`, cov: true, lvTo: c, items, add, usd, per: x.per != null && add > 0 ? (usd / add) * 100 : x.per, sub: x.subBase || "", extra: x.subBase || "", name: `${x.base} Lv ${x.lvFrom} \u2192 ${c}${add ? ` \u00b7 ${march(add)}` : ""}` });
+    const nx = tt.steps.find((y) => y.lv === c + 1);
+    if (!nx) return;
+    const per = x.per != null ? (nx.add > 0 ? (nx.usd / nx.add) * 100 : Infinity) : x.per;
+    put({ ...x, lvFrom: c, lvTo: nx.lv, usd: nx.usd, add: nx.add || 0, items: nx.items || {}, per, sub: x.per != null ? t("adv_p_per").replace("{v}", `$${per.toFixed(2)}`) : x.sub, name: `${x.base} Lv ${c} \u2192 ${nx.lv}${nx.add ? ` \u00b7 ${march(nx.add)}` : ""}` });
+  });
+  cap.sort((a, b) => a.per - b.per);
+  return covRows.concat(unl, cap);
 }
 let ADV_PRIO = [];
+let ADV_PRIO_RAW = []; // before the Backpack's levels were taken out (advPrioCov)
+// Budgets with its Free now sheet open.
+function advGoFree() { closeGearSheet(); goToTab("budgets"); BUDGET_SHEET = "cando"; }
 let ADV_PRIO_TT = []; // the same tracks, from now to their end (To target view)
 // ---- Sheets ----
 function advFind(id) {
@@ -8544,31 +8659,72 @@ function advFind(id) {
   if (!R) return null;
   return R.buy.find((r) => r.id === id) || null;
 }
+// The Budgets goal for an advisor step: { page, key, level } (level null = the page's target), or null.
+const ADV_GOAL_PAGE = { cg: "chief_gear", ch: "charm", t12: "t12_research", t11: "t11_helios", rc: "research_center", hero_gear: "hero_gear", pets: "pets", exl: "experts", exs: "experts", exr: "experts_research", isl: "islands", sk: "shining_skins" };
+function advGoalOf(track, hi, lb, tgt) {
+  const p = String(track || "").split("|"), k = p[0], rest = p.slice(1).join("|"), page = ADV_GOAL_PAGE[k];
+  if (!page || !rest) return null;
+  let key = rest, level = String(hi);
+  if (k === "cg") level = CHIEF_GEAR_ROWS && CHIEF_GEAR_ROWS[hi] ? chiefGearRowLabel(CHIEF_GEAR_ROWS[hi]) : null;
+  else if (k === "ch") level = String(lb);
+  else if (k === "hero_gear") { const rows = (HERO_GEAR_TABLES_CACHE || {})[p[3]] || []; key = `Set 1|${rest}`; level = rows[hi] ? rowLabel(rows[hi]) : null; }
+  else if (k === "pets") { const lv = (PETS_NODES_CACHE || {})[rest]; level = lv && lv[hi] ? String(lv[hi].level_label) : null; }
+  else if (k === "exl") { key = `${rest}|lv`; level = String(lb); }
+  else if (k === "exs") { key = `${p[1]}|sk|${p.slice(2).join("|")}`; }
+  else if (k === "sk") level = null;
+  if (tgt != null && hi >= tgt) level = null;
+  return { page, key, level };
+}
+// "＋ Add as goal": the upgrade at that level joins Budgets' goals (calc_state budget_goals).
+async function advAddGoal(g) {
+  const G = await ensureBudgetGoals();
+  const same = (G.goals || []).some((e) => e.page === g.page && e.key === g.key && String(e.level == null ? "" : e.level) === String(g.level == null ? "" : g.level));
+  if (same) return false;
+  G.goals = (G.goals || []).concat([{ id: Date.now().toString(36) + "a", page: g.page, key: g.key, level: g.level }]);
+  saveCalcState("budget_goals", G);
+  return true;
+}
+// The row sheet's buttons: Add as goal, See in Free now (covered) or Pack cost (to buy), Open <page>.
+function advSheetBtnsHtml(goal, cov, pg) {
+  const cda = Object.keys(ADV_COV_PAGE).find((k) => ADV_COV_PAGE[k] === pg.key) || "";
+  const addB = goal && IS_OWNER ? `<button type="button" class="btn ghost" style="flex:1;" data-advgoal='${esc(JSON.stringify(goal))}'>&#65291; ${esc(t("adv_add_goal"))}</button>` : "";
+  const second = cov ? (visitorCan("cando") ? `<button type="button" class="btn ghost" style="flex:1; color:var(--good); border-color:rgba(91,201,138,.5);" data-advfree>${esc(t("adv_see_free"))} &#8250;</button>` : "") : cda ? `<button type="button" class="btn ghost" style="flex:1;" data-advpc="${esc(cda)}">${esc(t("adv_pack_cost"))} &#8250;</button>` : "";
+  return `${addB || second ? `<div style="display:flex; gap:8px; margin-top:14px;">${addB}${second}</div>` : ""}<button type="button" class="btn" style="width:100%; margin-top:8px;" data-advopen="${esc(pg.tab)}">${esc(t("adv_open_named").replace("{page}", navLabel(pg.tab)))} &#8250;</button>`;
+}
+// One item line of a sheet: picture, name × amount, "✓ have N" (the Backpack, as that page counts it), value.
+function advItemRowHtml(n, q, have, cov) {
+  const v = q * advVal(n), src = materialIconSrc(n), h = have ? Number(have[n]) || 0 : 0;
+  const hv = have && h > 0 ? `<small style="display:block; color:${h >= q ? "var(--good)" : "var(--muted)"}; font-weight:700;">${h >= q ? "&#10003; " : ""}${esc(t("adv_have").replace("{n}", shortAmount(h)))}</small>` : "";
+  return `<div class="bset-row"><span class="bset-l" style="flex-direction:row; align-items:center; gap:8px;">${src ? `<img src="${esc(src)}" alt="" style="width:24px; height:24px; object-fit:contain;" />` : ""}<span>${esc(materialDisplayName(n))} <small>&times;${esc(shortAmount(q))}</small>${hv}${!cov && ADV_OWN_FROM[advItemKey(n)] ? `<small class="meta" style="display:block;">${esc(t("adv_valued_from").replace("{pack}", ADV_OWN_FROM[advItemKey(n)]))}</small>` : ""}</span></span><b class="bset-c">${v > 0 ? (cov ? `<s class="meta">${advMoney(v)}</s>` : advMoney(v)) : "\u2014"}</b></div>`;
+}
+// Cost now · Gives · Pack value (struck when the Backpack covers it).
+function advBoxesHtml(usd, gives, cov) {
+  return `<div class="cgw-nd" style="grid-template-columns:repeat(3, minmax(0, 1fr));">
+      <div class="cgw-nb${cov ? " ok" : ""}"><small>${esc(t("adv_cost_now"))}</small><b${cov ? ' style="color:var(--good);"' : ""}>${cov ? "$0" : advMoney(usd)}</b></div>
+      <div class="cgw-nb"><small>${esc(t("adv_gives"))}</small><b style="color:var(--good);">${esc(gives)}</b></div>
+      <div class="cgw-nb"><small>${esc(t("adv_pack_value"))}</small><b>${cov ? `<s>${advMoney(usd)}</s>` : advMoney(usd)}</b></div>
+    </div>${cov ? `<p class="pca-note ok" style="border:1px solid rgba(91,201,138,.5); border-radius:10px; padding:8px 10px; margin-top:10px;">&#10003; ${esc(t("adv_cov_line"))}</p>` : ""}`;
+}
 function advOpenSheet(r) {
-  const m = gearSheetEl(), pg = advPageOf(r.page), R = ADV_LAST.R, per = advPer(r), nx = r.track ? R.next.get(r.track) : null;
+  const m = gearSheetEl(), pg = advPageOf(r.page), R = ADV_LAST.R, nx = r.track ? R.next.get(r.track) : null;
+  const have = (ADV_LAST.steps && ADV_LAST.steps.covHave && ADV_LAST.steps.covHave[r.page]) || null;
   const by = {};
   Object.entries(r.gain).forEach(([k, v]) => { const [tr, st] = k.split("|"); (by[tr] = by[tr] || {})[st] = v; });
   const gives = PLX_TROOPS.filter((tr) => by[tr]).map((tr) => `<div class="bset-row"><span class="bset-l">${esc(troopDisplayName(tr))}</span><span class="bset-c" style="color:var(--good); font-weight:700;">${ADV_STATS.filter((s) => by[tr][s]).map((s) => `+${(Math.round(by[tr][s] * 100) / 100).toLocaleString("en-US")}% ${ADV_SHORT[s]}`).join(" · ")}</span></div>`).join("");
-  const items = Object.entries(r.items || {}).filter(([, q]) => q > 0.5).map(([n, q]) => {
-    const v = q * advVal(n), src = materialIconSrc(advItemKey(n) === "General Sigils" ? n : n);
-    return `<div class="bset-row"><span class="bset-l" style="flex-direction:row; align-items:center; gap:8px;">${src ? `<img src="${esc(src)}" alt="" style="width:24px; height:24px; object-fit:contain;" />` : ""}<span>${esc(materialDisplayName(n))} <small>&times;${esc(shortAmount(q))}</small>${ADV_OWN_FROM[advItemKey(n)] ? `<small class="meta" style="display:block;">${esc(t("adv_valued_from").replace("{pack}", ADV_OWN_FROM[advItemKey(n)]))}</small>` : ""}</span></span><b class="bset-c">${v > 0 ? advMoney(v) : "—"}</b></div>`;
-  }).join("");
+  const items = Object.entries(r.items || {}).filter(([, q]) => q > 0.5).map(([n, q]) => advItemRowHtml(n, q, have, r.cov)).join("");
   const members = r.members && r.members.length > 1 ? `<div class="cgw-nh">${esc(t("adv_members"))}</div><div class="pca-gv">${r.members.map((x) => `<span class="pca-chip x">${esc(x.name.split(": ").slice(1).join(": "))}</span>`).join("")}</div>` : "";
+  const goal = r.members && r.members.length > 1 ? null : advGoalOf(r.track, r.hi, r.lb, r.tgt);
   m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw" role="dialog" aria-modal="true" aria-label="${esc(r.name)}">
     <div class="cgw-top" data-cgwgrab><div class="cgw-grab"></div>
-    <div class="gs-head">${advPic(r.img, r.page)}<div style="flex:1; min-width:0;"><b>${esc(r.name)}</b><div class="meta">${esc(navLabel(pg.tab))}${r.rank ? ` · ${esc(t("adv_rank_of").replace("{n}", r.rank).replace("{m}", R.buy.length))}` : ""}${advSetTag(r)}</div></div>${closeXHtml("data-advclose")}</div></div>
-    <div class="cgw-nd" style="grid-template-columns:repeat(3, minmax(0, 1fr));">
-      <div class="cgw-nb"><small>${esc(t("adv_cost"))}</small><b>${advMoney(r.usd)}</b></div>
-      <div class="cgw-nb"><small>${esc(t("adv_gives"))}</small><b style="color:var(--good);">+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%</b></div>
-      <div class="cgw-nb"><small>${esc(t("adv_per_1"))}</small><b>${Number.isFinite(per) ? bidiNum(`$${per.toFixed(2)}`) : "\u2014"}</b></div>
-    </div>
+    <div class="gs-head">${advPic(r.img, r.page)}<div style="flex:1; min-width:0;"><b>${esc(r.name)}</b><div class="meta">${esc(navLabel(pg.tab))}${r.rank ? ` · ${esc(t("adv_rank_of").replace("{n}", r.rank).replace("{m}", R.buy.filter((x) => !x.cov).length))}` : ""}${advSetTag(r)}</div></div>${closeXHtml("data-advclose")}</div></div>
+    ${advBoxesHtml(r.usd, `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`, r.cov)}
     <div class="cgw-nh">${esc(t("adv_what_gives"))}</div>${gives}
-    <p class="pca-sb" style="margin:6px 0 0;">${esc(ADV_SET.mode === "pure" ? t("adv_sheet_pure").replace("{v}", `$${r.pp.toFixed(2)}`) : t("adv_sheet_prio").replace("{w}", `$${r.wpp.toFixed(2)}`).replace("{v}", `$${r.pp.toFixed(2)}`))}</p>
+    ${r.cov ? "" : `<p class="pca-sb" style="margin:6px 0 0;">${esc(ADV_SET.mode === "pure" ? t("adv_sheet_pure").replace("{v}", `$${r.pp.toFixed(2)}`) : t("adv_sheet_prio").replace("{w}", `$${r.wpp.toFixed(2)}`).replace("{v}", `$${r.pp.toFixed(2)}`))}</p>`}
     ${items ? `<div class="cgw-nh">${esc(t("adv_items"))}</div>${items}` : ""}
     ${members}
     ${r.note ? `<p class="pca-sb" style="margin:10px 0 0;">${esc(r.note)}</p>` : ""}
     ${nx && Number.isFinite(advPer(nx)) ? `<p class="pca-sb" style="margin:8px 0 0;">${esc(t("adv_after_this").replace("{name}", nx.name).replace("{v}", `$${advPer(nx).toFixed(2)}`))}</p>` : ""}
-    <div style="display:flex; gap:8px; margin-top:14px;"><button type="button" class="btn ghost" style="flex:1;" data-advclose>${esc(t("close_button"))}</button><button type="button" class="btn" style="flex:1;" data-advopen="${esc(pg.tab)}">${esc(t("adv_open_page"))} &#8250;</button></div>
+    ${advSheetBtnsHtml(goal, r.cov, pg)}
   </div>`;
   advWireSheet(m);
 }
@@ -8579,6 +8735,18 @@ function advWireSheet(m) {
     if (ev.target === m || ev.target.closest("[data-advclose]")) { closeGearSheet(); return; }
     const o = ev.target.closest("[data-advopen]");
     if (o) { closeGearSheet(); goToTab(o.dataset.advopen); return; }
+    if (ev.target.closest("[data-advfree]")) { advGoFree(); return; }
+    const pc = ev.target.closest("[data-advpc]");
+    if (pc) { closeGearSheet(); cdaGetMore(pc.dataset.advpc); return; }
+    const gl = ev.target.closest("[data-advgoal]");
+    if (gl && !gl.disabled) {
+      let g = null;
+      try { g = JSON.parse(gl.dataset.advgoal); } catch (e) { g = null; }
+      if (!g) return;
+      gl.disabled = true;
+      advAddGoal(g).then((added) => { gl.innerHTML = `&#10003; ${esc(t(added ? "adv_goal_added" : "adv_goal_had"))}`; if (added) toast(t("adv_goal_toast")); }).catch(() => { gl.disabled = false; });
+      return;
+    }
     const r = ev.target.closest("[data-advrow]");
     if (r) { ev.preventDefault(); const x = advFind(r.dataset.advrow); if (x) advOpenSheet(x); }
   };
@@ -8737,12 +8905,12 @@ async function advOpenTypesSheet() {
 function advOpenPageSheet(pageKey) {
   const m = gearSheetEl(), pg = advPageOf(pageKey), R = ADV_LAST.R;
   const mine = R.buy.filter((r) => r.page === pageKey);
-  const best = R.buy.find((r) => r.page !== pageKey);
+  const best = R.buy.find((r) => r.page !== pageKey && !r.cov);
   m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw" role="dialog" aria-modal="true" aria-label="${esc(t("adv_page_best").replace("{page}", navLabel(pg.tab)))}">
     <div class="cgw-top" data-cgwgrab><div class="cgw-grab"></div>
     <div class="gs-head">${advPic(QUICK_ICONS[pg.tab])}<div style="flex:1; min-width:0;"><b>${esc(t("adv_page_best").replace("{page}", navLabel(pg.tab)))}</b><div class="meta">${esc(t("adv_ranked_against").replace("{n}", R.buy.length))}</div></div>${closeXHtml("data-advclose")}</div></div>
     ${mine.map((r) => advRowHtml(r, { rank: true })).join("") || `<div class="meta">${esc(t("adv_nothing"))}</div>`}
-    ${best && mine[0] && best.rank < mine[0].rank ? `<p class="pca-sb" style="margin:10px 0 0;">${esc(t("adv_better_else").replace("{name}", best.name).replace("{v}", `$${advPer(best).toFixed(2)}`))}</p>` : ""}
+    ${best && mine[0] && !mine[0].cov && mine.find((r) => !r.cov) && best.rank < mine.find((r) => !r.cov).rank ? `<p class="pca-sb" style="margin:10px 0 0;">${esc(t("adv_better_else").replace("{name}", best.name).replace("{v}", `$${advPer(best).toFixed(2)}`))}</p>` : ""}
     <div style="display:flex; gap:8px; margin-top:14px;"><button type="button" class="btn ghost" style="flex:1;" data-advclose>${esc(t("close_button"))}</button><button type="button" class="btn" style="flex:1;" data-advopen="bestupgrades">${esc(t("adv_all_best"))} &#8250;</button></div>
   </div>`;
   advWireSheet(m);
@@ -8808,7 +8976,15 @@ document.addEventListener("click", (ev) => {
   const pgb = ev.target.closest("[data-advpage]");
   if (pgb) { ADV_SET.page = pgb.dataset.advpage; ADV_MORE = false; advDraw(); return; }
   const md = ev.target.closest("[data-advmode]");
-  if (md) { ADV_SET.mode = md.dataset.advmode; advSaveSet(); advDraw(); return; }
+  if (md) {
+    if (ADV_SET.mode === md.dataset.advmode) return;
+    ADV_SET.mode = md.dataset.advmode; advDraw();
+    // The shared order also decides what the Backpack covers first: worked out again.
+    const seq = RENDER_SEQ;
+    advSteps().then((steps) => { if (seq !== RENDER_SEQ || TAB !== "bestupgrades" || !ADV_LAST) return; ADV_LAST.steps = steps; ADV_PRIO = advPrioCov(ADV_PRIO_RAW, ADV_PRIO_TT, steps.cov); advDraw(); }).catch(() => {});
+    return;
+  }
+  if (ev.target.closest("[data-advfree]")) { ev.preventDefault(); advGoFree(); return; }
   if (ev.target.closest("[data-advmore]")) { ADV_MORE = !ADV_MORE; advDraw(); return; }
   const pr = ev.target.closest("[data-advprio]");
   if (pr) { ev.preventDefault(); advOpenPrioSheet(pr.dataset.advprio, pr.hasAttribute("data-advprionext") ? "next" : ADV_SET.view); return; }
@@ -9433,7 +9609,7 @@ function cdaBodyHtml(mid) {
   return `<div class="cdp cda">
     <div class="panel cda-top">
       <div class="rch-seg cdp-seg"><button type="button" data-cdamode="order" class="${best ? "" : "on"}">${esc(t("rch_my_order"))}</button><button type="button" data-cdamode="best" class="${best ? "on" : ""}">${esc(t("rch_best"))}</button></div>
-      ${best ? "" : `<button type="button" class="cda-ord" data-cdaorder>${esc(t("cda_edit_order"))} &#8250;</button>`}
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">${best ? "<span></span>" : `<button type="button" class="cda-ord" data-cdaorder>${esc(t("cda_edit_order"))} &#8250;</button>`}${visitorCan("bestupgrades") ? `<small class="meta">${esc(t("cda_same_best"))} <a href="#" data-cdago="bestupgrades" style="color:var(--ice); font-weight:700; text-decoration:none;">${esc(t("cda_same_best_l"))}</a></small>` : ""}</div>
       <label class="cda-sw"><input type="checkbox" class="bset-sw" data-cdapacks${CDA_SET.packs ? " checked" : ""} /><span><b>${esc(t("cda_packs"))}</b><small>${esc(CDA_SET.packs && wp ? t("cda_packs_n").replace("{b}", wp.bought).replace("{p}", wp.planned) : t("cda_packs_d"))}</small></span></label>
       <div class="cdp-ans"><div class="cdp-box"><div class="k">${esc(t("cdp_pages_up"))}</div><div class="v${upPages ? " g" : ""}">${P ? esc(t("cdp_of").replace("{n}", upPages).replace("{m}", P.pages.length)) : "…"}</div></div>
         <div class="cdp-box"><div class="k">${esc(t("cda_upgrades"))}</div><div class="v">${P ? esc(upgrades.toLocaleString()) : "…"}</div></div></div>
@@ -9469,7 +9645,7 @@ function cdaRedraw(after) {
 }
 function cdaClick(ev) {
   const go = ev.target.closest("[data-cdago]");
-  if (go) { if (!cdaGoBudgets(go.dataset.cdago)) goToTab(go.dataset.cdago); return; }
+  if (go) { ev.preventDefault(); if (!cdaGoBudgets(go.dataset.cdago)) { goToTab(go.dataset.cdago); } return; }
   const gm = ev.target.closest("[data-cdagm]");
   if (gm) { cdaGetMore(gm.dataset.cdagm); return; }
   const md = ev.target.closest("[data-cdamode]");
@@ -11566,7 +11742,7 @@ const SCAN_SUMMARY_ROWS = [[/\bgems?\b/i, "Gems"], [/\bmeat\b/i, "Meat"], [/\bwo
 // running mismatched code; if it still doesn't match, the promise fails with
 // err.stale and the caller says so.
 const CODE_FILES = {
-  admin: "admin.min.js?v=0a7cbbe8a6",
+  admin: "admin.min.js?v=20f7bd3941",
   scan: "scan.min.js?v=64a7ef20ff",
   packs: "packs.min.js?v=d85801810c",
   gallery: "gallery.min.js?v=28a7717641",
