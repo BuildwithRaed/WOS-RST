@@ -5,7 +5,7 @@
 // code and the Budgets state other pages read (My Purchases, the Menu, the Dashboard,
 // recordBudgetNeeds / budgetInvalidate, admin.js / scan.js / the planner worker) stay
 // in app.js. The site loads the packed copy budgets.min.js (tools/stamp.js).
-window.BUDGETS_BUILD = "8d5af57344";
+window.BUDGETS_BUILD = "66b92a8a60";
 
 // Order of the Budgets page tiles (owner picked A, 22 Nov 2026): per person in
 // calc_state budget_page_order = { order: [calcKeys] }; display only. Pages
@@ -1538,7 +1538,7 @@ async function renderBudgetsPageMain(opts = {}) {
     return `<details class="bud-line b3-sl"><summary title="${esc(names)}"><span class="bud-line-bar" style="background:${color};"></span><span class="bud-line-t">${title}</span><span class="bud-line-v"><b>${money}</b><span class="meta">${esc(t("bud_line_packs").replace("{n}", pl.rows.length))} <span class="bud-line-arrow">&#9656;</span></span></span></summary><div class="bud-line-body">${packRowsHtml(pl)}${trades}</div></details>`;
   };
   const plainNames = (keys) => keys.map((k) => packPageLabel(k)).join(" · ");
-  let b3Lines = "", b3Split = "", datesFold = false; // datesFold: the dates list has its Hide / Show button
+  let b3Lines = "", b3Split = "", b3After = ""; // b3Lines = the plan's lines (fold with Hide / Show), b3Split = the coloured bar, b3After = notes under the lines (always shown)
   // A short date for the lines and tiles: "Nov 30", with the year when it isn't this one ("Mar 27 ’27").
   const dShort = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000), s0 = x.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); return x.getUTCFullYear() !== packStartOfToday().getUTCFullYear() ? `${s0} \u2019${String(x.getUTCFullYear()).slice(2)}` : s0; };
   // The plain plan beside the dated one: "Everything by Dec 5 instead: QAR 40,246 · QAR 4,470 more".
@@ -1549,7 +1549,7 @@ async function renderBudgetsPageMain(opts = {}) {
   };
   // (the goals' dated plan is still being worked out: the plain plan shows until it is in)
   const datedWaitHtml = BUDGET_VIEW === "main" && !planPending && datedSetup && !dl ? `<div class="meta b3-vs"><span class="bud-pending small">${esc(t("bud_dates_wait"))}</span></div>` : "";
-  if (BUDGET_VIEW === "budget") b3Lines = spendHtml();
+  if (BUDGET_VIEW === "budget") { if (spendBest && spendBest.ok) b3Lines = spendHtml(); else b3After = spendHtml(); }
   else if (datedLead) {
     // Goals / pages with their own dates: one line per date (its packs inside),
     // the pages that can't make the target last; the bar is cut the same way.
@@ -1572,37 +1572,47 @@ async function renderBudgetsPageMain(opts = {}) {
     const whole = info.map((x) => Math.floor(x.v));
     let spare = Math.ceil(tot - 1e-6) - whole.reduce((a, v) => a + v, 0);
     info.map((x, i) => [x.v - Math.floor(x.v), i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (spare > 0) { whole[i]++; spare--; } });
-    // Hide / Show for the list of dates (owner, 11 Nov 2026): the site's usual
-    // button at the end of the bar; hidden, the bar and the line under the list
-    // stay. Remembered with the other Hide choices (calc_state "bar_hidden", key "bud:dates").
-    datesFold = info.length > 1;
-    const hid = BAR_SHOW_ALL["bud:dates"] === false;
-    b3Split = datesFold ? `<div class="b3-splitrow"><div class="b3-split">${info.map((x, i) => `<i style="${i === info.length - 1 ? "flex:1" : `width:${Math.max(3, tot > 0 ? (x.v / tot) * 100 : 0).toFixed(1)}%`}; background:${x.color};"></i>`).join("")}</div><button type="button" class="g1-fold" data-g1fold="bud:dates" aria-expanded="${!hid}">${esc(t(hid ? "g1_show" : "g1_hide"))} ${hid ? "&#9662;" : "&#9652;"}</button></div>` : "";
-    b3Lines = info.map((x, i) => b3Line(x.color, x.title, x.names, { rows: x.p.rows, trades: x.p.trades || [] }, whole[i])).join("") + datedVsHtml();
+    b3Split = info.length > 1 ? `<div class="b3-split">${info.map((x, i) => `<i style="${i === info.length - 1 ? "flex:1" : `width:${Math.max(3, tot > 0 ? (x.v / tot) * 100 : 0).toFixed(1)}%`}; background:${x.color};"></i>`).join("")}</div>` : "";
+    b3Lines = info.map((x, i) => b3Line(x.color, x.title, x.names, { rows: x.p.rows, trades: x.p.trades || [] }, whole[i])).join("");
+    b3After = datedVsHtml();
   } else if (split && BUDGET_VIEW === "main") {
     const tp = split.target.plan, lp = splitLate.plan, tv = packPlanLocal(tp), tot = tv + packPlanLocal(lp);
     const gw = tot > 0 ? Math.max(4, Math.min(96, (tv / tot) * 100)) : 50;
     b3Split = `<div class="b3-split"><i style="width:${gw.toFixed(1)}%; background:var(--good);"></i><i style="flex:1; background:var(--danger);"></i></div>`;
     b3Lines = b3Line("var(--good)", `<b>${esc(t("bud_line_by").replace("{date}", fmtDate(targetDays)))}</b>${tp.days ? ` <span class="meta">· ${tp.days} ${esc(t("pack_days_short_long"))}</span>` : ""}`, plainNames(split.target.keys), tp)
-      + b3Line("var(--danger)", `<b>${esc(t("bud_line_after"))}</b>`, `${plainNames(split.late.keys)} · ${t("bud_line_by").replace("{date}", fmtDate(lp.days))}`, lp) + droppedHtml + datedWaitHtml;
+      + b3Line("var(--danger)", `<b>${esc(t("bud_line_after"))}</b>`, `${plainNames(split.late.keys)} · ${t("bud_line_by").replace("{date}", fmtDate(lp.days))}`, lp);
+    b3After = droppedHtml + datedWaitHtml;
   } else if (planPending && BUDGET_VIEW === "main" && combinedRaw.split && combinedRaw.split.target && combinedRaw.split.target.plan) {
     // Only the by-target part of the split is in: its line now; the pages after the target are still being worked out.
     const tg = combinedRaw.split.target, tp = tg.plan;
     b3Lines = b3Line("var(--good)", `<b>${esc(t("bud_line_by").replace("{date}", fmtDate(targetDays)))}</b>${tp.days ? ` <span class="meta">· ${tp.days} ${esc(t("pack_days_short_long"))}</span>` : ""}`, plainNames(tg.keys || []), tp)
       + `<details class="bud-line b3-sl"><summary style="cursor:default;" title="${esc(t("budgets_working"))}"><span class="bud-line-bar" style="background:var(--danger);"></span><span class="bud-line-t"><b>${esc(t("bud_line_after"))}</b></span><span class="bud-line-v"><span class="bud-pending small">&hellip;</span></span></summary></details>`;
   } else if (combined.inc.length) {
-    b3Lines = (combined.chosen ? b3Line(lateAll ? "var(--danger)" : "var(--good)", `<b>${esc(t("bud_line_all"))}</b>`, plainNames(combined.inc), combined.chosen)
-      : `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`) + droppedHtml + datedWaitHtml;
+    if (combined.chosen) b3Lines = b3Line(lateAll ? "var(--danger)" : "var(--good)", `<b>${esc(t("bud_line_all"))}</b>`, plainNames(combined.inc), combined.chosen);
+    else b3After = `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`;
+    b3After += droppedHtml + datedWaitHtml;
+  }
+  // Hide / Show for the plan's lines, the same choice in every view (owner, 26 Nov 2026; was the
+  // dated list's only, 11 Nov): the site's usual button at the end of the coloured bar, or at the right
+  // of a slim row in its place when the view has no bar. Hidden, the total, the plan switch, the
+  // "My Purchases follows" line, the bar and the notes under the list stay; only the lines fold.
+  // Remembered with the other Hide choices (calc_state "bar_hidden", key "bud:dates": its old name,
+  // kept so an earlier choice still counts).
+  const linesHid = !!b3Lines && BAR_SHOW_ALL["bud:dates"] === false;
+  if (b3Lines) {
+    const btn = `<button type="button" class="g1-fold" data-g1fold="bud:dates" aria-expanded="${!linesHid}">${esc(t(linesHid ? "g1_show" : "g1_hide"))} ${linesHid ? "&#9662;" : "&#9652;"}</button>`;
+    b3Split = `<div class="b3-splitrow${b3Split ? "" : " b3-foldrow"}">${b3Split}${btn}</div>`;
+    b3Lines = `<div class="b3-lns">${b3Lines}</div>`;
   }
   const matsN = Object.keys(grandMats).length;
   const partialHtml = (() => { const noPlan = ticked.filter((pg) => pg.missing).length; return noPlan && !planPending ? `<div class="meta bud-partial">${esc(t("budgets_total_partial").replace("{n}", ticked.length - noPlan).replace("{m}", ticked.length))}</div>` : ""; })();
   const comingHtml = (() => { const n = (PACK_PURCHASES.list || []).filter(purPlannedCounts).length; return n ? `<button type="button" class="b3-a b3-coming" data-gototab="purchases">&#128722; ${esc(t("pur_budget_line").replace("{n}", n))}</button>` : ""; })();
-  const totalHtml = `<div class="b3-tile b3-hd${datesFold && BAR_SHOW_ALL["bud:dates"] === false ? " g1-folded" : ""}">
+  const totalHtml = `<div class="b3-tile b3-hd${linesHid ? " g1-folded" : ""}">
       <div class="b3-hd-l"><span>${esc(t("b3_total_ticked").replace("{n}", ticked.length))}</span>${matsN ? `<button type="button" class="b3-a" data-b3sheet="mats">${esc(t("b3_materials").replace("{n}", matsN))} &#8250;</button>` : ""}${grandDeltas.length ? `<button type="button" class="b3-a" data-b3sheet="stats">${esc(t("b3_stat_gain"))} &#8250;</button>` : ""}</div>
       <div class="b3-hd-t"><b>${planPending ? workHtml("span") : anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</b>${anyPlan && !planPending ? `<div><span class="${lateAll ? "rd" : "ok"}">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(t("bud_done_by"))} ${esc(fmtDate(grandDays))}`}</span>${grandDays ? `<small>${grandDays} ${esc(t("pack_days_short_long"))}</small>` : ""}</div>` : ""}</div>
       ${partialHtml}${comingHtml}
       ${viewCardsHtml}
-      ${b3Split}${b3Lines}
+      ${b3Split}${b3Lines}${b3After}
     </div>`;
   // Each page as a tile: picture, name, tick, its price, when it's done (by
   // the target / after it) and a ring = how much of what it needs you

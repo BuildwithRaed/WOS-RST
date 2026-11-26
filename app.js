@@ -11579,7 +11579,7 @@ const CODE_FILES = {
   packs: "packs.min.js?v=d85801810c",
   gallery: "gallery.min.js?v=28a7717641",
   purchases: "purchases.min.js?v=eaa3ea6342",
-  budgets: "budgets.min.js?v=8d5af57344",
+  budgets: "budgets.min.js?v=66b92a8a60",
 };
 const CODE_P = {}, CODE_OK = {};
 function loadCode(name) {
