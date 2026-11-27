@@ -1310,7 +1310,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 136; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 139; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -1583,6 +1583,37 @@ const T = {
   your_backpack: { en: "Your backpack" },
   backpack_desc: { en: "Every item the site uses. Tap an item to type how many you have." },
   t12x_settings: { en: "Settings" },
+  bst_your_plan: { en: "Your plan" },
+  bst_planning_to: { en: "Planning to {d} · {n} days" },
+  bst_planning_over: { en: "Planning to {d} · date passed" },
+  bst_budget_pill: { en: "Budget {v} / {per}" },
+  bst_ngf_pill: { en: "New hero packs first" },
+  bst_target: { en: "Target date" },
+  bst_done_by: { en: "Done by" },
+  bst_saved: { en: "Saved" },
+  bst_next_svs: { en: "Next SvS" },
+  bst_new_gen: { en: "New Gen" },
+  bst_plus_w: { en: "+{n} weeks" },
+  bst_upcoming: { en: "Done by · upcoming" },
+  bst_set_d: { en: "Set {d}" },
+  bst_cancel: { en: "Cancel" },
+  bst_forge_opens: { en: "Forge opens" },
+  bst_currency: { en: "Currency" },
+  bst_cur_note: { en: "Pack prices use your store's price when you typed one (Packs → Prices), else the US $ price × the rate." },
+  bst_spend_sub: { en: "{v} a {per}" },
+  bst_spend_keep: { en: "keep what's left" },
+  bst_spend_off: { en: "Not set" },
+  bst_ngf: { en: "New hero packs first" },
+  bst_new: { en: "NEW" },
+  bst_ngf_on: { en: "On" },
+  bst_ngf_off: { en: "Off" },
+  bst_ngf_row: { en: "Count them as bought" },
+  bst_ngf_desc: { en: "Forge widgets + Value Hero Pack counted as bought for every new hero" },
+  bst_ngf_none: { en: "No new hero packs on sale for the heroes in your plan right now." },
+  bst_recalc: { en: "Recalculate plan" },
+  bud_ngf_note: { en: "New hero packs first: {h} · {w}" },
+  bud_ngf_forge: { en: "Forge Tiers 1–{n}" },
+  bud_ngf_value: { en: "Value Hero Pack" },
   t12x_covered: { en: "covered by your speedups" },
   t12x_done: { en: "done" },
   t12x_not_planned: { en: "not planned" },
@@ -2672,8 +2703,27 @@ const T = {
   b3_tile_hero_shards: { en: "Heroes" },
   b3_ring_tip: { en: "You already have {p}% of what this page needs (Backpack + trades)" },
   b3_missing: { en: "{n} pages not in the plan yet" },
-  b3_week: { en: "This week {v}" },
-  b3_week_n: { en: "{n} packs" },
+  b3_not_setup: { en: "{n} pages not set up yet" },
+  b3_not_setup_s: { en: "not set up" },
+  b3_set_a_target: { en: "Set a target" },
+  b3_st_title: { en: "Start here" },
+  b3_st_sub: { en: "Your total shows once one page is set up." },
+  b3_st1: { en: "Set your target date" },
+  b3_st1_sub: { en: "When do you want your upgrades done? (e.g. next SvS)" },
+  b3_st1_done: { en: "Target: {d}" },
+  b3_st1_btn: { en: "Open Settings" },
+  b3_st2: { en: "Open your pages and set levels" },
+  b3_st2_sub: { en: "Set Now and Target on each page. {n} of {m} set up." },
+  b3_st3: { en: "Add goals" },
+  b3_st3_opt: { en: "optional" },
+  b3_st3_sub: { en: "Pick single upgrades and when you want them." },
+  b3_st_sh_none: { en: "no skins picked" },
+  b3_st_more: { en: "{n} more" },
+  b3_st_sh_pick: { en: "Pick skins" },
+  b3_st_bp: { en: "Fill your Backpack" },
+  b3_st_bp_sub: { en: "makes the plan cheaper" },
+  b3_st_foot: { en: "Free now, goal flags and This week appear once there is something to show." },
+  cda_not_setup_l: { en: "Not set up:" },
   budgets_desc: { en: "Every upgrade plan in one place: materials still needed, what the assigned packs cost, and the stat increase you'd get." },
   budgets_working: { en: "Working out the cheapest packs…" },
   budgets_plan_failed: { en: "Couldn't work it out" },
@@ -2691,9 +2741,17 @@ const T = {
   budgets_view_fastest: { en: "Fastest" },
   budgets_view_cheapest: { en: "Cheapest" },
   budgets_view_budget: { en: "My budget" },
+  b3_follow: { en: "My Purchases follows this plan" },
+  b3_follow_pick: { en: "pick it here" },
+  b3_follow_both: { en: "Pick the plan both pages follow" },
+  b3_week_todo: { en: "This week · still to buy {v}" },
+  b3_week_sub: { en: "{n} packs · bought {v}" },
+  pur_a2_todo: { en: "Still to buy" },
+  pur_a2_bought: { en: "Bought" },
+  pur_a2_bought_n: { en: "{a} of {b} bought" },
+  pur_a2_following: { en: "Following:" },
+  pur_a2_next: { en: "next {date}" },
   spend_title: { en: "My budget" },
-  spend_week: { en: "a week" },
-  spend_month: { en: "a month" },
   spend_carry: { en: "Keep what I don't spend for next time" },
   spend_hint: { en: "Type what you can spend: Budgets shows the plan that finishes soonest without going over it." },
   spend_admin_only: { en: "Only you see this. Visitors get it when you tick it in Admin → Visibility." },
@@ -3261,6 +3319,7 @@ const T = {
   gu_unlocked: { en: "Unlocked" },
   gu_part_by: { en: "By {d}: {a} of {b} {u}" },
   gu_part_pct: { en: "By {d}: {p}% of it" },
+  gu_part_fully: { en: "fully {d}" },
   gu_u_shards: { en: "shards" },
   gu_u_widgets: { en: "widgets" },
   bud_dates_part: { en: "\u26A0 only {p}% by then" },
@@ -3491,12 +3550,11 @@ const T = {
   pur_wait_note: { en: "still counted" },
   pur_1_pack: { en: "1 pack" },
   pur_wk_target: { en: "Target week" },
+  pur_wk_to_target: { en: "To target" },
   pur_wk_after: { en: "After target" },
   pur_wk_later: { en: "Later" },
   pur_wk_none: { en: "Nothing to buy this week." },
   pur_follow_line: { en: "The list follows this plan · tap to switch" },
-  pur_following: { en: "Following:" },
-  pur_go_spend: { en: "Change ›" },
   pur_wc_title: { en: "Weekly cards" },
   pur_wc_running_n: { en: "{n} running" },
   pur_wc_notbought_n: { en: "{n} not bought" },
@@ -3590,7 +3648,7 @@ const T = {
   bsx_lab: { en: "Research Lab" },
   bsx_trade: { en: "Trade {n}" },
   bsx_covered: { en: "Covered by your Backpack" },
-  bsx_cando: { en: "Can do now:" },
+  bsx_cando: { en: "Free now:" },
   bsx_cando_none: { en: "Nothing yet" },
   bsx_cov_trades: { en: "Covered with trades" },
   bsx_still_short: { en: "Still {n} short after trades" },
@@ -3608,6 +3666,8 @@ const T = {
   cdb_working: { en: "working out…" },
   cdb_sub: { en: "from your Backpack · {n} pages · no packs" },
   cdb_sub_wait: { en: "from your Backpack · no packs" },
+  cdb_sub_packs: { en: "from your Backpack + this week's packs · {n} pages" },
+  cdb_sub_wait_packs: { en: "from your Backpack + this week's packs" },
   cdb_goals_up: { en: "{n} of {m} goals can go up now" },
   cdb_sheet_title: { en: "Free now · from your Backpack" },
   cdb_your_goals: { en: "Your goals" },
@@ -3654,8 +3714,8 @@ const T = {
   rule_hg_em_sub: { en: "Enhance up to 100 needs no Mastery." },
   rule_hg_em_from: { en: "Enhance from" },
   rule_hg_em_need: { en: "Mastery needed" },
-  mk_this_page: { en: "This page only — all pages together:" },
-  mk_budgets_link: { en: "Budgets → Free now ›" },
+  mk_this_page: { en: "This page only." },
+  mk_budgets_link: { en: "See in Budgets › Free now" },
   mk_i_green: { en: "Green ✓" },
   mk_i_green_d: { en: "= your Backpack reaches this level now." },
   mk_i_blue: { en: "Blue “now 16.1”" },
@@ -3737,8 +3797,8 @@ const T = {
   adv_gap_none: { en: "Open the Dashboard once to see how far each troop is from max." },
   adv_open_dash: { en: "Open Dashboard" },
   adv_sort: { en: "Sort by" },
-  adv_prio: { en: "Priority" },
-  adv_pure: { en: "Pure value" },
+  adv_prio: { en: "My order" },
+  adv_pure: { en: "Best value" },
   adv_sort_prio_sub: { en: "your upgrade order counts" },
   adv_sort_pure_sub: { en: "every stat the same" },
   adv_ranked: { en: "Ranked by cost per 1%" },
@@ -3817,6 +3877,10 @@ const T = {
   adv_better_else: { en: "Better value on another page: {name} at {v} per 1%." },
   adv_all_best: { en: "All best upgrades" },
   adv_best_here: { en: "Best next here" },
+  adv_same_free: { en: "Same setting as" },
+  adv_same_free_l: { en: "Budgets › Free now" },
+  cda_same_best: { en: "Same setting as" },
+  cda_same_best_l: { en: "Best upgrades" },
   adv_see_all: { en: "See all" },
   cda_owned: { en: "owned" },
   cda_buy_skin: { en: "buy with Glorious Tomes" },
@@ -3832,6 +3896,7 @@ const T = {
   cda_s_experts_research: { en: "Exp. Research" },
   cda_s_islands: { en: "Islands" },
   cda_s_shining_skins: { en: "Skins" },
+  cda_s_hero_shards: { en: "Heroes" },
   cando_order: { en: "Your upgrade order" },
   cando_drag_hint: { en: "Drag ⋮⋮ to move a row. Same order on every page." },
   cg_pieces: { en: "Pieces" },
@@ -3914,17 +3979,63 @@ const T = {
   pur_pk_hide_all: { en: "Hide all" },
   pur_pk_show_all: { en: "Show all" },
   pur_pk_ng_later: { en: "Hero packs for later Gens show when their Gen is next" },
-  pur_pk_tab_on: { en: "On now" },
-  pur_pk_tab_soon: { en: "Coming" },
-  pur_pk_tab_all: { en: "All" },
-  pur_pk_note_on: { en: "Packs you can buy today, ★ = in your plan" },
-  pur_pk_note_soon: { en: "Packs that come back later, ★ = in your plan" },
-  pur_pk_note_all: { en: "Every pack, ★ = in your plan" },
   pur_pk_plan: { en: "plan" },
-  pur_pk_on_now: { en: "on now" },
-  pur_pk_next: { en: "next {date}" },
   pur_pk_stacks: { en: "any time · stacks" },
   pur_pk_change: { en: "Change" },
+  pur_sale_trig: { en: "Appears at a level" },
+  pur_sale_daily: { en: "Every day" },
+  pur_sale_on_until: { en: "On now · until {d}" },
+  pur_sale_on_tonight: { en: "On now · until tonight" },
+  pur_sale_on: { en: "On now" },
+  pur_sale_next: { en: "Next: {a} – {b}" },
+  pur_sale_next1: { en: "Next: {a}" },
+  pur_sale_days: { en: "({n} days)" },
+  pur_sale_day1: { en: "(1 day)" },
+  pur_sale_weeks: { en: "({n} weeks)" },
+  pur_sale_week1: { en: "(1 week)" },
+  pur_sale_hint: { en: "This pack is on sale {a} – {b} · tap a day:" },
+  pur_sale_hint1: { en: "This pack is on sale {a} · tap the day:" },
+  pur_sale_warn: { en: "Not on sale that day · next {d}" },
+  pur_sale_warn_none: { en: "Not on sale that day" },
+  pur_sale_any: { en: "On sale any time" },
+  pur_sale_any_daily: { en: "On sale every day" },
+  pur_sale_once_any: { en: "One-time pack · any day" },
+  pur_sale_trig_hint: { en: "Appears when its level is reached, so any date can be planned" },
+  pur_pk_group: { en: "Group:" },
+  pur_pk_hint: { en: "★ = in your plan · prices in {cur}" },
+  pur_pk_group_cat: { en: "Category" },
+  pur_wb_week: { en: "Week" },
+  pur_wb_month: { en: "Month" },
+  pur_wb_title: { en: "Dates to show" },
+  pur_wb_p_this: { en: "This month" },
+  pur_wb_p_next: { en: "Next month" },
+  pur_wb_p_target: { en: "Until target" },
+  pur_wb_p_custom: { en: "Custom" },
+  pur_wb_p_all: { en: "All" },
+  pur_wb_from: { en: "From" },
+  pur_wb_to: { en: "To" },
+  pur_wb_live: { en: "{n} packs · {v} in these dates" },
+  pur_wb_reset: { en: "Reset" },
+  pur_wb_show: { en: "Show" },
+  pur_wb_none: { en: "Nothing to buy in these dates." },
+  pur_pk_group_month: { en: "Month" },
+  pur_pk_week_n: { en: "Week {n}" },
+  pur_pk_1pack: { en: "1 pack" },
+  pur_pk_npacks: { en: "{n} packs" },
+  pur_pk_group_date: { en: "Date" },
+  pur_pk_d_on: { en: "On now" },
+  pur_pk_d_this: { en: "This week" },
+  pur_pk_d_next: { en: "Next week" },
+  pur_pk_d_later: { en: "Later" },
+  pur_chall: { en: "Change date for all" },
+  pur_chall_apply: { en: "Apply to {n}" },
+  pur_chall_note: { en: "On sale {a} – {b} · all prices move together" },
+  pur_chall_note_d: { en: "On sale {a} – {b} · all dates move to it" },
+  pur_chall_note_x: { en: "Not on sale that day · next {a} – {b}" },
+  pur_chall_note_any: { en: "All prices move together" },
+  pur_chall_done: { en: "Date changed" },
+  pur_ed_date_all: { en: "Date for all" },
+  pur_ed_date_keep: { en: "each keeps its own" },
   pur_pk_none: { en: "No pack found." },
   pur_tier: { en: "Tier" },
   pur_upto: { en: "Tiers 1–{tier} ({price})" },
@@ -3988,13 +4099,9 @@ const T = {
   pur_a2_days_left: { en: "{n} days left" },
   pur_a2_day_left: { en: "1 day left" },
   pur_a2_last_day: { en: "Last day" },
-  pur_a2_bought_of: { en: "{a} of {b} bought · {v}" },
   pur_a2_done: { en: "All done {date}" },
-  pur_a2_budget_sw: { en: "My budget · {v}" },
   pur_a2_per_month: { en: "/mo" },
   pur_a2_per_week: { en: "/wk" },
-  pur_a2_target_sw: { en: "By target · {date}" },
-  pur_a2_dates_sw: { en: "By your dates · next\u00a0{date}" },
   pur_follow_dates: { en: "your dates" },
   pur_tag_dates: { en: "dates" },
   pur_o1_over: { en: "{v} over" },
@@ -4569,7 +4676,7 @@ function goToTab(tab, opts = {}) {
   holdPageHeight(false);
   // Leaving Admin: drop data copies kept for the visit so pages show the edits.
   if (TAB === "adminpage" && tab !== "adminpage" && typeof dropKeptGameData === "function") dropKeptGameData();
-  if (tab !== "budgets") BUDGET_FOCUS_SPEND = false;
+  if (tab !== "budgets") { BUDGET_FOCUS_SPEND = false; BUDGET_FOCUS_VIEW = false; }
   BUDGET_SHEET = null;
   TAB = tab;
   localStorage.setItem("last_tab", TAB);
@@ -7427,6 +7534,11 @@ async function ensureUpgradeOrder() {
     const ok = Array.isArray(s.rows) && s.rows.length === UPGRADE_ORDER_DEFAULT.length && s.rows.every((r) => Array.isArray(r) && UPGRADE_ORDER_DEFAULT.some((d) => d[0] === r[0] && d[1] === r[1]));
     UPGRADE_ORDER = { mode: s.mode === "best" ? "best" : "order", rows: ok ? s.rows.map((r) => r.slice()) : UPGRADE_ORDER_DEFAULT.map((r) => r.slice()) };
   }
+  // One setting for Free now and Best upgrades: with no mode saved yet, Best upgrades' old
+  // sort choice in this browser (localStorage adv_set, "pure" = Best value) is the start.
+  if (!(s && (s.mode === "best" || s.mode === "order"))) {
+    try { const v = JSON.parse(localStorage.getItem("adv_set") || "{}"); if (v.mode === "pure") UPGRADE_ORDER.mode = "best"; } catch (e) { /* none */ }
+  }
   return UPGRADE_ORDER;
 }
 function saveUpgradeOrder() { saveCalcState("upgrade_order", UPGRADE_ORDER); }
@@ -7651,6 +7763,45 @@ function reachPlan(tracks, have, mode, rows, conv, opts) {
   const all = new Map();
   Object.keys(tradesBy).forEach((id) => { trades[id] = tradeList(tradesBy[id]); tradesBy[id].forEach((n, r) => all.set(r, (all.get(r) || 0) + n)); });
   return { lv, left, first: stopItems[0] || null, blocker, waits, trades, tradeSum: tradeList(all), reached: open.filter((tr) => lv[tr.id] >= tr.to).length, total: open.length };
+}
+// Troop unlocks and march capacity come first (the same nodes Best upgrades lists first):
+// T12 Troop Unlock slots / Troop Skill / Solar Supremacy, T11 Helios Unlock / Training /
+// Flame Squad, Research Center Regimental Expansion.
+function reachIsPrio(pageKey, tr) {
+  const raw = String((tr && tr.raw) || "");
+  if (pageKey === "t12_research") return ADV_T12_PRIO.includes(raw.split("|")[1]);
+  if (pageKey === "t11_helios") return /\|(Helios .* (Unlock|Training)|Flame Squad)$/.test(raw);
+  if (pageKey === "research_center") return /^Regimental Expansion /.test(raw);
+  return false;
+}
+// reachPlan with the unlock / march tracks (prio(tr) true) planned first: a first plan takes
+// them (with the research they wait for), then the stat order spends what is left. Same
+// result shape as reachPlan, levels counted from the tracks' own `from`.
+function reachPlanPrio(tracks, have, mode, rows, conv, prio) {
+  if (!prio || !tracks.some(prio)) return reachPlan(tracks, have, mode, rows, conv);
+  // Unlock / march nodes give no % themselves: a stand-in gain lets the plan take them;
+  // then only the research they need is kept.
+  const fake = (tr) => ({ ...tr, gain: (i) => ({ Attack: i }) }), zero = (tr) => ({ ...tr, gain: () => ({}) });
+  const p0 = reachPlan(tracks.map((tr) => (prio(tr) ? fake(tr) : zero(tr))), have, mode, rows, conv || []);
+  const req = {};
+  tracks.filter(prio).forEach((tr) => { for (let l = tr.from + 1; l <= (p0.lv[tr.id] || tr.from); l++) ((tr.needs && tr.needs(l)) || []).forEach((g) => (g[0] || []).forEach(([id, n]) => { req[id] = Math.max(req[id] || 0, n); })); });
+  const p1 = reachPlan(tracks.map((tr) => (prio(tr) ? { ...fake(tr), to: p0.lv[tr.id] || tr.from } : { ...zero(tr), to: Math.min(tr.to, Math.max(tr.from, req[tr.id] || 0)) })), have, mode, rows, conv || []);
+  const lv0 = {};
+  tracks.forEach((tr) => { if (p1.lv[tr.id] > tr.from) lv0[tr.id] = p1.lv[tr.id]; });
+  // This week's trades the first plan made are used up for the second one.
+  const conv2 = (conv || []).map((r) => {
+    if (!(r.max > 0)) return r;
+    const u = (p1.tradeSum || []).filter((x) => x.from === r.from && x.to === r.to).reduce((a, x) => a + x.give / r.give, 0);
+    if (!(u > 0)) return r;
+    return r.max - u > 1e-9 ? { ...r, max: r.max - u } : null; // used up (max 0 would read as no limit)
+  }).filter(Boolean);
+  const t2 = tracks.map((tr) => (lv0[tr.id] != null ? { ...tr, from: lv0[tr.id], to: Math.max(lv0[tr.id], tr.to) } : prio(tr) ? { ...tr, to: tr.from } : tr));
+  const plan = reachPlan(t2, { ...p1.left }, mode, rows, conv2);
+  const lv = {}, trades = { ...plan.trades };
+  tracks.forEach((tr) => { lv[tr.id] = Math.max(plan.lv[tr.id] ?? tr.from, lv0[tr.id] ?? tr.from); });
+  Object.entries(p1.trades || {}).forEach(([id, l]) => { trades[id] = (l || []).concat(trades[id] || []); });
+  const open = tracks.filter((tr) => tr.to > tr.from);
+  return { ...plan, lv, trades, tradeSum: (p1.tradeSum || []).concat(plan.tradeSum || []), reached: open.filter((tr) => lv[tr.id] >= tr.to).length, total: open.length };
 }
 // ---- Best upgrades advisor (owner only for now) ----
 // Every upgrade still open on Chief Gear, Chief Charm, T12, Experts Level / Research,
@@ -8120,8 +8271,11 @@ function advSteps() {
   return p;
 }
 // Settings, kept in this browser: value basis and sort.
-let ADV_SET = (() => { try { const v = JSON.parse(localStorage.getItem("adv_set") || "{}"); return { mode: v.mode === "pure" ? "pure" : "prio", view: v.view === "target" ? "target" : "next", page: "all" }; } catch (e) { return { mode: "prio", view: "next", page: "all" }; } })();
-function advSaveSet() { try { localStorage.setItem("adv_set", JSON.stringify({ mode: ADV_SET.mode, view: ADV_SET.view })); } catch (e) { /* not kept */ } }
+// The sort ("My order | Best value") is the shared calc_state upgrade_order.mode (Free now's own):
+// mode "prio" = "order", "pure" = "best". Only the view is kept in this browser.
+let ADV_SET = (() => { let v = {}; try { v = JSON.parse(localStorage.getItem("adv_set") || "{}") || {}; } catch (e) { v = {}; } return { view: v.view === "target" ? "target" : "next", page: "all" }; })();
+Object.defineProperty(ADV_SET, "mode", { get: () => (UPGRADE_ORDER.mode === "best" ? "pure" : "prio"), set: (m) => { UPGRADE_ORDER.mode = m === "pure" ? "best" : "order"; saveUpgradeOrder(); }, enumerable: true });
+function advSaveSet() { try { localStorage.setItem("adv_set", JSON.stringify({ view: ADV_SET.view })); } catch (e) { /* not kept */ } }
 function advWeights() {
   const W = {};
   (UPGRADE_ORDER.rows || UPGRADE_ORDER_DEFAULT).forEach(([tr, st], i) => { W[`${reachTroopKey(tr)}|${st}`] = 1.5 - i / 11; });
@@ -8251,6 +8405,7 @@ function advPageHtml(steps) {
   const settings = `<div class="panel">
       <div class="bset-row" style="border-top:0;"><span class="bset-l">${esc(t("adv_show"))}<small>${esc(t(ADV_SET.view === "target" ? "adv_show_target_sub" : "adv_show_next_sub"))}</small></span><span class="bset-c"><span class="seg"><button type="button" data-advview="next" class="${ADV_SET.view === "next" ? "active" : ""}">${esc(t("adv_view_next"))}</button><button type="button" data-advview="target" class="${ADV_SET.view === "target" ? "active" : ""}">${esc(t("adv_view_target"))}</button></span></span></div>
       <div class="bset-row"><span class="bset-l">${esc(t("adv_sort"))}<small>${esc(t(ADV_SET.mode === "pure" ? "adv_sort_pure_sub" : "adv_sort_prio_sub"))}</small></span><span class="bset-c"><span class="seg"><button type="button" data-advmode="prio" class="${ADV_SET.mode === "prio" ? "active" : ""}">${esc(t("adv_prio"))}</button><button type="button" data-advmode="pure" class="${ADV_SET.mode === "pure" ? "active" : ""}">${esc(t("adv_pure"))}</button></span><button type="button" class="btn ghost small" data-advorder>&#8645; ${esc(t("adv_order"))}</button></span></div>
+      <p class="pca-sb" style="margin:6px 0 0; text-align:end;">${esc(t("adv_same_free"))} ${visitorCan("cando") ? `<a href="#" data-advfree style="color:var(--ice); font-weight:700; text-decoration:none;">${esc(t("adv_same_free_l"))}</a>` : `<b>${esc(t("adv_same_free_l"))}</b>`}</p>
     </div>`;
   const TT = ADV_SET.view === "target", shownT = TT ? (ADV_SET.page === "all" ? R.tracks : R.tracks.filter((r) => r.type === ADV_SET.page)) : null;
   const N = 8, list = TT ? (ADV_MORE ? shownT : shownT.slice(0, N)) : ADV_MORE ? shown : shown.slice(0, N);
@@ -8719,6 +8874,7 @@ document.addEventListener("click", (ev) => {
   if (!ev.target.closest) return;
   const content = document.getElementById("content");
   if (!content || !content.contains(ev.target)) return;
+  if (ev.target.closest("[data-advfree]")) { ev.preventDefault(); goToTab("budgets"); BUDGET_SHEET = "cando"; return; }
   const row = ev.target.closest("[data-advrow]");
   if (row) { ev.preventDefault(); const r = advFind(row.dataset.advrow); if (r) advOpenSheet(r); return; }
   const sa = ev.target.closest("[data-advseeall]");
@@ -8729,7 +8885,7 @@ document.addEventListener("click", (ev) => {
   const pgb = ev.target.closest("[data-advpage]");
   if (pgb) { ADV_SET.page = pgb.dataset.advpage; ADV_MORE = false; advDraw(); return; }
   const md = ev.target.closest("[data-advmode]");
-  if (md) { ADV_SET.mode = md.dataset.advmode; advSaveSet(); advDraw(); return; }
+  if (md) { if (ADV_SET.mode !== md.dataset.advmode) { ADV_SET.mode = md.dataset.advmode; advDraw(); } return; }
   if (ev.target.closest("[data-advmore]")) { ADV_MORE = !ADV_MORE; advDraw(); return; }
   const pr = ev.target.closest("[data-advprio]");
   if (pr) { ev.preventDefault(); advOpenPrioSheet(pr.dataset.advprio, pr.hasAttribute("data-advprionext") ? "next" : ADV_SET.view); return; }
@@ -9092,12 +9248,19 @@ let CDA_PLAN_MEMO = null;
 async function cdaLoadSettings() {
   if (CDA_SET) return CDA_SET;
   const v = (await loadCalcState("cando_pages").catch(() => null)) || {};
-  CDA_SET = { off: new Set(Array.isArray(v.off) ? v.off : []), skip: new Set(Array.isArray(v.skip) ? v.skip : []), packs: v.packs === true };
+  const offOwn = new Set(Array.isArray(v.off) ? v.off : []);
+  // Pages: the ones ticked in Budgets until the person ticks Free now's own
+  // ("own"; an older saved list with pages left out counts as their own).
+  CDA_SET = { offOwn, own: v.own === true || offOwn.size > 0, skip: new Set(Array.isArray(v.skip) ? v.skip : []), packs: v.packs === true,
+    get off() { return this.own ? this.offOwn : new Set(CDA_PAGES.filter((pg) => BUDGET_SELECTED && BUDGET_SELECTED[pg.key] === false).map((pg) => pg.key)); },
+    set off(x) { this.offOwn = x; this.own = true; } };
   return CDA_SET;
 }
+// Before the person's first own tick: start from the pages Budgets has ticked.
+function cdaOwnTicks() { if (!CDA_SET.own) CDA_SET.off = new Set(CDA_SET.off); }
 function cdaSaveSettings() {
   CDA_PLAN_MEMO = null;
-  saveCalcState("cando_pages", { off: [...CDA_SET.off], skip: [...CDA_SET.skip], packs: CDA_SET.packs });
+  saveCalcState("cando_pages", { off: CDA_SET.own ? [...CDA_SET.offOwn] : [], skip: [...CDA_SET.skip], packs: CDA_SET.packs, ...(CDA_SET.own ? { own: true } : {}) });
 }
 // This week's packs (My Purchases): bought or will buy, dated Monday – Sunday of the game week.
 async function cdaWeekPacks() {
@@ -9132,7 +9295,10 @@ function cdaRun(opts) {
     (b.conv || []).forEach((r) => { const key = `${r.from}|${r.to}|${r.give}|${r.get}|${r.max}|${r.trade ? 1 : 0}`; if (!seen.has(key)) { seen.add(key); conv.push(r); } });
   });
   if (withPacks && CDA_PACKS) Object.entries(CDA_PACKS.items).forEach(([k, v]) => { have[k] = (have[k] || 0) + v; });
-  const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, conv);
+  // Troop unlocks and march capacity first (T12 / T11 / Research Center), then the stat order.
+  const prioIds = new Set();
+  pages.forEach((pg) => CDA_BUILT[pg.key].tracks.forEach((tr) => { if (reachIsPrio(pg.key, tr)) prioIds.add(tr.id); }));
+  const plan = reachPlanPrio(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, conv, (tr) => prioIds.has(tr.id));
   return { plan, tracks, have, pages };
 }
 function cdaPlan() {
@@ -9235,12 +9401,15 @@ function cdaGoalTrackKey(page, key) {
 // The picked upgrade goals (Order of goals, U2) with what the Backpack does for them now.
 function cdaGoalStates(P) {
   const out = [];
+  const seen = new Set();
   ((BUDGET_GOALS && BUDGET_GOALS.goals) || []).forEach((e) => {
-    if (!e || !e.page) return;
+    // (the same goals as Order of goals: pages ticked in Budgets, one goal per upgrade + level)
+    if (!e || !e.page || (BUDGET_SELECTED && BUDGET_SELECTED[e.page] === false)) return;
     const u = goalUpgrades(e.page).find((x) => x.id === `${e.page}|${e.key}`);
     if (!u) return;
     const li = goalUpLevelIdx(u, e.level);
-    if (li < 0) return;
+    if (li < 0 || seen.has(`${u.id}#${li}`)) return;
+    seen.add(`${u.id}#${li}`);
     const goalLabel = u.levels[li] ? u.levels[li].label : "";
     // A hero not out yet: nothing can go up before its release (shown grey, "from Dec 21").
     if (u.notOut) { out.push({ id: "up:" + e.id, u, e, goalLabel, k: "out", from: u.now, now: u.now, date: goalDayShort(u.notOut.rel) }); return; }
@@ -9249,6 +9418,9 @@ function cdaGoalStates(P) {
     const lab = (i) => (tr.lab ? tr.lab(i) : String(i)), lv = P.plan.lv[tr.id];
     let gi = -1;
     for (let i = tr.from; i <= tr.to; i++) if (lab(i) === goalLabel) gi = i;
+    // Labels written differently on the two sides (Chief Gear goal "Red T6 ★0" vs step "T6 ★0"):
+    // the goal's own ladder, when it counts the same steps as the track.
+    if (gi < 0 && u.ladder && u.nowAt === tr.from) for (let i = tr.from; i <= tr.to; i++) if (u.ladder[i] === goalLabel) gi = i;
     // Labels written differently (Pet Refine "Stage 3 23.5%" vs "23.5%"): the first step at or past the goal's number.
     if (gi < 0) { const m = String(goalLabel).match(/(-?\d+(?:\.\d+)?)\s*%\s*$/), v = m ? parseFloat(m[1]) : NaN; if (!isNaN(v)) for (let i = tr.from; i <= tr.to; i++) { if (parseFloat(lab(i)) >= v - 1e-9) { gi = i; break; } } }
     const blk = P.plan.blocker[tr.id], lk = hgLockInfo(tr, P.plan);
@@ -9289,7 +9461,7 @@ function cdaTileInner() {
   const ready = cdaReady(), P = ready ? cdaPlan() : null, c = P ? cdaCounts(P) : null;
   const gs = P ? cdaGoalStates(P).filter((s) => s.k !== "?") : [];
   const gl = gs.length ? `<small class="gl">${esc(t("cdb_goals_up").replace("{n}", gs.filter((s) => s.k === "full" || s.k === "part").length).replace("{m}", gs.length))}</small>` : "";
-  return `<span class="fz-ic">&#10003;</span><span class="b3-lr-t"><b>${esc(t("cdb_free"))} · <em>${c ? esc(t("cdb_ups").replace("{n}", c.ups.toLocaleString())) : esc(t("cdb_working"))}</em></b><small>${c ? esc(t("cdb_sub").replace("{n}", c.pages)) : esc(t("cdb_sub_wait"))}</small>${gl}</span><span class="b3-go">&#8250;</span>`;
+  return `<span class="fz-ic">&#10003;</span><span class="b3-lr-t"><b>${esc(t("cdb_free"))} · <em>${c ? esc(t("cdb_ups").replace("{n}", c.ups.toLocaleString())) : esc(t("cdb_working"))}</em></b><small>${c ? esc(t(CDA_SET && CDA_SET.packs ? "cdb_sub_packs" : "cdb_sub").replace("{n}", c.pages)) : esc(t(CDA_SET && CDA_SET.packs ? "cdb_sub_wait_packs" : "cdb_sub_wait"))}</small>${gl}</span><span class="b3-go">&#8250;</span>`;
 }
 // The sheet: the Can do settings and answer, the goals in order, then everything else.
 function cdaSheetInner() {
@@ -9342,19 +9514,23 @@ function cdaBodyHtml(mid) {
   };
   const cards = P ? P.pages.filter((pg) => infos[pg.key].st === "up").map((pg) => cdaCardHtml(pg, infos[pg.key], P)).join("") : "";
   const offNames = CDA_PAGES.filter((pg) => CDA_SET.off.has(pg.key)).map(cdaPageName);
-  const noneP = P ? P.pages.filter((pg) => infos[pg.key].st === "none") : [];
-  const doneP = P ? P.pages.filter((pg) => infos[pg.key].st === "done").map(cdaPageName) : [];
+  // A page never set up (`budgetPageSetUp`) with nothing to raise says "Not set up", not "At target".
+  const notSet = (pg) => infos[pg.key].st !== "up" && !budgetPageSetUp(pg.key);
+  const noneP = P ? P.pages.filter((pg) => infos[pg.key].st === "none" && !notSet(pg)) : [];
+  const doneP = P ? P.pages.filter((pg) => infos[pg.key].st === "done" && !notSet(pg)).map(cdaPageName) : [];
+  const unsetP = P ? P.pages.filter(notSet).map(cdaPageName) : [];
   const naP = ready ? ticked.filter((pg) => !avail(pg)).map(cdaPageName) : [];
   const foot = !P ? "" : `<div class="cda-off">
       ${offNames.length ? `<div>${esc(t("cda_not_ticked"))} ${esc(offNames.join(", "))} · <button type="button" class="cda-gm" data-cdatickall>${esc(t("cda_tick"))} &#8250;</button></div>` : ""}
       ${noneP.length ? `<div>${esc(t("cda_nothing_yet"))} ${noneP.map((pg) => { const i = infos[pg.key]; return `${esc(cdaPageName(pg))}${i.firstItem ? ` (${esc(t("cdp_short").replace("{item}", cdaItemName(i.firstItem, i.firstTr)))} · ${cdaGetMoreHtml(pg)})` : ""}`; }).join(", ")}</div>` : ""}
       ${doneP.length ? `<div>${esc(t("cda_at_target_l"))} ${esc(doneP.join(", "))}</div>` : ""}
+      ${unsetP.length ? `<div>${esc(t("cda_not_setup_l"))} ${esc(unsetP.join(", "))}</div>` : ""}
       ${naP.length ? `<div>${esc(t("cda_not_avail"))} ${esc(naP.join(", "))}</div>` : ""}
     </div>`;
   return `<div class="cdp cda">
     <div class="panel cda-top">
       <div class="rch-seg cdp-seg"><button type="button" data-cdamode="order" class="${best ? "" : "on"}">${esc(t("rch_my_order"))}</button><button type="button" data-cdamode="best" class="${best ? "on" : ""}">${esc(t("rch_best"))}</button></div>
-      ${best ? "" : `<button type="button" class="cda-ord" data-cdaorder>${esc(t("cda_edit_order"))} &#8250;</button>`}
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">${best ? "<span></span>" : `<button type="button" class="cda-ord" data-cdaorder>${esc(t("cda_edit_order"))} &#8250;</button>`}${visitorCan("bestupgrades") ? `<small class="meta">${esc(t("cda_same_best"))} <a href="#" data-cdago="bestupgrades" style="color:var(--ice); font-weight:700; text-decoration:none;">${esc(t("cda_same_best_l"))}</a></small>` : ""}</div>
       <label class="cda-sw"><input type="checkbox" class="bset-sw" data-cdapacks${CDA_SET.packs ? " checked" : ""} /><span><b>${esc(t("cda_packs"))}</b><small>${esc(CDA_SET.packs && wp ? t("cda_packs_n").replace("{b}", wp.bought).replace("{p}", wp.planned) : t("cda_packs_d"))}</small></span></label>
       <div class="cdp-ans"><div class="cdp-box"><div class="k">${esc(t("cdp_pages_up"))}</div><div class="v${upPages ? " g" : ""}">${P ? esc(t("cdp_of").replace("{n}", upPages).replace("{m}", P.pages.length)) : "…"}</div></div>
         <div class="cdp-box"><div class="k">${esc(t("cda_upgrades"))}</div><div class="v">${P ? esc(upgrades.toLocaleString()) : "…"}</div></div></div>
@@ -9390,7 +9566,7 @@ function cdaRedraw(after) {
 }
 function cdaClick(ev) {
   const go = ev.target.closest("[data-cdago]");
-  if (go) { if (!cdaGoBudgets(go.dataset.cdago)) goToTab(go.dataset.cdago); return; }
+  if (go) { ev.preventDefault(); if (!cdaGoBudgets(go.dataset.cdago)) { goToTab(go.dataset.cdago); } return; }
   const gm = ev.target.closest("[data-cdagm]");
   if (gm) { cdaGetMore(gm.dataset.cdagm); return; }
   const md = ev.target.closest("[data-cdamode]");
@@ -9398,8 +9574,8 @@ function cdaClick(ev) {
   if (ev.target.closest("[data-cdaorder]")) { cdaOrderSheet(); return; }
   if (!cdaReady()) return;
   const pgb = ev.target.closest("[data-cdapage]");
-  if (pgb) { const k = pgb.dataset.cdapage; if (CDA_SET.off.has(k)) CDA_SET.off.delete(k); else CDA_SET.off.add(k); CDA_NOTE = null; cdaSaveSettings(); cdaRedraw(); return; }
-  if (ev.target.closest("[data-cdaall]")) { const all = CDA_SET.off.size === 0; CDA_SET.off = new Set(all ? CDA_PAGES.map((p) => p.key) : []); CDA_NOTE = null; cdaSaveSettings(); cdaRedraw(); return; }
+  if (pgb) { cdaOwnTicks(); const k = pgb.dataset.cdapage; if (CDA_SET.off.has(k)) CDA_SET.off.delete(k); else CDA_SET.off.add(k); CDA_NOTE = null; cdaSaveSettings(); cdaRedraw(); return; }
+  if (ev.target.closest("[data-cdaall]")) { cdaOwnTicks(); const all = CDA_SET.off.size === 0; CDA_SET.off = new Set(all ? CDA_PAGES.map((p) => p.key) : []); CDA_NOTE = null; cdaSaveSettings(); cdaRedraw(); return; }
   if (ev.target.closest("[data-cdatickall]")) { CDA_SET.off = new Set(); cdaSaveSettings(); cdaRedraw(); return; }
   const cb = ev.target.closest("[data-cdaskip]");
   if (cb) { ev.preventDefault(); cdaToggleSkip(cb.dataset.cdaskip); return; }
@@ -9548,7 +9724,7 @@ async function mkCompute() {
     // Only what the Backpack holds (chests in it and this week's trades of its items): never
     // packs, not even Free now's "Include this week's packs" (that switch stays Budgets' own).
     const have = { ...(b.have || {}) };
-    const plan = reachPlan(b.tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, b.conv || []);
+    const plan = reachPlanPrio(b.tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, b.conv || [], (tr) => reachIsPrio(pg.key, tr));
     const list = b.tracks.map((tr, k) => ({ tr, html: mkHtml(tr, plan, k) }));
     MK = { tab, list, plan };
     document.querySelectorAll("#content .mk").forEach((m) => m.remove());
@@ -10023,7 +10199,7 @@ function packCurrentCycleStart(reset, resetDay) {
   return new Date(today.getTime() - since * 86400000);
 }
 function packPurchaseUse(groups) {
-  const list = (PACK_PURCHASES.list || []).filter((p) => packPurchaseUsesLimit(p, packLinkFor(p.table)));
+  const list = purListEff().filter((p) => packPurchaseUsesLimit(p, packLinkFor(p.table)));
   if (!list.length) return groups;
   // A pick-one set bought as several prices in one purchase (Benefit Card
   // $4.99 + $9.99 saved together as its last price, the choice price = the
@@ -10172,14 +10348,15 @@ function packPurchaseUse(groups) {
 }
 function packActiveCardSupply(calcKey, tables) {
   const out = {}, used = [];
-  // Packs you plan to buy (My Purchases): their items count as coming.
-  (PACK_PURCHASES.list || []).forEach((p) => {
+  // Packs you plan to buy (My Purchases): their items count as coming
+  // (with "New hero packs first" on, the new heroes' packs too).
+  purListEff().forEach((p) => {
     if (!purPlannedCounts(p)) return;
     const tb = (tables || []).find((x) => String(x.id) === String(p.table));
     if (!tb || !packTableServesPage(tb, calcKey)) return;
     const n = Math.max(1, Math.floor(Number(p.count) || 1));
     Object.entries(purchaseGives(p, tb)).forEach(([k, v]) => { out[k] = (out[k] || 0) + v * n; });
-    used.push({ title: `${tb.title || ""} × ${n} (${t("pur_planned_short")} ${p.date})` });
+    if (!p.virtual) used.push({ title: `${tb.title || ""} × ${n} (${t("pur_planned_short")} ${p.date})` });
   });
   (tables || []).forEach((tb) => {
     const l = packLinkFor(tb.id);
@@ -11491,12 +11668,12 @@ const SCAN_SUMMARY_ROWS = [[/\bgems?\b/i, "Gems"], [/\bmeat\b/i, "Meat"], [/\bwo
 // running mismatched code; if it still doesn't match, the promise fails with
 // err.stale and the caller says so.
 const CODE_FILES = {
-  admin: "admin.min.js?v=0a7cbbe8a6",
+  admin: "admin.min.js?v=20f7bd3941",
   scan: "scan.min.js?v=64a7ef20ff",
-  packs: "packs.min.js?v=8c7c3e7c6f",
+  packs: "packs.min.js?v=d85801810c",
   gallery: "gallery.min.js?v=28a7717641",
-  purchases: "purchases.min.js?v=21c5b54f97",
-  budgets: "budgets.min.js?v=0655976263",
+  purchases: "purchases.min.js?v=0849c1c5d5",
+  budgets: "budgets.min.js?v=9097fd485c",
 };
 const CODE_P = {}, CODE_OK = {};
 function loadCode(name) {
@@ -13349,6 +13526,106 @@ function vipFirstBuyOpen() {
   const rows = (HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || [];
   return rows.some((r) => r.hero && r.hero.name === VIP_FIRST_BUY_HERO && r.unlock > 0);
 }
+// ---- New hero packs first (Budgets Settings; per person, calc_state "budget_prefs" = { ngFirst }) ----
+// On: every new hero the hero plan covers gets its Value Hero Pack and its
+// Exclusive Gear Forge widget ladder (all steps) counted as bought on their
+// first sale day, like a My Purchases "will buy": their shards / widgets come
+// as supply and the packs' limits are used up (virtual purchases, never saved),
+// so the planner buys other packs only for what is still missing; their price
+// is added to every plan as rows of their own (ngFirstApply). A hero's pack the
+// person already has a real purchase of is left alone.
+function budgetPrefs() {
+  const v = CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID ? CALC_STATE_CACHE.budget_prefs : null;
+  return v && typeof v === "object" ? v : {};
+}
+function ngFirstOn() { return budgetPrefs().ngFirst === true; }
+// (force: the packs it would count, switch on or off; for the Settings faces)
+function ngFirstVirtual(force) {
+  if ((!force && !ngFirstOn()) || !HERO_PLAN_LAST || !Array.isArray(PACK_TABLES_CACHE)) return [];
+  if (typeof BUDGET_SELECTED !== "undefined" && BUDGET_SELECTED && BUDGET_SELECTED.hero_shards === false) return [];
+  const real = new Set((PACK_PURCHASES.list || []).map((p) => String(p.table)));
+  const today = packDayKey(packStartOfToday()), out = [];
+  (HERO_PLAN_LAST.rows || []).forEach((r) => {
+    if (!r.hero) return;
+    [["s", r.need > 0], ["w", r.wNeed > 0]].forEach(([k, want]) => {
+      if (!want) return;
+      const id = `ng-${k}-${Number(r.hero.generation)}-${r.hero.id}`;
+      const tb = PACK_TABLES_CACHE.find((x) => String(x.id) === id);
+      if (!tb || real.has(id) || !packInBudgets(id)) return;
+      const lk = packLinkFor(id), offers = packOffersFor(tb, true);
+      if (!offers.length) return;
+      const row = lk.sequential ? Math.max(...offers.map((o) => Number(o.row) || 0)) : Number(offers[0].row) || 0;
+      const st = packParseDay(lk.resetDay), sk = st ? packDayKey(st) : today;
+      out.push({ id: "ngv-" + id, table: id, row, from: 0, count: 1, date: sk > today ? sk : today, status: "planned", virtual: true, hero: r.hero.name, kind: k });
+    });
+  });
+  return out;
+}
+// The purchases the planner counts: the saved ones, plus the virtual ones above.
+function purListEff() {
+  const v = ngFirstVirtual();
+  return v.length ? (PACK_PURCHASES.list || []).concat(v) : (PACK_PURCHASES.list || []);
+}
+function ngFirstSig() { return ngFirstOn() ? ngFirstVirtual().map((p) => `${p.table}:${p.row}:${p.date}`).join(",") || "on" : ""; }
+// The virtual purchases as plan rows (the same fields as the planner's rows).
+function ngFirstRows() {
+  const strip = !packGemsCountFor("hero_shards");
+  return ngFirstVirtual().map((p) => {
+    const tb = PACK_TABLES_CACHE.find((x) => String(x.id) === p.table);
+    const gs = tb ? packGroupsForBuild([tb], strip) : [];
+    const g = gs[0];
+    if (!g) return null;
+    const o = g.ladder ? g.offers.filter((x) => !x.extra).pop() : g.offers.find((x) => x.row === p.row) || g.offers[0];
+    if (!o) return null;
+    return { grp: "ngf:" + p.table, title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: 1, subtotal: o.price, reset: g.reset, resetDay: g.resetDay, cycles: 1, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: g.ladder ? 0 : o.from, window: g.window, tables: g.tables, usedNow: 0, usedAt: null, ngFirst: true, hero: p.hero, kind: p.kind };
+  }).filter(Boolean);
+}
+// Adds those rows (once: plans carry ngFirst) to every plan of a combined plan
+// answer that covers the hero page, and to the hero page's share.
+function ngFirstApply(res) {
+  if (!res || typeof res !== "object" || !ngFirstOn()) return res;
+  const rows = ngFirstRows();
+  if (!rows.length) return res;
+  const sum = rows.reduce((a, r) => a + r.subtotal, 0);
+  const addTo = (pl) => {
+    if (!pl || typeof pl !== "object" || !Array.isArray(pl.rows) || typeof pl.total !== "number" || pl.ngFirst) return;
+    pl.rows = pl.rows.concat(rows.map((r) => ({ ...r })));
+    pl.total += sum; pl.ngFirst = true;
+  };
+  const seen = new Set();
+  const walk = (x, depth) => {
+    if (!x || typeof x !== "object" || seen.has(x) || depth > 6) return;
+    seen.add(x);
+    if (Array.isArray(x)) { x.forEach((y) => walk(y, depth + 1)); return; }
+    if (Array.isArray(x.rows) && typeof x.total === "number") { addTo(x); return; }
+    Object.keys(x).forEach((k) => { if (k !== "shares" && k !== "split" && k !== "droppedPlans" && k !== "groups") walk(x[k], depth + 1); });
+  };
+  const dropped = (res.dropped || []).includes("hero_shards");
+  if (dropped) walk(res.droppedPlans && res.droppedPlans.hero_shards, 0);
+  else walk(res, 0);
+  const sp = res.split;
+  if (sp && sp.target) {
+    const inLate = sp.late && (sp.late.keys || []).includes("hero_shards");
+    if (inLate) walk(sp.late, 0); else walk(sp.target, 0);
+  }
+  if (res.shares && !dropped) {
+    const sh = res.shares.hero_shards || (res.shares.hero_shards = { total: 0, rows: [] });
+    if (!sh.ngFirst) { sh.rows = sh.rows.concat(rows.map((r) => ({ ...r, share: 1, shareCost: r.subtotal, unitFrac: [] }))); sh.total += sum; sh.ngFirst = true; }
+  }
+  return res;
+}
+// The dated plan: the whole plan and its first dated part.
+function ngFirstApplyDated(res) {
+  if (!res || !res.plan || !ngFirstOn() || res.plan.ngFirst) return res;
+  const rows = ngFirstRows();
+  if (!rows.length) return res;
+  const sum = rows.reduce((a, r) => a + r.subtotal, 0);
+  res.plan.rows = res.plan.rows.concat(rows.map((r) => ({ ...r, stage: 0 })));
+  res.plan.total += sum; res.plan.ngFirst = true;
+  const p0 = (res.parts || []).find((p) => !p.late) || (res.parts || [])[0];
+  if (p0) { p0.rows = (p0.rows || []).concat(rows.map((r) => ({ ...r, stage: 0 }))); p0.total = (p0.total || 0) + sum; }
+  return res;
+}
 // What the built pack list depends on besides the tables (new heroes' copies,
 // the VIP tier for the VIP rows).
 function packBuiltSig() { return `${ngHeroSig()}|vip${vipTierNow()}`; }
@@ -13863,6 +14140,65 @@ function packResetOffsets(reset, day, horizon, win) {
   }
   for (let d = 0; d <= horizon; d += reset) out.push(d);
   return out;
+}
+// "Every 4 weeks" rather than "Every 28 days" (owner, 16 Nov 2026: events cycle in weeks).
+function packEveryText(r, day) {
+  const n = Number(r);
+  if (n === 30) { const d = packParseDay(packValidDay(day)); if (!d) return t("pk_every_month_date"); const n2 = d.getUTCDate(), ord = LANG === "en" ? n2 + ([11, 12, 13].includes(n2 % 100) ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[n2 % 10] || "th")) : String(n2); return t("pk_every_month_on").replace("{d}", ord); }
+  if (n === 7) return t("pk_every_week");
+  if (n > 0 && n % 7 === 0) return t("pk_every_weeks").replace("{n}", n / 7);
+  return t("pk_every_days").replace("{n}", n);
+}
+// When a pack is on sale, read the way the planner reads it (packResetOffsets
+// + its "Lasts" window): { kind, wins: [{ s, e }] (days from today, e = its
+// last day), often: "Every week · Sun–Tue" }. kind: "any" (any time:
+// stacking cards, no limit, the first-buy reward), "daily", "trigger"
+// (appears at a level), "once" (one-time, no date), "dated" (wins).
+function packSaleInfo(id, horizon) {
+  const H = horizon || 400, lk = packLinkFor(id), r = lk.reset, out = { kind: "dated", wins: [], often: "" };
+  if (lk.trigger) { out.kind = "trigger"; out.often = t("pur_sale_trig"); return out; }
+  if (lk.firstBuy) { out.kind = "any"; out.often = t("pack_reset_once"); return out; }
+  if (packStackInfo(r)) { out.kind = "any"; out.often = t("pur_pk_stacks"); return out; }
+  if (r == null || r === "" || r === "unlimited") { out.kind = "any"; out.often = t("pack_reset_unlimited"); return out; }
+  const t0 = packStartOfToday(), anchor = packParseDay(packValidDay(lk.resetDay));
+  const aOff = anchor ? Math.round((anchor - t0) / 86400000) : null;
+  const win = Number(lk.window) > 0 ? Math.floor(Number(lk.window)) : 0;
+  if (r === "once" || Number(r) >= PACK_ONE_TIME_DAYS) {
+    out.often = t("pack_reset_once");
+    if (aOff == null) { out.kind = "once"; return out; }
+    const e = win ? aOff + win - 1 : H;
+    if (e >= 0) out.wins.push({ s: aOff, e });
+    return out;
+  }
+  const n = Number(r);
+  if (!(n > 0)) { out.kind = "any"; return out; }
+  if (n === 1) { out.kind = "daily"; out.often = t("pur_sale_daily"); return out; }
+  const starts = [];
+  if (n === 30 && anchor) {
+    for (let m = -2; m < 40; m++) { const s = Math.round((new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + m, anchor.getUTCDate())) - t0) / 86400000); if (s > H) break; starts.push(s); }
+  } else {
+    let s;
+    if (aOff != null) { s = aOff; while (s > -n) s -= n; } else if (n === 7 || n === 14) s = -((t0.getUTCDay() + 6) % 7); else s = 0;
+    for (; s <= H; s += n) starts.push(s);
+  }
+  starts.forEach((s, i) => {
+    const nx = i + 1 < starts.length ? starts[i + 1] : s + n;
+    const e = Math.min(s + (win || nx - s) - 1, nx - 1);
+    if (e >= 0) out.wins.push({ s, e });
+  });
+  const parts = [packEveryText(n, lk.resetDay)];
+  if (anchor && win > 0 && win < 7 && n % 7 === 0) {
+    const wd = (d) => { try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { weekday: "short", timeZone: "UTC" }); } catch (e) { return ""; } };
+    parts.push(win === 1 ? wd(anchor) : `${wd(anchor)}–${wd(new Date(anchor.getTime() + (win - 1) * 86400000))}`);
+  }
+  out.often = parts.join(" · ");
+  return out;
+}
+// The sale window on or after day `d` (days from today): { s, e, in } or null.
+function packSaleWinAt(info, d) {
+  if (!info || info.kind !== "dated") return null;
+  const w = info.wins.find((x) => x.e >= d);
+  return w ? { s: w.s, e: w.e, in: w.s <= d } : null;
 }
 const PACK_HORIZON_DAYS = 1095;
 
@@ -17668,6 +18004,23 @@ const BUDGET_PAGES = [
   // Shining City: Glorious Tomes for the City Skins picked on the Skin Gallery page.
   { key: "shining_skins", tab: "skingallery" },
 ];
+// A Budgets page is "set up" once the person saved its levels / picks of their own (owner,
+// 26 Nov 2026): the live pages by their own calc_state (Chief Gear, Charms, Heroes Gears sets,
+// heroes: roster / hero targets / a hero plan with rows), Shining City by own picked skins (the
+// owner: the default list), every other page by a saved Budgets needs entry (budget_needs).
+// Display only: the plan itself is unchanged. Budgets shows a "Start here" card while none is.
+const BUDGET_SETUP_STATES = { chief_gear: ["chief_gear"], charm: ["charm"], hero_gear: ["hero_gear", "hero_gear_set2", "hero_gear_set3"], hero_shards: ["dashboard_roster", "hero_targets"] };
+function calcStateHas(n) { return !!(CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID && CALC_STATE_CACHE[n] != null); }
+function budgetPageSetUp(calcKey) {
+  if (calcKey === "shining_skins") {
+    if (IS_OWNER) return shiningSkinsDefault().length > 0;
+    const v = calcStateHas("shining_skins") ? CALC_STATE_CACHE.shining_skins : null;
+    return !!(v && Array.isArray(v.list) && v.list.length);
+  }
+  const st = BUDGET_SETUP_STATES[calcKey];
+  if (st) return st.some(calcStateHas) || (calcKey === "hero_shards" && !!(HERO_PLAN_LAST && HERO_PLAN_LAST.rows && HERO_PLAN_LAST.rows.length));
+  return !!(BUDGET_NEEDS_SNAPSHOT && BUDGET_NEEDS_SNAPSHOT[calcKey]);
+}
 // Hero targets: calc_state "hero_targets" =
 // { heroes: { heroId: { push, stars, widget, later, wNow } }, extra: [heroId], pushGen }.
 let HERO_TARGETS = null;
@@ -18870,7 +19223,7 @@ const BUDGET_PLANS_INDEX = "budget_plans_v2", BUDGET_PLAN_ITEM = "budget_plan_v2
 const BUDGET_PLANS_KEPT = 5;
 function budgetPlanFingerprint(payload) {
   tradeExtraSync();
-  const str = JSON.stringify({ v: 9, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
+  const str = JSON.stringify({ v: 9, user: USER_ID || "", day: packDayKey(packStartOfToday()), ...(ngFirstOn() ? { ngf: ngFirstSig() } : {}), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
   // cyrb53: a quick 53-bit hash of the text, plus its length.
   let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
   for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
@@ -18942,7 +19295,7 @@ async function budgetCombinedPlanAsync(pages, selected, targetDays, more) {
   try {
     key = budgetPlanFingerprint(payload);
     const kept = budgetPlanKept(key);
-    if (kept) return withCands(kept);
+    if (kept) return ngFirstApply(withCands(kept));
   } catch (e) { /* storage blocked: work it out */ }
   // Two planners side by side when the device can: the first works the whole
   // plan out (Fastest, Cheapest, My budget), the second the split around the
@@ -18962,9 +19315,9 @@ async function budgetCombinedPlanAsync(pages, selected, targetDays, more) {
     const splitIn = acc.splitDone || acc.splitEarly;
     // (A split that is in before the plan itself is passed on as it is; the plan then says if it's wanted.)
     const split = !two ? ((acc.main && acc.main.split) || (acc.splitEarly ? acc.split : acc.target ? { target: acc.target } : null)) : splitIn ? (!m || wantsSplit(m) ? acc.split : null) : acc.target ? { target: acc.target } : null;
-    more.onPart({ chosen: null, shares: {}, dropped: [], inc: [], views: {}, byTarget: null, ...(m || {}), split, pending: true,
+    more.onPart(ngFirstApply({ chosen: null, shares: {}, dropped: [], inc: [], views: {}, byTarget: null, ...(m || {}), split, pending: true,
       have: { set: !!acc.main, fast: !!(m && m.views && m.views.fastest && m.views.fastest.plan), views: acc.step === "views" || acc.step === "done",
-        split: two ? (splitIn ? true : acc.target ? "target" : false) : ((acc.main && !acc.early) || acc.splitEarly ? true : acc.target ? "target" : false) } });
+        split: two ? (splitIn ? true : acc.target ? "target" : false) : ((acc.main && !acc.early) || acc.splitEarly ? true : acc.target ? "target" : false) } }));
   };
   // A part of the split: its by-target part, or the whole of it handed over early.
   const splitPart = (p) => { if (p.split.late) { acc.split = p.split; acc.splitEarly = true; } else if (p.split.target) acc.target = p.split.target; else return; tell(); };
@@ -18999,7 +19352,7 @@ async function budgetCombinedPlanAsync(pages, selected, targetDays, more) {
     }
   }
   if (key) budgetPlanKeep(key, res);
-  return withCands(res);
+  return ngFirstApply(withCands(res));
 }
 // Each page's own plan, added together as one plan over the combined packs.
 // Valid only if the packs' limits allow those purchases together and they
@@ -19307,20 +19660,109 @@ let PUR_SUGGEST = null; // { key, promise | plan }
 // `dated` (budgetDatedPlan): goals / pages with their own dates - the plan
 // bought for those dates takes the "By target" plan's place ("By your dates").
 const BUDGET_DATED_WRAP = new WeakMap(); // the dated plan as My Purchases gets it (one object per plan)
-function budgetSuggestOf(combined, dated) {
-  const sb_ = spendActive() ? budgetSpendBest(combined) : null;
-  let dp = null;
-  if (combined && dated && dated.res && dated.res.plan) {
-    const pl = dated.res.plan;
-    if (!BUDGET_DATED_WRAP.has(pl)) { const ds = dated.setup.due.filter((d) => d != null && d >= 0); BUDGET_DATED_WRAP.set(pl, { ...pl, need: combined.need, dated: true, nextDay: ds.length ? Math.min(...ds) : null }); }
-    dp = BUDGET_DATED_WRAP.get(pl);
+// ---- One followed plan (owner, 26 Nov 2026) ----
+// The plan picked on Budgets' plan switch (Fastest / By target or By your
+// dates / Cheapest / My budget) is saved per person (calc_state
+// "budget_prefs".view) and My Purchases follows the same plan. Before it was
+// saved, My Purchases' own old switch (localStorage "pur_follow") is the start.
+const BUDGET_VIEWS = ["fastest", "main", "cheapest", "budget"];
+function budgetFollowView() {
+  const v = budgetPrefs().view;
+  if (BUDGET_VIEWS.includes(v)) return v;
+  let old = null;
+  try { old = localStorage.getItem("pur_follow"); } catch (e) { /* blocked */ }
+  return old === "budget" ? "budget" : "main";
+}
+function budgetFollowSet(view) {
+  if (!BUDGET_VIEWS.includes(view) || budgetPrefs().view === view) return;
+  saveCalcState("budget_prefs", { ...budgetPrefs(), view });
+  PUR_SUGGEST = null; PUR_SUGGEST_DONE = null; PUR_SUG_OVERLAY = null;
+}
+let BUDGET_FOCUS_VIEW = false; // set by My Purchases' "Following: … change ›": show Budgets' plan switch once
+// The plain plan "By your target": the part by the target and the late pages' part, as one plan.
+const BUDGET_SPLIT_MAIN = new WeakMap();
+function budgetSplitMain(combined) {
+  const split = combined && combined.split && combined.split.target && combined.split.late ? combined.split : null;
+  if (!split) return null;
+  const late = split.late[BUDGET_SPLIT_LATE] || split.late.cheapest;
+  const kept = BUDGET_SPLIT_MAIN.get(split);
+  if (kept && kept.late === late) return kept.v;
+  const v = {
+    plan: { rows: split.target.plan.rows.concat(late.plan.rows), total: split.target.plan.total + late.plan.total, days: Math.max(split.target.plan.days || 0, late.plan.days || 0), trades: (split.target.plan.trades || []).concat(late.plan.trades || []), split: true },
+    shares: { ...split.target.shares, ...late.shares },
+  };
+  BUDGET_SPLIT_MAIN.set(split, { late, v });
+  return v;
+}
+// The followed plan (one object per plan and view, so My Purchases can tell it is the same one).
+const BUDGET_FOLLOW_WRAP = new WeakMap();
+function budgetFollowWrap(pl, view, extra) {
+  if (!BUDGET_FOLLOW_WRAP.has(pl)) BUDGET_FOLLOW_WRAP.set(pl, new Map());
+  const m = BUDGET_FOLLOW_WRAP.get(pl);
+  if (!m.has(view)) m.set(view, { ...pl, ...extra, followView: view });
+  return m.get(view);
+}
+// `view`: the saved one unless given. A view the plan doesn't have (no My
+// budget, no Cheapest card) falls back to the main plan, as on Budgets.
+function budgetSuggestOf(combined, dated, view) {
+  if (!combined) return null;
+  const v = view || budgetFollowView();
+  const need = combined.need;
+  if (v === "budget") {
+    const sb_ = spendActive() ? budgetSpendBest(combined) : null;
+    if (sb_ && sb_.ok) return budgetFollowWrap(sb_.plan, "budget", { spendSched: sb_.sched, spend: sb_, need });
   }
-  // (the admin also gets the "By target" plan to compare: My Purchases labels)
-  const tp = dp || (combined ? (combined.byTarget || (combined.split && combined.split.target && combined.split.target.plan) || null) : null);
-  if (sb_ && sb_.ok) return { ...sb_.plan, spendSched: sb_.sched, spend: sb_, targetPlan: tp, need: combined.need };
-  if (dp) return dp;
-  if (combined && combined.chosen && combined.need && !combined.chosen.need) combined.chosen.need = combined.need;
-  return (combined && combined.chosen) || null;
+  if (v === "fastest" || v === "cheapest") {
+    const vw = combined.views && combined.views[v];
+    const ok = vw && vw.plan && (v === "fastest" || !!combined.byTarget || !!combined.split);
+    if (ok) return budgetFollowWrap(vw.plan, v, { need });
+  }
+  if (dated && dated.res && dated.res.plan) {
+    const pl = dated.res.plan;
+    if (!BUDGET_DATED_WRAP.has(pl)) { const ds = dated.setup.due.filter((d) => d != null && d >= 0); BUDGET_DATED_WRAP.set(pl, { ...pl, need, dated: true, nextDay: ds.length ? Math.min(...ds) : null, followView: "main" }); }
+    return BUDGET_DATED_WRAP.get(pl);
+  }
+  const sm = budgetSplitMain(combined);
+  const pl = sm ? sm.plan : combined.chosen;
+  return pl ? budgetFollowWrap(pl, "main", { need }) : null;
+}
+// This week (Monday – Sunday) of the followed plan, the same on Budgets' This
+// week tile and My Purchases' answer card: bought this week (My Purchases),
+// still to buy = "will buy" dated this week or passed + the plan's buys from
+// today to Sunday. Money in store prices; packs counted once per pack.
+// `rows` / `sched`: the plan's rows and days (My Purchases passes its own,
+// without the picks it already took from the plan).
+function budgetWeekSums(plan, rows, sched) {
+  const t0 = packStartOfToday(), monW = (t0.getUTCDay() + 6) % 7;
+  const today = packDayKey(t0), mon = packDayKey(new Date(t0.getTime() - monW * 86400000)), sun = packDayKey(new Date(t0.getTime() + (6 - monW) * 86400000));
+  const tables = Array.isArray(PACK_TABLES_CACHE) ? PACK_TABLES_CACHE : [];
+  const byId = new Map(tables.map((tb) => [String(tb.id), tb]));
+  const keyOf = (tid) => { const tb = byId.get(String(tid)); if (!tb) return "id:" + tid; const l = packLinkFor(tb.id); return l.option && l.linkSet ? "set:" + l.linkSet : "id:" + tb.id; };
+  const out = { todo: 0, bought: 0, todoN: 0, boughtN: 0 };
+  const todoK = new Set(), boughtK = new Set();
+  const pLocal = (p) => { const tb = byId.get(String(p.table)); return packConvert(purchasePrice(p, tb) * Math.max(1, Math.floor(Number(p.count) || 1)), packLinkFor(p.table).currency || "USD").n; };
+  (PACK_PURCHASES.list || []).forEach((p) => {
+    if (!byId.has(String(p.table))) return;
+    if (p.status === "bought") {
+      if (p.hidden || !(p.date >= mon && p.date <= today)) return;
+      out.bought += pLocal(p); boughtK.add(keyOf(p.table));
+    } else if (p.date <= sun && !purTriggerWaiting(p)) {
+      out.todo += pLocal(p); todoK.add(keyOf(p.table));
+    }
+  });
+  if (plan && plan.rows) {
+    const rs = rows || plan.rows.filter((r) => r.count > 0);
+    const sc = sched || plan.spendSched || packPlanSchedule(rs);
+    rs.forEach((r, i) => {
+      const n = (sc[i] || []).filter((x) => Math.max(0, x.off) <= 6 - monW).reduce((a, x) => a + x.count, 0);
+      if (!(n > 0)) return;
+      out.todo += packRowLocalUnits(r).reduce((a, x) => a + x, 0) * n;
+      const tid = (r.tables || [])[0];
+      todoK.add(tid != null ? keyOf(tid) : "t:" + r.title);
+    });
+  }
+  out.todoN = todoK.size; out.boughtN = boughtK.size;
+  return out;
 }
 // The dated plan can be asked for once the plain plan it is made from is in:
 // all of it, or - while the rest is still being worked out - the plan on
@@ -19683,12 +20125,14 @@ function goalUpLevelIdx(u, level) {
 // The goals in order: the picked upgrades on the ticked pages (incKeys), then
 // "Rest of the plan": what is left of each page after its picked upgrades, one
 // entry per page ("rest:<page>", each with its own "By").
-function budgetGoalList(pages, incKeys, defaultOrder) {
+// `goalOnly` (optional): more pages whose picked goals are listed (nothing to buy on them), without a "rest" row.
+function budgetGoalList(pages, incKeys, defaultOrder, goalOnly) {
   const G = BUDGET_GOALS || { goals: [] }, ups = new Map(), pageIdx = (k) => BUDGET_PAGES.findIndex((p) => p.key === k);
-  incKeys.forEach((k) => goalUpgrades(k).forEach((u) => ups.set(u.id, u)));
+  const goalKeys = incKeys.concat(goalOnly || []);
+  goalKeys.forEach((k) => goalUpgrades(k).forEach((u) => ups.set(u.id, u)));
   const seen = new Set();
   const list = (G.goals || []).map((e) => {
-    if (!incKeys.includes(e.page)) return null;
+    if (!goalKeys.includes(e.page)) return null;
     const u = ups.get(`${e.page}|${e.key}`);
     if (!u) return null;
     const li = goalUpLevelIdx(u, e.level);
@@ -20001,7 +20445,9 @@ function budgetDeadlineDrop() {
 // without a date for the main target - or, on a page the plan knows can't make
 // the target (lateKeys), the cheapest way after it. `peek` = only what is
 // already worked out (in memory or kept on the phone); nothing is asked.
-function budgetDeadlineFor(pages, selected, goals, due, mainDay, keys, onReady, lateKeys, peek) {
+// ("New hero packs first": their rows are added to the dated plan too.)
+function budgetDeadlineFor(...a) { return ngFirstApplyDated(budgetDeadlineForRaw(...a)); }
+function budgetDeadlineForRaw(pages, selected, goals, due, mainDay, keys, onReady, lateKeys, peek) {
   const segs = budgetGoalSegs(goals, pages), byDay = new Map(), late = { need: {}, pages: {} };
   const put = (m, seg) => Object.entries(seg || {}).forEach(([n, q]) => { m[n] = (m[n] || 0) + q; });
   // (each part also keeps every page's own share, so a leftover stays with its page)
@@ -21894,7 +22340,9 @@ const shiningTomesPer = () => Number(ISL_RULES.skinTomes) || 10000;
 const shiningTomesIn = (bp) => (Number((bp || {})["Glorious Tome"]) || 0) + (Number((bp || {})["Lucky Glorious Tome Chest"]) || 0) * (Number(chestGives("Lucky Glorious Tome Chest")["Glorious Tome"]) || 0);
 function shiningSkinsDefault() { const v = siteConfig("shining_skins", null); return Array.isArray(v) ? v.map(String) : []; }
 // The list in use: the owner's own view is the default; others their own list, else the default.
-function shiningSkinsListOf(saved) { if (IS_OWNER) return shiningSkinsDefault(); return saved && Array.isArray(saved.list) ? saved.list.map(String) : shiningSkinsDefault(); }
+// (Since 26 Nov 2026 the owner's default picks no longer count for a person who never picked:
+// they start with none, so Budgets / My Purchases don't plan skins they didn't choose.)
+function shiningSkinsListOf(saved) { if (IS_OWNER) return shiningSkinsDefault(); return saved && Array.isArray(saved.list) ? saved.list.map(String) : []; }
 // The picked skins (rows), in pick order.
 // Globe Level skins (Frost Spheres and each level's extra skins) are never Shining City skins.
 const shiningGlobeSkin = (n) => !!(typeof ALL_GLOBE_WIRED_NAMES_GLOBAL !== "undefined" && ALL_GLOBE_WIRED_NAMES_GLOBAL && ALL_GLOBE_WIRED_NAMES_GLOBAL.has(n));

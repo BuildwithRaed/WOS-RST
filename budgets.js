@@ -5,7 +5,7 @@
 // code and the Budgets state other pages read (My Purchases, the Menu, the Dashboard,
 // recordBudgetNeeds / budgetInvalidate, admin.js / scan.js / the planner worker) stay
 // in app.js. The site loads the packed copy budgets.min.js (tools/stamp.js).
-window.BUDGETS_BUILD = "0655976263";
+window.BUDGETS_BUILD = "9097fd485c";
 
 // Order of the Budgets page tiles (owner picked A, 22 Nov 2026): per person in
 // calc_state budget_page_order = { order: [calcKeys] }; display only. Pages
@@ -160,7 +160,7 @@ function budgetForceRecalc() {
   budgetInvalidate();
   dashDataChanged();
 }
-let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" | "cheapest" (not saved)
+let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" | "cheapest" (saved: budgetFollowView, also followed by My Purchases)
 let BUDGET_GOALS_OPEN = true; // the card's fold (kept for the visit)
 let BUDGET_GOAL_ADD = null;   // { page } while "+ Add mini target" is open
 // Upcoming dates a goal can be "By" (about 6 months): game events (SvS, KOI, the admin's),
@@ -231,6 +231,155 @@ function goalByPopHtml(myBy, mainDay, no) {
   early += earlyEv.slice(-2).join(""); // (the last two before the release are enough to show why)
   const lock = no ? `<div class="gbp-lock">&#128274; <b>${esc(t("gbp_lock_b").replace("{g}", no.gen).replace("{d}", md(relD)))}</b> ${esc(t("gbp_lock"))}</div>` : "";
   return `<div class="gbp${no ? " no" : ""}" role="dialog" aria-label="${esc(t("goal_by_title"))}"><div class="gbp-t">${esc(t("gbp_upcoming"))}</div><div class="gbp-l">${lock}${early ? `<div class="gbp-early">${early}</div>` : ""}${h}</div><button type="button" class="gbp-pick" data-gbpcal>&#128197; ${esc(t("gbp_pick_date"))}</button></div>`;
+}
+// ---- Budgets Settings sheet = T2 "Summary first" ----
+// "Your plan" card on top, then folds that open one at a time (kept for the
+// visit): Target date (quick chips, the K4-style list and a mini month),
+// Currency, My budget (admin unless Visibility opens it), New hero packs first.
+let BUDGET_SET_OPEN = "target"; // the open fold: "target" | "cur" | "spend" | "ngf" | null
+let BUDGET_TGT_POP = null;      // the date list under "Done by": { cal: null | { m, sel } }
+let BUDGET_SET_SAVED = 0;       // when the target was last saved here (the green "Saved" pill)
+function bstMd(d) { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); }
+// The new heroes "New hero packs first" covers (faces), whether it is on or not.
+function bstNgHeroes() {
+  const seen = new Set(), out = [];
+  ngFirstVirtual(true).forEach((p) => { if (!seen.has(p.hero)) { seen.add(p.hero); out.push(p.hero); } });
+  return out;
+}
+function bstFacesHtml(names) {
+  return names.length ? `<div class="bst-faces">${names.map((n) => { const im = HERO_IMG_BY_NAME[n]; return `<span>${im ? `<img src="${esc(im)}" alt="" loading="lazy" />` : ""}${esc(n)}</span>`; }).join("")}</div>` : "";
+}
+function bstNextDays() {
+  const t0 = packStartOfToday(), DAY = 86400000, end = new Date(t0.getTime() + 200 * DAY);
+  const sv = (GAME_EVENTS || []).find((e) => e.key === "svs");
+  const svs = sv ? gameEventStarts(sv, t0, end).find((d) => d > t0) : null;
+  const gen = (newGenStarts(newGenBaseDay(), 6) || []).find((d) => d > t0) || null;
+  return { svs, gen };
+}
+function bstTargetPopHtml(targetDays) {
+  const t0 = packStartOfToday(), DAY = 86400000;
+  const P = BUDGET_TGT_POP || {};
+  if (P.cal) {
+    const keep = BUDGET_BY_CAL;
+    BUDGET_BY_CAL = P.cal;
+    let h;
+    try { h = goalByPopHtml("", targetDays, null); } finally { BUDGET_BY_CAL = keep; }
+    const sd = P.cal.sel ? packParseDay(P.cal.sel) : null, n = sd ? Math.round((sd - t0) / DAY) : 0;
+    const use = `<div class="gbp-use"><span>${sd ? `<b>${esc(bstMd(sd))}</b> · ${esc(t("gbp_in_days").replace("{n}", n))}` : esc(t("gbp_tap_day"))}</span><span class="bst-use-b"><button type="button" class="btn small ghost" data-bstback>${esc(t("bst_cancel"))}</button><button type="button" class="btn small" data-bstuse ${sd ? "" : "disabled"}>${esc(sd ? t("bst_set_d").replace("{d}", bstMd(sd)) : t("gbp_use_x"))}</button></span></div>`;
+    return h.replace(/<div class="gbp-use">[\s\S]*?<\/div>\s*<\/div>\s*$/, use + "</div>")
+      .replace('class="gbp cal"', 'class="gbp cal bst-pop"')
+      .replace(/data-gbpday=/g, "data-bstday=").replace(/data-gbpmon=/g, "data-bstmon=").replace(/data-gbpback/g, "data-bstback");
+  }
+  const tg = targetDays != null ? new Date(t0.getTime() + targetDays * DAY) : null;
+  const row = (key, dot, name, when, on, sub) => `<button type="button" class="gbp-r${on ? " on" : ""}" data-bstset="${esc(key)}">${dot}<span class="gbp-n">${esc(name)}${sub ? ` <small>${esc(sub)}</small>` : ""}</span><span class="gbp-w">${esc(when)}</span>${on ? '<span class="gbp-ok">&#10003;</span>' : ""}</button>`;
+  let h = "";
+  if (tg) h += row(packDayKey(tg), '<span class="gbp-ic">&#128197;</span>', t("gbp_your_date"), bstMd(tg), true);
+  h += `<div class="bst-wks">${[2, 4, 8].map((w) => { const d = new Date(t0.getTime() + w * 7 * DAY); return `<button type="button" data-bstset="${packDayKey(d)}"><b>${esc(t("bst_plus_w").replace("{n}", w))}</b><small>${esc(bstMd(d))}</small></button>`; }).join("")}</div>`;
+  const rng = (a, b) => (b.getTime() === a.getTime() ? bstMd(a) : a.getUTCMonth() === b.getUTCMonth() ? `${bstMd(a)} – ${b.getUTCDate()}` : `${bstMd(a)} – ${bstMd(b)}`);
+  const list = goalByEvents().slice();
+  // The next Exclusive Gear Forge (widgets) after each new heroes day.
+  const gens = list.filter((e) => e.kind === "gen");
+  gens.forEach((e) => { const fd = new Date(e.a.getTime() + ngForgeDays() * DAY); list.push({ kind: "forge", a: fd, b: fd, name: t("bst_forge_opens"), sub: t("ht_widgets"), col: "#e8b44c" }); });
+  const cut = new Date(t0.getTime() + 183 * DAY);
+  let mon = "";
+  list.filter((e) => e.a <= cut).sort((x, y) => x.a - y.a || x.name.localeCompare(y.name)).forEach((e) => {
+    const mm = e.a.toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "long", ...(e.a.getUTCFullYear() !== t0.getUTCFullYear() ? { year: "numeric" } : {}), timeZone: "UTC" });
+    if (mm !== mon) { mon = mm; h += `<div class="gbp-hd">${esc(mm)}</div>`; }
+    const dot = e.star ? '<span class="gbp-ic st">&#11088;</span>' : `<i class="gbp-dot" style="background:${e.col}"></i>`;
+    const gen = e.kind === "gen" ? (() => { const g = newGenGen(); const k = (newGenStarts(newGenBaseDay(), 6) || []).findIndex((d) => d.getTime() === e.a.getTime()); return g && k >= 0 ? `Gen ${g + k}` : ""; })() : e.sub;
+    h += row(packDayKey(e.a), dot, e.name, rng(e.a, e.b), false, gen);
+  });
+  return `<div class="gbp bst-pop" role="dialog" aria-label="${esc(t("bst_upcoming"))}"><div class="gbp-t">${esc(t("bst_upcoming"))}</div><div class="gbp-l">${h}</div><button type="button" class="gbp-pick" data-bstcal>&#128197; ${esc(t("gbp_pick_date"))}</button></div>`;
+}
+function budgetSettingsHtml(targetDays) {
+  const t0 = packStartOfToday(), DAY = 86400000;
+  const tg = targetDays != null ? new Date(t0.getTime() + targetDays * DAY) : null;
+  const saved = Date.now() - BUDGET_SET_SAVED < 6000;
+  const cur = DISPLAY_CURRENCY || "USD";
+  const spOn = spendFeatureOn(), sp = spOn ? spendSettings() : null, amt = spOn ? spendAmountLocal() : 0;
+  const perTxt = (sp && sp.per === "week") ? t("spend_week_s") : t("spend_month_s");
+  const ngOn = ngFirstOn(), ngH = bstNgHeroes();
+  const pills = [`<span>${esc(cur)}</span>`];
+  if (spOn && amt > 0) pills.push(`<span>${esc(t("bst_budget_pill").replace("{v}", Math.round(amt).toLocaleString()).replace("{per}", perTxt))}</span>`);
+  if (ngOn) pills.push(`<span>${esc(t("bst_ngf_pill"))} &#10003;</span>`);
+  const sumTitle = tg ? (targetDays < 0 ? t("bst_planning_over").replace("{d}", bstMd(tg)) : t("bst_planning_to").replace("{d}", bstMd(tg)).replace("{n}", targetDays)) : t("pack_no_date");
+  const sum = `<div class="bst-sum"><div class="bst-k">${esc(t("bst_your_plan"))}</div><div class="bst-v${saved ? " ok" : ""}">${esc(sumTitle)}</div><div class="bst-pills">${pills.join("")}</div></div>`;
+  const fold = (key, ic, title, sub, body, tag) => {
+    const open = BUDGET_SET_OPEN === key;
+    return `<div class="bst-f${open ? " open" : ""}" data-bstfold="${key}"><button type="button" class="bst-fh" data-bstf="${key}" aria-expanded="${open}"><span class="bst-ic">${ic}</span><span class="bst-ft"><b>${esc(title)}${tag || ""}</b><small>${sub}</small></span><span class="bst-ar">${open ? "&#9652;" : "&#9662;"}</span></button>${open ? `<div class="bst-fb">${body}</div>` : ""}</div>`;
+  };
+  // Target date
+  const nx = bstNextDays();
+  const dateTxt = tg ? tg.toLocaleDateString(LANG === "en" ? "en-GB" : LANG, { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" }) : "—";
+  const tgSub = tg ? `${esc(tg.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }))} · ${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}` : esc(t("pack_no_date"));
+  const chip = (cls, d, label) => (d ? `<button type="button" class="bst-chip ${cls}" data-bstset="${packDayKey(d)}" title="${esc(bstMd(d))}">${esc(label)}</button>` : "");
+  const tgBody = `<div class="bset-row bst-dr"><span class="bset-l">${esc(t("bst_done_by"))}</span><span class="bset-c"><button type="button" class="bst-date${BUDGET_TGT_POP ? " on" : ""}" data-bstdate aria-expanded="${!!BUDGET_TGT_POP}">${esc(dateTxt)} <span aria-hidden="true">&#128197;</span></button>${BUDGET_TARGET ? `<button type="button" class="btn small ghost bset-x" data-budgettargetclear title="${esc(t("pack_no_date"))}">&times;</button>` : ""}</span></div>
+    ${BUDGET_TGT_POP ? bstTargetPopHtml(targetDays) : ""}
+    <div class="bst-chips">${chip("sv", nx.svs, t("bst_next_svs"))}${chip("gen", nx.gen, t("bst_new_gen"))}${chip("", new Date(t0.getTime() + 28 * DAY), t("bst_plus_w").replace("{n}", 4))}</div>`;
+  let h = sum + fold("target", "&#127919;", t("bst_target"), tgSub, tgBody, saved ? ` <span class="bst-saved">&#10003; ${esc(t("bst_saved"))}</span>` : "");
+  // Currency
+  h += fold("cur", "&#128177;", t("bst_currency"), esc(cur), `<div class="bset-row"><span class="bset-l">${esc(t("show_prices_in"))}</span><span class="bset-c">${currencySelectHtml(`id="budgetsCurrency" aria-label="${esc(t("show_prices_in"))}"`)}</span></div><div class="meta bset-note">${esc(t("bst_cur_note"))}</div>`);
+  // My budget
+  if (spOn) {
+    const visitorsToo = !!((siteConfig("visitor_access", {}) || {}).spendbudget === true);
+    const adminOnly = IS_OWNER && !visitorsToo;
+    const tag = adminOnly ? ` <span class="bset-tag" title="${esc(t("spend_admin_only"))}">&#128274; ${esc(t("spend_admin_tag"))}</span>` : "";
+    const sub = amt > 0 ? esc(t("bst_spend_sub").replace("{v}", `${Math.round(amt).toLocaleString()} ${packLocalCode("USD", 4.99)}`).replace("{per}", perTxt)) + (sp.carry ? ` · ${esc(t("bst_spend_keep"))}` : "") : esc(t("bst_spend_off"));
+    const body = `<div class="bud-spend">
+      <div class="bset-row"><span class="bset-l">${esc(t("spend_amount"))}</span><span class="bset-c"><input type="number" min="0" step="1" inputmode="decimal" data-spendamt value="${amt > 0 ? Math.round(amt) : ""}" placeholder="0" aria-label="${esc(t("spend_title"))}" /><span class="meta">${esc(packLocalCode("USD", 4.99))}</span><span class="bud-spend-per"><button type="button" data-spendper="week" class="${sp.per === "week" ? "on" : ""}">${esc(t("spend_week_s"))}</button><button type="button" data-spendper="month" class="${sp.per === "month" ? "on" : ""}">${esc(t("spend_month_s"))}</button></span></span></div>
+      <label class="bset-row" style="cursor:pointer;"><span class="bset-l">${esc(t("spend_carry_short"))}<small>${esc(t("spend_carry_sub"))}</small></span><input type="checkbox" class="bset-sw" data-spendcarry ${sp.carry ? "checked" : ""} aria-label="${esc(t("spend_carry"))}" /></label>
+      ${amt > 0 ? "" : `<div class="meta bset-note">${esc(t("spend_hint"))}</div>`}
+      ${adminOnly ? `<div class="meta bset-note">${esc(t("spend_visitors_note"))}</div>` : ""}
+    </div>`;
+    h += fold("spend", "&#128176;", t("spend_title"), sub, body, tag);
+  }
+  // New hero packs first
+  const ngSub = `${esc(ngOn ? t("bst_ngf_on") : t("bst_ngf_off"))}${ngH.length ? ` · ${esc(ngH.join(" · "))}` : ""}`;
+  const ngBody = `<label class="bset-row" style="cursor:pointer;"><span class="bset-l">${esc(t("bst_ngf_row"))}<small>${esc(t("bst_ngf_desc"))}</small></span><input type="checkbox" class="bset-sw" data-bstngf ${ngOn ? "checked" : ""} aria-label="${esc(t("bst_ngf"))}" /></label>${ngH.length ? bstFacesHtml(ngH) : `<div class="meta bset-note">${esc(t("bst_ngf_none"))}</div>`}`;
+  h += fold("ngf", "&#129464;", t("bst_ngf"), ngSub, ngBody, ` <span class="bst-new">${esc(t("bst_new"))}</span>`);
+  h += `<button type="button" class="bst-rc" data-budgetrecalc>&#8635; ${esc(t("bst_recalc"))}</button>`;
+  return `<div class="t12x-settings b3-set bst">${h}</div>`;
+}
+// The sheet's own taps (the date list, the folds, the switch); the rest keep their handlers.
+function wireBudgetSettings(content, redraw) {
+  const box = content.querySelector(".bst");
+  if (!box) return;
+  const saveTarget = (v) => {
+    BUDGET_TARGET = v || "";
+    saveCalcState("pack_target_budgets", { date: BUDGET_TARGET });
+    BUDGET_TGT_POP = null; BUDGET_SET_SAVED = Date.now();
+    redraw();
+  };
+  box.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b || !box.contains(b)) return;
+    if (b.dataset.bstf) { BUDGET_SET_OPEN = BUDGET_SET_OPEN === b.dataset.bstf ? null : b.dataset.bstf; if (BUDGET_SET_OPEN !== "target") BUDGET_TGT_POP = null; redraw(); return; }
+    if (b.hasAttribute("data-bstdate")) { BUDGET_TGT_POP = BUDGET_TGT_POP ? null : { cal: null }; redraw(); return; }
+    if (b.dataset.bstset) { saveTarget(b.dataset.bstset); return; }
+    if (b.hasAttribute("data-bstcal")) { const sel = BUDGET_TARGET || null; BUDGET_TGT_POP = { cal: { m: (sel || packDayKey(packStartOfToday())).slice(0, 7), sel } }; redraw(); return; }
+    if (b.hasAttribute("data-bstback")) { BUDGET_TGT_POP = { cal: null }; redraw(); return; }
+    if (b.dataset.bstmon && BUDGET_TGT_POP && BUDGET_TGT_POP.cal) { const [y, m] = BUDGET_TGT_POP.cal.m.split("-").map(Number), d = new Date(Date.UTC(y, m - 1 + Number(b.dataset.bstmon), 1)); BUDGET_TGT_POP = { cal: { ...BUDGET_TGT_POP.cal, m: packDayKey(d).slice(0, 7) } }; redraw(); return; }
+    if (b.dataset.bstday && BUDGET_TGT_POP && BUDGET_TGT_POP.cal) { BUDGET_TGT_POP = { cal: { ...BUDGET_TGT_POP.cal, sel: b.dataset.bstday } }; redraw(); return; }
+    if (b.hasAttribute("data-bstuse") && BUDGET_TGT_POP && BUDGET_TGT_POP.cal && BUDGET_TGT_POP.cal.sel) { saveTarget(BUDGET_TGT_POP.cal.sel); return; }
+  });
+  const ng = box.querySelector("[data-bstngf]");
+  if (ng) ng.addEventListener("change", () => {
+    saveCalcState("budget_prefs", { ...budgetPrefs(), ngFirst: ng.checked });
+    if (typeof PACK_PLAN_CACHE !== "undefined") { PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); }
+    budgetInvalidate();
+    redraw();
+  });
+}
+// Heroes page window: what "New hero packs first" counted as bought.
+function ngFirstNoteHtml() {
+  if (!ngFirstOn()) return "";
+  const v = ngFirstVirtual();
+  if (!v.length) return "";
+  const hs = [...new Set(v.map((p) => p.hero))];
+  const fw = v.find((p) => p.kind === "w"), parts = [];
+  if (fw) parts.push(t("bud_ngf_forge").replace("{n}", (Number(fw.row) || 0) + 1));
+  if (v.some((p) => p.kind === "s")) parts.push(t("bud_ngf_value"));
+  return `<div class="bud-vip bud-ngf">&#129464; ${esc(t("bud_ngf_note").replace("{h}", hs.join(", ")).replace("{w}", parts.join(" + ")))}</div>`;
 }
 let BUDGET_TR_TAB = "free";    // a page sheet's trades tab: "free" | "packs" (for the visit)
 let BUDGET_HT_OPEN = false;     // Hero targets fold (for the visit)
@@ -450,6 +599,7 @@ function wireBudgetGoals(box) {
 // A Budgets page's picture: its Menu page's quick picture; Hero shards & widgets (whose page is
 // the Backpack, an emoji there) the Mythic General Hero Shard.
 // Shorter names on the Budgets page tiles only (full name in the tile's title / aria-label).
+let B3_START_MORE = false; // "Start here": every page chip shown (for the visit)
 const B3_TILE_SHORT = { research_center: "b3_tile_research_center", hero_shards: "b3_tile_hero_shards" };
 let BUDGET_PLAN_RUNNING = null; // "targetDays|ticks|cands|data gen" of the packs plan being worked out in the background
 let BUDGET_PLAN_FAILED = null; // the same key when that plan failed (cleared by ↻ Recalculate)
@@ -590,10 +740,7 @@ async function renderBudgetsPageMain(opts = {}) {
   // card only changes what's shown below; nothing is saved.
   const split = combinedRaw.split && combinedRaw.split.target && combinedRaw.split.late ? combinedRaw.split : null;
   const splitLate = split ? (split.late[BUDGET_SPLIT_LATE] || split.late.cheapest) : null;
-  const splitMain = split ? {
-    plan: { rows: split.target.plan.rows.concat(splitLate.plan.rows), total: split.target.plan.total + splitLate.plan.total, days: Math.max(split.target.plan.days || 0, splitLate.plan.days || 0), trades: (split.target.plan.trades || []).concat(splitLate.plan.trades || []), split: true },
-    shares: { ...split.target.shares, ...splitLate.shares },
-  } : null;
+  const splitMain = split ? budgetSplitMain(combinedRaw) : null;
   // The target is out of every page's reach and only the Fastest card is in so
   // far (the plan itself, the Cheapest card, is still being worked out): the
   // split around the target is the plan to show, as soon as it is in.
@@ -607,7 +754,9 @@ async function renderBudgetsPageMain(opts = {}) {
   const views = combinedRaw.views || {};
   const spendBest = wantCands && !have ? budgetSpendBest(combinedRaw) : null;
   const viewKeys = ["fastest", "main"].concat(reachable ? ["cheapest"] : []).filter((k) => k === "main" ? !!combinedRaw.chosen || startOnly : viewsWait || !!(views[k] && views[k].plan)).concat(spendBest ? ["budget"] : []);
+  // The saved plan (one for Budgets and My Purchases, budgetFollowView);
   // (kept on "My budget" while its plans are still being worked out)
+  BUDGET_VIEW = budgetFollowView();
   if (!viewKeys.includes(BUDGET_VIEW) && !(BUDGET_VIEW === "budget" && wantCands && pendingAll)) BUDGET_VIEW = "main";
   const planPending = pendingAll && !viewReady(BUDGET_VIEW);
   const pickDropped = (pg, k) => k === "fastest" ? (pg.fastest || pg.chosen) : k === "cheapest" ? (pg.cheapest || pg.chosen) : pg.chosen;
@@ -940,6 +1089,7 @@ async function renderBudgetsPageMain(opts = {}) {
       ${upFoldHtml(pg.calcKey)}
       ${!pg.live ? `<div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("budgets_snapshot_note"))}</div>` : ""}
       ${((x) => (x ? `<div class="bud-partial">&#128274; ${esc(t("bud_not_open").replace("{what}", x))}</div>` : ""))(budgetNotOpenText(pg.calcKey))}
+      ${pg.calcKey === "hero_shards" ? ngFirstNoteHtml() : ""}
       ${pg.vip ? `<div class="bud-vip">&#127873; ${esc(t("bud_vip_note").replace("{tier}", pg.vip.tier).replace("{n}", qty(pg.vip.total)).replace("{when}", BUDGET_TARGET ? t("vip_bundle_by").replace("{date}", fmtDate(pg.vip.days)) : t("vip_bundle_30d")).replace("{d}", pg.vip.daily))}</div>` : ""}
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials"))} <span style="font-weight:400;">(${esc(t("pack_mode_still"))} / ${esc(t("pack_mode_full"))})</span></div>${matsHtml(pg.needFull, pg.needStill, pg.owned)}
         ${tradesHtml(pg, shareOf)}</div>
@@ -995,8 +1145,10 @@ async function renderBudgetsPageMain(opts = {}) {
       const v = viewData(k), late = targetDays != null && v.days > targetDays;
       return `<button type="button" data-budgetview="${k}" class="${k === BUDGET_VIEW ? "on" : ""}${late ? " late" : ""}" title="${esc(`${title(k)} · ${fmtDate(v.days)}`)}">${esc(title(k))}<b>${packFmtLocal(Math.ceil(v.total), v.sample?.currency, true, v.sample?.price)}</b><span>${v.days === 0 ? esc(t("pack_ready_now")) : esc(shortDate(v.days))}</span></button>`;
     };
+    // My Purchases follows the plan picked here (one plan for both pages).
+    const fol = BUDGET_FOCUS_VIEW ? `<div class="meta b3-fol pick">&#8593; ${esc(t("b3_follow_both"))}</div>` : `<div class="meta b3-fol"><span class="good">&#10003; ${esc(t("b3_follow"))}</span> · ${esc(t("b3_follow_pick"))}</div>`;
     return `${targetDays != null && !reachable ? `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--danger);">${esc(t("budgets_cant_target").replace("{date}", fmtDate(targetDays)))}</div>` : ""}
-      <div class="bud-seg">${viewKeys.map(seg).join("")}</div>`;
+      <div class="bud-seg${BUDGET_FOCUS_VIEW ? " flash" : ""}">${viewKeys.map(seg).join("")}</div>${fol}`;
   })();
   // Items shared by pages from one Backpack amount count it once (see budgetSharedOwnedExtra).
   Object.values(budgetSharedOwnedExtra(pagesRaw.filter((pg) => !pg.missing && included(pg.calcKey)))).forEach((m) => Object.entries(m).forEach(([n, q]) => { grandMats[n] = (grandMats[n] || 0) + q; }));
@@ -1018,8 +1170,11 @@ async function renderBudgetsPageMain(opts = {}) {
     // own plan's packs join the dates below).
     const droppedKeys = (combinedRaw.dropped || []).filter((k) => included(k) && !planKeys.includes(k));
     const incKeys = planKeys.concat(droppedKeys);
-    const keys = planPending ? pagesRaw.filter((pg) => included(pg.calcKey) && !pg.missing && Object.keys(pg.need || {}).length).map((pg) => pg.calcKey) : incKeys;
-    const goals = budgetGoalList(pagesRaw, keys);
+    const keys0 = planPending ? pagesRaw.filter((pg) => included(pg.calcKey) && !pg.missing && Object.keys(pg.need || {}).length).map((pg) => pg.calcKey) : incKeys;
+    // Ticked pages with nothing to buy (the Backpack covers them): their picked goals are listed too, reached "Now".
+    const covKeys = pagesRaw.filter((pg) => included(pg.calcKey) && !pg.missing && !keys0.includes(pg.calcKey) && !Object.values(pg.needStill || {}).some((v) => v > 0) && !(planPending && Object.keys(pg.need || {}).length)).map((pg) => pg.calcKey);
+    const keys = keys0.concat(covKeys);
+    const goals = budgetGoalList(pagesRaw, keys0, false, covKeys);
     const nGoals = goals.filter((g) => !g.rest).length;
     if (!nGoals && !keys.length && !included("hero_shards")) return "";
     const ck = "__budget:" + incKeys.join(",");
@@ -1153,8 +1308,8 @@ async function renderBudgetsPageMain(opts = {}) {
     // level up to the page's target), the page's target, "By", date ✓ / ⚠.
     const rowHtml = (g, i) => {
       if (g.rest) return "";
-      const u = g.up, dt = dates && dates[i], d = due[i], myBy = by[g.id] || "", dIn = goalDeadlineDay(myBy);
-      const own = !planPending && !incKeys.includes(g.page), lim = d != null ? d : targetDays, last = u.levels.length - 1;
+      const u = g.up, dt = (dates && dates[i]) || (covKeys.includes(g.page) && !planPending ? { day: 0, spent: 0, done: true } : null), d = due[i], myBy = by[g.id] || "", dIn = goalDeadlineDay(myBy);
+      const own = !planPending && !incKeys.includes(g.page) && !covKeys.includes(g.page), lim = d != null ? d : targetDays, last = u.levels.length - 1;
       const pending = planPending || (dlPending && d != null);
       const dTxt = pending ? workHtml("span", "small") : own ? esc(t("gd_own")) : esc(gdTxt(dt));
       const kind = goalByKind(myBy) === "date" ? " date" : myBy ? " ev" : "";
@@ -1164,8 +1319,10 @@ async function renderBudgetsPageMain(opts = {}) {
         if (pending || own || !dt || dt.done || lim == null || !(dt.day > lim) || !(dt.needDue > 0) || dt.gotDue == null) return "";
         const it = dt.items || [], unit = it.length && it.every((n) => / Shards$/.test(n)) ? t("gu_u_shards") : it.length && it.every((n) => / Widgets$/.test(n)) ? t("gu_u_widgets") : it.length === 1 ? itemShortName(it[0]) : "";
         const dd = gdTxt({ day: lim });
-        return unit ? t("gu_part_by").replace("{d}", dd).replace("{a}", Math.floor(dt.gotDue + 1e-6).toLocaleString()).replace("{b}", Math.round(dt.needDue).toLocaleString()).replace("{u}", unit)
-          : t("gu_part_pct").replace("{d}", dd).replace("{p}", Math.floor(100 * dt.gotDue / dt.needDue));
+        // (and the day it is fully done, when the plan gets there)
+        const fully = dt.day > lim ? ` · ${t("gu_part_fully").replace("{d}", gdTxt(dt))}` : "";
+        return (unit ? t("gu_part_by").replace("{d}", dd).replace("{a}", Math.floor(dt.gotDue + 1e-6).toLocaleString()).replace("{b}", Math.round(dt.needDue).toLocaleString()).replace("{u}", unit)
+          : t("gu_part_pct").replace("{d}", dd).replace("{p}", Math.floor(100 * dt.gotDue / dt.needDue))) + fully;
       })();
       const partH = partTxt ? `<small class="gu-part">&#9888; ${esc(partTxt)}</small>` : "";
       const no = u.notOut || null;
@@ -1373,13 +1530,12 @@ async function renderBudgetsPageMain(opts = {}) {
   // goals as flags (admin), the pages as tiles, then Settings and This week.
   // The details (materials, stat gain, goal order, settings, a page's packs)
   // open in a sheet over the page (BUDGET_SHEET, kept across redraws).
-  if (BUDGET_FOCUS_SPEND === true && spendFeatureOn()) BUDGET_SHEET = "settings";
+  if (BUDGET_FOCUS_SPEND === true && spendFeatureOn()) { BUDGET_SHEET = "settings"; BUDGET_SET_OPEN = "spend"; }
   const ticked = pagesRaw.filter((pg) => included(pg.calcKey));
   // The phone Menu's Budgets tile shows this total (mmBudgetSet; nothing worked out for it).
   if (!planPending) mmBudgetSet(anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : null);
   const lateAll = targetDays != null && grandDays > targetDays;
   const shortDay = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000); return x.toLocaleDateString(LANG === "en" ? undefined : LANG, x.getUTCFullYear() !== new Date().getUTCFullYear() ? { month: "short", year: "numeric", timeZone: "UTC" } : { day: "numeric", month: "short", timeZone: "UTC" }); };
-  const b3Money = (v) => packFmtLocal(Math.ceil(v), (combined.chosen && combined.chosen.rows[0] && combined.chosen.rows[0].currency) || grandCurrency, true, combined.chosen && combined.chosen.rows[0] ? combined.chosen.rows[0].price : undefined);
   // The plan's parts as compact lines (bar, title, price, "N packs ▸"); which
   // pages are in each part shows on the tiles (and in the line's tooltip).
   const b3Line = (color, title, names, pl, shown) => {
@@ -1388,7 +1544,7 @@ async function renderBudgetsPageMain(opts = {}) {
     return `<details class="bud-line b3-sl"><summary title="${esc(names)}"><span class="bud-line-bar" style="background:${color};"></span><span class="bud-line-t">${title}</span><span class="bud-line-v"><b>${money}</b><span class="meta">${esc(t("bud_line_packs").replace("{n}", pl.rows.length))} <span class="bud-line-arrow">&#9656;</span></span></span></summary><div class="bud-line-body">${packRowsHtml(pl)}${trades}</div></details>`;
   };
   const plainNames = (keys) => keys.map((k) => packPageLabel(k)).join(" · ");
-  let b3Lines = "", b3Split = "", datesFold = false; // datesFold: the dates list has its Hide / Show button
+  let b3Lines = "", b3Split = "", b3After = ""; // b3Lines = the plan's lines (fold with Hide / Show), b3Split = the coloured bar, b3After = notes under the lines (always shown)
   // A short date for the lines and tiles: "Nov 30", with the year when it isn't this one ("Mar 27 ’27").
   const dShort = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000), s0 = x.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); return x.getUTCFullYear() !== packStartOfToday().getUTCFullYear() ? `${s0} \u2019${String(x.getUTCFullYear()).slice(2)}` : s0; };
   // The plain plan beside the dated one: "Everything by Dec 5 instead: QAR 40,246 · QAR 4,470 more".
@@ -1399,7 +1555,7 @@ async function renderBudgetsPageMain(opts = {}) {
   };
   // (the goals' dated plan is still being worked out: the plain plan shows until it is in)
   const datedWaitHtml = BUDGET_VIEW === "main" && !planPending && datedSetup && !dl ? `<div class="meta b3-vs"><span class="bud-pending small">${esc(t("bud_dates_wait"))}</span></div>` : "";
-  if (BUDGET_VIEW === "budget") b3Lines = spendHtml();
+  if (BUDGET_VIEW === "budget") { if (spendBest && spendBest.ok) b3Lines = spendHtml(); else b3After = spendHtml(); }
   else if (datedLead) {
     // Goals / pages with their own dates: one line per date (its packs inside),
     // the pages that can't make the target last; the bar is cut the same way.
@@ -1422,37 +1578,47 @@ async function renderBudgetsPageMain(opts = {}) {
     const whole = info.map((x) => Math.floor(x.v));
     let spare = Math.ceil(tot - 1e-6) - whole.reduce((a, v) => a + v, 0);
     info.map((x, i) => [x.v - Math.floor(x.v), i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (spare > 0) { whole[i]++; spare--; } });
-    // Hide / Show for the list of dates (owner, 11 Nov 2026): the site's usual
-    // button at the end of the bar; hidden, the bar and the line under the list
-    // stay. Remembered with the other Hide choices (calc_state "bar_hidden", key "bud:dates").
-    datesFold = info.length > 1;
-    const hid = BAR_SHOW_ALL["bud:dates"] === false;
-    b3Split = datesFold ? `<div class="b3-splitrow"><div class="b3-split">${info.map((x, i) => `<i style="${i === info.length - 1 ? "flex:1" : `width:${Math.max(3, tot > 0 ? (x.v / tot) * 100 : 0).toFixed(1)}%`}; background:${x.color};"></i>`).join("")}</div><button type="button" class="g1-fold" data-g1fold="bud:dates" aria-expanded="${!hid}">${esc(t(hid ? "g1_show" : "g1_hide"))} ${hid ? "&#9662;" : "&#9652;"}</button></div>` : "";
-    b3Lines = info.map((x, i) => b3Line(x.color, x.title, x.names, { rows: x.p.rows, trades: x.p.trades || [] }, whole[i])).join("") + datedVsHtml();
+    b3Split = info.length > 1 ? `<div class="b3-split">${info.map((x, i) => `<i style="${i === info.length - 1 ? "flex:1" : `width:${Math.max(3, tot > 0 ? (x.v / tot) * 100 : 0).toFixed(1)}%`}; background:${x.color};"></i>`).join("")}</div>` : "";
+    b3Lines = info.map((x, i) => b3Line(x.color, x.title, x.names, { rows: x.p.rows, trades: x.p.trades || [] }, whole[i])).join("");
+    b3After = datedVsHtml();
   } else if (split && BUDGET_VIEW === "main") {
     const tp = split.target.plan, lp = splitLate.plan, tv = packPlanLocal(tp), tot = tv + packPlanLocal(lp);
     const gw = tot > 0 ? Math.max(4, Math.min(96, (tv / tot) * 100)) : 50;
     b3Split = `<div class="b3-split"><i style="width:${gw.toFixed(1)}%; background:var(--good);"></i><i style="flex:1; background:var(--danger);"></i></div>`;
     b3Lines = b3Line("var(--good)", `<b>${esc(t("bud_line_by").replace("{date}", fmtDate(targetDays)))}</b>${tp.days ? ` <span class="meta">· ${tp.days} ${esc(t("pack_days_short_long"))}</span>` : ""}`, plainNames(split.target.keys), tp)
-      + b3Line("var(--danger)", `<b>${esc(t("bud_line_after"))}</b>`, `${plainNames(split.late.keys)} · ${t("bud_line_by").replace("{date}", fmtDate(lp.days))}`, lp) + droppedHtml + datedWaitHtml;
+      + b3Line("var(--danger)", `<b>${esc(t("bud_line_after"))}</b>`, `${plainNames(split.late.keys)} · ${t("bud_line_by").replace("{date}", fmtDate(lp.days))}`, lp);
+    b3After = droppedHtml + datedWaitHtml;
   } else if (planPending && BUDGET_VIEW === "main" && combinedRaw.split && combinedRaw.split.target && combinedRaw.split.target.plan) {
     // Only the by-target part of the split is in: its line now; the pages after the target are still being worked out.
     const tg = combinedRaw.split.target, tp = tg.plan;
     b3Lines = b3Line("var(--good)", `<b>${esc(t("bud_line_by").replace("{date}", fmtDate(targetDays)))}</b>${tp.days ? ` <span class="meta">· ${tp.days} ${esc(t("pack_days_short_long"))}</span>` : ""}`, plainNames(tg.keys || []), tp)
       + `<details class="bud-line b3-sl"><summary style="cursor:default;" title="${esc(t("budgets_working"))}"><span class="bud-line-bar" style="background:var(--danger);"></span><span class="bud-line-t"><b>${esc(t("bud_line_after"))}</b></span><span class="bud-line-v"><span class="bud-pending small">&hellip;</span></span></summary></details>`;
   } else if (combined.inc.length) {
-    b3Lines = (combined.chosen ? b3Line(lateAll ? "var(--danger)" : "var(--good)", `<b>${esc(t("bud_line_all"))}</b>`, plainNames(combined.inc), combined.chosen)
-      : `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`) + droppedHtml + datedWaitHtml;
+    if (combined.chosen) b3Lines = b3Line(lateAll ? "var(--danger)" : "var(--good)", `<b>${esc(t("bud_line_all"))}</b>`, plainNames(combined.inc), combined.chosen);
+    else b3After = `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`;
+    b3After += droppedHtml + datedWaitHtml;
+  }
+  // Hide / Show for the plan's lines, the same choice in every view (owner, 26 Nov 2026; was the
+  // dated list's only, 11 Nov): the site's usual button at the end of the coloured bar, or at the right
+  // of a slim row in its place when the view has no bar. Hidden, the total, the plan switch, the
+  // "My Purchases follows" line, the bar and the notes under the list stay; only the lines fold.
+  // Remembered with the other Hide choices (calc_state "bar_hidden", key "bud:dates": its old name,
+  // kept so an earlier choice still counts).
+  const linesHid = !!b3Lines && BAR_SHOW_ALL["bud:dates"] === false;
+  if (b3Lines) {
+    const btn = `<button type="button" class="g1-fold" data-g1fold="bud:dates" aria-expanded="${!linesHid}">${esc(t(linesHid ? "g1_show" : "g1_hide"))} ${linesHid ? "&#9662;" : "&#9652;"}</button>`;
+    b3Split = `<div class="b3-splitrow${b3Split ? "" : " b3-foldrow"}">${b3Split}${btn}</div>`;
+    b3Lines = `<div class="b3-lns">${b3Lines}</div>`;
   }
   const matsN = Object.keys(grandMats).length;
   const partialHtml = (() => { const noPlan = ticked.filter((pg) => pg.missing).length; return noPlan && !planPending ? `<div class="meta bud-partial">${esc(t("budgets_total_partial").replace("{n}", ticked.length - noPlan).replace("{m}", ticked.length))}</div>` : ""; })();
   const comingHtml = (() => { const n = (PACK_PURCHASES.list || []).filter(purPlannedCounts).length; return n ? `<button type="button" class="b3-a b3-coming" data-gototab="purchases">&#128722; ${esc(t("pur_budget_line").replace("{n}", n))}</button>` : ""; })();
-  const totalHtml = `<div class="b3-tile b3-hd${datesFold && BAR_SHOW_ALL["bud:dates"] === false ? " g1-folded" : ""}">
+  const totalHtml = `<div class="b3-tile b3-hd${linesHid ? " g1-folded" : ""}">
       <div class="b3-hd-l"><span>${esc(t("b3_total_ticked").replace("{n}", ticked.length))}</span>${matsN ? `<button type="button" class="b3-a" data-b3sheet="mats">${esc(t("b3_materials").replace("{n}", matsN))} &#8250;</button>` : ""}${grandDeltas.length ? `<button type="button" class="b3-a" data-b3sheet="stats">${esc(t("b3_stat_gain"))} &#8250;</button>` : ""}</div>
       <div class="b3-hd-t"><b>${planPending ? workHtml("span") : anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</b>${anyPlan && !planPending ? `<div><span class="${lateAll ? "rd" : "ok"}">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(t("bud_done_by"))} ${esc(fmtDate(grandDays))}`}</span>${grandDays ? `<small>${grandDays} ${esc(t("pack_days_short_long"))}</small>` : ""}</div>` : ""}</div>
       ${partialHtml}${comingHtml}
       ${viewCardsHtml}
-      ${b3Split}${b3Lines}
+      ${b3Split}${b3Lines}${b3After}
     </div>`;
   // Each page as a tile: picture, name, tick, its price, when it's done (by
   // the target / after it) and a ring = how much of what it needs you
@@ -1504,49 +1670,53 @@ async function renderBudgetsPageMain(opts = {}) {
       ${nothing ? `<div class="b3-pt-p nothing">&#10003; ${esc(t("b3_nothing"))}</div>` : x.bpCovers ? `<div class="b3-pt-p">&nbsp;</div>` : `<div class="b3-pt-p">${x.right}</div>`}
       ${x.bpCovers ? `<div class="b3-pt-m cov">${b3CovHtml}</div>` : `<div class="b3-pt-m ${cls}">${sub ? esc(sub) : "&nbsp;"}</div>`}${nothing ? ringHtml(100, true) : x.bpCovers ? ringHtml(100, false, true) : x.inc ? ringHtml(covered(x.pg), false) : ""}</div>`;
   };
-  const missing = B3_PAGES.filter((x) => x.pg.missing);
-  const tilesHtml = `<div class="b3-pgw"${arrangeHostAttr(B3_ARR_KEY)}><div class="b3-pgh"><span class="b3-lbl">${esc(t("b3_pages"))}</span>${arrangeBtnHtml(B3_ARR_KEY)}</div><div class="arr-hint b3-pghint">${esc(t("b3_arrange_hint"))}</div><div class="b3-pg">${b3PageOrdered(B3_PAGES.filter((x) => !x.pg.missing)).map(tileHtml).join("")}</div></div>`;
-  const missHtml = missing.length ? `<button type="button" class="b3-tile b3-np" data-b3sheet="missing"><span>${esc(t("b3_missing").replace("{n}", missing.length))}</span><span class="b3-ics">${missing.slice(0, 6).map((x) => { const ic = pageIcon(x); return ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""; }).join("")}</span><span class="b3-go">&#8250;</span></button>` : "";
+  // Pages the person hasn't set up (no own levels / picks, `budgetPageSetUp`) join the pages
+  // with no saved plan in one line; with none set up the "Start here" card shows instead.
+  const setUp = (x) => budgetPageSetUp(x.pg.calcKey);
+  const startMode = !B3_PAGES.some(setUp);
+  const missing = B3_PAGES.filter((x) => x.pg.missing || !setUp(x));
+  const missLabel = t(missing.every((x) => x.pg.missing) ? "b3_missing" : "b3_not_setup").replace("{n}", missing.length);
+  const tilesHtml = `<div class="b3-pgw"${arrangeHostAttr(B3_ARR_KEY)}><div class="b3-pgh"><span class="b3-lbl">${esc(t("b3_pages"))}</span>${arrangeBtnHtml(B3_ARR_KEY)}</div><div class="arr-hint b3-pghint">${esc(t("b3_arrange_hint"))}</div><div class="b3-pg">${b3PageOrdered(B3_PAGES.filter((x) => !x.pg.missing && setUp(x))).map(tileHtml).join("")}</div></div>`;
+  const missHtml = missing.length ? `<button type="button" class="b3-tile b3-np" data-b3sheet="missing"><span>${esc(missLabel)}</span><span class="b3-ics">${missing.slice(0, 6).map((x) => { const ic = pageIcon(x); return ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""; }).join("")}</span><span class="b3-go">&#8250;</span></button>` : "";
   // This week (Monday – Sunday): the shown plan's packs; opens My Purchases.
-  const wkData = (() => {
-    const pl = combined.chosen;
-    if (planPending) return null;
-    if (!pl || !pl.rows) return { money: 0, n: 0 };
-    const sched = packPlanSchedule(pl.rows), dow = (packStartOfToday().getUTCDay() + 6) % 7, names = new Set();
-    let m = 0;
-    pl.rows.forEach((r, i) => (sched[i] || []).forEach((sl) => {
-      if (Math.floor((sl.off + dow) / 7) !== 0) return;
-      m += r.count ? (packRowLocal(r) / r.count) * sl.count : 0;
-      names.add(purShortName(purPackName(r.title, (r.tables || []).map((id) => ({ id })))));
-    }));
-    return { money: m, n: names.size };
-  })();
+  // The same numbers as My Purchases' answer card (budgetWeekSums of the followed plan).
+  const wkData = planPending ? null : budgetWeekSums(budgetSuggestOf(combinedRaw, dlPlan ? { res: dl, setup: datedSetup } : null, BUDGET_VIEW));
   const wkTab = "purchases";
+  const wkMoney = (v) => { const r0 = combined.chosen && combined.chosen.rows[0]; return packFmtLocal(v, (r0 && r0.currency) || grandCurrency, false, r0 ? r0.price : undefined); };
   // Settings sits beside ↻ at the top; This week has the bottom row.
   // Title-row button: "⚙ <target date> · <currency>", opens the Settings sheet.
-  const setBtnHtml = `<button type="button" class="b3-setb hd-btn" data-b3sheet="settings" title="${esc(t("t12x_settings"))}" aria-label="${esc(t("t12x_settings"))}">&#9881; ${esc(targetDays != null ? shortDay(targetDays) : t("pack_no_date"))} · ${esc(DISPLAY_CURRENCY || "USD")}</button>`;
+  // No target yet: amber "⚙ Set a target · USD"; it opens Settings on the target fold.
+  const setBtnHtml = `<button type="button" class="b3-setb hd-btn${targetDays == null ? " need" : ""}" data-b3sheet="settings"${targetDays == null ? " data-b3settarget" : ""} title="${esc(t("t12x_settings"))}" aria-label="${esc(t("t12x_settings"))}">&#9881; ${esc(targetDays != null ? shortDay(targetDays) : t("b3_set_a_target"))} · ${esc(DISPLAY_CURRENCY || "USD")}</button>`;
   const lrHtml = `<div class="b3-lr">
-      <button type="button" class="b3-tile wk" data-gototab="${wkTab}"><img src="${esc(QUICK_ICONS[wkTab])}" alt="" /><span class="b3-lr-t"><b>${esc(t("b3_week").replace("{v}", wkData ? b3Money(wkData.money) : "…"))}</b><small>${esc(t("b3_week_n").replace("{n}", wkData ? wkData.n : "…"))} · ${esc(navLabel(wkTab))}</small></span><span class="b3-go">&#8250;</span></button>
+      <button type="button" class="b3-tile wk" data-gototab="${wkTab}"><img src="${esc(QUICK_ICONS[wkTab])}" alt="" /><span class="b3-lr-t"><b>${esc(t("b3_week_todo").replace("{v}", wkData ? wkMoney(wkData.todo) : "…"))}</b><small>${esc(t("b3_week_sub").replace("{n}", wkData ? wkData.todoN : "…").replace("{v}", wkData ? wkMoney(wkData.bought) : "…"))} · ${esc(navLabel(wkTab))}</small></span><span class="b3-go">&#8250;</span></button>
     </div>`;
+  // "Start here" (owner picked V1, 26 Nov 2026): while no page is set up, one card with three
+  // steps replaces the total, Free now, goal flags, This week and the page tiles.
+  const startHtml = (() => {
+    if (!startMode) return "";
+    const chipPages = B3_PAGES.filter((x) => x.pg.calcKey !== "shining_skins");
+    const nSet = chipPages.filter(setUp).length;
+    const goalsOn = visitorCan("goals");
+    const nGoals = goalsOn && BUDGET_GOALS ? (BUDGET_GOALS.goals || []).length : 0;
+    const step = (n, done, title, sub, body) => `<div class="b3-st-s${done ? " done" : ""}"><span class="b3-st-n">${done ? "&#10003;" : n}</span><div class="b3-st-b"><b>${title}</b><small>${esc(sub)}</small>${body || ""}</div></div>`;
+    const chip = (x) => { const ic = pageIcon(x), k = x.pg.calcKey; return `<button type="button" class="b3-st-c" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<b>${esc(B3_TILE_SHORT[k] ? t(B3_TILE_SHORT[k]) : x.label)}</b>${setUp(x) ? "" : `<em>${esc(t("b3_not_setup_s"))}</em>`}</button>`; };
+    const sh = B3_PAGES.find((x) => x.pg.calcKey === "shining_skins");
+    const shPic = sh ? pageIcon(sh) : "";
+    return `<div class="b3-start">
+      <div class="b3-tile b3-st">
+        <div class="b3-st-h"><b>${esc(t("b3_st_title"))}</b><small>${esc(t("b3_st_sub"))}</small></div>
+        ${step(1, targetDays != null, esc(t("b3_st1")), targetDays != null ? t("b3_st1_done").replace("{d}", shortDay(targetDays)) : t("b3_st1_sub"), `<button type="button" class="btn small b3-st-go" data-b3sheet="settings" data-b3settarget>&#9881; ${esc(t("b3_st1_btn"))}</button>`)}
+        ${step(2, nSet > 0, esc(t("b3_st2")), t("b3_st2_sub").replace("{n}", nSet).replace("{m}", chipPages.length), `<div class="b3-st-cs">${(B3_START_MORE ? chipPages : chipPages.slice(0, 6)).map(chip).join("")}${!B3_START_MORE && chipPages.length > 6 ? `<button type="button" class="b3-st-c more" data-b3startmore>+ ${esc(t("b3_st_more").replace("{n}", chipPages.length - 6))} &#8250;</button>` : ""}</div>`)}
+        ${goalsOn ? step(3, nGoals > 0, `${esc(t("b3_st3"))} <span class="b3-st-o">· ${esc(t("b3_st3_opt"))}</span>`, t("b3_st3_sub"), `<button type="button" class="btn small ghost b3-st-go" data-b3startgoal>${esc(t("gu_add"))}</button>`) : ""}
+      </div>
+      ${sh ? `<button type="button" class="b3-tile b3-st-l" data-gototab="${esc(BUDGET_PAGES[sh.i].tab)}">${shPic ? `<img src="${esc(shPic)}" alt="" loading="lazy" />` : ""}<span class="b3-st-t"><b>${esc(sh.label)}</b> · ${esc(t("b3_st_sh_none"))}</span><span class="b3-st-a">${esc(t("b3_st_sh_pick"))} &#8250;</span></button>` : ""}
+      <button type="button" class="b3-tile b3-st-l" data-gototab="backpack"><span class="b3-st-em" aria-hidden="true">&#127890;</span><span class="b3-st-t"><b>${esc(t("b3_st_bp"))}</b> · ${esc(t("b3_st_bp_sub"))}</span><span class="b3-go">&#8250;</span></button>
+      <div class="meta b3-st-f">${esc(t("b3_st_foot"))}</div>
+    </div>`;
+  })();
   // The sheet's content.
-  const settingsHtml = `<div class="t12x-settings b3-set">
-            <div class="bset-row"><span class="bset-l">${esc(t("pack_target_by"))}${targetDays != null ? `<small style="color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</small>` : `<small>${esc(t("pack_no_date"))}</small>`}</span>
-              <span class="bset-c"><input type="date" data-budgettarget value="${esc(BUDGET_TARGET)}" aria-label="${esc(t("pack_target_by"))}" />${BUDGET_TARGET ? `<button type="button" class="btn small ghost bset-x" data-budgettargetclear title="${esc(t("pack_no_date"))}">&times;</button>` : ""}</span></div>
-            <div class="bset-row"><span class="bset-l">${esc(t("show_prices_in"))}</span><span class="bset-c">${currencySelectHtml(`id="budgetsCurrency" aria-label="${esc(t("show_prices_in"))}"`)}</span></div>
-            ${spendFeatureOn() ? (() => {
-              const sp = spendSettings(), amt = spendAmountLocal();
-              const visitorsToo = !!((siteConfig("visitor_access", {}) || {}).spendbudget === true);
-              const adminOnly = IS_OWNER && !visitorsToo;
-              return `<div class="bud-spend">
-                <div class="bset-sec"><b>${esc(t("spend_title"))}</b>${adminOnly ? `<span class="bset-tag" title="${esc(t("spend_admin_only"))}">&#128274; ${esc(t("spend_admin_tag"))}</span>` : ""}</div>
-                <div class="bset-row"><span class="bset-l">${esc(t("spend_amount"))}</span><span class="bset-c"><input type="number" min="0" step="1" inputmode="decimal" data-spendamt value="${amt > 0 ? Math.round(amt) : ""}" placeholder="0" aria-label="${esc(t("spend_title"))}" /><span class="meta">${esc(packLocalCode("USD", 4.99))}</span><span class="bud-spend-per"><button type="button" data-spendper="week" class="${sp.per === "week" ? "on" : ""}">${esc(t("spend_week_s"))}</button><button type="button" data-spendper="month" class="${sp.per === "month" ? "on" : ""}">${esc(t("spend_month_s"))}</button></span></span></div>
-                <label class="bset-row" style="cursor:pointer;"><span class="bset-l">${esc(t("spend_carry_short"))}<small>${esc(t("spend_carry_sub"))}</small></span><input type="checkbox" class="bset-sw" data-spendcarry ${sp.carry ? "checked" : ""} aria-label="${esc(t("spend_carry"))}" /></label>
-                ${amt > 0 ? "" : `<div class="meta bset-note">${esc(t("spend_hint"))}</div>`}
-                ${adminOnly ? `<div class="meta bset-note">${esc(t("spend_visitors_note"))}</div>` : ""}
-              </div>`;
-            })() : ""}
-          </div>`;
-  const missRow = (x) => { const ic = pageIcon(x); return `<div class="b3-mrow"><label><input type="checkbox" data-budgetinc="${esc(x.pg.calcKey)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" />${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<span><b>${esc(x.label)}</b>${x.right}</span></label><button type="button" class="btn small ghost" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${esc(t("budgets_open_page"))}</button></div>`; };
+  const settingsHtml = budgetSettingsHtml(targetDays);
+  const missRow = (x) => { const ic = pageIcon(x); return `<div class="b3-mrow"><label><input type="checkbox" data-budgetinc="${esc(x.pg.calcKey)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" />${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<span><b>${esc(x.label)}</b>${x.pg.missing ? x.right : `<span class="meta" style="font-size:11px;">${esc(t("b3_not_setup_s"))}</span>`}</span></label><button type="button" class="btn small ghost" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${esc(t("budgets_open_page"))}</button></div>`; };
   const pageSheet = (x) => `<div class="b3-ps-top"><label class="b3-ps-inc"><input type="checkbox" data-budgetinc="${esc(x.pg.calcKey)}" ${x.inc ? "checked" : ""} /> ${esc(t("b3_tick"))}</label><span class="b3-ps-v">${isNothing(x) ? `<span style="color:var(--good); font-size:12px;">&#10003; ${esc(t("budgets_nothing_planned"))}</span>` : x.bpCovers ? b3CovHtml : x.right || ""}</span><button type="button" class="btn small" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${esc(t("budgets_open_page"))} &#8250;</button></div>
       ${x.pg.calcKey === "hero_gear" ? hgSetsHtml() : ""}
       ${x.pg.sh ? shiningSkinsSheetHtml(x.pg.sh) : ""}
@@ -1559,7 +1729,7 @@ async function renderBudgetsPageMain(opts = {}) {
     if (sh === "goals" && visitorCan("goals") && goalsCardHtml) return { title: t("goals_title"), info: goalsInfoHtml, html: goalsCardHtml };
     if (sh === "settings") return { title: t("t12x_settings"), html: settingsHtml };
     if (sh === "cando" && visitorCan("cando")) return { title: t("cdb_sheet_title"), html: `<div data-cdasheet>${cdaSheetInner()}</div>` };
-    if (sh === "missing" && missing.length) return { title: t("b3_missing").replace("{n}", missing.length), html: missing.map(missRow).join("") };
+    if (sh === "missing" && missing.length && !startMode) return { title: missLabel, html: missing.map(missRow).join("") };
     if (sh.startsWith("page:")) { const x = B3_PAGES.find((y) => "page:" + y.pg.calcKey === sh); if (x) return { title: x.pg.calcKey === "shining_skins" ? t("sh_title") : (x.glabel ? `${x.glabel} · ` : "") + x.label, html: pageSheet(x) }; }
     return null;
   })();
@@ -1571,12 +1741,17 @@ async function renderBudgetsPageMain(opts = {}) {
       <div class="plx-head b3-head"><h2>${esc(t("budgets_title"))}</h2>${setBtnHtml}<button type="button" class="b3-sq hd-btn" data-budgetrecalc title="${esc(t("budgets_recalc_hint"))}" aria-label="${esc(t("budgets_recalc"))}">&#8635;</button></div>
       <p class="desc">${esc(t("budgets_desc"))}</p>
       <div class="b3-cols">
-        <div class="b3-left">${totalHtml}${cdaTileHtml()}${goalFlagsHtml}${lrHtml}</div>
-        <div class="b3-right">${tilesHtml}${missHtml}</div>
+        ${startMode ? startHtml : `<div class="b3-left">${totalHtml}${cdaTileHtml()}${goalFlagsHtml}${lrHtml}</div>
+        <div class="b3-right">${tilesHtml}${missHtml}</div>`}
       </div>
       ${sheetHtml}
     </div>`; });
   if (!planPending) holdPageHeight(false);
+  // My Purchases' "Following: … change ›": the plan switch, scrolled to once.
+  if (BUDGET_FOCUS_VIEW === true) {
+    const sg = content.querySelector(".bud-seg");
+    if (sg) { sg.scrollIntoView({ block: "center" }); BUDGET_FOCUS_VIEW = "scrolled"; }
+  }
   if (BUDGET_FOCUS_SPEND) {
     const sb = content.querySelector(".bud-spend");
     if (sb) {
@@ -1598,6 +1773,8 @@ async function renderBudgetsPageMain(opts = {}) {
   }));
   content.querySelectorAll("[data-budgetview]").forEach((b) => b.addEventListener("click", () => {
     BUDGET_VIEW = b.dataset.budgetview;
+    BUDGET_FOCUS_VIEW = false;
+    budgetFollowSet(BUDGET_VIEW);
     const y = window.scrollY;
     { const sq = RENDER_SEQ; renderBudgetsPage().then(() => window.scrollTo(0, y)).catch((e) => pageRedrawFailed(e, sq)); }
   }));
@@ -1624,7 +1801,7 @@ async function renderBudgetsPageMain(opts = {}) {
     BUDGET_SPEND = { ...(BUDGET_SPEND || {}), ...patch };
     saveCalcState("budget_spend", BUDGET_SPEND);
     PUR_SUGGEST = null;
-    if (show && spendActive()) BUDGET_VIEW = "budget";
+    if (show && spendActive()) { BUDGET_VIEW = "budget"; budgetFollowSet("budget"); }
     const y = window.scrollY;
     { const sq = RENDER_SEQ; renderBudgetsPage().then(() => window.scrollTo(0, y)).catch((e) => pageRedrawFailed(e, sq)); }
   };
@@ -1650,11 +1827,15 @@ async function renderBudgetsPageMain(opts = {}) {
     const btn = document.querySelector(`.topnav-groups [data-tab="${b.dataset.gototab}"]`);
     if (btn) btn.click();
   }));
+  wireBudgetSettings(content, () => keepPlace(() => renderBudgetsPage()));
   const goalsBox = content.querySelector(".bud-goals");
   if (goalsBox) wireBudgetGoals(goalsBox);
   // B3: sheets, page tiles, goal flags.
   const b3Redraw = () => keepPlace(() => renderBudgetsPage());
-  content.querySelectorAll("[data-b3sheet]").forEach((b) => b.addEventListener("click", () => { BUDGET_SHEET = b.dataset.b3sheet; b3Redraw(); }));
+  content.querySelectorAll("[data-b3sheet]").forEach((b) => b.addEventListener("click", () => { BUDGET_SHEET = b.dataset.b3sheet; if (b.hasAttribute("data-b3settarget")) BUDGET_SET_OPEN = "target"; b3Redraw(); }));
+  // "Start here" step 3: the Order of goals sheet with its add-goal form open.
+  content.querySelectorAll("[data-b3startmore]").forEach((b) => b.addEventListener("click", () => { B3_START_MORE = true; b3Redraw(); }));
+  content.querySelectorAll("[data-b3startgoal]").forEach((b) => b.addEventListener("click", () => { BUDGET_SHEET = "goals"; BUDGET_GOAL_ADD = {}; b3Redraw(); }));
   const b3bg = content.querySelector("[data-b3bg]");
   if (b3bg) b3bg.addEventListener("click", (e) => { if (e.target === b3bg || e.target.closest("[data-b3close]")) { BUDGET_SHEET = null; b3bg.remove(); } });
   content.querySelectorAll("[data-b3page]").forEach((el) => {

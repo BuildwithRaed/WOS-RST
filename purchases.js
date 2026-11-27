@@ -5,7 +5,7 @@
 // live here; anything another page (Budgets, the Menu, the Dashboard, admin.js /
 // scan.js / the planner worker) uses stays in app.js. The site loads the packed copy
 // purchases.min.js (tools/stamp.js).
-window.PURCHASES_BUILD = "21c5b54f97";
+window.PURCHASES_BUILD = "0849c1c5d5";
 
 function packOpenSettingsOnPacks(id) {
   PACK_SETTINGS_FOCUS = String(id);
@@ -232,7 +232,46 @@ let PUR_SUG_WEEK = 0; // My Purchases: the suggestions' chosen week tab (0 = thi
 let PUR_SUG_KEEP = null; // My Purchases: the suggestions box's height / scroll before a redraw
 // The pack picker's All tab: category groups folded (kept for the visit and in this browser).
 const PUR_PICK_FOLD = new Set((() => { try { const v = JSON.parse(localStorage.getItem("pur_pick_fold") || "[]"); return Array.isArray(v) ? v.map(String) : []; } catch { return []; } })());
-let PUR_PICK_TAB = "on"; // Add a pack: the pack picker's tab ("on" / "soon" / "all"), kept for the visit
+const PUR_PICK_MORE = new Set(); // pack picker: folds showing every row ("Show N more" tapped), for the visit
+let PUR_PICK_GROUP = (() => { try { const v = localStorage.getItem("pur_pick_group"); return v === "cat" || v === "month" ? v : "date"; } catch { return "date"; } })(); // pack picker: by date (default), category or month
+// Your packs → Will buy (R3): which dates show and how ({ by: "month" | "week",
+// preset: "all" | "this" | "next" | "target" | "custom", from, to }), for the
+// visit and in this browser.
+let PUR_WB = (() => { try { const v = JSON.parse(localStorage.getItem("pur_wb_range") || "null"); if (v && typeof v === "object") return { by: v.by === "week" ? "week" : "month", preset: ["all", "this", "next", "target", "custom"].includes(v.preset) ? v.preset : "all", from: v.from || "", to: v.to || "" }; } catch { /* none */ } return { by: "month", preset: "all", from: "", to: "" }; })();
+let PUR_PICK_MON = 0; // pack picker's Month view: months from this one (for the visit)
+// A ladder bought as the plan's steps plus the next steps ("extra") on the
+// same date is ONE purchase (owner, 26 Nov 2026): records of the same pack,
+// date, status and count whose steps follow on (a.row + 1 === b.from) are
+// joined: from = the first step's (left out for step 1), row = the last,
+// the plan's tag, extraFrom = the first extra step. `_x` marks an extra part
+// in a list being saved (dropped here).
+function purJoinLadders(list) {
+  if (!Array.isArray(list)) return list;
+  const arr = (list || []).slice();
+  const cnt = (p) => Math.max(1, Math.floor(Number(p.count) || 1));
+  const isX = (p) => !!p._x || p.plan === "extra";
+  let changed = false;
+  for (let i = 0; i < arr.length; i++) {
+    for (let j = 0; arr[i] && j < arr.length; j++) {
+      const a = arr[i], b = arr[j];
+      if (!b || i === j || String(a.table) !== String(b.table) || a.date !== b.date || (a.status || "planned") !== (b.status || "planned")) continue;
+      if (cnt(a) !== cnt(b) || !!a.hidden !== !!b.hidden || !!a.choice !== !!b.choice || Number(a.extra) > 0) continue;
+      if (!(Number(b.from) > 0) || (Number(a.row) || 0) + 1 !== Number(b.from) || !packLinkFor(a.table).sequential) continue;
+      const m = { ...a, row: b.row };
+      if (Number(b.extra) > 0) m.extra = b.extra;
+      if (!(Number(a.from) > 0)) delete m.from;
+      delete m._x;
+      if (isX(a) && isX(b)) { m.plan = "extra"; delete m.extraFrom; }
+      else if (isX(a)) { m.plan = b.plan; m.extraFrom = Number(a.from) || 0; }
+      else if (isX(b) && a.extraFrom == null) m.extraFrom = b.extraFrom != null ? b.extraFrom : Number(b.from);
+      if (a.choice) m.choice = { ...a.choice, label: [a.choice.label, b.choice.label].filter(Boolean).join(" · "), price: Math.round(((Number(a.choice.price) || 0) + (Number(b.choice.price) || 0)) * 100) / 100, gives: (() => { const g = {}; [a.choice.gives, b.choice.gives].forEach((x) => Object.entries(x || {}).forEach(([n, v]) => { g[n] = (g[n] || 0) + v; })); return g; })() };
+      arr[i] = m; arr[j] = null; changed = true; j = -1;
+    }
+  }
+  const out = changed ? arr.filter(Boolean) : arr;
+  out.forEach((p, k) => { if (p && p._x) { const q = { ...p }; delete q._x; out[k] = q; changed = true; } });
+  return changed ? out : list;
+}
 // My Purchases lists = O1: one switch Next weeks | Coming | Bought
 // under the checklist, the chosen list on the page (kept in this browser).
 // Box 1: the week strip moved into the This week box,
@@ -284,6 +323,9 @@ async function renderPurchasesPageMain() {
   if (seq !== RENDER_SEQ) return;
   await Promise.all([ensureBarHidden(), visitorCan("goals") ? ensureBudgetGoals() : null]);
   if (seq !== RENDER_SEQ) return;
+  // Old pairs of one ladder (plan steps + extra steps saved apart) show and
+  // edit as one purchase; joined here, saved with the next change.
+  { const jl = purJoinLadders(PACK_PURCHASES.list); if (jl !== PACK_PURCHASES.list) PACK_PURCHASES.list = jl; }
   const today = packDayKey(packStartOfToday());
   const fmtDay = (k) => { const d = packParseDay(k); if (!d) return k || ""; try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); } catch (e) { return k; } };
   const byId = new Map(tables.map((tb) => [String(tb.id), tb]));
@@ -362,7 +404,29 @@ async function renderPurchasesPageMain() {
     if (link.firstBuy) on = !vipFirstBuyDone();
     const name = setLead(tb) ? setName(tb) : packDisplayName(tb, tb.title || "");
     const words = [name, tb.title || "", ...(tb.columns || []).map((c, ci) => (ci === pc ? "" : `${cols[ci] || c} ${materialDisplayName(cols[ci] || c) || ""}`))].join(" ").toLowerCase();
-    return { id: String(tb.id), name, cat: link.group || "", icon, price, on, next, stack: !!st, words };
+    return { id: String(tb.id), name, cat: link.group || "", icon, price, on, next, stack: !!st, words, sale: packSaleInfo(tb.id), first: !!link.firstBuy };
+  };
+  // When the pack is on sale: green "● On now · until Nov 30" / blue "Next: Dec 1 – Dec 3 (3 days)".
+  const pkDur = (n) => (n % 7 === 0 ? (n === 7 ? t("pur_sale_week1") : t("pur_sale_weeks").replace("{n}", n / 7)) : n === 1 ? t("pur_sale_day1") : t("pur_sale_days").replace("{n}", n));
+  const pkSaleHtml = (i) => {
+    const s = i.sale;
+    if (s.kind === "trigger") return `<span class="pur-pk-nx">${esc(s.often)}</span>`;
+    if (s.kind === "daily") return `<span class="pur-pk-on">&#9679; ${esc(t("pur_sale_on_tonight"))}</span>`;
+    if (s.kind !== "dated") return (i.first ? i.on : true) ? `<span class="pur-pk-on">&#9679; ${esc(t("pur_sale_on"))}</span>` : "";
+    const w = packSaleWinAt(s, 0);
+    if (!w) return "";
+    if (w.in) return `<span class="pur-pk-on">&#9679; ${esc(w.e === 0 ? t("pur_sale_on_tonight") : t("pur_sale_on_until").replace("{d}", pkDay(w.e)))}</span>`;
+    return `<span class="pur-pk-nx">${esc(w.s === w.e ? t("pur_sale_next1").replace("{a}", pkDay(w.s)) : t("pur_sale_next").replace("{a}", pkDay(w.s)).replace("{b}", pkDay(w.e)))}</span> ${esc(pkDur(w.e - w.s + 1))}`;
+  };
+  // D2: the week a pack's next sale starts in ("on" / 0 this week / 1 next week / 2 later).
+  const pkDateGrp = (i) => {
+    const s = i.sale;
+    if (s.kind === "daily" || (s.kind !== "dated" && s.kind !== "trigger" && (i.first ? i.on : true))) return "on";
+    const w = packSaleWinAt(s, 0);
+    if (!w) return "later";
+    if (w.in) return "on";
+    const wk = Math.floor((w.s + (packStartOfToday().getUTCDay() + 6) % 7) / 7);
+    return wk === 0 ? "this" : wk === 1 ? "next" : "later";
   };
   const purPlanTables = () => {
     const out = new Set(), plan = PUR_SUG_SHOWN && PUR_SUG_SHOWN.plan;
@@ -370,10 +434,24 @@ async function renderPurchasesPageMain() {
     rows.forEach((x) => (x.tables || []).forEach((id) => { const tb = byId.get(String(id)); const lead = tb && setLead(tb); out.add(String(lead ? lead.id : id)); }));
     return out;
   };
-  const pkStatus = (i, tab) => (i.on ? (i.stack ? esc(t("pur_pk_stacks")) : tab === "on" ? esc(i.cat) : `<span class="pur-pk-on">&#9679; ${esc(t("pur_pk_on_now"))}</span>`) : i.next != null ? `${esc(t("pur_pk_next").replace("{date}", pkDay(i.next)))}${tab === "soon" || tab === "allg" ? "" : ` · ${esc(i.cat)}`}` : tab === "allg" ? "" : esc(i.cat));
   const purPickedHtml = (tb) => {
     const i = purPackInfo(tb), star = purPlanTables().has(i.id);
-    return `<button type="button" class="pur-pk-pick" data-purpick aria-haspopup="dialog"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${esc(i.name)}</b><small>${star ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span>` : ""}${pkStatus(i, "all")}</small><small class="pur-pk-pp">${esc(i.price)}</small></span><span class="pur-pk-chg">${esc(t("pur_pk_change"))} &rsaquo;</span></button>`;
+    return `<button type="button" class="pur-pk-pick" data-purpick aria-haspopup="dialog"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${star ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span> ` : ""}${esc(i.name)}</b><small>${[pkSaleHtml(i), esc(i.cat)].filter(Boolean).join(" · ")}</small><small class="pur-pk-pp">${esc(i.price)}</small></span><span class="pur-pk-chg">${esc(t("pur_pk_change"))} &rsaquo;</span></button>`;
+  };
+  // D1: under the Add sheet's date box: when this pack is on sale, its next
+  // sale days as chips, amber when the date isn't a sale day.
+  const dayOffOf = (k) => { const d = packParseDay(k); return d ? Math.round((d - packStartOfToday()) / 86400000) : 0; };
+  const dateHintHtml = (tid, day) => {
+    const s = packSaleInfo(tid), d = dayOffOf(day);
+    if (s.kind !== "dated") return `<small class="meta">${esc(t(s.kind === "trigger" ? "pur_sale_trig_hint" : s.kind === "daily" ? "pur_sale_any_daily" : s.kind === "once" ? "pur_sale_once_any" : "pur_sale_any"))}</small>`;
+    const at = packSaleWinAt(s, d), w = at || packSaleWinAt(s, 0);
+    const warn = at && at.in ? "" : `<div class="pur-o1-warn pur-dh-w">&#9888; ${esc(at ? t("pur_sale_warn").replace("{d}", pkDay(at.s)) : t("pur_sale_warn_none"))}</div>`;
+    if (!w) return warn;
+    const days = [];
+    for (let o = Math.max(0, w.s); o <= w.e && days.length < 5; o++) days.push(o);
+    const wd = (o) => { try { return new Date(packStartOfToday().getTime() + o * 86400000).toLocaleDateString(pkLoc, { weekday: "short", timeZone: "UTC" }); } catch { return ""; } };
+    const key = (o) => packDayKey(new Date(packStartOfToday().getTime() + o * 86400000));
+    return `${warn}<small class="meta">${esc(w.s === w.e ? t("pur_sale_hint1").replace("{a}", pkDay(w.s)) : t("pur_sale_hint").replace("{a}", pkDay(w.s)).replace("{b}", pkDay(w.e)))}</small>${days.length ? `<span class="pur-dh-c">${days.map((o) => `<button type="button" class="pur-dh-d${o === d ? " on" : ""}" data-purdday="${key(o)}"><b>${esc(pkDay(o))}</b><small>${esc(wd(o))}</small></button>`).join("")}</span>` : ""}`;
   };
   const tierOpts = formTb ? formOffers.map((o) => `<option value="${o.row}" ${o.row === PUR_FORM.row ? "selected" : ""}>${esc(tierLabel(formTb, o.row))}</option>`).join("") : "";
   const formFor = formTb ? packUsedForNames(formTb) : [];
@@ -385,6 +463,7 @@ async function renderPurchasesPageMain() {
         : `<label class="pur-f"><span class="meta">${esc(t("pur_tier"))}</span><select data-purf="row">${tierOpts}</select></label>`}
       <label class="pur-f pur-f-sm"><span class="meta">${esc(t("pur_count"))}</span><input type="number" min="1" step="1" data-purf="count" value="${PUR_FORM.count}" /></label>
       <label class="pur-f"><span class="meta">${esc(t("pur_date"))}</span><input type="date" data-purf="date" value="${esc(PUR_FORM.date)}" /></label>
+      ${formTb ? `<div class="pur-f pur-f-full pur-dh" data-purdhint>${dateHintHtml(formTb.id, PUR_FORM.date)}</div>` : ""}
       <div class="pur-f" style="flex:0 1 auto;"><span class="meta">${esc(t("pur_status"))}</span><div class="pur-seg">${["planned", "bought"].map((s) => `<button type="button" data-purstatus="${s}" class="${PUR_FORM.status === s ? "on" : ""}">${esc(t(s === "planned" ? "pur_will_buy" : "pur_bought"))}</button>`).join("")}</div></div>
       ${formChoice ? "" : `<button type="button" class="btn" data-puradd>${esc(t("pur_add_btn"))}</button>`}
     </div>
@@ -518,6 +597,15 @@ async function renderPurchasesPageMain() {
     </div>`;
   };
   // The small sheet of one line.
+  // Sale windows (packSaleInfo, the planner's rhythm) as short text.
+  const offKey = (o) => packDayKey(new Date(packStartOfToday().getTime() + o * 86400000));
+  const challNote = (tid, day, prices) => {
+    const info = packSaleInfo(tid);
+    if (info.kind !== "dated") return { warn: false, html: esc(t(info.kind === "trigger" ? "pur_sale_trig_hint" : "pur_chall_note_any")) };
+    const w = packSaleWinAt(info, dOff(day));
+    if (!w) return { warn: true, html: esc(t("pur_sale_warn_none")) };
+    return { warn: !w.in, html: esc(t(!w.in ? "pur_chall_note_x" : prices ? "pur_chall_note" : "pur_chall_note_d").replace("{a}", shortDay(offKey(w.s))).replace("{b}", shortDay(offKey(w.e)))) };
+  };
   const grpSheetHtml = (id) => {
     const G = GROUPS.get(id);
     if (!G) return "";
@@ -539,6 +627,7 @@ async function renderPurchasesPageMain() {
       <div class="meta pur-o1-for">${esc(t("pack_used_for"))}: ${names.length ? esc(names.join(" · ")) : esc(t("pur_for_none"))}</div>
       ${I.late ? `<div class="pur-o1-warn">${esc(t("pur_past_note"))}</div>` : ""}
       ${G.bk === "w-2" ? `<div class="meta pur-o1-for">${esc(t("pur_wk_waiting"))} · ${esc(t("pur_wait_note"))}</div>` : ""}
+      ${g.items.length > 1 ? (() => { const d0 = g.items.map((x) => x.date).sort()[0], nt = challNote(I.tb.id, d0, I.nPrices > 1); return `<div class="pur-chall"><div class="pur-chall-r"><b>${esc(t("pur_chall"))}</b><input type="date" class="pur-ed-date" data-purchall value="${esc(d0)}"${kind === "b" ? ` max="${esc(today)}"` : ""} aria-label="${esc(t("pur_chall"))}" /><button type="button" class="btn small" data-purchallgo>${esc(t("pur_chall_apply").replace("{n}", g.items.length))}</button></div><small class="meta${nt.warn ? " warn" : ""}" data-purchallw>${nt.html}</small></div>`; })() : ""}
       <div class="pur-o1-lb">${esc(t("pur_o1_dates"))}</div>
       <div class="pur-o1-dts">${g.items.slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).map(dateRow).join("")}</div>
       <div class="pur-o1-foot"><button type="button" class="btn ghost pur-o1-rm" data-purgdel>&#10005; ${esc(t(g.items.length > 1 ? "pur_o1_remove_all" : "pur_remove"))}</button>${kind === "c" ? `<button type="button" class="btn pur-o1-ok" data-purgall>&#10003; ${esc(t(g.items.length > 1 ? "pur_all_bought" : "pur_mark_bought"))}</button>` : ""}</div>
@@ -586,8 +675,44 @@ async function renderPurchasesPageMain() {
     const more = over > 0 ? purMoreBtnHtml(`data-purlmore="${kind}"`, all, over) : "";
     return `<div class="pur-o1-list" data-purscroll="${kind}">${html}</div>${more}`;
   };
+  // R3: the Will buy dates shown (a date button + its sheet) and the list by month.
+  const wbRange = (st, arr) => {
+    const t0 = packStartOfToday(), y = t0.getUTCFullYear(), m = t0.getUTCMonth(), dk = (d) => packDayKey(d);
+    const ds = arr.filter((x) => !purTriggerWaiting(x)).map((x) => x.date).sort();
+    const lo = ds[0] && ds[0] > today ? today : ds[0] || today, hi = ds[ds.length - 1] || today;
+    if (st.preset === "this") return { from: today, to: dk(new Date(Date.UTC(y, m + 1, 0))) };
+    if (st.preset === "next") return { from: dk(new Date(Date.UTC(y, m + 1, 1))), to: dk(new Date(Date.UTC(y, m + 2, 0))) };
+    if (st.preset === "target" && packValidDay(BUDGET_TARGET)) return { from: today, to: BUDGET_TARGET };
+    if (st.preset === "custom" && packValidDay(st.from) && packValidDay(st.to)) return { from: st.from, to: st.to };
+    return { from: lo < today ? lo : today, to: hi > today ? hi : today };
+  };
+  const wbIn = (x, r) => purTriggerWaiting(x) || (x.date >= r.from && x.date <= r.to);
+  const wbRangeTxt = (r) => `${shortDay(r.from)} – ${shortDay(r.to)}`;
+  const wbHtml = (arr) => {
+    const r = wbRange(PUR_WB, arr), list = arr.filter((x) => wbIn(x, r));
+    const bar = `<div class="pur-wb-bar"><button type="button" class="pur-wb-btn" data-purwbopen aria-haspopup="dialog">&#128197; ${esc(wbRangeTxt(r))} &#9662;</button><span class="pur-pk-seg pur-wb-seg" role="group">${["week", "month"].map((k) => `<button type="button" data-purwbby="${k}" class="${PUR_WB.by === k ? "on" : ""}" aria-pressed="${PUR_WB.by === k}">${esc(t("pur_wb_" + k))}</button>`).join("")}</span></div>
+      <div class="pur-wb-tot"><span><b>${esc(wbRangeTxt(r))}</b>${PUR_WB.preset === "all" ? ` · ${esc(t("pur_wb_p_all"))}` : ""} <span class="meta">${esc(nPacks(list) === 1 ? t("pur_1_pack") : t("pur_pk_npacks").replace("{n}", nPacks(list)))}</span></span><b>${esc(packFmtLocal(sumCost(list), sample, false))}</b></div>`;
+    if (!list.length) return bar + `<div class="meta pur-a2-none">${esc(t("pur_wb_none"))}</div>`;
+    if (PUR_WB.by === "week") return bar + listHtml("c", list);
+    // Months that fold (this month / the first one open), the weeks inside as small headings.
+    const months = [], byM = new Map();
+    list.forEach((x) => { const mk = purTriggerWaiting(x) ? "wait" : x.date.slice(0, 7); if (!byM.has(mk)) { byM.set(mk, []); months.push(mk); } byM.get(mk).push(x); });
+    months.sort((a, b) => (a === "wait" ? -1 : b === "wait" ? 1 : a.localeCompare(b)));
+    const firstM = months.find((mk) => mk !== "wait");
+    const body = months.map((mk) => {
+      const part = byM.get(mk), key = "c:" + mk, on = PUR_MON.has(key) ? PUR_MON.get(key) : mk === "wait" || mk === firstM;
+      let name = mk === "wait" ? t("pur_wk_waiting") : mk;
+      if (mk !== "wait") { try { name = packParseDay(mk + "-01").toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "long", year: "numeric", timeZone: "UTC" }); } catch (e) { /* keep */ } }
+      const wks = [], byW = new Map();
+      part.forEach((x) => { const bk = bucketFor("c", x); if (!byW.has(bk)) { byW.set(bk, []); wks.push(bk); } byW.get(bk).push(x); });
+      wks.sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+      const inner = wks.map((bk) => { const wp = byW.get(bk), gs = groupBy(wp); gs.forEach((g) => GROUPS.set(`c|${bk}|${g.key}`, { g, kind: "c", bk })); return (mk === "wait" ? "" : bucketHead("c", bk, wp).replace('class="pur-bh', 'class="pur-bh pur-wb-wk')) + gs.map((g) => lineHtml(g, "c", bk)).join(""); }).join("");
+      return `<details class="pur-mon pur-wb-mon" data-purmon="${esc(key)}" ${on ? "open" : ""}><summary class="pur-bh"><b>${esc(name)}</b> <span class="meta">${esc(nPacks(part) === 1 ? t("pur_1_pack") : t("pur_pk_npacks").replace("{n}", nPacks(part)))}</span><b class="pur-bh-t">${esc(packFmtLocal(sumCost(part), sample, false))}</b></summary>${inner}</details>`;
+    }).join("");
+    return bar + `<div class="pur-o1-list" data-purscroll="c">${body}</div>`;
+  };
   const listBody = (k, arr) => (k === "c"
-    ? (arr.length ? listHtml("c", arr) + `<div class="meta pur-o1-hint">${esc(t("pur_o1_c_hint"))}</div>` : `<div class="meta pur-a2-none">${esc(t(coming.length ? "pur_o1_none_later" : "pur_none_coming"))}</div>`)
+    ? (arr.length ? wbHtml(arr) + `<div class="meta pur-o1-hint">${esc(t("pur_o1_c_hint"))}</div>` : `<div class="meta pur-a2-none">${esc(t(coming.length ? "pur_o1_none_later" : "pur_none_coming"))}</div>`)
     : (arr.length ? listHtml("b", arr) + `<div class="meta pur-o1-hint">${esc(t("pur_o1_b_hint"))}</div>` : `<div class="meta pur-a2-none">${esc(t("pur_none_bought"))}</div>`));
 
   // Weekly cards (A2 box with Hide / Show, 4 Nov
@@ -644,6 +769,7 @@ async function renderPurchasesPageMain() {
   // weeks and the triggered packs still waiting.
   const sunKey0 = (() => { const t0 = packStartOfToday(); return packDayKey(new Date(t0.getTime() + (6 - ((t0.getUTCDay() + 6) % 7)) * 86400000)); })();
   const comingLater = coming.filter((p) => purTriggerWaiting(p) || p.date > sunKey0);
+  if (BUDGET_TARGET === undefined) { const sv = await loadCalcState("pack_target_budgets"); if (seq !== RENDER_SEQ) return; if (BUDGET_TARGET === undefined) BUDGET_TARGET = (sv && sv.date) || ""; }
   // This week's "will buy" lines aren't drawn in Coming, but the checklist opens their sheet (✎ Edit, dates).
   {
     const byB = new Map();
@@ -791,8 +917,8 @@ async function renderPurchasesPageMain() {
       it.step = st.replace(/^\((.*)\)/, "$1").trim();
     });
     const all = items.concat(restList);
-    const total = all.reduce((a, x) => a + x.local, 0), doneV = items.reduce((a, x) => a + x.local, 0);
-    const nAll = all.length, nDone = items.length;
+    const doneV = items.reduce((a, x) => a + x.local, 0);
+    const nAll = all.length;
     // Answer card
     const left = 6 - monW;
     const leftTxt = left <= 0 ? t("pur_a2_last_day") : left === 1 ? t("pur_a2_day_left") : t("pur_a2_days_left").replace("{n}", left);
@@ -802,13 +928,21 @@ async function renderPurchasesPageMain() {
     const doneDay = pl && pl.days != null && (pl.rows || []).length ? fmtDay(packDayKey(offDate(Math.max(0, pl.days)))) : "";
     const per = plan && plan.spend ? t(plan.spend.per === "week" ? "pur_a2_per_week" : "pur_a2_per_month") : "";
     const tDay = packValidDay(BUDGET_TARGET);
-    const sw = cmp ? `<div class="pur-a2-sw" role="group">${["budget", "target"].map((k) => `<button type="button" data-purfollow="${k}" class="${follow === k ? "on" : ""}" aria-pressed="${follow === k}">${esc(k === "budget" ? t("pur_a2_budget_sw").replace("{v}", packFmtLocal(plan.spend.amount, cur0, true, smp) + per) : (cmp.targetPlan.dated ? (cmp.targetPlan.nextDay != null ? t("pur_a2_dates_sw").replace("{date}", shortDay(packDayKey(offDate(cmp.targetPlan.nextDay))).replace(/ /g, "\u00a0")) : t("budgets_view_dates")) : t("pur_a2_target_sw").replace("{date}", tDay ? shortDay(tDay) : "—")))}</button>`).join("")}</div>`
-      : plan && plan.spend ? `<div class="pur-following" data-purgospend role="button" tabindex="0">${esc(t("pur_following"))} <b>${esc(t("budgets_view_budget"))}</b> <span class="meta">(${esc(packFmtLocal(plan.spend.amount, cur0, true, smp))}${esc(per)})</span> <span class="pur-go">${esc(t("pur_go_spend"))}</span></div>` : "";
-    const pct = nAll ? Math.round((nDone / nAll) * 100) : 0;
+    // The plan followed is picked on Budgets (one plan for both pages): a chip
+    // names it and opens Budgets at its plan switch.
+    const fv = plan ? plan.followView || "main" : null;
+    const fName = !plan ? "" : fv === "budget" ? t("budgets_view_budget") : fv === "fastest" ? t("budgets_view_fastest") : fv === "cheapest" ? t("budgets_view_cheapest") : plan.dated ? t("budgets_view_dates") : tDay ? t("budgets_view_target") : t("budgets_view_cheapest");
+    const fSub = !plan ? "" : plan.dated && plan.nextDay != null ? t("pur_a2_next").replace("{date}", shortDay(packDayKey(offDate(plan.nextDay)))) : fv === "budget" && plan.spend ? packFmtLocal(plan.spend.amount, cur0, true, smp) + per : fv === "main" && tDay ? shortDay(tDay) : "";
+    const sw = plan ? `<div class="pur-following pur-a2-fol" data-purgoview role="button" tabindex="0"><span>${esc(t("pur_a2_following"))} <b>${esc(fName)}</b>${fSub ? ` <span class="meta">· ${esc(fSub)}</span>` : ""}</span><span class="pur-a2-lk">${esc(t("pur_a2_change"))} &#8250;</span></div>` : "";
+    // Still to buy / Bought this week: the same numbers as Budgets' This week tile (budgetWeekSums).
+    const ws = budgetWeekSums(plan && P.rows ? plan : null, P && P.rows ? P.rows.slice(0, P.nFollow) : null, P && P.sched ? P.sched.slice(0, P.nFollow) : null);
+    const nB = ws.boughtN, nT = ws.todoN + ws.boughtN;
+    const pct = nT ? Math.round((nB / nT) * 100) : 0;
+    const boxN = (n) => (n === 1 ? t("pur_1_pack") : t("pur_n_packs").replace("{n}", n));
     ans.innerHTML = `<div class="pur-a2-wk"><span>${esc(t("pur_a2_week").replace("{range}", range))}</span><span class="meta">${esc(leftTxt)}</span></div>
-      <div class="pur-a2-big">${pending && !nAll ? `<span class="bud-pending small">${esc(t("budgets_working"))}</span>` : `<b>${nAll ? esc(fmt(total)) : "—"}</b><span class="meta">${esc(t("pur_n_packs").replace("{n}", nAll))}</span>`}</div>
+      <div class="pur-a2-two"><div class="pur-a2-bx"><small>${esc(t("pur_a2_todo"))}</small>${pending && !nAll ? `<span class="bud-pending small">${esc(t("budgets_working"))}</span>` : `<b>${esc(fmt(ws.todo))}</b><span class="meta">${esc(boxN(ws.todoN))}</span>`}</div><div class="pur-a2-bx done"><small>${esc(t("pur_a2_bought"))}</small><b>${nB ? "&#10003; " : ""}${esc(fmt(ws.bought))}</b><span class="meta">${esc(boxN(nB))}</span></div></div>
       <span class="pur-a2-bar"><i style="width:${pct}%;"></i></span>
-      <div class="pur-a2-sub">${nDone ? `<span class="good">&#10003; ${esc(t("pur_a2_bought_of").replace("{a}", nDone).replace("{b}", nAll).replace("{v}", fmt(doneV)))}</span>` : nAll ? `<span class="meta">${esc(t("pur_a2_bought_of").replace("{a}", 0).replace("{b}", nAll).replace("{v}", fmt(0)))}</span>` : "<span></span>"}${doneDay ? `<span class="meta">${esc(t("pur_a2_done").replace("{date}", doneDay))}</span>` : pending ? `<span class="meta bud-pending small">${esc(t("budgets_working"))}</span>` : ""}</div>
+      <div class="pur-a2-sub">${nT ? `<span class="${nB ? "good" : "meta"}">${nB ? "&#10003; " : ""}${esc(t("pur_a2_bought_n").replace("{a}", nB).replace("{b}", nT))}</span>` : "<span></span>"}${doneDay ? `<span class="meta">${esc(t("pur_a2_done").replace("{date}", doneDay))}</span>` : pending ? `<span class="meta bud-pending small">${esc(t("budgets_working"))}</span>` : ""}</div>
       ${sw}`;
     // Checklist
     const rowHtml = (it, k) => {
@@ -917,9 +1051,8 @@ async function renderPurchasesPageMain() {
     const moreB = chk.querySelector("[data-pura2more]");
     if (moreB) moreB.addEventListener("click", () => { PUR_CHK_ALL = !PUR_CHK_ALL; drawWeek(P, pending); });
     // Taps
-    ans.querySelectorAll("[data-purfollow]").forEach((b) => b.addEventListener("click", () => { if (b.classList.contains("on")) return; try { localStorage.setItem("pur_follow", b.dataset.purfollow); } catch (e) { /* blocked */ } redraw(); }));
-    ans.querySelectorAll("[data-purgospend]").forEach((b) => {
-      const go = () => { BUDGET_FOCUS_SPEND = true; goToTab("budgets"); };
+    ans.querySelectorAll("[data-purgoview]").forEach((b) => {
+      const go = () => { BUDGET_FOCUS_VIEW = true; goToTab("budgets"); };
       b.addEventListener("click", go);
       b.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
     });
@@ -1008,8 +1141,8 @@ async function renderPurchasesPageMain() {
     // follows one plan (switch, kept in this browser) and labels every pack
     // "both" / "target" / "budget"; the other plan's packs are listed too.
     const cmp = plan && plan.spend && plan.targetPlan && (plan.targetPlan.rows || []).length ? plan : null;
+    // (one plan is followed, picked on Budgets: budgetSuggestOf)
     let follow = "budget";
-    try { if (localStorage.getItem("pur_follow") === "target") follow = "target"; } catch (e) { /* blocked */ }
     if (!cmp) follow = "budget";
     const budRows = plan && plan.rows ? plan.rows.filter((r) => r.count > 0) : [];
     const tgtRows = cmp ? cmp.targetPlan.rows.filter((r) => r.count > 0) : [];
@@ -1113,7 +1246,9 @@ async function renderPurchasesPageMain() {
     }
     const money = (v) => packFmtLocal(v, rows[0].currency, true, rows[0].price);
     const wkStart = (w) => new Date(packStartOfToday().getTime() + (w * 7 - monIdx) * 86400000);
-    const wkName = (k) => (k === "after" ? t(tOff != null && tOff >= 0 ? "pur_wk_after" : "pur_wk_later") : k === 0 ? t("pur_wk_this") : k === 1 ? t("pur_wk_next") : tOff != null && k === lastWeek ? t("pur_wk_target") : t("pur_wk_n").replace("{n}", k + 1));
+    // (a week cut short by the target, after this one: "To target")
+    const wkCut = (k) => tOff != null && k !== "after" && k > 0 && k === lastWeek && !!tDay && tDay < new Date(wkStart(k).getTime() + 6 * 86400000);
+    const wkName = (k) => (k === "after" ? t(tOff != null && tOff >= 0 ? "pur_wk_after" : "pur_wk_later") : k === 0 ? t("pur_wk_this") : wkCut(k) ? t("pur_wk_to_target") : k === 1 ? t("pur_wk_next") : tOff != null && k === lastWeek ? t("pur_wk_target") : t("pur_wk_n").replace("{n}", k + 1));
     const short = (d) => fmtDay(packDayKey(d)).replace(/,? \d{4}$/, "");
     const wkRange = (k) => {
       if (k === "after") return tOff != null && tOff >= 0 ? `${short(new Date(tDay.getTime() + 86400000))} →` : `${short(wkStart(lastWeek + 1))} →`;
@@ -1291,11 +1426,12 @@ async function renderPurchasesPageMain() {
         </div>${open ? `<div class="pur-cl-ex">${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}${kidsR.map((k) => `<div>${esc(whenShort(k.vr.xs))} · ${esc(k.vr.r.label)}${cmp ? ` ${tagHtml(k.i, k.n)}` : ""}</div>`).join("")}${u.coming.map((p) => `<div>${willTag} ${esc(whenTxt(Math.max(0, dOff(p.date))))} · ${esc(purTierText(byId.get(String(p.table)) || tb0, p.row, Number(p.from) || 0, p.choice, p.extra) || packFmtMoney(purchasePrice(p, byId.get(String(p.table)) || tb0), packLinkFor(p.table).currency))} ${bidiNum("× " + cntNow(p))}</div>`).join("")}${u.oth.map(([j, xs]) => `<div>${esc(whenShort(xs))} · ${esc(rows[j].label)} <span class="pur-cmp pur-cmp-${otherName}">${esc(tagTxt(otherName))}</span></div>`).join("")}</div>` : ""}`;
       };
       // Week strip (box 1, Option 1): This week · Next week · Week 3 … This week = the ✓ checklist below.
-      const boxes = `<div class="pur-wbs pur-o1-wbs">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wb${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${tOff != null && k === lastWeek ? "&#127919; " : ""}${esc(wkName(k))}</span><b>${b && b.cost ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<i class="pur-cmp-${otherName}">${esc(tagTxt(otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</i>` : ""}</button>`; }).join("")}</div>`;
-      const per = plan.spend ? t(plan.spend.per === "week" ? "spend_week" : "spend_month") : "";
+      // (This week: still to buy, the same number as the answer card and Budgets' This week tile)
+      const wk0 = budgetWeekSums(plan, rows.slice(0, nFollow), sched.slice(0, nFollow)).todo;
+      const boxes = `<div class="pur-wbs pur-o1-wbs">${keys.map((k) => { const b = buckets.get(k), c = k === 0 ? wk0 : b && b.cost; return `<button type="button" class="pur-wb${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${tOff != null && k === lastWeek ? "&#127919; " : ""}${esc(wkName(k))}</span><b>${c ? esc(money(c)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<i class="pur-cmp-${otherName}">${esc(tagTxt(otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</i>` : ""}</button>`; }).join("")}</div>`;
       const followLine = cmp
         ? `<div class="pur-o1-fl"><span class="pur-o1-flt">${esc(t("pur_o1_following"))} <b>${esc(followName)}</b> <span class="meta">· ${esc(t("pur_o1_other_plan").replace("{plan}", tagTxt(otherName)).replace("{v}", money(sel ? sel.alt || 0 : 0)))}</span></span><button type="button" class="pur-o1-sw" data-purfollow="${otherName}" title="${esc(t("pur_follow_line"))}">&#8644; ${esc(t("pur_o1_switch"))}</button></div>`
-        : plan.spend ? `<div class="pur-o1-fl" data-purgospend role="button" tabindex="0"><span class="pur-o1-flt">${esc(t("pur_o1_following"))} <b>${esc(followName)}</b> <span class="meta">(${esc(money(plan.spend.amount))} ${esc(per)})</span></span><span class="pur-go">${esc(t("pur_go_spend"))}</span></div>` : "";
+        : ""; // (the plan followed is named in the answer card above)
       const budLine = bi ? `<div class="pur-o1-bud"><span style="color:${bi.spent > bi.avail + 0.5 ? "var(--danger)" : "var(--good)"};">${bi.spent > bi.avail + 0.5 ? "&#9888;" : "&#10003;"} ${esc(bi.name)}</span> <span class="meta">${esc(money(bi.spent))} / ${esc(money(bi.avail))}</span></div>`
         : di ? `<div class="pur-o1-bud"><span style="color:${di.spent > di.avail + 0.5 ? "var(--amber)" : "var(--good)"};">${di.spent > di.avail + 0.5 ? "&#9888;" : "&#10003;"} ${esc(di.name)}</span> <span class="meta">${esc(money(di.spent))} / ${esc(money(di.avail))}${di.spent > di.avail + 0.5 ? ` \u00b7 ${esc(t("pur_o1_over").replace("{v}", money(di.spent - di.avail)))}` : ""}</span></div>` : "";
       // First 5 lines, then "Show N more" (the + Will buy button counts every ticked pack).
@@ -1758,9 +1894,10 @@ async function renderPurchasesPageMain() {
         const adds = [];
         // What was added to the plan's part (next steps, other prices / cards)
         // is its own purchase, tagged "extra".
-        ix.forEach((d) => partsOf(selOf(d)).concat(mateParts(d), exParts()).forEach((p) => adds.push({ id: "p" + Date.now().toString(36) + d + "_" + adds.length + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: p.row, ...(p.from != null ? { from: p.from } : r.from != null && !p.isExtra ? { from: r.from } : {}), ...(p.extra > 0 ? { extra: p.extra } : {}), count: p.count != null ? p.count : cntOf(d), date: dayOf(Math.max(0, s0[d].off)), status: btOn(d) ? "bought" : "planned", plan: p.isExtra ? (p.oth || "extra") : p.mate ? planTag(p.mate.i) : p.mateI != null ? planTag(p.mateI) : vers.length > 1 ? vers[vi].key : planTag(i0), ...(plainPack(tb) ? {} : { choice: { name: p.mateI != null ? sugName(rows[p.mateI]) : sugName(r), label: p.label, price: p.price, gives: p.gives } }) })));
+        ix.forEach((d) => partsOf(selOf(d)).concat(mateParts(d), exParts()).forEach((p) => adds.push({ id: "p" + Date.now().toString(36) + d + "_" + adds.length + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: p.row, ...(p.from != null ? { from: p.from } : r.from != null && !p.isExtra ? { from: r.from } : {}), ...(p.extra > 0 ? { extra: p.extra } : {}), count: p.count != null ? p.count : cntOf(d), date: dayOf(Math.max(0, s0[d].off)), status: btOn(d) ? "bought" : "planned", plan: p.isExtra ? (p.oth || "extra") : p.mate ? planTag(p.mate.i) : p.mateI != null ? planTag(p.mateI) : vers.length > 1 ? vers[vi].key : planTag(i0), ...(plainPack(tb) ? {} : { choice: { name: p.mateI != null ? sugName(rows[p.mateI]) : sugName(r), label: p.label, price: p.price, gives: p.gives } }), ...(p.isExtra ? { _x: true } : {}) })));
         if (!adds.length) return;
-        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
+        // The plan's steps and the next steps of the same ladder: one purchase (purJoinLadders).
+        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(purJoinLadders(adds));
         savePackPurchases();
         // The plan's own pack, step and choice on some of its dates: the rest stays as planned.
         const ri = rows.indexOf(r), base = r.row != null ? r.row : 0;
@@ -1870,8 +2007,15 @@ async function renderPurchasesPageMain() {
     if (k === "table") { PUR_FORM.table = inp.value; PUR_FORM.row = -1; redraw(); return; }
     if (k === "row") PUR_FORM.row = Number(inp.value);
     else if (k === "count") PUR_FORM.count = Math.max(1, Math.floor(Number(inp.value) || 1));
-    else if (k === "date") PUR_FORM.date = inp.value || today;
+    else if (k === "date") { PUR_FORM.date = inp.value || today; const h = content.querySelector("[data-purdhint]"); if (h && formTb) h.innerHTML = dateHintHtml(formTb.id, PUR_FORM.date); }
   }));
+  const dHint = content.querySelector("[data-purdhint]");
+  if (dHint) dHint.onclick = (e) => {
+    const b = e.target.closest("[data-purdday]"), inp = content.querySelector('[data-purf="date"]');
+    if (!b || !inp) return;
+    inp.value = b.dataset.purdday;
+    inp.dispatchEvent(new Event("change", { bubbles: true }));
+  };
   content.querySelectorAll("[data-purstatus]").forEach((b) => b.addEventListener("click", () => {
     PUR_FORM.status = b.dataset.purstatus;
     content.querySelectorAll("[data-purstatus]").forEach((x) => x.classList.toggle("on", x === b));
@@ -1923,7 +2067,9 @@ async function renderPurchasesPageMain() {
     if (!modal) { modal = document.createElement("div"); modal.id = "purPickModal"; modal.className = "modal-overlay pur-pk-ov"; document.body.appendChild(modal); }
     let q = "";
     const close = () => { modal.style.display = "none"; };
-    const inTab = (i, tab) => (tab === "on" ? i.on : tab === "soon" ? !i.on && i.next != null : true);
+    // Date view leaves out packs that won't be on sale again (a dated pack with no
+    // window left, a first-buy pack already used).
+    const notPast = (i) => !((i.sale.kind === "dated" && !packSaleWinAt(i.sale, 0)) || (i.first && !i.on));
     const match = (i) => !q || i.words.includes(q);
     // All: grouped by category in the Packs page's order (saved order first,
     // then first appearance; "Not assigned" last).
@@ -1933,30 +2079,92 @@ async function renderPurchasesPageMain() {
       const saved = PACK_LINKS && PACK_LINKS.__order && Array.isArray(PACK_LINKS.__order.categories) ? PACK_LINKS.__order.categories : [];
       return [...saved.filter((g) => seen.includes(g)), ...seen.filter((g) => !saved.includes(g)), ""];
     })();
-    const rowHtml = (i, tab) => `<button type="button" class="pur-pk-row${i.id === String(PUR_FORM.table) ? " on" : ""}" data-ppkid="${esc(i.id)}"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${esc(i.name)}</b><small>${i.plan ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span>` : ""}${pkStatus(i, tab)}</small></span><span class="pur-pk-pr">${esc(i.price)}</span></button>`;
-    const listHtml = () => {
-      const tab = PUR_PICK_TAB, list = infos.filter((i) => match(i) && inTab(i, tab));
-      if (tab === "all" && list.length) {
-        const ngNote = ngHidden ? `<div class="pur-pk-ngnote">${esc(t("pur_pk_ng_later"))}</div>` : "";
-        // Each heading folds its group (kept for the visit and in this browser); searching opens every group with matches.
-        const groups = catOrder.map((g) => ({ g, its: list.filter((i) => (catOrder.includes(i.cat) ? i.cat : "") === g) })).filter((x) => x.its.length);
-        const folded = (g) => !q && PUR_PICK_FOLD.has(g);
-        const allShut = groups.every((x) => folded(x.g));
-        const bar = q ? "" : `<div class="pur-pk-allbar"><button type="button" data-ppkall>${esc(t(allShut ? "pur_pk_show_all" : "pur_pk_hide_all"))}</button></div>`;
-        return bar + groups.map(({ g, its }) => { const f = folded(g); return `<button type="button" class="pur-pk-gh" data-ppkgrp="${esc(g)}" aria-expanded="${!f}"><span>${esc(g || t("packs_filter_none"))} <small>${its.length}</small></span><i aria-hidden="true">${f ? "&#9656;" : "&#9662;"}</i></button>${f ? "" : its.map((i) => rowHtml(i, "allg")).join("")}`; }).join("") + ngNote;
+    // D1: name, when it is on sale, how often + its price.
+    // A pack not on sale today: the date box goes to its next sale day.
+    const nextDay = (i) => { const w = packSaleWinAt(i.sale, 0); return w && !w.in ? ` data-ppkday="${packDayKey(new Date(packStartOfToday().getTime() + w.s * 86400000))}"` : ""; };
+    const rowHtml = (i) => { const sl = pkSaleHtml(i); return `<button type="button" class="pur-pk-row pur-pk-row3${i.id === String(PUR_FORM.table) ? " on" : ""}" data-ppkid="${esc(i.id)}"${nextDay(i)}><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${i.plan ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span> ` : ""}${esc(i.name)}</b>${sl ? `<small>${sl}</small>` : ""}<small class="pur-pk-of"><span>${esc(i.sale.kind === "trigger" ? "" : i.sale.often)}</span><span class="pur-pk-pr">${esc(i.price)}</span></small></span></button>`; };
+    // All: by category (Packs page order) or by date (D2: On now / This week / Next week / Later).
+    const wk0 = (packStartOfToday().getUTCDay() + 6) % 7;
+    const PK_FIRST = 6;
+    const moreHtml = (g, n) => `<button type="button" class="pur-pk-more" data-ppkmore="${esc(g)}">${esc(t("pkb_show_more").replace("{n}", n))} &#9662;</button>`;
+    const rowsOf = (g, its, one) => { const all = q || PUR_PICK_MORE.has(g) || its.length <= PK_FIRST + 1, sh = all ? its : its.slice(0, PK_FIRST); return sh.map(one).join("") + (all ? "" : moreHtml(g, its.length - PK_FIRST)); };
+    // A folded heading shows the first few packs' pictures.
+    const stripHtml = (its) => { const ics = its.map((x) => (x.i || x).icon).filter(Boolean).slice(0, 4); return ics.length ? `<span class="pur-pk-stk" aria-hidden="true">${ics.map((h) => `<span>${h}</span>`).join("")}</span>` : ""; };
+    const dateGroups = [["on", t("pur_pk_d_on"), ""], ["this", t("pur_pk_d_this"), `${pkDay(0)} – ${pkDay(6 - wk0)}`], ["next", t("pur_pk_d_next"), `${pkDay(7 - wk0)} – ${pkDay(13 - wk0)}`], ["later", t("pur_pk_d_later"), ""]];
+    const groupsOf = (list) => (PUR_PICK_GROUP === "date"
+      ? dateGroups.map(([k, label, range]) => ({ g: "d:" + k, label, range, its: list.filter((i) => notPast(i) && pkDateGrp(i) === k) }))
+      : catOrder.map((g) => ({ g, label: g || t("packs_filter_none"), range: "", its: list.filter((i) => (catOrder.includes(i.cat) ? i.cat : "") === g) }))).filter((x) => x.its.length);
+    // Month (L3): "‹ December 2026 Today ›", then each game week of the month
+    // with its events and every pack on sale that week (their days on the right;
+    // packs on sale all month / every day are listed in each week). Each week
+    // folds (current week open first, kept for the visit and in this browser);
+    // searching opens every week with matches. A tap picks the pack with the
+    // date box on its first sale day of that week.
+    const monthWeeks = (list) => {
+      const t0 = packStartOfToday(), y = t0.getUTCFullYear(), m = t0.getUTCMonth() + PUR_PICK_MON;
+      const ms = new Date(Date.UTC(y, m, 1)), me = new Date(Date.UTC(y, m + 1, 0));
+      const off = (d) => Math.round((d - t0) / 86400000), dOf = (o) => new Date(t0.getTime() + o * 86400000);
+      const a = off(ms), b = off(me);
+      const shown = list.filter((i) => { const s = i.sale; return s.kind === "dated" || s.kind === "daily" || (s.kind === "any" && (i.first ? i.on : true)); });
+      const weeks = [];
+      let n = 0;
+      for (let ws = a - ((ms.getUTCDay() + 6) % 7); ws <= b; ws += 7) {
+        n++;
+        const we = ws + 6;
+        if (we < 0) continue;
+        const wlo = Math.max(ws, 0);
+        const its = shown.map((i) => { if (i.sale.kind !== "dated") return { i, s: wlo, e: we }; const w = i.sale.wins.find((x) => x.e >= wlo && x.s <= we); return w ? { i, s: Math.max(w.s, wlo), e: Math.min(w.e, we) } : null; }).filter(Boolean).sort((x, y) => x.s - y.s || x.i.name.localeCompare(y.i.name, pkLoc));
+        // "w:<Monday>" = folded, "wo:<Monday>" = opened (weeks start folded, this week open).
+        weeks.push({ n, ws, we, its, key: packDayKey(dOf(ws)), now: ws <= 0 && we >= 0 });
       }
-      const ngNote = ngHidden ? `<div class="pur-pk-ngnote">${esc(t("pur_pk_ng_later"))}</div>` : "";
-      return (list.length ? list.map((i) => rowHtml(i, tab)).join("") : `<div class="meta pur-pk-none">${esc(t("pur_pk_none"))}</div>`) + ngNote;
+      return { t0, ms, a, b, dOf, weeks };
     };
-    const segHtml = () => ["on", "soon", "all"].map((k) => `<button type="button" data-ppktab="${k}" class="${PUR_PICK_TAB === k ? "on" : ""}" aria-pressed="${PUR_PICK_TAB === k}">${esc(t("pur_pk_tab_" + k))} · ${infos.filter((i) => match(i) && inTab(i, k)).length}</button>`).join("");
+    const wkFolded = (w) => (q ? !w.its.length : w.now ? PUR_PICK_FOLD.has("w:" + w.key) : !PUR_PICK_FOLD.has("wo:" + w.key));
+    const wkSet = (w, fold) => { PUR_PICK_FOLD.delete("w:" + w.key); PUR_PICK_FOLD.delete("wo:" + w.key); if (w.now && fold) PUR_PICK_FOLD.add("w:" + w.key); if (!w.now && !fold) PUR_PICK_FOLD.add("wo:" + w.key); };
+    const monthHtml = (list) => {
+      const { ms, dOf, weeks } = monthWeeks(list);
+      const wd = (o) => { try { return dOf(o).toLocaleDateString(pkLoc, { weekday: "short", timeZone: "UTC" }); } catch { return ""; } };
+      const range = (s, e) => { if (s === e) return pkDay(s); const ds = dOf(s), de = dOf(e); return ds.getUTCMonth() === de.getUTCMonth() ? `${pkDay(s)}–${de.getUTCDate()}` : `${pkDay(s)} – ${pkDay(e)}`; };
+      let mName = "";
+      try { mName = ms.toLocaleDateString(pkLoc, { month: "long", year: "numeric", timeZone: "UTC" }); } catch { mName = packDayKey(ms).slice(0, 7); }
+      const head = `<div class="pur-pk-mh"><button type="button" class="pur-pk-mb" data-ppkmon="-1"${PUR_PICK_MON <= 0 ? " disabled" : ""} aria-label="&#8249;">&#8249;</button><b>${esc(mName)}</b>${PUR_PICK_MON ? `<button type="button" class="pur-pk-mt" data-ppkmon="0">${esc(t("pcl_today"))}</button>` : ""}<button type="button" class="pur-pk-mb" data-ppkmon="1"${PUR_PICK_MON >= 11 ? " disabled" : ""} aria-label="&#8250;">&#8250;</button></div>`;
+      const allShut = weeks.every((w) => wkFolded(w));
+      const bar = q || !weeks.length ? "" : `<div class="pur-pk-allbar"><button type="button" data-ppkwkall>${esc(t(allShut ? "pur_pk_show_all" : "pur_pk_hide_all"))}</button></div>`;
+      let html = "";
+      weeks.forEach((w) => {
+        const { n, ws, we, its } = w, f = wkFolded(w);
+        const evs = [];
+        GAME_EVENTS.forEach((ev) => gameEventStarts(ev, dOf(ws), dOf(we)).forEach(() => { if (!evs.includes(ev)) evs.push(ev); }));
+        const evHtml = evs.map((ev) => `<span class="pur-pk-ev" style="background:${esc(gameEventColor(ev.key))}">${esc(ev.name)}</span>`).join("");
+        const rowM = ({ i, s, e }) => `<button type="button" class="pur-pk-row pur-pk-row3 pur-pk-rowm${i.id === String(PUR_FORM.table) ? " on" : ""}" data-ppkid="${esc(i.id)}" data-ppkday="${packDayKey(dOf(s))}"><span class="pur-pk-ic">${i.icon || "&#127873;"}</span><span class="pur-pk-tx"><b>${i.plan ? `<span class="pur-pk-star">&#9733; ${esc(t("pur_pk_plan"))}</span> ` : ""}${esc(i.name)}</b><small class="pur-pk-of"><span>${esc(i.sale.often)}</span><span class="pur-pk-pr">${esc(i.price)}</span></small></span><span class="pur-pk-wd"><b>${esc(s === e ? wd(s) : `${wd(s)}–${wd(e)}`)}</b><small>${esc(range(s, e))}</small></span></button>`;
+        html += `<button type="button" class="pur-pk-wh" data-ppkwk="${esc(w.key)}" aria-expanded="${!f}"><span><b>${esc(t("pur_pk_week_n").replace("{n}", n))}</b> · ${esc(range(ws, we))}${w.now ? `<span class="pur-pk-now">${esc(t("pcl_this_week"))}</span>` : ""}${evHtml}</span><span class="pur-pk-gr">${f ? stripHtml(its) : ""}<small>${esc(its.length === 1 ? t("pur_pk_1pack") : t("pur_pk_npacks").replace("{n}", its.length))} <i aria-hidden="true">${f ? "&#9656;" : "&#9662;"}</i></small></span></button>`
+          + (f ? "" : rowsOf("w:" + w.key, its, rowM));
+      });
+      return head + bar + html;
+    };
+    // Date: On now open, This week / Next week / Later folded until opened ("o:<g>" = opened).
+    const defShut = (g) => g === "d:this" || g === "d:next" || g === "d:later";
+    const isShut = (g) => (defShut(g) ? !PUR_PICK_FOLD.has("o:" + g) : PUR_PICK_FOLD.has(g));
+    const setShut = (g, shut) => { PUR_PICK_FOLD.delete(g); PUR_PICK_FOLD.delete("o:" + g); if (defShut(g) ? !shut : shut) PUR_PICK_FOLD.add(defShut(g) ? "o:" + g : g); };
+    const listHtml = () => {
+      const list = infos.filter(match);
+      if (PUR_PICK_GROUP === "month") return monthHtml(list);
+      const ngNote = ngHidden ? `<div class="pur-pk-ngnote">${esc(t("pur_pk_ng_later"))}</div>` : "";
+      const groups = groupsOf(list);
+      if (!groups.length) return `<div class="meta pur-pk-none">${esc(t("pur_pk_none"))}</div>` + ngNote;
+      // Each heading folds its group (kept for the visit and in this browser); searching opens every group with matches.
+      const folded = (g) => !q && isShut(g);
+      const allShut = groups.every((x) => folded(x.g));
+      const bar = q ? "" : `<div class="pur-pk-allbar"><button type="button" data-ppkall>${esc(t(allShut ? "pur_pk_show_all" : "pur_pk_hide_all"))}</button></div>`;
+      return bar + groups.map(({ g, label, range, its }) => { const f = folded(g); return `<button type="button" class="pur-pk-gh" data-ppkgrp="${esc(g)}" aria-expanded="${!f}"><span>${esc(label)}${range ? ` <small class="pur-pk-rg">${esc(range)}</small>` : ""}</span><span class="pur-pk-gr">${f ? stripHtml(its) : ""}<small>${its.length}</small><i aria-hidden="true">${f ? "&#9656;" : "&#9662;"}</i></span></button>${f ? "" : rowsOf(g, its, rowHtml)}`; }).join("") + ngNote;
+    };
     const fill = () => {
-      modal.querySelector(".pur-pk-seg").innerHTML = segHtml();
-      modal.querySelector(".pur-pk-note").textContent = t("pur_pk_note_" + PUR_PICK_TAB);
+      modal.querySelector(".pur-pk-seg").innerHTML = ["date", "cat", "month"].map((k) => `<button type="button" data-ppkgby="${k}" class="${PUR_PICK_GROUP === k ? "on" : ""}" aria-pressed="${PUR_PICK_GROUP === k}">${esc(t("pur_pk_group_" + k))}</button>`).join("");
       const l = modal.querySelector(".pur-pk-list"); l.innerHTML = listHtml(); l.scrollTop = 0;
     };
     modal.innerHTML = `<div class="modal-box pur-pk-box"><div class="pur-m-head"><h2>${esc(t("pur_pk_title"))}</h2>${closeXHtml("data-ppkclose")}</div>
       <label class="pur-pk-search"><span aria-hidden="true">&#128269;</span><input type="search" data-ppkq placeholder="${esc(t("pur_pk_search"))}" aria-label="${esc(t("pur_pk_search"))}" autocomplete="off" /></label>
-      <div class="pur-pk-seg" role="group"></div><div class="meta pur-pk-note"></div><div class="pur-pk-list"></div></div>`;
+      <div class="pur-pk-seg" role="group" aria-label="${esc(t("pur_pk_group"))}"></div><div class="pur-pk-note">${esc(t("pur_pk_hint").replace("{cur}", packConvert(4.99, "USD").code))}</div><div class="pur-pk-list"></div></div>`;
     modal.style.display = "flex";
     fill();
     modal.onclick = (ev) => {
@@ -1964,16 +2172,37 @@ async function renderPurchasesPageMain() {
       const gh = ev.target.closest("[data-ppkgrp]"), ab = ev.target.closest("[data-ppkall]");
       if (gh || ab) {
         const l = modal.querySelector(".pur-pk-list"), top = l.scrollTop;
-        if (gh) { const g = gh.dataset.ppkgrp; if (PUR_PICK_FOLD.has(g)) PUR_PICK_FOLD.delete(g); else PUR_PICK_FOLD.add(g); }
-        else { const gs = catOrder.filter((g) => infos.some((i) => (catOrder.includes(i.cat) ? i.cat : "") === g)); if (gs.every((g) => PUR_PICK_FOLD.has(g))) PUR_PICK_FOLD.clear(); else gs.forEach((g) => PUR_PICK_FOLD.add(g)); }
+        if (gh) { const g = gh.dataset.ppkgrp; setShut(g, !isShut(g)); }
+        else { const gs = groupsOf(infos.filter(match)).map((x) => x.g), shut = gs.every(isShut); gs.forEach((g) => setShut(g, !shut)); }
         try { localStorage.setItem("pur_pick_fold", JSON.stringify([...PUR_PICK_FOLD])); } catch { /* blocked */ }
         l.innerHTML = listHtml(); l.scrollTop = top;
         return;
       }
-      const tb2 = ev.target.closest("[data-ppktab]");
-      if (tb2) { PUR_PICK_TAB = tb2.dataset.ppktab; fill(); return; }
+      const mo = ev.target.closest("[data-ppkmore]");
+      if (mo) { const l = modal.querySelector(".pur-pk-list"), top = l.scrollTop; PUR_PICK_MORE.add(mo.dataset.ppkmore); l.innerHTML = listHtml(); l.scrollTop = top; return; }
+      const gby = ev.target.closest("[data-ppkgby]");
+      if (gby) { PUR_PICK_GROUP = gby.dataset.ppkgby; try { localStorage.setItem("pur_pick_group", PUR_PICK_GROUP); } catch { /* blocked */ } fill(); return; }
+      const wh = ev.target.closest("[data-ppkwk]"), wa = ev.target.closest("[data-ppkwkall]");
+      if (wh || wa) {
+        const l = modal.querySelector(".pur-pk-list"), top = l.scrollTop;
+        const weeks = monthWeeks(infos.filter(match)).weeks;
+        if (wh) { const w = weeks.find((x) => x.key === wh.dataset.ppkwk); if (w) wkSet(w, !wkFolded(w)); }
+        else { const shut = weeks.every((w) => wkFolded(w)); weeks.forEach((w) => wkSet(w, !shut)); }
+        try { localStorage.setItem("pur_pick_fold", JSON.stringify([...PUR_PICK_FOLD])); } catch { /* blocked */ }
+        l.innerHTML = listHtml(); l.scrollTop = top;
+        return;
+      }
+      const mb = ev.target.closest("[data-ppkmon]");
+      if (mb) { const d = Number(mb.dataset.ppkmon); PUR_PICK_MON = d ? Math.max(0, Math.min(11, PUR_PICK_MON + d)) : 0; const l = modal.querySelector(".pur-pk-list"); l.innerHTML = listHtml(); l.scrollTop = 0; return; }
       const row = ev.target.closest("[data-ppkid]");
-      if (row && sel) { close(); if (sel.value !== row.dataset.ppkid) { sel.value = row.dataset.ppkid; sel.dispatchEvent(new Event("change", { bubbles: true })); } }
+      if (row && sel) {
+        close();
+        // The date box goes to the pack's first sale day (Month: of that week).
+        const day = packValidDay(row.dataset.ppkday);
+        if (day) PUR_FORM.date = day;
+        if (sel.value !== row.dataset.ppkid) { sel.value = row.dataset.ppkid; sel.dispatchEvent(new Event("change", { bubbles: true })); }
+        else if (day) { const di = content.querySelector('[data-purf="date"]'); if (di) { di.value = day; di.dispatchEvent(new Event("change", { bubbles: true })); } }
+      }
     };
     modal.querySelector("[data-ppkq]").addEventListener("input", (ev) => { q = String(ev.target.value || "").trim().toLowerCase(); fill(); });
   });
@@ -1981,6 +2210,42 @@ async function renderPurchasesPageMain() {
   try { const d = JSON.parse(sessionStorage.getItem("pur_tbl_draft") || "null"); if (d && tblBtn && formTb && d.table === String(formTb.id) && !document.querySelector("#purTblModal[style*='flex']")) tblBtn.click(); } catch (e) { /* none */ }
   const toBought = (p) => ({ ...p, status: "bought", date: p.date > today ? today : p.date });
   content.querySelectorAll("[data-purmon]").forEach((d) => { const sm = d.querySelector("summary"); if (sm) sm.addEventListener("click", () => PUR_MON.set(d.dataset.purmon, !d.open)); });
+  // R3: Week | Month and the "Dates to show" sheet of the Will buy list.
+  const wbSave = () => { try { localStorage.setItem("pur_wb_range", JSON.stringify(PUR_WB)); } catch { /* blocked */ } };
+  content.querySelectorAll("[data-purwbby]").forEach((b) => b.addEventListener("click", () => { PUR_WB = { ...PUR_WB, by: b.dataset.purwbby }; wbSave(); redraw(); }));
+  const wbBtn = content.querySelector("[data-purwbopen]");
+  if (wbBtn) wbBtn.addEventListener("click", () => {
+    document.getElementById("purWbSheet")?.remove();
+    const ov = document.createElement("div");
+    ov.id = "purWbSheet";
+    ov.className = "modal-overlay adm-sheet-wrap gs-wrap pur-shw";
+    document.body.appendChild(ov);
+    let st = { ...PUR_WB };
+    { const r0 = wbRange(st, comingLater); st.from = st.from || r0.from; st.to = st.to || r0.to; }
+    const close = () => { ov.remove(); };
+    const draw = () => {
+      const r = st.preset === "custom" ? { from: st.from, to: st.to } : wbRange(st, comingLater);
+      const list = comingLater.filter((x) => wbIn(x, r));
+      const presets = ["this", "next", ...(packValidDay(BUDGET_TARGET) ? ["target"] : []), "custom", "all"];
+      ov.innerHTML = `<div class="modal-box adm-sheet gs-box pur-wb-sh" role="dialog" aria-modal="true" aria-label="${esc(t("pur_wb_title"))}"><div class="gs-head"><b style="flex:1;">${esc(t("pur_wb_title"))}</b>${closeXHtml("data-purwbx")}</div>
+        <div class="pur-wb-chips">${presets.map((k) => `<button type="button" class="pur-wb-chip${st.preset === k ? " on" : ""}" data-purwbp="${k}">${esc(t("pur_wb_p_" + k))}</button>`).join("")}</div>
+        <div class="pur-wb-dates"><label><small class="meta">${esc(t("pur_wb_from"))}</small><input type="date" class="pur-ed-date" data-purwbf value="${esc(r.from)}" /></label><label><small class="meta">${esc(t("pur_wb_to"))}</small><input type="date" class="pur-ed-date" data-purwbt value="${esc(r.to)}" /></label></div>
+        <div class="meta pur-wb-live">${esc(t("pur_wb_live").replace("{n}", nPacks(list)).replace("{v}", packFmtLocal(sumCost(list), sample, false)))}</div>
+        <div class="pur-wb-foot"><button type="button" class="btn ghost" data-purwbreset>${esc(t("pur_wb_reset"))}</button><button type="button" class="btn" data-purwbshow>${esc(t("pur_wb_show"))}</button></div></div>`;
+      ov.style.display = "flex";
+      const f = ov.querySelector("[data-purwbf]"), to = ov.querySelector("[data-purwbt]");
+      const typed = () => { if (packValidDay(f.value) && packValidDay(to.value)) { st = { ...st, preset: "custom", from: f.value <= to.value ? f.value : to.value, to: f.value <= to.value ? to.value : f.value }; draw(); } };
+      f.onchange = typed; to.onchange = typed;
+    };
+    ov.onclick = (e) => {
+      if (e.target === ov || e.target.closest("[data-purwbx]")) { close(); return; }
+      const c = e.target.closest("[data-purwbp]");
+      if (c) { const k = c.dataset.purwbp; st = { ...st, preset: k }; if (k !== "custom") { const r = wbRange(st, comingLater); st.from = r.from; st.to = r.to; } draw(); return; }
+      if (e.target.closest("[data-purwbreset]")) { st = { ...st, preset: "all", from: "", to: "" }; const r = wbRange(st, comingLater); st.from = r.from; st.to = r.to; draw(); return; }
+      if (e.target.closest("[data-purwbshow]")) { PUR_WB = { by: PUR_WB.by, preset: st.preset, from: st.preset === "custom" ? st.from : "", to: st.preset === "custom" ? st.to : "" }; wbSave(); close(); redraw(); }
+    };
+    draw();
+  });
   // Weekly cards: reward days left → the plan (same as the old "My pack dates" box).
   const wcSave = () => {
     Object.keys(MY_CARDS_ACTIVE).forEach((k) => { if (!packActiveDaysSaved(MY_CARDS_ACTIVE[k])) delete MY_CARDS_ACTIVE[k]; });
@@ -2126,6 +2391,29 @@ async function renderPurchasesPageMain() {
     PACK_PURCHASES.list = PACK_PURCHASES.list.filter((p) => !ids.has(p.id)); savePackPurchases(); redraw();
   };
   const grpEl = document.getElementById("purGrpSheet");
+  // E1: one date for every purchase of a line (that week / month); the plan
+  // is worked out again (savePackPurchases → budgetInvalidate).
+  const grpMoveAll = (id, day) => {
+    day = packValidDay(day);
+    if (!day) return;
+    const { kind } = grpParts(id), its = grpItems(id);
+    if (!its.length) return;
+    if (kind === "b" && day > today) day = today;
+    const ids = new Set(its.map((p) => p.id));
+    PACK_PURCHASES.list = purJoinLadders(PACK_PURCHASES.list.map((p) => (ids.has(p.id) ? { ...p, date: day } : p)));
+    PUR_EDIT = null;
+    savePackPurchases();
+    const moved = PACK_PURCHASES.list.find((p) => ids.has(p.id));
+    if (moved) PUR_GRP_OPEN = `${kind}|${bucketFor(kind, moved)}|${purGroupKey(moved)}`;
+    toast(t("pur_chall_done"));
+    redraw();
+  };
+  if (grpEl) grpEl.onchange = (e) => {
+    const inp = e.target.closest && e.target.closest("[data-purchall]"), id = PUR_GRP_OPEN, G = id && GROUPS.get(id);
+    if (!inp || !G) return;
+    const I = grpInfo(G.g, G.kind), w = grpEl.querySelector("[data-purchallw]"), nt = packValidDay(inp.value) ? challNote(I.tb.id, inp.value, I.nPrices > 1) : null;
+    if (w && nt) { w.innerHTML = nt.html; w.classList.toggle("warn", nt.warn); }
+  };
   // ✎ Edit a coming or bought purchase: in a line's sheet,
   // "✎ Edit" (the whole pack, all its dates) or ✎ on a date (that date only).
   // Date, How many, step / tier (buy-in-order ladders and option ladders), item
@@ -2218,7 +2506,7 @@ async function renderPurchasesPageMain() {
     const M = editModel(p, tb);
     // A line of several prices: each date is edited on its own (one step / card for all would change the others).
     const mixed = new Set(its.map(purRowKey)).size > 1;
-    PUR_EDIT = { id, pid: p.id, mixed, scope: pid || its.length === 1 || mixed ? "one" : "all", date: p.date, count: cntNow(p), status: p.status === "bought" ? "bought" : "planned", M, k: M ? M.k : 0, pick: M && M.pick ? M.pick.slice() : [], pp: M && M.pp ? M.pp.slice() : [], card: M && M.card != null ? M.card : 0, slot: "", p };
+    PUR_EDIT = { id, pid: p.id, mixed, scope: pid || its.length === 1 || mixed ? "one" : "all", date: p.date, count: cntNow(p), status: p.status === "bought" ? "bought" : "planned", dateAll: "", M, k: M ? M.k : 0, pick: M && M.pick ? M.pick.slice() : [], pp: M && M.pp ? M.pp.slice() : [], card: M && M.card != null ? M.card : 0, slot: "", p };
     PUR_EDIT.k0 = PUR_EDIT.k; PUR_EDIT.pick0 = PUR_EDIT.pick.join(); PUR_EDIT.pp0 = PUR_EDIT.pp.join(); PUR_EDIT.card0 = PUR_EDIT.card;
     drawEdit();
   };
@@ -2238,7 +2526,11 @@ async function renderPurchasesPageMain() {
     const stepChanged = !!M && (E.k !== E.k0 || E.pick.join() !== E.pick0 || E.pp.join() !== E.pp0 || E.card !== E.card0);
     const unit = purchasePrice({ row: buys.row, from: E.p.from, ...(!stepChanged && E.p.extra > 0 ? { extra: E.p.extra } : {}), ...(buys.choice ? { choice: buys.choice } : {}) }, tb);
     const oldV = target.reduce((a, p) => a + cost(p), 0), newV = unit * E.count * target.length;
-    const changed = stepChanged || target.some((p) => cntNow(p) !== E.count) || (E.scope === "one" && E.date !== E.p.date);
+    const changed = stepChanged || target.some((p) => cntNow(p) !== E.count) || (E.scope === "one" && E.date !== E.p.date) || (E.scope === "all" && !!E.dateAll && target.some((p) => p.date !== E.dateAll));
+    // Date box(es): the whole pack can move to one date too; amber when that day isn't a sale day.
+    const sameDay = target.every((p) => p.date === target[0].date) ? target[0].date : "";
+    const edDay = E.scope === "one" ? E.date : E.dateAll || sameDay;
+    const edWarn = edDay ? challNote(tb.id, edDay, false) : null;
     const row = (label, ctl, cls) => `<div class="pur-ed-r${cls ? " " + cls : ""}"><span class="pur-ed-l">${esc(label)}</span><span class="pur-ed-c">${ctl}</span></div>`;
     const picOf = (o) => { const ic = itemIc(o.name || "") || itemIc(Object.keys(o.gives || {})[0] || ""); return ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(String(o.tag || "").slice(0, 2))}</i>`; };
     const slots = (opts) => `<span class="pur-slots">${E.pp.map((sj, i) => { const o = opts[sj] || opts[0]; return `<button type="button" class="pur-slot${E.slot === String(i) ? " open" : ""}" data-edslot="${i}" title="${esc(o.tag)}">${picOf(o)}<small>${esc(shortAmount(o.q))}</small></button>`; }).join("")}</span>`;
@@ -2260,7 +2552,8 @@ async function renderPurchasesPageMain() {
     host.hidden = false;
     host.innerHTML = `<div class="pur-ed-h">&#9998; ${esc(t("pur_ed_title"))}${E.scope === "one" ? ` <span class="meta">· ${esc(shortDay(E.p.date))}</span>` : ""}</div>
       ${scopeHtml}
-      ${E.scope === "one" ? row(t("pur_ed_date"), `<input type="date" class="pur-ed-date" data-eddate value="${esc(E.date)}"${E.status === "bought" ? ` max="${esc(today)}"` : ""} />`) : ""}
+      ${E.scope === "one" ? row(t("pur_ed_date"), `<input type="date" class="pur-ed-date" data-eddate value="${esc(E.date)}"${E.status === "bought" ? ` max="${esc(today)}"` : ""} />`) : row(t("pur_ed_date_all"), `<input type="date" class="pur-ed-date" data-eddateall value="${esc(E.dateAll || sameDay)}"${E.status === "bought" ? ` max="${esc(today)}"` : ""} />${!E.dateAll && !sameDay ? ` <small class="meta">${esc(t("pur_ed_date_keep"))}</small>` : ""}`)}
+      ${edWarn && edWarn.warn ? `<div class="pur-o1-warn">&#9888; ${edWarn.html}</div>` : ""}
       ${row(t("pur_ed_count"), `${purStepHtml("edcnt", E.count, max)}${max > 1 ? ` <small class="meta">${esc(t("pur_ed_max").replace("{n}", max))}</small>` : ""}`)}
       ${stepHtml}
       ${row(t("pur_ed_status"), `<span class="pur-seg pur-ed-st">${["planned", "bought"].map((s) => `<button type="button" data-edstatus="${s}" class="${E.status === s ? "on" : ""}">${s === "bought" ? "&#10003; " : ""}${esc(t(s === "planned" ? "pur_o1_coming" : "pur_bought_list"))}</button>`).join("")}</span>`)}
@@ -2293,10 +2586,12 @@ async function renderPurchasesPageMain() {
           if (!ids.has(p.id)) return p;
           const q = { ...p, count: E.count, status: E.status };
           if (E.scope === "one") q.date = packValidDay(E.date) || p.date;
+          else if (packValidDay(E.dateAll)) q.date = E.dateAll;
           if (q.status === "bought" && q.date > today) q.date = today;
-          if (stepChanged) { q.row = bu.row; delete q.extra; if (bu.choice) q.choice = bu.choice; else delete q.choice; }
+          if (stepChanged) { q.row = bu.row; delete q.extra; if (bu.choice) q.choice = bu.choice; else delete q.choice; if (q.extraFrom != null && !(q.row >= q.extraFrom)) delete q.extraFrom; }
           return q;
         });
+        PACK_PURCHASES.list = purJoinLadders(PACK_PURCHASES.list);
         PUR_EDIT = null;
         savePackPurchases(); // also budgetInvalidate(): Budgets plans the rest again
         toast(t("pur_ed_saved"));
@@ -2313,6 +2608,8 @@ async function renderPurchasesPageMain() {
     };
     const dt = host.querySelector("[data-eddate]");
     if (dt) dt.onchange = () => { if (packValidDay(dt.value)) E.date = dt.value; drawEdit(); };
+    const dta = host.querySelector("[data-eddateall]");
+    if (dta) dta.onchange = () => { E.dateAll = packValidDay(dta.value) || ""; drawEdit(); };
   }
   const closeGrp = () => { PUR_GRP_OPEN = null; PUR_EDIT = null; if (grpEl) { grpEl.style.display = "none"; grpEl.innerHTML = ""; } };
   const openGrp = (id) => {
@@ -2330,6 +2627,7 @@ async function renderPurchasesPageMain() {
     const { kind } = grpParts(id);
     const ed = e.target.closest("[data-puredit]");
     if (ed) { openEdit(id, ed.dataset.puredit || ""); return; }
+    if (e.target.closest("[data-purchallgo]")) { const inp = grpEl.querySelector("[data-purchall]"); grpMoveAll(id, inp && inp.value); return; }
     if (e.target.closest("[data-purgall]")) { grpAllBought(id); return; }
     if (e.target.closest("[data-purgdel]")) { grpRemoveAll(id); return; }
     const row0 = e.target.closest("[data-purid]");
