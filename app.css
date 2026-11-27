@@ -2816,7 +2816,8 @@ input,select,textarea{
   .adv-wt-hd .adv-wt-t{ display:flex; align-items:center; gap:6px; }
   .adv-cap{ font-size:12px; letter-spacing:.06em; text-transform:uppercase; }
   .adv-plain{ font-size:12.5px; color:var(--muted); margin:2px 0 8px; padding-inline-start:2px; }
-  .adv-cur{ border:1px solid var(--ice); border-radius:11px; padding:7px 9px; }
+  .adv-cur{ border:1px solid transparent; border-radius:11px; padding:7px 9px; background:rgba(255,255,255,.03); margin-top:6px; }
+  .adv-cur.on{ border-color:var(--ice); }
   .adv-ppr{ display:flex; align-items:center; gap:8px; }
   .adv-ppr .adv-ppn{ flex:1; min-width:0; display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; gap:6px; font-size:14px; font-weight:800; }
   .adv-ppr .adv-cc em{ margin-top:0; font-size:12px; }
@@ -2836,6 +2837,28 @@ input,select,textarea{
   .adv-bal.a{ color:#e0b25a; background:rgba(224,178,90,.1); border:1px solid rgba(224,178,90,.35); }
   .adv-swu{ margin-top:8px; font-size:12px; color:var(--muted); }
   .adv-swu b{ color:var(--frost); }
+  .psk > summary{ cursor:pointer; list-style:none; display:flex; align-items:center; gap:6px; font-size:14px; }
+  .psk > summary::-webkit-details-marker{ display:none; }
+  .psk > summary::after{ content:"\25B8"; margin-inline-start:auto; color:var(--muted); }
+  .psk[open] > summary::after{ content:"\25BE"; }
+  .psk-h{ margin:10px 0 4px; font-size:12.5px; font-weight:700; }
+  .psk-g{ display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:6px; }
+  .psk-c{ display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; }
+  .psk-c small{ font-size:11px; color:var(--muted); }
+  .psk-c input{ width:100%; min-width:0; text-align:center; padding-inline:2px; }
+  .adv-pl{ padding:6px 9px; border-radius:11px; background:rgba(255,255,255,.03); }
+  .adv-pl .adv-ppn{ color:var(--muted); font-weight:700; }
+  .adv-pl .adv-ppn small{ font-size:11px; font-weight:500; }
+  .adv-cc em.b{ background:rgba(134,148,163,.14); color:var(--muted); }
+  .adv-gt{ width:100%; border-collapse:collapse; font-size:12px; margin-top:4px; }
+  .adv-gt th{ font-weight:600; color:var(--muted); text-align:center; padding:3px 2px; }
+  .adv-gt th:first-child, .adv-gt td:first-child{ text-align:start; }
+  .adv-gt td{ text-align:center; padding:4px 2px; border-top:1px solid var(--line); color:var(--muted); white-space:nowrap; }
+  .adv-gt td:first-child{ color:var(--frost); font-weight:700; }
+  .adv-gt td img{ width:14px; height:14px; vertical-align:-2px; margin-inline-end:4px; }
+  .adv-gt td.g{ color:var(--good); font-weight:700; }
+  .adv-gt td.r{ color:var(--danger); font-weight:700; }
+  .adv-gtt{ text-align:end; font-size:11.5px; color:var(--muted); margin-top:4px; }
   .enemy-card{ margin-top:10px; padding:10px 12px; border:1px solid var(--line); border-radius:14px; background:var(--panel-2); }
   .enemy-card b.t{ display:block; font-size:13.5px; margin-bottom:4px; }
   .enemy-chips{ display:flex; flex-wrap:wrap; gap:5px; }

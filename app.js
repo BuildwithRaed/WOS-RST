@@ -3868,9 +3868,13 @@ const T = {
   adv_wt_yours: { en: "Current stats (Dashboard now)" },
   adv_wt_general: { en: "Max stats (game max)" },
   adv_pp_title: { en: "Price per 1%" },
-  adv_each_troop: { en: "+{v}% {stat} on each troop" },
   adv_sorts_list: { en: "sorts the list" },
-  adv_plain: { en: "Plain {v} \u00b7 raw %" },
+  adv_plain_l: { en: "Plain" },
+  adv_raw: { en: "raw %" },
+  adv_troop: { en: "Troop" },
+  adv_in_all: { en: "+{v}% in all" },
+  adv_in_all_eq: { en: "\u2248 +{v}% in all (its worth in your own stat)" },
+  adv_price_raw: { en: "raw cost of the items" },
   adv_cur_stats: { en: "Current stats" },
   adv_vs_max: { en: "vs Max stats" },
   adv_bal_lower: { en: "{stat} is lower compared to your other stats \u00b7 1% helps you more" },
@@ -3906,9 +3910,6 @@ const T = {
   adv_what_does: { en: "What it does" },
   adv_always_on: { en: "always on" },
   adv_enemy_does: { en: "Lowers the {stat} of every enemy you fight by {v}% more." },
-  adv_worth_pre: { en: "Worth \u2248" },
-  adv_worth_post: { en: "on each troop (your stats)" },
-  adv_counted_all: { en: "Counted as +{v}% {stat} in all ({each}% \u00d7 {n} troops)." },
   adv_price: { en: "Price" },
   adv_after_h: { en: "After this" },
   adv_level: { en: "Level" },
@@ -8103,15 +8104,6 @@ function enemyEq(kind, r1, r2, T) {
 }
 // "−1.25%" (a reduction shown with a minus sign).
 const enemyPct = (v) => `−${(Math.round((Number(v) || 0) * 100) / 100).toLocaleString("en-US")}%`;
-// Built-in skill stats used only while the table's row has no stat of its own (Admin rows win).
-const EXPERT_SKILL_DEFAULTS = { "Gareth|Fearsome Reputation": { stat: "Enemy Lethality", per: 0.25 } };
-function expertSkillDefaults(rows) {
-  (rows || []).forEach((r) => {
-    const d = EXPERT_SKILL_DEFAULTS[`${r.expert}|${r.skill}`];
-    if (d && !r.stat_type) { r.stat_type = d.stat; r.stat_value = Math.round(d.per * (Number(r.level) || 0) * 1000) / 1000; }
-  });
-  return rows;
-}
 const advAddItems = (a, b, f = 1) => { Object.entries(b || {}).forEach(([k, v]) => { if (Number(v) > 0) a[k] = (a[k] || 0) + Number(v) * f; }); return a; };
 // ---- Steps, one builder per page ----
 // Every row is the NEXT single upgrade of one track (a piece's next star row, a charm's
@@ -8495,6 +8487,8 @@ function advRank(steps) {
   // My order: how far each row moved against Best value (up / down arrows).
   buy.slice().sort((a, b) => a.ypp - b.ypp || a.usd - b.usd).forEach((r, i) => { r.yrank = i + 1; });
   buy.slice().sort((a, b) => a.pp - b.pp || a.usd - b.usd).forEach((r, i) => { r.grank = i + 1; });
+  const plainOf = (r) => (r.g > 0 ? r.usd / r.g : Infinity);
+  buy.slice().sort((a, b) => plainOf(a) - plainOf(b) || a.usd - b.usd).forEach((r, i) => { r.prank = i + 1; });
   buy.slice().sort((a, b) => a.wpp - b.wpp || a.usd - b.usd).forEach((r, i) => { r.orank = i + 1; });
   buy.sort((a, b) => a[key] - b[key] || a.usd - b.usd);
   buy.forEach((r, i) => { r.rank = i + 1; r.move = key === "wpp" ? r.yrank - r.rank : 0; });
@@ -8884,18 +8878,18 @@ function advOpenSheet(r) {
   // Now / next: the levels and what the step adds (enemy stats: their own % down).
   const e = r.enemy, es = e ? ENEMY_STAT_OF[e.k] : null;
   const trs = PLX_TROOPS.filter((tr) => by[tr]);
-  const per1 = trs.length ? stSum[mainSt] / trs.length : 0, same = trs.length > 1 && trs.every((tr) => Object.keys(by[tr]).length === 1 && Math.abs((by[tr][mainSt] || 0) - per1) < 0.05);
-  const addTxt = e ? `${enemyShort(e.k)} ${enemyPct(e.b)}` : same ? t("adv_each_troop").replace("{v}", r1(per1)).replace("{stat}", ADV_SHORT[mainSt]) : advGivesText(r.gain);
-  const nowNext = r.la || r.lb ? `<div class="adv-nn"><div class="adv-nb"><small>${esc(t("adv_now"))}</small><b>${esc(/^[\d.]+$/.test(r.la) ? t("adv_lv").replace("{n}", r.la) : r.la || "—")}</b>${e ? `<span>${esc(`${enemyShort(e.k)} ${e.a > 0 ? enemyPct(e.a) : "0%"}`)}</span>` : ""}</div><span class="adv-nn-ar">&rarr;</span><div class="adv-nb on"><small>${esc(t("adv_next"))}</small><b>${esc(/^[\d.]+$/.test(r.lb) ? t("adv_lv").replace("{n}", r.lb) : r.lb || "—")}</b><span>${esc(addTxt)}</span></div></div>` : "";
-  const chip = (tr, txt) => `<span class="pca-chip" title="${esc(troopDisplayName(tr))}">${esc(troopDisplayName(tr))} ${esc(txt)}</span>`;
-  const what = e ? `<div class="adv-box"><div class="adv-bh">${esc(t("adv_what_does"))} <span class="adv-on">${esc(t("adv_always_on"))}</span></div>
-      <p class="pca-sb" style="margin:2px 0 6px;">${esc(t("adv_enemy_does").replace("{stat}", tStatLabel(es)).replace("{v}", String(Math.round((e.b - e.a) * 100) / 100)))}</p>
-      <div class="adv-worth">${esc(t("adv_worth_pre"))} <b>+${r1(per1)}% ${esc(tStatLabel(es))}</b> ${esc(t("adv_worth_post"))}</div>
-      <div class="adv-trw">${PLX_TROOPS.map((tr) => chip(tr, `+${r1((by[tr] && by[tr][es]) || 0)}% ${ADV_SHORT[es]}`)).join("")}</div>
-      <p class="pca-sb" style="margin:6px 0 0;">${esc(t("adv_counted_all").replace("{v}", r1(r.g)).replace("{stat}", ADV_SHORT[es]).replace("{each}", r1(per1)).replace("{n}", PLX_TROOPS.length))}</p></div>`
-    : `<div class="adv-box"><div class="adv-bh">${esc(t("adv_what_gives"))}</div><div class="adv-trw">${trs.map((tr) => chip(tr, ADV_STATS.filter((s) => by[tr][s]).map((s) => `+${(Math.round(by[tr][s] * 100) / 100).toLocaleString("en-US")}% ${ADV_SHORT[s]}`).join(" · "))).join("")}</div>
-      ${same ? `<p class="pca-sb" style="margin:6px 0 0;">${esc(t("adv_counted_all").replace("{v}", r1(r.g)).replace("{stat}", ADV_SHORT[mainSt]).replace("{each}", r1(per1)).replace("{n}", trs.length))}</p>` : ""}</div>`;
-  const price = `<div class="adv-box"><div class="adv-bh" style="display:flex; justify-content:space-between;"><span>${esc(t("adv_price"))}</span><b>${advMoney(r.usd)}</b></div>${items}</div>`;
+  const nowNext = r.la || r.lb ? `<div class="adv-nn"><div class="adv-nb"><small>${esc(t("adv_now"))}</small><b>${esc(/^[\d.]+$/.test(r.la) ? t("adv_lv").replace("{n}", r.la) : r.la || "—")}</b></div><span class="adv-nn-ar">&rarr;</span><div class="adv-nb on"><small>${esc(t("adv_next"))}</small><b>${esc(/^[\d.]+$/.test(r.lb) ? t("adv_lv").replace("{n}", r.lb) : r.lb || "—")}</b></div></div>` : "";
+  // What it gives: one row per troop it touches (ATK / DEF / LETH / HP), a total line;
+  // an enemy stat adds an "Enemy" row with its % down (the troop rows = its worth in your stat).
+  const cell = (v, pre) => (v > 1e-9 ? `<td class="g">${pre || ""}+${(Math.round(v * 100) / 100).toLocaleString("en-US")}%</td>` : "<td>\u2014</td>");
+  const what = `<div class="adv-box"><div class="adv-bh">${esc(t(e ? "adv_what_does" : "adv_what_gives"))}${e ? ` <span class="adv-on">${esc(t("adv_always_on"))}</span>` : ""}</div>
+      ${e ? `<p class="pca-sb" style="margin:2px 0 6px;">${esc(t("adv_enemy_does").replace("{stat}", tStatLabel(es)).replace("{v}", String(Math.round((e.b - e.a) * 100) / 100)))}</p>` : ""}
+      <table class="adv-gt"><thead><tr><th>${esc(t("adv_troop"))}</th>${ADV_STATS.map((st) => `<th>${esc(ADV_SHORT[st])}</th>`).join("")}</tr></thead><tbody>
+      ${trs.map((tr) => `<tr><td><img src="${esc(`icons/troop-${tr.toLowerCase()}.png`)}" alt="" />${esc(troopDisplayName(tr))}</td>${ADV_STATS.map((st) => cell(by[tr][st] || 0, e ? "\u2248" : "")).join("")}</tr>`).join("")}
+      ${e ? `<tr class="en"><td>${esc(t("enemy_word"))}</td>${ADV_STATS.map((st) => (st === es ? `<td class="r">\u2212${(Math.round((e.b - e.a) * 100) / 100).toLocaleString("en-US")}%</td>` : "<td>\u2014</td>")).join("")}</tr>` : ""}
+      </tbody></table>
+      <div class="adv-gtt">${esc(t(e ? "adv_in_all_eq" : "adv_in_all").replace("{v}", r1(r.g)))}</div></div>`;
+  const price = `<div class="adv-box"><div class="adv-bh" style="display:flex; justify-content:space-between;"><span>${esc(t("adv_price"))} <small class="meta" style="font-weight:500;">\u00b7 ${esc(t("adv_price_raw"))}</small></span><b>${advMoney(r.usd)}</b></div>${items}</div>`;
   // Price per 1%: Plain (no weights), Current stats (your Dashboard now) against Max stats (the
   // game's max), My order; the sort in use carries "sorts the list".
   const money = (v) => (Number.isFinite(v) ? bidiNum(`$${v.toFixed(2)}/1%`) : "—");
@@ -8910,8 +8904,8 @@ function advOpenSheet(r) {
   (UPGRADE_ORDER.rows || UPGRADE_ORDER_DEFAULT).forEach(([tr, st], i) => { ranks[`${reachTroopKey(tr)}|${st}`] = i + 1; });
   const oRanks = Object.keys(r.gain).filter((k) => k.endsWith(`|${mainSt}`) && r.gain[k] > 1e-9).map((k) => ranks[k]).filter(Boolean).sort((a, b) => a - b);
   const perBox = `<div class="adv-box"><div class="adv-bh adv-cap">${esc(t("adv_pp_title"))}</div>
-      <div class="adv-plain">${esc(t("adv_plain").replace("{v}", Number.isFinite(plain) ? `$${plain.toFixed(2)}` : "—"))}</div>
-      <div class="adv-cur">
+      <div class="adv-ppr adv-pl"><span class="adv-ppn">${esc(t("adv_plain_l"))} <small>${esc(t("adv_raw"))}</small></span><span class="adv-cc"><em class="b">${money(plain)}</em></span><small class="adv-rk">#${r.prank || "—"}</small></div>
+      <div class="adv-cur${you ? " on" : ""}">
         <div class="adv-ppr"><span class="adv-ppn">${esc(t("adv_cur_stats"))}${you ? ` ${sortsPill}` : ""}</span><span class="adv-cc"><em class="${cls(r.ypp)}">${money(r.ypp)}</em></span><small class="adv-rk">#${r.yrank || "—"}</small></div>
         <div class="adv-vs"><span>${esc(t("adv_vs_max"))}</span><b>${money(r.pp)}</b></div>
         <div class="adv-trk ${tone}"><i style="width:${fill.toFixed(1)}%;"></i><b style="inset-inline-start:${tick.toFixed(1)}%;"></b></div>
@@ -11973,7 +11967,7 @@ const SCAN_SUMMARY_ROWS = [[/\bgems?\b/i, "Gems"], [/\bmeat\b/i, "Meat"], [/\bwo
 // running mismatched code; if it still doesn't match, the promise fails with
 // err.stale and the caller says so.
 const CODE_FILES = {
-  admin: "admin.min.js?v=cfa29ce292",
+  admin: "admin.min.js?v=ce6ffa64d5",
   scan: "scan.min.js?v=64a7ef20ff",
   packs: "packs.min.js?v=d85801810c",
   gallery: "gallery.min.js?v=28a7717641",
@@ -23084,7 +23078,7 @@ const EXPERT_NODE_PATHS = {
 let EXPERT_NODE_ROWS = {};
 function loadExpertNodes(kind) {
   const table = EXPERT_NODE_PATHS[kind].split("?")[0];
-  if (!EXPERT_NODE_ROWS[kind]) EXPERT_NODE_ROWS[kind] = sbAllPagesAtOnce(EXPERT_NODE_PATHS[kind].replace("select=id,", `select=${upId(table)}`)).then((rows) => (kind === "skill" ? expertSkillDefaults(rows) : rows)).catch((e) => { delete EXPERT_NODE_ROWS[kind]; throw e; });
+  if (!EXPERT_NODE_ROWS[kind]) EXPERT_NODE_ROWS[kind] = sbAllPagesAtOnce(EXPERT_NODE_PATHS[kind].replace("select=id,", `select=${upId(table)}`)).catch((e) => { delete EXPERT_NODE_ROWS[kind]; throw e; });
   return EXPERT_NODE_ROWS[kind];
 }
 // Reads a table that can pass the API's 1,000-row page size (the affinity

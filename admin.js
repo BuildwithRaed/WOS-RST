@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "cfa29ce292";
+window.ADMIN_BUILD = "ce6ffa64d5";
 
 // ============================================================
 // ADMIN PAGE
@@ -2442,6 +2442,7 @@ const ADMIN_EXPERT_TABLE_CONFIG = {
 const ADM_PSK_KINDS = [["", "— none —"], ["ATK+", "Attack +"], ["DEF+", "Defense +"], ["LETH+", "Lethality +"], ["HP+", "Health +"], ["EATK", "Enemy Attack −"], ["EDEF", "Enemy Defense −"], ["ELETH", "Enemy Lethality −"], ["EHP", "Enemy Health −"]];
 const ADM_PSK_SHORT = { "ATK+": "ATK +", "DEF+": "DEF +", "LETH+": "LETH +", "HP+": "HP +", EATK: "Enemy ATK −", EDEF: "Enemy DEF −", ELETH: "Enemy LETH −", EHP: "Enemy HP −" };
 let ADM_PSK = null; // { pet, name, stats: [{ kind, vals }], two, saved: JSON }
+let ADM_PSK_OPEN = false; // the section starts folded (one line), for the visit
 async function admPetSkillDraw(pet) {
   const host = document.getElementById("adminPetSkill");
   if (!host || !pet) return;
@@ -2460,8 +2461,11 @@ async function admPetSkillDraw(pet) {
   const D = ADM_PSK, n = admPetSkillChanges();
   const sel = (i) => `<select data-pskkind="${i}" style="width:100%;">${ADM_PSK_KINDS.map(([v, l]) => `<option value="${v}" ${D.stats[i].kind === v ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
   const cols = D.two ? [0, 1] : [0];
-  host.innerHTML = `<h2>Pet skill</h2>
-    <p class="desc">Grows when the pet advances; no cost of its own (the pet's levels pay for it). "+" stats add to your Dashboard totals; "Enemy −" stats lower that enemy stat and count as multipliers.</p>
+  const saved = JSON.parse(ADM_PSK.saved || "null");
+  const sumTxt = saved && saved.stats && saved.stats.length ? [saved.name || "", saved.stats.map((x) => ADM_PSK_SHORT[x.kind] || "").join(" + ")].filter(Boolean).join(" · ") : saved && saved.name ? saved.name : "none";
+  const grid = (i) => `<div class="psk-g">${advs.map((a) => { const v = D.stats[i].vals[a]; return `<label class="psk-c"><small>${esc(a)}</small><input type="number" step="any" min="0" class="keep-w" data-pskval="${i}|${esc(a)}" value="${v == null ? "" : esc(String(v))}" placeholder="—" /></label>`; }).join("")}</div>`;
+  host.innerHTML = `<details class="psk" ${ADM_PSK_OPEN ? "open" : ""}><summary><b>Pet skill</b> <span class="meta">· ${esc(sumTxt)}</span></summary>
+    <p class="desc" style="margin:6px 0 8px;">Grows when the pet advances; no cost of its own (the pet's levels pay for it). "+" stats add to your Dashboard totals; "Enemy −" stats lower that enemy stat and count as multipliers.</p>
     <label class="meta" style="font-size:11.5px;">Skill name</label>
     <input type="text" data-pskname value="${esc(D.name)}" placeholder="e.g. Frost Roar" style="width:100%; margin-bottom:8px;" />
     <div style="display:grid; grid-template-columns:${D.two ? "1fr 1fr" : "1fr"}; gap:8px;">
@@ -2469,10 +2473,9 @@ async function admPetSkillDraw(pet) {
       ${D.two ? `<label class="meta" style="font-size:11.5px;">Second stat (optional)${sel(1)}</label>` : ""}
     </div>
     ${D.two ? `<button type="button" class="btn ghost small" data-psktwo="0" style="margin-top:6px;">− Remove the second stat</button>` : `<button type="button" class="btn ghost small" data-psktwo="1" style="margin-top:6px; border-style:dashed;">+ Add a second stat</button>`}
-    <div class="meta" style="font-size:12px; font-weight:700; margin:10px 0 4px;">Value at each Advancement</div>
-    <table style="width:100%; border-collapse:collapse; font-size:12.5px;"><thead><tr><th style="text-align:start; padding:4px; color:var(--muted);">Level</th>${cols.map((i) => `<th style="text-align:start; padding:4px; color:var(--muted);">${esc(ADM_PSK_SHORT[D.stats[i].kind] || "—")}</th>`).join("")}</tr></thead>
-    <tbody>${advs.map((a) => `<tr><td style="padding:3px 4px; font-weight:700;">${esc(a)}</td>${cols.map((i) => { const v = D.stats[i].vals[a]; return `<td style="padding:3px 4px;"><span style="display:flex; align-items:center; gap:4px; white-space:nowrap;"><input type="number" step="any" min="0" class="keep-w" data-pskval="${i}|${esc(a)}" value="${v == null ? "" : esc(String(v))}" placeholder="—" style="flex:1 1 auto; width:auto; min-width:0; max-width:140px;" />%</span></td>`; }).join("")}</tr>`).join("")}</tbody></table>
-    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px;"><span class="meta" data-pskn>${n ? `${n} change${n === 1 ? "" : "s"} not saved` : "No changes"}</span><button type="button" class="btn ghost small" data-pskundo ${n ? "" : "disabled"}>Undo</button><button type="button" class="btn small" data-psksave ${n ? "" : "disabled"}>Save</button></div>`;
+    ${cols.map((i) => `<div class="psk-h">Value at each Advancement${D.two ? ` · ${esc(ADM_PSK_SHORT[D.stats[i].kind] || "—")}` : ""} <span class="meta">· %</span></div>${grid(i)}`).join("")}
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px;"><span class="meta" data-pskn>${n ? `${n} change${n === 1 ? "" : "s"} not saved` : "No changes"}</span><button type="button" class="btn ghost small" data-pskundo ${n ? "" : "disabled"}>Undo</button><button type="button" class="btn small" data-psksave ${n ? "" : "disabled"}>Save</button></div></details>`;
+  host.querySelector("details.psk").addEventListener("toggle", (e) => { ADM_PSK_OPEN = e.currentTarget.open; });
   const upd = () => { const k = admPetSkillChanges(), el = host.querySelector("[data-pskn]"); if (el) el.textContent = k ? `${k} change${k === 1 ? "" : "s"} not saved` : "No changes"; host.querySelectorAll("[data-pskundo], [data-psksave]").forEach((b) => { b.disabled = !k; }); };
   host.querySelector("[data-pskname]").addEventListener("input", (e) => { D.name = e.target.value; upd(); });
   host.querySelectorAll("[data-pskkind]").forEach((x) => x.addEventListener("change", () => { D.stats[Number(x.dataset.pskkind)].kind = x.value; admPetSkillDraw(pet); }));
@@ -2511,6 +2514,12 @@ function admPetSkillChanges() {
     if (((a.stats[i] || {}).vals || {})[v] !== ((b.stats[i] || {}).vals || {})[v]) n++;
   });
   return n;
+}
+// A skill's number in the game (1 – 4, the roster's skill1 … skill4 of the expert shown); 99 = not on the roster.
+function admSkillNo(skill) {
+  const e = (typeof EXPERTS_LIST !== "undefined" ? EXPERTS_LIST : []).find((x) => x.key === ADMIN_ACTIVE_EXPERT);
+  const i = e && e.skills ? e.skills.indexOf(skill) : -1;
+  return i < 0 ? 99 : i + 1;
 }
 // Stat dropdown of an expert table: "— none —", the list, and a saved word not in it kept as it is.
 function admExpStatSelect(c, v, attrs) {
@@ -2643,7 +2652,9 @@ async function renderAdminExpertTable(body, tableKey) {
 
   async function loadRows() {
     const cols = ["id", ...cfg.cols.map((c) => c.key)].join(",");
-    const rows = await sb(`${cfg.table}?select=${cols}&expert=eq.${encodeURIComponent(ADMIN_ACTIVE_EXPERT)}&order=${cfg.orderCol}`);
+    let rows = await sb(`${cfg.table}?select=${cols}&expert=eq.${encodeURIComponent(ADMIN_ACTIVE_EXPERT)}&order=${cfg.orderCol}`);
+    // Skills in the game's order (skill 1 → 4 of the roster), then by level.
+    if (tableKey === "skills") rows = rows.slice().sort((a, b) => admSkillNo(a.skill) - admSkillNo(b.skill) || (Number(a.level) || 0) - (Number(b.level) || 0));
     currentRows = rows;
     document.getElementById("adminRowsHeading").textContent = `Rows for ${ADMIN_ACTIVE_EXPERT} (${rows.length})`;
     const wrap = document.getElementById("adminRowsWrap");
@@ -2676,7 +2687,7 @@ async function renderAdminExpertTable(body, tableKey) {
       </table>
     `;
 
-    wireAdmEditBar(wrap, { rowAttr: "data-exprow", table: cfg.table, upTable: cfg.table, saveRow: (id) => saveExpRow(id), after: () => { EXPERTS_RESEARCH_NODES_GLOBAL = null; dropKeptGameData(); }, hide: ["#adminExpRowsSaveAll", "[data-exprowsave]"],
+    wireAdmEditBar(wrap, { rowAttr: "data-exprow", table: cfg.table, upTable: cfg.table, rowName: tableKey === "skills" ? (tr) => { const v = (tr.querySelector('[data-f="skill"]') || {}).value || ""; const n = admSkillNo(v); return n < 99 ? `${n} ${v}` : v; } : undefined, saveRow: (id) => saveExpRow(id), after: () => { EXPERTS_RESEARCH_NODES_GLOBAL = null; dropKeptGameData(); }, hide: ["#adminExpRowsSaveAll", "[data-exprowsave]"],
       addForm: "#adminAddRowForm", reload: () => loadRows(),
       create: async (tr) => { await sb(`${cfg.table}`, { method: "POST", body: JSON.stringify({ expert: ADMIN_ACTIVE_EXPERT, ...admNewRowPayload(tr, null) }) }); } });
     admWireRowSave(wrap, "data-exprowsave", saveExpRow);
