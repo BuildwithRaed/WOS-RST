@@ -10249,6 +10249,11 @@ function packPurchaseUse(groups) {
       // Bought in an earlier copy of a repeating pack (a weekly pack bought on
       // Sunday, today Monday): that copy is over, its buys don't count now.
       if (p.status === "bought" && repeating && startKey && p.date < startKey) return;
+      // Bought in the running cycle, but that copy's sale window is over
+      // (Champion Forge: 28 days on sale every 84): the next copy starts
+      // fresh, so this buy uses none of it.
+      const inRun = startKey && p.date >= startKey && p.date <= todayKey;
+      if (inRun && repeating && Number(g.window) > 0 && offs.length && offs[0] !== 0) return;
       add += n;
       // Bought (or planned for today) in the running copy: that copy's buys are taken.
       if (startKey && p.date >= startKey && p.date <= todayKey) { now += n; usedAt[0] = (usedAt[0] || 0) + n; noteTop(0, p, n); return; }
@@ -19218,7 +19223,7 @@ const BUDGET_PLANS_INDEX = "budget_plans_v2", BUDGET_PLAN_ITEM = "budget_plan_v2
 const BUDGET_PLANS_KEPT = 5;
 function budgetPlanFingerprint(payload) {
   tradeExtraSync();
-  const str = JSON.stringify({ v: 8, user: USER_ID || "", day: packDayKey(packStartOfToday()), ...(ngFirstOn() ? { ngf: ngFirstSig() } : {}), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
+  const str = JSON.stringify({ v: 9, user: USER_ID || "", day: packDayKey(packStartOfToday()), ...(ngFirstOn() ? { ngf: ngFirstSig() } : {}), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
   // cyrb53: a quick 53-bit hash of the text, plus its length.
   let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
   for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
