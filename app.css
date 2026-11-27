@@ -1862,7 +1862,8 @@
   /* The dates list's Hide / Show button sits at the end of the bar; hidden, the lines go. */
   .b3-splitrow{ display:flex; align-items:center; gap:10px; margin:8px 0 2px; }
   .b3-splitrow .b3-split{ flex:1 1 auto; margin:0; }
-  .b3-hd.g1-folded details.bud-line.b3-sl{ display:none; }
+  .b3-hd.g1-folded .b3-lns{ display:none; }
+  .b3-splitrow.b3-foldrow{ justify-content:flex-end; margin:6px 0 0; }
   /* Under the lines: the plain plan beside the dated one ("Everything by Dec 5 instead: …"). */
   .b3-vs{ margin-top:8px; font-size:11.5px; line-height:1.4; }
   .b3-vs b{ color:var(--frost); font-weight:600; }
@@ -1929,6 +1930,30 @@
   .b3-lr .b3-tile img{ width:26px; height:26px; object-fit:contain; flex:none; }
   .b3-lr .b3-tile.wk{ border-color:var(--ice-dim); background:rgba(44,85,104,.28); }
   .b3-head .b3-setb{ display:flex; align-items:center; gap:8px; width:auto; max-width:62%; min-height:42px; padding:3px 12px 3px 10px; flex:0 1 auto; }
+  /* No target yet: amber Settings button. "Start here" card (no page set up yet). */
+  #content .hd-btn.b3-setb.need{ color:var(--amber); border-color:rgba(232,162,60,.6); }
+  .b3-start{ display:flex; flex-direction:column; gap:8px; max-width:640px; }
+  .b3-st{ padding:12px 14px 6px; border-color:rgba(111,211,242,.45); }
+  .b3-st-h{ padding-bottom:10px; border-bottom:1px solid var(--line); }
+  .b3-st-h b{ display:block; font-size:17px; } .b3-st-h small{ display:block; color:var(--muted); font-size:12.5px; margin-top:2px; }
+  .b3-st-s{ display:flex; gap:10px; padding:12px 0; border-top:1px solid var(--line); }
+  .b3-st-h + .b3-st-s{ border-top:0; }
+  .b3-st-n{ width:28px; height:28px; flex:none; border-radius:50%; border:2px solid var(--ice); color:var(--ice); display:grid; place-items:center; font-weight:800; font-size:13px; }
+  .b3-st-s.done .b3-st-n{ border-color:var(--good); color:#0d1a12; background:var(--good); }
+  .b3-st-b{ flex:1; min-width:0; }
+  .b3-st-b > b{ display:block; font-size:14.5px; } .b3-st-o{ color:var(--muted); font-weight:500; font-size:12.5px; }
+  .b3-st-b > small{ display:block; color:var(--muted); font-size:12.5px; margin-top:2px; }
+  .b3-st-go{ margin-top:8px; }
+  .b3-st-cs{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  #content .b3-st-c{ display:inline-flex; width:auto; flex:0 1 auto; align-items:center; gap:6px; min-height:36px; padding:3px 10px 3px 6px; border:1px solid var(--line); border-radius:10px; background:rgba(255,255,255,.03); color:var(--frost); font:inherit; font-size:12.5px; cursor:pointer; max-width:100%; }
+  .b3-st-c img{ width:22px; height:22px; object-fit:contain; flex:none; }
+  #content .b3-st-c.more{ color:var(--ice); font-weight:700; padding-inline-start:10px; }
+  .b3-st-c em{ font-style:normal; color:var(--amber); font-size:11.5px; font-weight:600; }
+  .b3-st-l{ display:flex; align-items:center; gap:8px; min-height:50px; padding:6px 12px; font-size:13px; }
+  .b3-st-l img{ width:26px; height:26px; object-fit:contain; flex:none; } .b3-st-em{ font-size:20px; flex:none; }
+  .b3-st-t{ flex:1; min-width:0; color:var(--muted); font-size:13px; line-height:1.35; } .b3-st-t b{ color:var(--frost); font-weight:700; }
+  .b3-st-a{ color:var(--ice); font-weight:700; white-space:nowrap; }
+  .b3-st-f{ text-align:center; font-size:12px; padding:2px 8px; }
   .b3-gear{ flex:none; font-size:19px; }
   .b3-lr-t{ display:flex; flex-direction:column; min-width:0; line-height:1.25; }
   .b3-lr-t b{ font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -5770,3 +5795,15 @@ span.mk.mk svg{flex:none}
 .bst-faces img{ width:24px; height:24px; border-radius:50%; object-fit:cover; border:1px solid var(--line); }
 .bst-rc{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; height:40px; margin-top:12px; border:1px solid var(--line); border-radius:12px; background:var(--panel); color:var(--ice); font:inherit; font-size:13.5px; cursor:pointer; }
 .bud-ngf{ border-color:rgba(80,200,120,.35); }
+  /* One followed plan: My Purchases' Still to buy / Bought boxes, Budgets' "follows this plan" line. */
+  .pur-a2-two{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  .pur-a2-bx{ display:flex; flex-direction:column; min-width:0; padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); }
+  .pur-a2-bx small{ font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--muted); }
+  .pur-a2-bx b{ font-size:24px; font-weight:800; letter-spacing:-.4px; line-height:1.2; overflow-wrap:anywhere; }
+  .pur-a2-bx.done b{ font-size:19px; color:var(--good); }
+  .pur-a2-bx .meta{ font-size:12px; }
+  .pur-a2-fol{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:10px 0 0; cursor:pointer; }
+  .pur-a2-fol .pur-a2-lk{ padding:0; }
+  .b3-fol{ font-size:12px; margin-top:6px; }
+  .b3-fol.pick{ color:var(--ice); font-weight:600; }
+  .bud-seg.flash{ box-shadow:0 0 0 2px var(--ice); border-radius:10px; }
