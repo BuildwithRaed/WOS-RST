@@ -3742,7 +3742,7 @@ const T = {
   cda_u_skins: { en: "skins" },
   cda_path: { en: "Path {n}" },
   adv_title: { en: "Best upgrades" },
-  adv_desc: { en: "The next upgrade of every piece, charm, research, expert, island building and Shining City skin you can still get, ranked by what 1% costs. Prices are the items' value in USD from your packs (not your Backpack); 1% = one troop's stat, so an all-troops upgrade counts 3 times. Priority counts each troop + stat by its place in your upgrade order (1st ×1.5 down to 12th ×0.5)." },
+  adv_desc: { en: "The next upgrade of every piece, charm, research, expert, island building and Shining City skin you can still get, ranked by what 1% costs. Prices are the items' value in USD from your packs (not your Backpack); 1% = one troop's stat, so an all-troops upgrade counts 3 times. Priority counts each troop + stat by its place in your upgrade order (1st ×1.25 down to 12th ×0.75)." },
   adv_p_t12: { en: "Needed for T12 troops" },
   adv_p_t11: { en: "Needed for T11 troops" },
   adv_p_t12skill: { en: "Part of T12 troops" },
@@ -3799,8 +3799,8 @@ const T = {
   adv_sort: { en: "Sort by" },
   adv_prio: { en: "My order" },
   adv_pure: { en: "Best value" },
-  adv_sort_prio_sub: { en: "your upgrade order counts" },
-  adv_sort_pure_sub: { en: "every stat the same" },
+  adv_sort_prio_sub: { en: "Current stats \u00d7 your upgrade order (rank 1 \u00d71.25 \u2026 rank 12 \u00d70.75)" },
+  adv_sort_pure_sub: { en: "Current stats: cost per 1% of real fight power (your Dashboard)" },
   adv_ranked: { en: "Ranked by cost per 1%" },
   adv_n_ups: { en: "{n} upgrades" },
   adv_n_up1: { en: "1 upgrade" },
@@ -3864,6 +3864,66 @@ const T = {
   adv_r_skin: { en: "${v} each; its own bonus" },
   adv_ts_note: { en: "Plain value: 1% on one troop = 1, an all-troops upgrade counts 3 times. The pill is the typical value: the whole table's cost ÷ its whole gain. A reference only: some kinds here aren't in your list." },
   adv_rank_of: { en: "rank #{n} of {m}" },
+  enemy_word: { en: "Enemy" },
+  adv_wt_yours: { en: "Current stats (Dashboard now)" },
+  adv_wt_general: { en: "Max stats (game max)" },
+  adv_pp_title: { en: "Price per 1%" },
+  adv_sorts_list: { en: "sorts the list" },
+  adv_plain_l: { en: "Plain" },
+  adv_raw: { en: "raw %" },
+  adv_troop: { en: "Troop" },
+  adv_in_all: { en: "+{v}% in all" },
+  adv_in_all_eq: { en: "\u2248 +{v}% in all (its worth in your own stat)" },
+  adv_price_raw: { en: "raw cost of the items" },
+  adv_cur_stats: { en: "Current stats" },
+  adv_vs_max: { en: "vs Max stats" },
+  adv_bal_lower: { en: "{stat} is lower compared to your other stats \u00b7 1% helps you more" },
+  adv_bal_higher: { en: "{stat} is higher compared to your other stats \u00b7 1% helps you less" },
+  adv_bal_same: { en: "Same balance as max stats" },
+  adv_sw_used: { en: "Stat weight used" },
+  adv_w_current: { en: "current" },
+  adv_w_max: { en: "max" },
+  adv_w_order: { en: "order" },
+  adv_step: { en: "Step" },
+  adv_per1: { en: "per 1%" },
+  adv_tag_you: { en: "current" },
+  adv_tag_order: { en: "order" },
+
+  adv_why_one: { en: "{troop} {stat} is your #{n}" },
+  adv_why_stat: { en: "{stat}: {ranks}" },
+  adv_eq_gain: { en: "\u2248 +{v}% {stat}" },
+  adv_lh_you: { en: "ranked by your current stats" },
+  adv_lh_order: { en: "ranked by your order" },
+  adv_lh_target: { en: "to your targets" },
+  adv_wt_title: { en: "Your stat weights" },
+  adv_wt_from: { en: "from Dashboard" },
+  adv_wt_none: { en: "open the Dashboard once to work them out" },
+  adv_wt_desc: { en: "Fight power grows with ATK \u00d7 LETH against the enemy's DEF \u00d7 HP, so 1% more counts most where you have least. Weight = the average of a troop's four stats \u00f7 that stat (your Dashboard totals). The boxes show the average of the three troops. Max stats uses the same formula on the Dashboard's max (shown in each row's details, for comparing)." },
+  adv_wt_less: { en: "Stats you have less of count more." },
+  adv_your_order: { en: "Your order" },
+  adv_rank_weight: { en: "rank \u00b7 weight" },
+  adv_to_change: { en: "to change" },
+  adv_order_note: { en: "A row's price = its Current stats price \u00f7 the average of its troops' order weights." },
+  adv_now: { en: "Now" },
+  adv_next: { en: "Next" },
+  adv_lv: { en: "Lv {n}" },
+  adv_what_does: { en: "What it does" },
+  adv_always_on: { en: "always on" },
+  adv_enemy_does: { en: "Lowers the {stat} of every enemy you fight by {v}% more." },
+  adv_price: { en: "Price" },
+  adv_after_h: { en: "After this" },
+  adv_level: { en: "Level" },
+  adv_enemy_each: { en: "Each level lowers {k} a little more." },
+  adv_rank_you: { en: "#{n} by your value" },
+  adv_rank_order: { en: "#{n} by your order" },
+  adv_done: { en: "Done" },
+  enemy_card_title: { en: "Enemy stats down" },
+  enemy_card_note: { en: "Doesn't change your own totals" },
+  enemy_stat_gain: { en: "Enemy stats down" },
+  pet_skill_word: { en: "pet skill" },
+  pet_skill_grows: { en: "Grows at {lv}" },
+  cda_best_dash: { en: "Best value uses your Dashboard stats" },
+  cda_best_dash_more: { en: "{stats} count more" },
   adv_cost: { en: "Cost" },
   adv_gives: { en: "Gives" },
   adv_what_gives: { en: "What it gives" },
@@ -5970,12 +6030,20 @@ async function renderOverview(opts = {}) {
     }
     if (calcKey === "Pets Level") {
       // single combined ATK/DEF stat per pet, applied to both Attack and
-      // Defense equally for all 3 troops (the source data never split them)
-      if (statKey !== "ATT" && statKey !== "DEF") return null;
+      // Defense equally for all 3 troops (the source data never split them);
+      // pet skills' "+" stats add to their own stat (all troops).
+      const skStat = STAT_KEY_TO_RAW[statKey];
+      const anySkill = PETS_NODES_CACHE && Object.keys(PETS_NODES_CACHE).some((pet) => { const sk = petSkillOf(pet); return sk && sk.stats.some((x) => PET_SKILL_KINDS[x.kind].stat === skStat); });
+      if (statKey !== "ATT" && statKey !== "DEF" && !anySkill) return null;
       if (!PETS_NODES_CACHE) return 0;
       let total = 0;
       Object.keys(PETS_NODES_CACHE).forEach((pet) => {
         if (!isPetUnlocked(pet)) return;
+        if (anySkill) {
+          const s0 = PETS_STATE ? PETS_STATE[pet] : null, fi = s0 && typeof s0 === "object" ? s0.from : s0 ?? -1;
+          total += Number(petSkillAtIdx(pet, useMax ? petMaxIdx(pet) : fi)[skStat]) || 0;
+        }
+        if (statKey !== "ATT" && statKey !== "DEF") return;
         const levels = PETS_NODES_CACHE[pet];
         if (useMax) {
           for (let i = petMaxIdx(pet); i >= 0; i--) {
@@ -6185,7 +6253,7 @@ async function renderOverview(opts = {}) {
 
   // averages across all 12 stat lines, for the top metric row
   const allStats = [];
-  for (const t of TROOP_TYPES) for (const s of STATS) allStats.push({ troop: t.key, stat: s.key, ...statFor(t.key, s.key) });
+  for (const t of TROOP_TYPES) for (const s of STATS) allStats.push({ troop: t.key, stat: s.key, ...statFor(t.key, s.key), ...(opts.withMax ? { max: maxStatFor(t.key, s.key) } : {}) });
   // The Budgets page only needs the numbers, not the page.
   if (opts.computeOnly) return allStats;
   if (seq !== RENDER_SEQ) return;
@@ -6499,11 +6567,19 @@ async function renderOverview(opts = {}) {
         </button>`;
       }).join("")}
     </div>`).join("")}</div>
+    <div id="dashEnemy">${DASH_ENEMY_HTML}</div>
   </div>`;
   sections.innerHTML = statsHtml();
   // Best upgrades: the gap from max per troop + stat, the same numbers as these boxes.
-  try { const SK = { ATT: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" }, g = {}; TROOP_TYPES.forEach((tt) => STATS.forEach((st) => { g[`${reachTroopKey(tt.key)}|${SK[st.key]}`] = { now: statFor(tt.key, st.key).total, max: maxStatFor(tt.key, st.key) }; })); advGapSet(g); } catch (e) { /* not kept */ }
+  try { const SK = { ATT: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" }, g = {}; TROOP_TYPES.forEach((tt) => STATS.forEach((st) => { g[`${reachTroopKey(tt.key)}|${SK[st.key]}`] = { now: statFor(tt.key, st.key).total, max: maxStatFor(tt.key, st.key) }; })); advGapSet(g); advDashSet(Object.fromEntries(Object.entries(g).map(([k, v]) => [k, v.now])), Object.fromEntries(Object.entries(g).map(([k, v]) => [k, v.max]))); } catch (e) { /* not kept */ }
   statPassMemo = null; // first paint done - recompute fresh from here on
+  // Enemy stats down (Gareth's Fearsome Reputation, pet skills): one slim card under the boxes, never in the totals.
+  enemyStatsNow().then((list) => {
+    if (seq !== RENDER_SEQ) return;
+    const html = enemyCardHtml(list), h = document.getElementById("dashEnemy");
+    DASH_ENEMY_HTML = html;
+    if (h && h.innerHTML !== html) { h.innerHTML = html; fitDashToScreen(); }
+  }).catch((e) => console.warn("enemy stats", e));
   fitDashToScreen();
 
   // Current and max per source for one troop + stat (the breakdown pop-up
@@ -7524,7 +7600,7 @@ function researchNeedsText(pg, nodes, r) {
 // steps giving the most stat % per item over every troop. Both stay inside the
 // person's targets. Steps that raise no stat are filled last.
 const UPGRADE_ORDER_DEFAULT = [["Infantry", "Health"], ["Infantry", "Defense"], ["Marksman", "Lethality"], ["Marksman", "Attack"], ["Lancer", "Lethality"], ["Lancer", "Attack"], ["Marksman", "Health"], ["Marksman", "Defense"], ["Infantry", "Lethality"], ["Infantry", "Attack"], ["Lancer", "Health"], ["Lancer", "Defense"]];
-let UPGRADE_ORDER = { mode: "order", rows: UPGRADE_ORDER_DEFAULT.map((r) => r.slice()) };
+let UPGRADE_ORDER = { mode: "best", rows: UPGRADE_ORDER_DEFAULT.map((r) => r.slice()) };
 let UPGRADE_ORDER_LOADED = false;
 async function ensureUpgradeOrder() {
   if (UPGRADE_ORDER_LOADED) return UPGRADE_ORDER;
@@ -7532,13 +7608,9 @@ async function ensureUpgradeOrder() {
   UPGRADE_ORDER_LOADED = true;
   if (s && typeof s === "object") {
     const ok = Array.isArray(s.rows) && s.rows.length === UPGRADE_ORDER_DEFAULT.length && s.rows.every((r) => Array.isArray(r) && UPGRADE_ORDER_DEFAULT.some((d) => d[0] === r[0] && d[1] === r[1]));
-    UPGRADE_ORDER = { mode: s.mode === "best" ? "best" : "order", rows: ok ? s.rows.map((r) => r.slice()) : UPGRADE_ORDER_DEFAULT.map((r) => r.slice()) };
+    UPGRADE_ORDER = { mode: s.mode === "order" ? "order" : "best", rows: ok ? s.rows.map((r) => r.slice()) : UPGRADE_ORDER_DEFAULT.map((r) => r.slice()) };
   }
-  // One setting for Free now and Best upgrades: with no mode saved yet, Best upgrades' old
-  // sort choice in this browser (localStorage adv_set, "pure" = Best value) is the start.
-  if (!(s && (s.mode === "best" || s.mode === "order"))) {
-    try { const v = JSON.parse(localStorage.getItem("adv_set") || "{}"); if (v.mode === "pure") UPGRADE_ORDER.mode = "best"; } catch (e) { /* none */ }
-  }
+  // One setting for Free now and Best upgrades: with no mode saved yet it starts on Best value.
   return UPGRADE_ORDER;
 }
 function saveUpgradeOrder() { saveCalcState("upgrade_order", UPGRADE_ORDER); }
@@ -7557,6 +7629,7 @@ const REACH_TROOP_RANK = { Infantry: 0, Marksman: 1, Lancer: 2 };
 // e.g. research time paid with general speedups).
 function reachPlan(tracks, have, mode, rows, conv, opts) {
   const wbase = (opts && opts.wbase) || null;
+  const SW = mode === "best" ? advStatW() : null; // Best value: your Dashboard stat weights
   const left = {};
   Object.keys(have || {}).forEach((k) => { left[k] = Math.max(0, Number(have[k]) || 0); });
   const lv = {};
@@ -7660,19 +7733,32 @@ function reachPlan(tracks, have, mode, rows, conv, opts) {
       }
       return true;
     };
-    const statGain = (a, b) => {
+    // Best value: each troop + stat counts by your Dashboard weight (an all-troops gain counts
+    // for every troop); "Enemy X" stats count as the same-named own stat they are worth.
+    const statGain = (a, b, trp) => {
       let g = 0;
-      if (stat) g = (a[stat] || 0) - (b[stat] || 0);
-      else Object.keys(a).forEach((k) => { g += (a[k] || 0) - (b[k] || 0); });
+      const trs = trp && trp !== "all" ? [reachTroopKey(trp)] : PLX_TROOPS;
+      new Set([...Object.keys(a), ...Object.keys(b)]).forEach((k) => {
+        const es = ENEMY_STAT_OF[k];
+        if (es) {
+          if (stat && es !== stat) return;
+          const eq = enemyEq(k, b[k] || 0, a[k] || 0);
+          trs.forEach((x) => { g += (eq[`${x}|${es}`] || 0) * (stat ? 1 / trs.length : SW ? SW[`${x}|${es}`] || 1 : 1); });
+          return;
+        }
+        const d = (a[k] || 0) - (b[k] || 0);
+        if (stat) { if (k === stat) g += d; return; }
+        g += SW ? trs.reduce((sum, x) => sum + d * (SW[`${x}|${k}`] || 1), 0) : d;
+      });
       return g;
     };
     const g0 = tr.gain(cur, lv) || {};
     for (let j = cur + 1; j <= tr.to && j <= cur + 60; j++) {
       if (!meet(tr, j, 0) || !pay(tr.cost(j))) break;
       tmp.set(tr.id, j);
-      let gain = statGain(tr.gain(j, lv) || {}, g0);
+      let gain = statGain(tr.gain(j, lv) || {}, g0, tr.troop);
       // Research done first for this step counts with it.
-      tmp.forEach((l, id) => { if (id === tr.id) return; const t2 = byId.get(id); gain += statGain(t2.gain(l, lv) || {}, t2.gain(lv[id], lv) || {}); });
+      tmp.forEach((l, id) => { if (id === tr.id) return; const t2 = byId.get(id); gain += statGain(t2.gain(l, lv) || {}, t2.gain(lv[id], lv) || {}, t2.troop); });
       if (gain > 1e-9) {
         const r = gain / Math.max(weight(st.draw), 1e-12);
         if (!best || r > best.r || (tr.bulk && r >= best.r * (1 - 1e-9))) { const pre = {}; tmp.forEach((l, id) => { if (id !== tr.id) pre[id] = l; }); best = { to: j, r, st, pre }; }
@@ -7809,7 +7895,7 @@ function reachPlanPrio(tracks, have, mode, rows, conv, prio) {
 // charm level, 10 research levels …). Each step's price = its items × a value per item
 // (USD), and its gain = what it adds to every troop and stat (1% on one troop = 1).
 // Ranked by $ per 1%; with "Priority" each troop + stat counts by its place in the
-// person's upgrade order (calc_state upgrade_order): rank 1 ×1.5 down to rank 12 ×0.5.
+// person's upgrade order (calc_state upgrade_order): rank 1 ×1.25 down to rank 12 ×0.75.
 // Values per item: each item from one chosen step of the owner's pack tables
 // (ADV_PACK_SPECS), read live: (step price − gems × 0.00016 − the other items' value) ÷
 // amount; some items are linked to another one (Amber = 10 Design Plans …). An item with
@@ -7959,6 +8045,65 @@ function advGain(g, troop, stats, v) {
   (troop === "all" ? PLX_TROOPS : [reachTroopKey(troop)]).forEach((tr) => stats.forEach((s) => { g[`${tr}|${s}`] = (g[`${tr}|${s}`] || 0) + v; }));
   return g;
 }
+// ---- Your stat weights (from the Dashboard) and enemy stats down ----
+// Fight power ∝ (ATK × LETH) ÷ (enemy DEF × enemy HP), each stat as a multiplier
+// m = 1 + total% / 100 (the Dashboard's current totals). A stat you have less of moves
+// the product more: weight = (average of the troop's 4 multipliers) ÷ that stat's.
+// "Enemy X" stats lower the enemy's X by a %; going from r1 to r2 is worth the same as
+// raising your own X by (f − 1) × m × 100 points on every troop, f = (1 − r1) / (1 − r2).
+const ENEMY_STAT_OF = { "Enemy Attack": "Attack", "Enemy Defense": "Defense", "Enemy Lethality": "Lethality", "Enemy Health": "Health" };
+const ENEMY_STATS = Object.keys(ENEMY_STAT_OF);
+const isEnemyStat = (k) => !!ENEMY_STAT_OF[String(k || "").trim()];
+const enemyShort = (k) => `${t("enemy_word")} ${ADV_SHORT[ENEMY_STAT_OF[k]] || k}`;
+let ADV_DASH = null;       // { seq, p }
+let ADV_DASH_LAST = null;  // { "Infantry|Attack": total % } the Dashboard's current totals
+let ADV_DASH_MAX = null;   // the same for the Dashboard's max (the "general" price)
+function advDashSet(totals, max) { if (totals && Object.keys(totals).length) ADV_DASH_LAST = totals; if (max && Object.keys(max).length) ADV_DASH_MAX = max; }
+function advDashTotals() {
+  if (ADV_DASH && ADV_DASH.seq === CALC_SAVE_SEQ) return ADV_DASH.p;
+  const seq = CALC_SAVE_SEQ, SK = { ATT: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
+  const p = renderOverview({ computeOnly: true, withMax: true }).then((all) => {
+    const o = {}, mx = {};
+    (all || []).forEach((x) => { if (SK[x.stat]) { o[`${reachTroopKey(x.troop)}|${SK[x.stat]}`] = Number(x.total) || 0; mx[`${reachTroopKey(x.troop)}|${SK[x.stat]}`] = Number(x.max) || 0; } });
+    advDashSet(o, mx);
+    return ADV_DASH_LAST;
+  }).catch((e) => { console.warn("stat weights", e); return ADV_DASH_LAST; });
+  ADV_DASH = { seq, p };
+  return p;
+}
+function advStatMult(T) {
+  const m = {};
+  PLX_TROOPS.forEach((tr) => ADV_STATS.forEach((s) => { m[`${tr}|${s}`] = 1 + (Number(T && T[`${tr}|${s}`]) || 0) / 100; }));
+  return m;
+}
+// { "Infantry|Attack": weight } or null while the Dashboard numbers aren't known.
+function advStatW(T) {
+  T = T || ADV_DASH_LAST;
+  if (!T) return null;
+  const m = advStatMult(T), w = {};
+  PLX_TROOPS.forEach((tr) => {
+    const avg = ADV_STATS.reduce((a, s) => a + m[`${tr}|${s}`], 0) / ADV_STATS.length;
+    ADV_STATS.forEach((s) => { w[`${tr}|${s}`] = m[`${tr}|${s}`] > 0 ? avg / m[`${tr}|${s}`] : 1; });
+  });
+  return w;
+}
+// General weights: the same formula on the Dashboard's max (the game's max for every player).
+const advStatWMax = () => (ADV_DASH_MAX ? advStatW(ADV_DASH_MAX) : null);
+const advWMaxAvg = (st) => advStatWAvg(advStatWMax(), st);
+// Average weight of one stat over the troops (the card's boxes).
+function advStatWAvg(w, s) { return w ? PLX_TROOPS.reduce((a, tr) => a + (w[`${tr}|${s}`] || 1), 0) / PLX_TROOPS.length : 1; }
+// An enemy stat going from r1 % to r2 % down: { "Infantry|Lethality": own-stat points } (all troops).
+function enemyEq(kind, r1, r2, T) {
+  const s = ENEMY_STAT_OF[kind], o = {};
+  if (!s) return o;
+  const a = Math.min(99, Number(r1) || 0), b = Math.min(99, Number(r2) || 0), f = (1 - a / 100) / (1 - b / 100);
+  if (!(Math.abs(f - 1) > 1e-12)) return o;
+  const m = advStatMult(T || ADV_DASH_LAST);
+  PLX_TROOPS.forEach((tr) => { o[`${tr}|${s}`] = (f - 1) * m[`${tr}|${s}`] * 100; });
+  return o;
+}
+// "−1.25%" (a reduction shown with a minus sign).
+const enemyPct = (v) => `−${(Math.round((Number(v) || 0) * 100) / 100).toLocaleString("en-US")}%`;
 const advAddItems = (a, b, f = 1) => { Object.entries(b || {}).forEach(([k, v]) => { if (Number(v) > 0) a[k] = (a[k] || 0) + Number(v) * f; }); return a; };
 // ---- Steps, one builder per page ----
 // Every row is the NEXT single upgrade of one track (a piece's next star row, a charm's
@@ -8073,16 +8218,27 @@ async function advStepsExperts(out) {
     // Skills with a troop stat, one level a step; EXP paid with expert speedups (1 EXP = 1 s).
     (e.skills || []).forEach((sk) => {
       const srows = kit.SKILL_CACHE[`${hero}|${sk}`] || [];
-      if (!srows.some((r) => types(r.stat_type).length)) return;
+      const etypes = (s) => String(s || "").split(",").map((k) => k.trim()).filter(isEnemyStat);
+      if (!srows.some((r) => types(r.stat_type).length || etypes(r.stat_type).length)) return;
       const st = (hs.skills || {})[sk] || { current: 0 };
       const vAt = (lv) => { let m = null; srows.forEach((r) => { if (r.level <= lv) m = r; }); return m && types(m.stat_type).length ? { v: Number(m.stat_value) || 0, k: types(m.stat_type) } : { v: 0, k: [] }; };
+      const eAt = (lv) => { let m = null; srows.forEach((r) => { if (r.level <= lv) m = r; }); return m && etypes(m.stat_type).length ? { v: Number(m.stat_value) || 0, k: etypes(m.stat_type) } : { v: 0, k: [] }; };
       let xp = kit.skillExpHave(st);
       advEach(Number(st.current) || 0, kit.skillMaxLevel(hero, sk), (b, e2, nth) => {
         const c = kit.skillCost(hero, sk, b, e2), exp = Math.max(0, c.exp - xp);
         xp = Math.max(0, xp - c.exp);
-        const g = {}, A = vAt(b), B = vAt(e2);
+        const g = {}, A = vAt(b), B = vAt(e2), EA = eAt(b), EB = eAt(e2);
         B.k.forEach((k) => advGain(g, "all", [k], B.v - (A.k.includes(k) ? A.v : 0)));
-        out.push({ id: `exs|${hero}|${sk}|${e2}`, track: `exs|${hero}|${sk}`, nth, page: "experts", type: "exp_skill", base: `${name} \u00b7 ${dataName(sk)}`, la: String(b), lb: String(e2), hi: e2, tgt: st.desired != null ? Number(st.desired) || 0 : null, name: t("adv_exp_skill").replace("{name}", name).replace("{skill}", dataName(sk)).replace("{a}", b).replace("{b}", e2),
+        // Enemy stats down: worth the same-named own stat on every troop (your Dashboard numbers).
+        let enemy = null;
+        let genGain = null;
+        EB.k.forEach((k) => {
+          const a = EA.k.includes(k) ? EA.v : 0;
+          Object.entries(enemyEq(k, a, EB.v)).forEach(([gk, v]) => { if (v > 1e-9) g[gk] = (g[gk] || 0) + v; });
+          if (ADV_DASH_MAX) { genGain = { ...g }; Object.entries(enemyEq(k, a, EB.v, ADV_DASH_MAX)).forEach(([gk, v]) => { genGain[gk] = v; }); }
+          enemy = { k, a, b: EB.v };
+        });
+        out.push({ enemy, genGain, id: `exs|${hero}|${sk}|${e2}`, track: `exs|${hero}|${sk}`, nth, page: "experts", type: "exp_skill", base: `${name} \u00b7 ${dataName(sk)}`, la: String(b), lb: String(e2), hi: e2, tgt: st.desired != null ? Number(st.desired) || 0 : null, name: t("adv_exp_skill").replace("{name}", name).replace("{skill}", dataName(sk)).replace("{a}", b).replace("{b}", e2),
           img: e.img || "", items: { "Books of Knowledge": c.book, "Expert Speedups (minutes)": exp / 60 }, gain: g, kind: "buy", note: [t("adv_n_exp"), off].filter(Boolean).join(" · ") });
       });
     });
@@ -8166,6 +8322,16 @@ function advFromTracks(out, tracks, o) {
   tracks.forEach((tr) => advEach(tr.from, tr.top, (lo, hi, nth) => {
     const g0 = tr.gain(lo, { ...lv, [tr.id]: lo }) || {}, g1 = tr.gain(hi, { ...lv, [tr.id]: hi }) || {}, g = {};
     ADV_STATS.forEach((k) => advGain(g, tr.troop || "all", [k], (Number(g1[k]) || 0) - (Number(g0[k]) || 0)));
+    // Enemy stats down (pet skills): worth the same-named own stat (your Dashboard; general at its max).
+    let enemy = null, genGain = null;
+    ENEMY_STATS.forEach((k) => {
+      const a = Number(g0[k]) || 0, b = Number(g1[k]) || 0;
+      if (!(b > a)) return;
+      if (!genGain) genGain = { ...g };
+      Object.entries(enemyEq(k, a, b)).forEach(([gk, v]) => { g[gk] = (g[gk] || 0) + v; });
+      Object.entries(enemyEq(k, a, b, ADV_DASH_MAX || ADV_DASH_LAST)).forEach(([gk, v]) => { genGain[gk] = (genGain[gk] || 0) + v; });
+      enemy = { k, a, b };
+    });
     // A step that needs another track first (Heroes Gears Enhance → Mastery): that track's
     // missing levels are paid with this step (only the first step that needs them).
     let items = tr.cost(hi) || {}, note = "";
@@ -8181,7 +8347,7 @@ function advFromTracks(out, tracks, o) {
       }
     }
     out.push({ id: `${o.type}|${tr.id}|${hi}`, track: `${o.type}|${tr.id}`, nth, page: o.page, type: o.type, base: tr.name, la: tr.lab ? tr.lab(lo) : String(lo), lb: tr.lab ? tr.lab(hi) : String(hi), hi, tgt: tr.tgt != null ? tr.tgt : null, name: `${tr.name} ${tr.lab ? tr.lab(lo) : lo} \u2192 ${tr.lab ? tr.lab(hi) : hi}`,
-      img: (o.pic && o.pic(tr)) || QUICK_ICONS[advPageOf(o.page).tab], items, gain: g, kind: "buy", note });
+      img: (o.pic && o.pic(tr)) || QUICK_ICONS[advPageOf(o.page).tab], items, gain: g, enemy, genGain, kind: "buy", note });
   }));
 }
 // T11 tracks (Flame Squad and the Helios Unlock / Training path are in "Priority first").
@@ -8229,7 +8395,7 @@ function advPetTracks(all) {
     const lab = (i) => { if (i < 0 || !levels[i]) return "0"; const l = String(levels[i].level_label), n = parseInt(l, 10) || 0; return /\.1$/.test(l) ? `${n} ${t("pet_adv_short")}` : String(n); };
     return { id: pet, troop: "all", from, tgt: s && typeof s === "object" && s.to != null ? Number(s.to) : null, top: all ? levels.length - 1 : petMaxIdx(pet), name: dataName(pet), lab, img: petImage(pet),
       cost: (i) => { const r = levels[i] || {}; return { Food: Number(r.food) || 0, Manual: Number(r.manual) || 0, Potion: Number(r.potion) || 0, Serum: Number(r.serum) || 0 }; },
-      gain: (i) => { const v = statAt(i); return { Attack: v, Defense: v }; } };
+      gain: (i) => { const v = statAt(i), o = { Attack: v, Defense: v }; Object.entries(petSkillAtIdx(pet, i)).forEach(([k, x]) => { o[k] = (o[k] || 0) + x; }); return o; } };
   });
 }
 async function advStepsMore(out) {
@@ -8258,13 +8424,14 @@ async function advStepsSkins(out) {
 // The steps, worked out once per visit; any save (calc_state) or skins change starts again.
 let ADV_STEPS = null;   // { seq, p }
 let ADV_BUILDING = false;
-function advInvalidate() { ADV_STEPS = null; }
+function advInvalidate() { ADV_STEPS = null; ADV_DASH = null; }
 function advSteps() {
   if (ADV_STEPS && ADV_STEPS.seq === CALC_SAVE_SEQ) return ADV_STEPS.p;
   const seq = CALC_SAVE_SEQ, out = [];
   ADV_BUILDING = true;
-  const p = Promise.all([advOwnValues().catch((e) => console.warn("best upgrades: pack values", e)), advStepsChiefGear, advStepsCharm, advStepsT12, advStepsExperts, advStepsExpertsResearch, advStepsIslands, advStepsSkins, advStepsMore]
-    .map((f) => (typeof f === "function" ? f(out).catch((e) => console.warn("best upgrades", f.name, e)) : f)))
+  // The Dashboard's totals first: enemy stats are worth your own stats at those numbers.
+  const p = advDashTotals().then(() => Promise.all([advOwnValues().catch((e) => console.warn("best upgrades: pack values", e)), advStepsChiefGear, advStepsCharm, advStepsT12, advStepsExperts, advStepsExpertsResearch, advStepsIslands, advStepsSkins, advStepsMore]
+    .map((f) => (typeof f === "function" ? f(out).catch((e) => console.warn("best upgrades", f.name, e)) : f))))
     .then(() => out).finally(() => { ADV_BUILDING = false; });
   ADV_STEPS = { seq, p };
   p.then(() => { if (ADV_STEPS && ADV_STEPS.p === p) ADV_STEPS.seq = CALC_SAVE_SEQ; });
@@ -8276,20 +8443,30 @@ function advSteps() {
 let ADV_SET = (() => { let v = {}; try { v = JSON.parse(localStorage.getItem("adv_set") || "{}") || {}; } catch (e) { v = {}; } return { view: v.view === "target" ? "target" : "next", page: "all" }; })();
 Object.defineProperty(ADV_SET, "mode", { get: () => (UPGRADE_ORDER.mode === "best" ? "pure" : "prio"), set: (m) => { UPGRADE_ORDER.mode = m === "pure" ? "best" : "order"; saveUpgradeOrder(); }, enumerable: true });
 function advSaveSet() { try { localStorage.setItem("adv_set", JSON.stringify({ view: ADV_SET.view })); } catch (e) { /* not kept */ } }
+// Upgrade order weight of rank i + 1: rank 1 ×1.25 down evenly to rank 12 ×0.75.
+const advOrderW = (i) => 1.25 - (0.5 * i) / 11;
 function advWeights() {
   const W = {};
-  (UPGRADE_ORDER.rows || UPGRADE_ORDER_DEFAULT).forEach(([tr, st], i) => { W[`${reachTroopKey(tr)}|${st}`] = 1.5 - i / 11; });
+  (UPGRADE_ORDER.rows || UPGRADE_ORDER_DEFAULT).forEach(([tr, st], i) => { W[`${reachTroopKey(tr)}|${st}`] = advOrderW(i); });
   return W;
 }
 const advUsd = (s) => (s.fixed || 0) + Object.entries(s.items || {}).reduce((a, [n, q]) => a + (Number(q) || 0) * advVal(n), 0);
 // Scored and ranked: { buy: [rows by the chosen sort, with rank], other: [event / no price] }.
 // Skins of one category with the same price and gain are one row ("Frame ×5").
+// Three prices per 1%: base (plain gain), your value (each troop + stat x your Dashboard
+// weight, "Best value") and your order (also x the upgrade order's weight, "My order").
+function advScoreOf(s, W, SW, WM) {
+  let g = 0, yg = 0, wg = 0, gG = 0;
+  Object.entries(s.gain || {}).forEach(([k, v]) => { g += v; const y = v * (SW ? SW[k] || 1 : 1); yg += y; wg += y * (W[k] || 1); });
+  // General: every troop + stat weighted at the Dashboard's max (enemy stats worth at the max too).
+  Object.entries(s.genGain || s.gain || {}).forEach(([k, v]) => { gG += v * (WM ? WM[k] || 1 : 1); });
+  return { g, gG, yg, wg };
+}
 function advRank(steps) {
-  const W = advWeights();
+  const W = advWeights(), SW = advStatW(), WM = advStatWMax();
   const score = (s) => {
-    const g = Object.values(s.gain).reduce((a, v) => a + v, 0), wg = Object.entries(s.gain).reduce((a, [k, v]) => a + v * (W[k] || 1), 0);
-    const usd = advUsd(s);
-    return { ...s, usd, g, wg, pp: g > 0 ? usd / g : Infinity, wpp: wg > 0 ? usd / wg : Infinity };
+    const { g, gG, yg, wg } = advScoreOf(s, W, SW, WM), usd = advUsd(s);
+    return { ...s, usd, g, gG, yg, wg, pp: gG > 0 ? usd / gG : Infinity, ypp: yg > 0 ? usd / yg : Infinity, wpp: wg > 0 ? usd / wg : Infinity };
   };
   const next = new Map();
   steps.filter((s) => s.nth === 1).map(score).forEach((s) => next.set(s.track, s));
@@ -8306,9 +8483,15 @@ function advRank(steps) {
     buy.push(s);
   });
   buy.forEach((r) => { if (r.members && r.members.length > 1) { r.id = `grp|${r.members[0].id}`; r.name = t("adv_group").replace("{cat}", dataName(r.cat)).replace("{n}", r.members.length); r.sub = t("adv_group_sub").replace("{name}", r.members[0].name.split(": ").slice(1).join(": ")).replace("{n}", r.members.length - 1); } });
-  const key = ADV_SET.mode === "pure" ? "pp" : "wpp";
+  const key = ADV_SET.mode === "pure" ? "ypp" : "wpp";
+  // My order: how far each row moved against Best value (up / down arrows).
+  buy.slice().sort((a, b) => a.ypp - b.ypp || a.usd - b.usd).forEach((r, i) => { r.yrank = i + 1; });
+  buy.slice().sort((a, b) => a.pp - b.pp || a.usd - b.usd).forEach((r, i) => { r.grank = i + 1; });
+  const plainOf = (r) => (r.g > 0 ? r.usd / r.g : Infinity);
+  buy.slice().sort((a, b) => plainOf(a) - plainOf(b) || a.usd - b.usd).forEach((r, i) => { r.prank = i + 1; });
+  buy.slice().sort((a, b) => a.wpp - b.wpp || a.usd - b.usd).forEach((r, i) => { r.orank = i + 1; });
   buy.sort((a, b) => a[key] - b[key] || a.usd - b.usd);
-  buy.forEach((r, i) => { r.rank = i + 1; });
+  buy.forEach((r, i) => { r.rank = i + 1; r.move = key === "wpp" ? r.yrank - r.rank : 0; });
   const types = ADV_TYPES.filter((ty) => buy.some((r) => r.type === ty.key));
   // To target: each track's steps up to its target (no target saved = the page's open max).
   const byTrack = new Map();
@@ -8322,11 +8505,13 @@ function advRank(steps) {
     if (!st.length) return;
     const g = {}, usd = st.reduce((s, x) => s + x.usd, 0);
     st.forEach((x) => Object.entries(x.gain).forEach(([k, v]) => { g[k] = (g[k] || 0) + v; }));
-    const gs = st.reduce((s, x) => s + x.g, 0), wg = st.reduce((s, x) => s + x.wg, 0);
+    const gs = st.reduce((s, x) => s + x.g, 0), wg = st.reduce((s, x) => s + x.wg, 0), yg = st.reduce((s, x) => s + x.yg, 0);
+    const gG = st.reduce((s, x) => s + x.gG, 0);
+    const en = st.filter((x) => x.enemy), enemy = en.length ? { k: en[0].enemy.k, a: en[0].enemy.a, b: en[en.length - 1].enemy.b } : null;
     if (!(gs > 1e-9)) return;
     const from = first.hi - 1, lastHi = st[st.length - 1].hi;
     tracks.push({ id: `tt|${first.track}`, track: first.track, page: first.page, type: first.type, img: first.img, single: !!first.single, tomes: first.tomes, base: first.base || first.name, la: first.la, lb: st[st.length - 1].lb,
-      name: first.single ? t("adv_buy_name").replace("{name}", first.base) : first.base ? `${first.base} ${first.la} \u2192 ${st[st.length - 1].lb}` : first.name, steps: st, n: st.length, usd, gain: g, g: gs, wg, pp: usd / gs, wpp: wg > 0 ? usd / wg : Infinity,
+      name: first.single ? t("adv_buy_name").replace("{name}", first.base) : first.base ? `${first.base} ${first.la} \u2192 ${st[st.length - 1].lb}` : first.name, steps: st, n: st.length, usd, gain: g, g: gs, wg, yg, enemy, pp: gG > 0 ? usd / gG : Infinity, ypp: yg > 0 ? usd / yg : Infinity, wpp: wg > 0 ? usd / wg : Infinity,
       bar: { now: top > 0 ? Math.max(0, Math.min(1, (from + 1 - (list[0].hi - list[0].nth - 1) * 0) / (top + 1))) : 0, from, to: lastHi, top } });
   });
   tracks.sort((x, y) => x[key] - y[key] || x.usd - y.usd);
@@ -8335,7 +8520,8 @@ function advRank(steps) {
 }
 // ---- Look ----
 const advMoney = (v) => `$${v >= 100 ? Math.round(v).toLocaleString("en-US") : v.toFixed(2)}`;
-const advPer = (r, key) => r[key || (ADV_SET.mode === "pure" ? "pp" : "wpp")];
+const advKey = () => (ADV_SET.mode === "pure" ? "ypp" : "wpp");
+const advPer = (r, key) => r[key || advKey()];
 // "+set bonus 3%": a Chief Gear step that reaches a new tier (why it is cheap).
 const advSetTxt = (s) => (s && s.setPct > 1e-9 ? t("adv_set_tag").replace("{v}", (Math.round(s.setPct * 10) / 10).toLocaleString("en-US")) : "");
 const advSetTag = (s) => { const x = advSetTxt(s); return x ? ` <span class="pur-cmp pur-cmp-budget">${esc(x)}</span>` : ""; };
@@ -8343,11 +8529,29 @@ function advPillHtml(v, pre) {
   const cls = v < 5 ? "pur-cmp pur-cmp-budget" : v <= 20 ? "pur-cmp pur-cmp-target" : "trd-sc";
   return `<span class="${cls}">${pre ? `${esc(pre)} ` : ""}${bidiNum(`$${v.toFixed(2)}`)} / 1%</span>`;
 }
-// Right side of a ranked row: the total price big, $ per 1% as a small coloured tag under it.
+// Right side of a ranked row: the total price big, then the coloured tag it is ranked by
+// ("you" on Best value, "order" on My order). The general price is in the row's sheet.
 function advCcHtml(usdTxt, per, avg) {
-  const cls = per < 5 ? "g" : per <= 20 ? "a" : "r";
-  return `<span class="adv-cc"><b>${bidiNum(usdTxt)}</b>${Number.isFinite(per) ? `<em class="${cls}">${avg ? `${esc(t("adv_avg"))} ` : ""}${bidiNum(`$${per.toFixed(2)}/1%`)}</em>` : ""}</span>`;
+  const cls = per < 5 ? "g" : per <= 20 ? "a" : "r", dp = avg ? 1 : 2;
+  const lab = t(ADV_SET.mode === "pure" ? "adv_tag_you" : "adv_tag_order");
+  return `<span class="adv-cc"><b>${bidiNum(usdTxt)}</b>${Number.isFinite(per) ? `<em class="${cls}">${esc(lab)} ${bidiNum(`$${per.toFixed(dp)}/1%`)}</em>` : ""}</span>`;
 }
+// Where a row's troop + stat sit in the upgrade order ("Marksman ATK is your #2", "HP: #3 / #8 / #12").
+function advWhyTxt(r) {
+  const R = {};
+  (UPGRADE_ORDER.rows || UPGRADE_ORDER_DEFAULT).forEach(([tr, st], i) => { R[`${reachTroopKey(tr)}|${st}`] = i + 1; });
+  const ks = Object.keys(r.gain || {}).filter((k) => r.gain[k] > 1e-9 && R[k]);
+  if (!ks.length) return "";
+  const trs = new Set(ks.map((k) => k.split("|")[0])), sts = new Set(ks.map((k) => k.split("|")[1]));
+  if (trs.size > 1 && sts.size === 1) return t("adv_why_stat").replace("{stat}", ADV_SHORT[[...sts][0]]).replace("{ranks}", ks.map((k) => R[k]).sort((a, b) => a - b).map((n) => `#${n}`).join(" / "));
+  const best = ks.slice().sort((a, b) => R[a] - R[b])[0], [tr, st] = best.split("|");
+  return t("adv_why_one").replace("{troop}", troopDisplayName(tr)).replace("{stat}", ADV_SHORT[st]).replace("{n}", R[best]);
+}
+const advGainStats = (r) => ADV_STATS.filter((st) => Object.keys(r.gain || {}).some((k) => k.endsWith(`|${st}`) && r.gain[k] > 1e-9)).map((st) => ADV_SHORT[st]).join("\u00b7");
+const advMoveHtml = (r) => (r.move > 0 ? ` <span class="adv-mv up">\u25B2${r.move}</span>` : r.move < 0 ? ` <span class="adv-mv dn">\u25BC${-r.move}</span>` : "");
+// An enemy stat row's gain: "~ +21% LETH" (its worth in your own stat, all troops).
+const advEnemyGainTxt = (r) => t("adv_eq_gain").replace("{v}", (Math.round(r.g * 10) / 10).toLocaleString("en-US")).replace("{stat}", ADV_SHORT[ENEMY_STAT_OF[r.enemy.k]] || "");
+const advEnemyLine = (e) => (e ? `${enemyShort(e.k)} ${e.a > 0 ? enemyPct(e.a) : "0%"} \u2192 ${enemyPct(e.b)}` : "");
 function advGivesText(gain) {
   const by = {};
   Object.entries(gain).forEach(([k, v]) => { const [tr, st] = k.split("|"), r = Math.round(v * 100) / 100; const kk = `${st}|${r}`; (by[kk] = by[kk] || []).push(tr); });
@@ -8361,8 +8565,10 @@ function advRowHtml(r, o = {}) {
     r = { ...r, name: grp ? r.name : t("adv_buy_name").replace("{name}", r.base || r.name), usdTxt: grp ? `${price} ${t("adv_each")}` : price };
   }
   const grp = r.members && r.members.length > 1;
-  const sub = [o.rank ? `#${r.rank}` : "", r.sub || "", o.page ? advTypeName(r.type) : "", `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`, advSetTxt(r), r.usdTxt && r.page === "skins" ? r.usdTxt.replace(/ \(\$[^)]*\)/, "") : grp ? t("adv_each") : ""].filter(Boolean).join(" · ");
-  return `<details class="pca-pk"><summary data-advrow="${esc(r.id)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span></span>${advCcHtml(advMoney(r.usd), per, false)}</summary></details>`;
+  const sub = [o.rank ? `#${r.rank}` : "", r.sub || "", o.page ? advTypeName(r.type) : "", r.enemy ? advEnemyGainTxt(r) : `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}% ${advGainStats(r)}`.trim(), advSetTxt(r), r.usdTxt && r.page === "skins" ? r.usdTxt.replace(/ \(\$[^)]*\)/, "") : grp ? t("adv_each") : ""].filter(Boolean).join(" · ");
+  const why = ADV_SET.mode !== "pure" && o.rank ? advWhyTxt(r) : "";
+  const subHtml = o.rank && r.move ? esc(sub).replace(`#${r.rank}`, `#${r.rank}${advMoveHtml(r)}`) : esc(sub);
+  return `<details class="pca-pk"><summary data-advrow="${esc(r.id)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${subHtml}</span>${r.enemy ? `<span class="pca-sb adv-en">${esc(advEnemyLine(r.enemy))}</span>` : ""}${why ? `<span class="adv-why">${esc(why)}</span>` : ""}</span>${advCcHtml(advMoney(r.usd), per, false)}</summary></details>`;
 }
 // The Dashboard's numbers (now / max per troop + stat), kept when the Dashboard draws.
 let ADV_GAP = null;
@@ -8385,6 +8591,39 @@ function advGapHtml() {
   }).join("")}</div>`;
   return `<div class="panel" data-advgap><div class="t12x-title">${esc(t("adv_gap_title"))} <small class="meta" style="font-weight:600; text-transform:none; letter-spacing:0;">· ${esc(t("adv_gap_worst").replace("{troop}", troopDisplayName(worst)))}</small></div><p class="desc">${esc(t("adv_gap_desc"))}</p>${plxTroopSwitchHtml("adv", boxes)}</div>`;
 }
+// "Your stat weights": the Dashboard's weights (folded to one line at first); on My order
+// also the order grid (rank and weight of each troop + stat). Hide / Show kept on the
+// account (calc_state bar_hidden "adv:weights").
+function advWeightsCardHtml() {
+  const w = advStatW();
+  barFoldDefault("adv:weights");
+  const hid = BAR_SHOW_ALL["adv:weights"] === false;
+  const fold = (cls) => `<button type="button" class="g1-fold ${cls}" data-g1fold="adv:weights" aria-expanded="${!hid}">${esc(t(hid ? "g1_show" : "g1_hide"))} ${hid ? "&#9662;" : "&#9652;"}</button>`;
+  if (!w) return `<div class="panel adv-wt"><div class="adv-wt-sum"><span><b>${esc(t("adv_wt_title"))}</b> \u00b7 <span class="meta">${esc(t("adv_wt_none"))}</span></span><button type="button" class="btn ghost small" data-advopen="overview">${esc(t("adv_open_dash"))} &#8250;</button></div></div>`;
+  const avg = Object.fromEntries(ADV_STATS.map((st) => [st, advStatWAvg(w, st)]));
+  const groups = [];
+  ADV_STATS.slice().sort((a, b) => avg[b] - avg[a]).forEach((st) => { const v = avg[st].toFixed(2), g = groups.find((x) => x.v === v); if (g) g.s.push(st); else groups.push({ v, s: [st] }); });
+  const sumTxt = groups.map((g) => `<span class="${Number(g.v) >= 1 ? "adv-up" : "adv-dn"}">${esc(g.s.map((x) => ADV_SHORT[x]).join("/"))} \u00d7${g.v}</span>`).join(" \u00b7 ");
+  const box = (st) => `<div class="adv-wb"><small>${esc(ADV_SHORT[st])}</small><b class="${avg[st] >= 1 ? "adv-up" : "adv-dn"}">\u00d7${avg[st].toFixed(2)}</b></div>`;
+  const wm = advStatWMax();
+  const gbox = (st) => { const v = advStatWAvg(wm, st); return `<div class="adv-wb sm gen"><small>${esc(ADV_SHORT[st])}</small><b>\u00d7${v.toFixed(2)}</b></div>`; };
+  let grid = "";
+  if (ADV_SET.mode !== "pure") {
+    const R = {};
+    (UPGRADE_ORDER.rows || UPGRADE_ORDER_DEFAULT).forEach(([tr, st], i) => { R[`${reachTroopKey(tr)}|${st}`] = i + 1; });
+    const W = advWeights();
+    grid = `<div class="adv-og-h"><span>${esc(t("adv_your_order"))}</span><small class="meta">${esc(t("adv_rank_weight"))}</small></div>
+      <div class="adv-og"><span></span>${ADV_STATS.map((st) => `<span class="adv-og-c">${esc(ADV_SHORT[st])}</span>`).join("")}
+      ${PLX_TROOPS.map((tr) => `<span class="adv-og-t"><i style="background:${PLX_TROOP_COLORS[tr]};"></i>${esc(troopDisplayName(tr))}</span>${ADV_STATS.map((st) => { const k = `${tr}|${st}`, x = W[k] || 1; return `<span class="adv-og-x"><small>#${R[k] || "\u2014"}</small><b class="${x >= 1 ? "adv-up" : "adv-dn"}">\u00d7${x.toFixed(2)}</b></span>`; }).join("")}`).join("")}</div>
+      <div class="adv-og-f"><button type="button" class="btn ghost small" data-advorder>&#8645; ${esc(t("adv_order"))}</button><span class="meta">${esc(t("adv_to_change"))}</span></div>
+      <p class="pca-sb" style="margin:6px 0 0;">${esc(t("adv_order_note"))}</p>`;
+  }
+  return `<div class="panel adv-wt${hid ? " g1-folded" : ""}">
+    <div class="adv-wt-sum"><span><b>${esc(t("adv_wt_title"))}</b> \u00b7 ${sumTxt}</span>${fold("")}</div>
+    <div class="adv-wt-hd"><span class="t12x-title adv-wt-t">${esc(t("adv_wt_title"))}</span><small class="meta">${esc(t("adv_wt_from"))}</small>${fold("")}</div>
+    <div class="adv-wt-body"><p class="desc">${esc(t("adv_wt_desc"))}</p><div class="adv-wr">${esc(t("adv_wt_yours"))}</div><div class="adv-wbs">${ADV_STATS.map(box).join("")}</div>${wm ? `<div class="adv-wr">${esc(t("adv_wt_general"))}</div><div class="adv-wbs">${ADV_STATS.map(gbox).join("")}</div>` : ""}<p class="pca-sb" style="margin:6px 0 0;">${esc(t("adv_wt_less"))}</p>${grid}</div>
+  </div>`;
+}
 let ADV_LAST = null;   // { steps, ranked } shown on the page
 let ADV_MORE = false;  // "Show N more" opened (for the visit)
 function advPageHtml(steps) {
@@ -8402,16 +8641,17 @@ function advPageHtml(steps) {
     </div>` : `<div class="panel"><div class="empty">${esc(t("adv_nothing"))}</div></div>`;
   const chips = `<div class="cat-tabs pk-cat-row" data-advchips style="margin:2px 0 10px;"><button type="button" data-advpage="all" class="${ADV_SET.page === "all" ? "active" : ""}">${esc(t("adv_all"))}</button>${R.types.map((ty) => `<button type="button" data-advpage="${ty.key}" class="${ADV_SET.page === ty.key ? "active" : ""}">${esc(advTypeName(ty.key))}</button>`).join("")}</div>`;
   const typesCard = `<div class="panel" data-advtypes><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span class="pca-mid"><span class="pca-nm">${esc(t("adv_types"))}</span><span class="pca-sb">${esc(t("adv_types_desc"))}</span></span><button type="button" class="pca-n" data-advtypesmore>${esc(t("adv_open"))} &#8250;</button></div></div>`;
-  const settings = `<div class="panel">
-      <div class="bset-row" style="border-top:0;"><span class="bset-l">${esc(t("adv_show"))}<small>${esc(t(ADV_SET.view === "target" ? "adv_show_target_sub" : "adv_show_next_sub"))}</small></span><span class="bset-c"><span class="seg"><button type="button" data-advview="next" class="${ADV_SET.view === "next" ? "active" : ""}">${esc(t("adv_view_next"))}</button><button type="button" data-advview="target" class="${ADV_SET.view === "target" ? "active" : ""}">${esc(t("adv_view_target"))}</button></span></span></div>
-      <div class="bset-row"><span class="bset-l">${esc(t("adv_sort"))}<small>${esc(t(ADV_SET.mode === "pure" ? "adv_sort_pure_sub" : "adv_sort_prio_sub"))}</small></span><span class="bset-c"><span class="seg"><button type="button" data-advmode="prio" class="${ADV_SET.mode === "prio" ? "active" : ""}">${esc(t("adv_prio"))}</button><button type="button" data-advmode="pure" class="${ADV_SET.mode === "pure" ? "active" : ""}">${esc(t("adv_pure"))}</button></span><button type="button" class="btn ghost small" data-advorder>&#8645; ${esc(t("adv_order"))}</button></span></div>
-      <p class="pca-sb" style="margin:6px 0 0; text-align:end;">${esc(t("adv_same_free"))} ${visitorCan("cando") ? `<a href="#" data-advfree style="color:var(--ice); font-weight:700; text-decoration:none;">${esc(t("adv_same_free_l"))}</a>` : `<b>${esc(t("adv_same_free_l"))}</b>`}</p>
-    </div>`;
+  const settings = `<div class="panel adv-set">
+      <div class="adv-sort"><span class="meta">${esc(t("adv_sort"))}</span><span class="seg"><button type="button" data-advmode="prio" class="${ADV_SET.mode === "prio" ? "active" : ""}">${esc(t("adv_prio"))}</button><button type="button" data-advmode="pure" class="${ADV_SET.mode === "pure" ? "active" : ""}">${esc(t("adv_pure"))}</button></span>${ADV_SET.mode === "prio" ? `<button type="button" class="btn ghost small" data-advorder>&#8645; ${esc(t("adv_order"))}</button>` : ""}</div>
+      <p class="pca-sb" style="margin:6px 0 0;">${esc(t(ADV_SET.mode === "pure" ? "adv_sort_pure_sub" : "adv_sort_prio_sub"))}</p>
+      <p class="pca-sb" style="margin:4px 0 0;">${esc(t("adv_same_free"))} ${visitorCan("cando") ? `<a href="#" data-advfree style="color:var(--ice); font-weight:700; text-decoration:none;">${esc(t("adv_same_free_l"))}</a>` : `<b>${esc(t("adv_same_free_l"))}</b>`}</p>
+    </div>${advWeightsCardHtml()}
+    <div class="adv-view"><span class="seg"><button type="button" data-advview="next" class="${ADV_SET.view === "next" ? "active" : ""}">${esc(t("adv_view_next"))}</button><button type="button" data-advview="target" class="${ADV_SET.view === "target" ? "active" : ""}">${esc(t("adv_view_target"))}</button></span></div>`;
   const TT = ADV_SET.view === "target", shownT = TT ? (ADV_SET.page === "all" ? R.tracks : R.tracks.filter((r) => r.type === ADV_SET.page)) : null;
   const N = 8, list = TT ? (ADV_MORE ? shownT : shownT.slice(0, N)) : ADV_MORE ? shown : shown.slice(0, N);
   const listCount = TT ? t(shownT.length === 1 ? "adv_n_tr1" : "adv_n_trs").replace("{n}", shownT.length) : t(shown.length === 1 ? "adv_n_up1" : "adv_n_ups").replace("{n}", shown.length);
   const listCard = `<div class="panel" data-advlist>
-      <div class="t12x-title">${esc(t(TT ? "adv_ranked_avg" : "adv_ranked"))} <small class="meta" style="font-weight:600; text-transform:none; letter-spacing:0;">\u00b7 ${esc(listCount)}</small></div>
+      <div class="t12x-title adv-lh"><span>${esc(t(TT ? "adv_view_target" : "adv_view_next"))} <small class="meta" style="font-weight:600; text-transform:none; letter-spacing:0;">\u00b7 ${esc(listCount)}</small></span><small class="meta" style="font-weight:600; text-transform:none; letter-spacing:0;">${esc(t(TT ? "adv_lh_target" : ADV_SET.mode === "pure" ? "adv_lh_you" : "adv_lh_order"))}</small></div>
       <p class="desc">${esc(t("adv_ranked_desc"))}</p>
       ${chips}
       ${ADV_SET.page === "all" ? (P.length ? `<div class="pca-h">${esc(t("adv_p_list_h"))}</div>${(TT ? ADV_PRIO_TT : P).map(advPrioRowHtml).join("")}<div class="pca-h">${esc(t(TT ? "adv_p_avg_h" : "adv_p_pct_h"))}</div>` : `<p class="pca-note ok" style="margin:0 0 6px;">&#10003; ${esc(t("adv_p_done"))}</p>`) : ""}
@@ -8444,7 +8684,7 @@ function advDraw() {
 }
 async function renderBestUpgradesPage() {
   const seq = RENDER_SEQ, content = document.getElementById("content");
-  await ensureUpgradeOrder();
+  await Promise.all([ensureUpgradeOrder(), ensureBarHidden()]);
   const [steps, prio] = await Promise.all([advSteps(), advPriority().catch((e) => { console.warn("best upgrades: priority", e); return []; })]);
   if (seq !== RENDER_SEQ) return;
   ADV_PRIO = prio;
@@ -8526,14 +8766,14 @@ function advTrackRowHtml(r, showPage) {
   const b = r.bar, w = (x) => Math.max(0, Math.min(100, (x / Math.max(1, b.top)) * 100));
   const one = r.single || r.n === 1, g = `+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%`;
   const price = r.single && r.tomes ? t("adv_tomes_price").replace("{n}", r.tomes.toLocaleString("en-US")).replace("{v}", advMoney(r.usd)) : advMoney(r.usd);
-  const sub = [`#${r.rank}`, showPage ? advTypeName(r.type) : "", g, price === advMoney(r.usd) ? "" : price.replace(/ \(\$[^)]*\)/, ""), one ? "" : t("adv_n_steps").replace("{n}", r.n)].filter(Boolean).join(" \u00b7 ");
+  const sub = [`#${r.rank}`, showPage ? advTypeName(r.type) : "", r.enemy ? advEnemyGainTxt(r) : `${g} ${advGainStats(r)}`.trim(), price === advMoney(r.usd) ? "" : price.replace(/ \(\$[^)]*\)/, ""), one ? "" : t("adv_n_steps").replace("{n}", r.n)].filter(Boolean).join(" \u00b7 ");
   const bar = one ? "" : `<span style="display:flex; align-items:center; gap:6px;"><span class="pc-bar" style="flex:1; margin-top:0;"><i style="width:${w(b.from)}%;"></i><i style="width:${w(b.to) - w(b.from)}%;"></i></span><small class="meta">&rarr; ${esc(r.lb)}</small></span>`;
-  return `<details class="pca-pk"><summary data-advtrack="${esc(r.track)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span>${bar}</span>${advCcHtml(advMoney(r.usd), advPer(r), !one)}</summary></details>`;
+  return `<details class="pca-pk"><summary data-advtrack="${esc(r.track)}">${advPic(r.img, r.page)}<span class="pca-mid"><span class="pca-nm">${esc(r.name)}</span><span class="pca-sb">${esc(sub)}</span>${r.enemy ? `<span class="pca-sb adv-en">${esc(advEnemyLine(r.enemy))}</span>` : ""}${bar}</span>${advCcHtml(advMoney(r.usd), advPer(r), !one)}</summary></details>`;
 }
 // To target sheet: totals, then every step with its own $ and $ per 1%; long middles fold.
 let ADV_TT_ALL = false;
 function advOpenTrackSheet(r) {
-  const m = gearSheetEl(), pg = advPageOf(r.page), key = ADV_SET.mode === "pure" ? "pp" : "wpp";
+  const m = gearSheetEl(), pg = advPageOf(r.page), key = advKey();
   const row = (s) => `<div class="bset-row"><span class="bset-l"><span>${esc(s.lb)}${advSetTag(s)}</span></span><span class="bset-c"><b>${advMoney(s.usd)}</b>${Number.isFinite(s[key]) ? advPillHtml(s[key]) : ""}</span></div>`;
   const st = r.steps, fold = !ADV_TT_ALL && st.length > 6;
   const mid = fold ? `<div class="bset-row" role="button" tabindex="0" data-advttall style="cursor:pointer;"><span class="bset-l">\u2026 ${esc(`${st[2].lb} \u2013 ${st[st.length - 3].lb}`)}</span><span class="bset-c meta">${esc(t("adv_n_steps").replace("{n}", st.length - 4))} &#8250;</span></div>` : "";
@@ -8547,7 +8787,7 @@ function advOpenTrackSheet(r) {
     </div>
     <div class="cgw-nh">${esc(t("adv_steps_h"))}</div>
     ${fold ? st.slice(0, 2).map(row).join("") + mid + st.slice(-2).map(row).join("") : st.map(row).join("")}
-    <p class="pca-sb" style="margin:10px 0 0;">${esc(t(key === "pp" ? "adv_tt_note_pure" : "adv_tt_note_prio"))}</p>
+    <p class="pca-sb" style="margin:10px 0 0;">${esc(t(key === "ypp" ? "adv_tt_note_pure" : "adv_tt_note_prio"))}</p>
     <div style="display:flex; gap:8px; margin-top:14px;"><button type="button" class="btn ghost" style="flex:1;" data-advclose>${esc(t("close_button"))}</button><button type="button" class="btn" style="flex:1;" data-advopen="${esc(pg.tab)}">${esc(t("adv_open_named").replace("{page}", navLabel(pg.tab)))} &#8250;</button></div>
   </div>`;
   advWireSheet(m);
@@ -8621,30 +8861,78 @@ function advFind(id) {
   return R.buy.find((r) => r.id === id) || null;
 }
 function advOpenSheet(r) {
-  const m = gearSheetEl(), pg = advPageOf(r.page), R = ADV_LAST.R, per = advPer(r), nx = r.track ? R.next.get(r.track) : null;
+  const m = gearSheetEl(), pg = advPageOf(r.page), R = ADV_LAST.R, nx = r.track ? R.next.get(r.track) : null;
   const by = {};
   Object.entries(r.gain).forEach(([k, v]) => { const [tr, st] = k.split("|"); (by[tr] = by[tr] || {})[st] = v; });
-  const gives = PLX_TROOPS.filter((tr) => by[tr]).map((tr) => `<div class="bset-row"><span class="bset-l">${esc(troopDisplayName(tr))}</span><span class="bset-c" style="color:var(--good); font-weight:700;">${ADV_STATS.filter((s) => by[tr][s]).map((s) => `+${(Math.round(by[tr][s] * 100) / 100).toLocaleString("en-US")}% ${ADV_SHORT[s]}`).join(" · ")}</span></div>`).join("");
+  const SW = advStatW(), WM = advStatWMax(), you = ADV_SET.mode === "pure";
+  const r1 = (x) => (Math.round(x * 10) / 10).toLocaleString("en-US");
+  // The row's main stat: the one it gives most of.
+  const stSum = {};
+  Object.entries(r.gain).forEach(([k, v]) => { const st = k.split("|")[1]; stSum[st] = (stSum[st] || 0) + v; });
+  const mainSt = Object.keys(stSum).sort((a, b) => stSum[b] - stSum[a])[0] || "Attack";
   const items = Object.entries(r.items || {}).filter(([, q]) => q > 0.5).map(([n, q]) => {
     const v = q * advVal(n), src = materialIconSrc(advItemKey(n) === "General Sigils" ? n : n);
     return `<div class="bset-row"><span class="bset-l" style="flex-direction:row; align-items:center; gap:8px;">${src ? `<img src="${esc(src)}" alt="" style="width:24px; height:24px; object-fit:contain;" />` : ""}<span>${esc(materialDisplayName(n))} <small>&times;${esc(shortAmount(q))}</small>${ADV_OWN_FROM[advItemKey(n)] ? `<small class="meta" style="display:block;">${esc(t("adv_valued_from").replace("{pack}", ADV_OWN_FROM[advItemKey(n)]))}</small>` : ""}</span></span><b class="bset-c">${v > 0 ? advMoney(v) : "—"}</b></div>`;
   }).join("");
   const members = r.members && r.members.length > 1 ? `<div class="cgw-nh">${esc(t("adv_members"))}</div><div class="pca-gv">${r.members.map((x) => `<span class="pca-chip x">${esc(x.name.split(": ").slice(1).join(": "))}</span>`).join("")}</div>` : "";
+  // Now / next: the levels and what the step adds (enemy stats: their own % down).
+  const e = r.enemy, es = e ? ENEMY_STAT_OF[e.k] : null;
+  const trs = PLX_TROOPS.filter((tr) => by[tr]);
+  const nowNext = r.la || r.lb ? `<div class="adv-nn"><div class="adv-nb"><small>${esc(t("adv_now"))}</small><b>${esc(/^[\d.]+$/.test(r.la) ? t("adv_lv").replace("{n}", r.la) : r.la || "—")}</b></div><span class="adv-nn-ar">&rarr;</span><div class="adv-nb on"><small>${esc(t("adv_next"))}</small><b>${esc(/^[\d.]+$/.test(r.lb) ? t("adv_lv").replace("{n}", r.lb) : r.lb || "—")}</b></div></div>` : "";
+  // What it gives: one row per troop it touches (ATK / DEF / LETH / HP), a total line;
+  // an enemy stat adds an "Enemy" row with its % down (the troop rows = its worth in your stat).
+  const cell = (v, pre) => (v > 1e-9 ? `<td class="g">${pre || ""}+${(Math.round(v * 100) / 100).toLocaleString("en-US")}%</td>` : "<td>\u2014</td>");
+  const what = `<div class="adv-box"><div class="adv-bh">${esc(t(e ? "adv_what_does" : "adv_what_gives"))}${e ? ` <span class="adv-on">${esc(t("adv_always_on"))}</span>` : ""}</div>
+      ${e ? `<p class="pca-sb" style="margin:2px 0 6px;">${esc(t("adv_enemy_does").replace("{stat}", tStatLabel(es)).replace("{v}", String(Math.round((e.b - e.a) * 100) / 100)))}</p>` : ""}
+      <table class="adv-gt"><thead><tr><th>${esc(t("adv_troop"))}</th>${ADV_STATS.map((st) => `<th>${esc(ADV_SHORT[st])}</th>`).join("")}</tr></thead><tbody>
+      ${trs.map((tr) => `<tr><td><img src="${esc(`icons/troop-${tr.toLowerCase()}.png`)}" alt="" />${esc(troopDisplayName(tr))}</td>${ADV_STATS.map((st) => cell(by[tr][st] || 0, e ? "\u2248" : "")).join("")}</tr>`).join("")}
+      ${e ? `<tr class="en"><td>${esc(t("enemy_word"))}</td>${ADV_STATS.map((st) => (st === es ? `<td class="r">\u2212${(Math.round((e.b - e.a) * 100) / 100).toLocaleString("en-US")}%</td>` : "<td>\u2014</td>")).join("")}</tr>` : ""}
+      </tbody></table>
+      <div class="adv-gtt">${esc(t(e ? "adv_in_all_eq" : "adv_in_all").replace("{v}", r1(r.g)))}</div></div>`;
+  const price = `<div class="adv-box"><div class="adv-bh" style="display:flex; justify-content:space-between;"><span>${esc(t("adv_price"))} <small class="meta" style="font-weight:500;">\u00b7 ${esc(t("adv_price_raw"))}</small></span><b>${advMoney(r.usd)}</b></div>${items}</div>`;
+  // Price per 1%: Plain (no weights), Current stats (your Dashboard now) against Max stats (the
+  // game's max), My order; the sort in use carries "sorts the list".
+  const money = (v) => (Number.isFinite(v) ? bidiNum(`$${v.toFixed(2)}/1%`) : "—");
+  const plain = r.g > 0 ? r.usd / r.g : Infinity;
+  const cls = (v) => (v < 5 ? "g" : v <= 20 ? "a" : "r");
+  const sortsPill = `<span class="adv-sorts">${esc(t("adv_sorts_list"))}</span>`;
+  const ratio = Number.isFinite(r.ypp) && Number.isFinite(r.pp) && r.pp > 0 ? r.ypp / r.pp : 1;
+  const tone = ratio <= 0.95 ? "g" : ratio >= 1.05 ? "a" : "i";
+  const scale = Math.max(r.ypp || 0, r.pp || 0) * 1.12 || 1, fill = Math.min(100, ((r.ypp || 0) / scale) * 100), tick = Math.min(100, ((r.pp || 0) / scale) * 100);
+  const note = tone === "g" ? t("adv_bal_lower").replace("{stat}", tStatLabel(mainSt)) : tone === "a" ? t("adv_bal_higher").replace("{stat}", tStatLabel(mainSt)) : t("adv_bal_same");
+  const ranks = {};
+  (UPGRADE_ORDER.rows || UPGRADE_ORDER_DEFAULT).forEach(([tr, st], i) => { ranks[`${reachTroopKey(tr)}|${st}`] = i + 1; });
+  const oRanks = Object.keys(r.gain).filter((k) => k.endsWith(`|${mainSt}`) && r.gain[k] > 1e-9).map((k) => ranks[k]).filter(Boolean).sort((a, b) => a - b);
+  const perBox = `<div class="adv-box"><div class="adv-bh adv-cap">${esc(t("adv_pp_title"))}</div>
+      <div class="adv-ppr adv-pl"><span class="adv-ppn">${esc(t("adv_plain_l"))} <small>${esc(t("adv_raw"))}</small></span><span class="adv-cc"><em class="b">${money(plain)}</em></span><small class="adv-rk">#${r.prank || "—"}</small></div>
+      <div class="adv-cur${you ? " on" : ""}">
+        <div class="adv-ppr"><span class="adv-ppn">${esc(t("adv_cur_stats"))}${you ? ` ${sortsPill}` : ""}</span><span class="adv-cc"><em class="${cls(r.ypp)}">${money(r.ypp)}</em></span><small class="adv-rk">#${r.yrank || "—"}</small></div>
+        <div class="adv-vs"><span>${esc(t("adv_vs_max"))}</span><b>${money(r.pp)}</b></div>
+        <div class="adv-trk ${tone}"><i style="width:${fill.toFixed(1)}%;"></i><b style="inset-inline-start:${tick.toFixed(1)}%;"></b></div>
+        <div class="adv-bal ${tone}">${tone === "i" ? "≈ " : ""}${esc(note)}</div>
+      </div>
+      <div class="adv-ppr adv-ord${you ? "" : " on"}"><span class="adv-ppn">${esc(t("adv_prio"))}${you ? "" : ` ${sortsPill}`}</span><span class="adv-cc"><em class="${cls(r.wpp)}">${money(r.wpp).replace("/1%", "")}</em></span><small class="adv-rk">#${r.orank || "—"}</small></div>
+      <div class="adv-swu"><b>${esc(t("adv_sw_used"))}</b> · ${esc(`${ADV_SHORT[mainSt]} ×${advStatWAvg(SW, mainSt).toFixed(2)} (${t("adv_w_current")}) · ×${advStatWAvg(WM, mainSt).toFixed(2)} (${t("adv_w_max")})${oRanks.length ? ` · ${t("adv_w_order")} ${oRanks.map((n) => `#${n}`).join(" / ")}` : ""}`)}</div>
+    </div>`;
+  // After this: the track's next steps (up to 4), the active sort's price per 1%.
+  const W = advWeights(), later = r.track ? (ADV_LAST.steps || []).filter((x) => x.track === r.track && x.nth >= 1 && x.nth <= 4).sort((a, b2) => a.nth - b2.nth) : [];
+  const pill = (v) => (Number.isFinite(v) ? advPillHtml(v).replace(" / 1%", "") : "—");
+  const after = later.length ? `<div class="adv-box"><div class="adv-bh">${esc(t("adv_after_h"))}</div><table class="adv-at"><thead><tr><th>${esc(t("adv_step"))}</th><th>${esc(t("adv_price"))}</th><th>${esc(t("adv_per1"))}</th></tr></thead><tbody>${later.map((x) => {
+    const sc = advScoreOf(x, W, SW, WM), u = advUsd(x), yp = you ? (sc.yg > 0 ? u / sc.yg : Infinity) : sc.wg > 0 ? u / sc.wg : Infinity;
+    return `<tr><td>${esc(`${x.la} → ${x.lb}`)}</td><td>${advMoney(u)}</td><td>${pill(yp)}</td></tr>`;
+  }).join("")}</tbody></table>${e ? `<p class="pca-sb" style="margin:6px 0 0;">${esc(t("adv_enemy_each").replace("{k}", enemyShort(e.k)))}</p>` : ""}</div>` : "";
+  const rankTxt = r.rank ? (you ? t("adv_rank_you") : t("adv_rank_order")).replace("{n}", r.rank) : "";
   m.innerHTML = `<div class="modal-box adm-sheet gs-box cgw" role="dialog" aria-modal="true" aria-label="${esc(r.name)}">
     <div class="cgw-top" data-cgwgrab><div class="cgw-grab"></div>
-    <div class="gs-head">${advPic(r.img, r.page)}<div style="flex:1; min-width:0;"><b>${esc(r.name)}</b><div class="meta">${esc(navLabel(pg.tab))}${r.rank ? ` · ${esc(t("adv_rank_of").replace("{n}", r.rank).replace("{m}", R.buy.length))}` : ""}${advSetTag(r)}</div></div>${closeXHtml("data-advclose")}</div></div>
-    <div class="cgw-nd" style="grid-template-columns:repeat(3, minmax(0, 1fr));">
-      <div class="cgw-nb"><small>${esc(t("adv_cost"))}</small><b>${advMoney(r.usd)}</b></div>
-      <div class="cgw-nb"><small>${esc(t("adv_gives"))}</small><b style="color:var(--good);">+${(Math.round(r.g * 10) / 10).toLocaleString("en-US")}%</b></div>
-      <div class="cgw-nb"><small>${esc(t("adv_per_1"))}</small><b>${Number.isFinite(per) ? bidiNum(`$${per.toFixed(2)}`) : "\u2014"}</b></div>
-    </div>
-    <div class="cgw-nh">${esc(t("adv_what_gives"))}</div>${gives}
-    <p class="pca-sb" style="margin:6px 0 0;">${esc(ADV_SET.mode === "pure" ? t("adv_sheet_pure").replace("{v}", `$${r.pp.toFixed(2)}`) : t("adv_sheet_prio").replace("{w}", `$${r.wpp.toFixed(2)}`).replace("{v}", `$${r.pp.toFixed(2)}`))}</p>
-    ${items ? `<div class="cgw-nh">${esc(t("adv_items"))}</div>${items}` : ""}
+    <div class="gs-head">${advPic(r.img, r.page)}<div style="flex:1; min-width:0;"><b>${esc(r.base && !r.members ? r.base : r.name)}</b><div class="meta">${esc(advTypeName(r.type))}${rankTxt ? ` · ${esc(rankTxt)}` : ""}${advSetTag(r)}${r.move ? advMoveHtml(r) : ""}</div></div>${closeXHtml("data-advclose")}</div></div>
+    ${nowNext}
+    ${what}
+    ${price}
+    ${perBox}
     ${members}
     ${r.note ? `<p class="pca-sb" style="margin:10px 0 0;">${esc(r.note)}</p>` : ""}
-    ${nx && Number.isFinite(advPer(nx)) ? `<p class="pca-sb" style="margin:8px 0 0;">${esc(t("adv_after_this").replace("{name}", nx.name).replace("{v}", `$${advPer(nx).toFixed(2)}`))}</p>` : ""}
-    <div style="display:flex; gap:8px; margin-top:14px;"><button type="button" class="btn ghost" style="flex:1;" data-advclose>${esc(t("close_button"))}</button><button type="button" class="btn" style="flex:1;" data-advopen="${esc(pg.tab)}">${esc(t("adv_open_page"))} &#8250;</button></div>
+    ${after || (nx && Number.isFinite(advPer(nx)) ? `<p class="pca-sb" style="margin:8px 0 0;">${esc(t("adv_after_this").replace("{name}", nx.name).replace("{v}", `$${advPer(nx).toFixed(2)}`))}</p>` : "")}
+    <div style="display:flex; gap:8px; margin-top:14px;"><button type="button" class="btn ghost" style="flex:1;" data-advopen="${esc(pg.tab)}">${esc(t("adv_open_named").replace("{page}", navLabel(pg.tab)))} &#8250;</button><button type="button" class="btn" style="flex:1;" data-advclose>${esc(t("adv_done"))}</button></div>
   </div>`;
   advWireSheet(m);
 }
@@ -8671,9 +8959,12 @@ let ADV_REF = null; // { seq, p }
 function advRefTypes() {
   if (ADV_REF && ADV_REF.seq === CALC_SAVE_SEQ) return ADV_REF.p;
   const p = (async () => {
-    await advOwnValues().catch(() => null);
+    await Promise.all([advOwnValues().catch(() => null), advDashTotals()]);
     const out = [], cost = (items) => Object.entries(items).reduce((s, [n, q]) => s + (Number(q) || 0) * advVal(n), 0);
-    const add = (key, tab, name, note, list, o = {}) => {
+    // General value: each entry's gain weighted at the Dashboard's max (x.wf, else the type's stats).
+    const wfOf = (stats) => (stats ? stats.reduce((a, st) => a + advWMaxAvg(st), 0) / stats.length : 1);
+    const add = (key, tab, name, note, list0, o = {}) => {
+      const wf0 = wfOf(o.stats), list = list0.map((x) => ({ ...x, g: x.g * (x.wf != null ? x.wf : wf0) }));
       const ok = list.filter((x) => x.g > 1e-9 && x.usd > 0), per = ok.map((x) => x.usd / x.g).sort((x, y) => x - y);
       const su = ok.reduce((s, x) => s + x.usd, 0), sg = ok.reduce((s, x) => s + x.g, 0);
       // typical = the whole table's cost ÷ its whole gain
@@ -8682,17 +8973,17 @@ function advRefTypes() {
     const safe = async (f) => { try { await f(); } catch (e) { console.warn("value by type", e); } };
     await safe(async () => {
       const rows = await loadChiefGearRows(), cols = [["hardened_alloy", "Hardened Alloy"], ["polishing_solution", "Polishing Solution"], ["design_plan", "Design Plan"], ["amber", "Amber"]], st = (i) => parseStatPct(rows[i] && rows[i].stat) || 0;
-      add("chief_gear", "chiefgear", navLabel("chiefgear"), t("adv_r_cg"), rows.slice(1).map((r, k) => ({ usd: cost(Object.fromEntries(cols.map(([c, n]) => [n, Number(r[c]) || 0]))), g: 2 * (st(k + 1) - st(k)) })));
+      add("chief_gear", "chiefgear", navLabel("chiefgear"), t("adv_r_cg"), rows.slice(1).map((r, k) => ({ usd: cost(Object.fromEntries(cols.map(([c, n]) => [n, Number(r[c]) || 0]))), g: 2 * (st(k + 1) - st(k)) })), { stats: ["Attack", "Defense"] });
     });
     await safe(async () => {
       await Promise.all([ensureCharmData(), ensureCharmLevelsData()]);
       const L = CHARM_LEVELS.map(String);
-      add("charm", "charmscalc", navLabel("charmscalc"), t("adv_r_charm"), L.slice(1).map((l, k) => { const c = CHARM_STEP_COST[l] || [0, 0, 0]; return { usd: cost({ "Charm Guides": c[0], "Charm Designs": c[1], "Jewel Secrets": c[2] }), g: 2 * (charmStatAt(l) - charmStatAt(L[k])) }; }));
+      add("charm", "charmscalc", navLabel("charmscalc"), t("adv_r_charm"), L.slice(1).map((l, k) => { const c = CHARM_STEP_COST[l] || [0, 0, 0]; return { usd: cost({ "Charm Guides": c[0], "Charm Designs": c[1], "Jewel Secrets": c[2] }), g: 2 * (charmStatAt(l) - charmStatAt(L[k])) }; }), { stats: ["Lethality", "Health"] });
     });
     await safe(async () => {
       await Promise.all([ensureT12NodesData(), ensureResearchSpeedData()]);
       const list = [];
-      T12_ITEM_DEFS.filter((d) => d.stat).forEach((d) => { for (let lv = 1; lv <= d.max; lv++) { const r = (T12_NODES_CACHE[d.tier] || {})[lv]; if (r) list.push({ usd: cost({ Steel: Number(r.steel) || 0, "Refined FC": Number(r.refined_fc) || 0, "FC Shard": Number(r.fc_shard) || 0, "Research Speedups (minutes)": applyResearchPct(Number(r.time_hours) || 0) * 60 }), g: d.pct || 1 }); } });
+      T12_ITEM_DEFS.filter((d) => d.stat).forEach((d) => { for (let lv = 1; lv <= d.max; lv++) { const r = (T12_NODES_CACHE[d.tier] || {})[lv]; if (r) list.push({ usd: cost({ Steel: Number(r.steel) || 0, "Refined FC": Number(r.refined_fc) || 0, "FC Shard": Number(r.fc_shard) || 0, "Research Speedups (minutes)": applyResearchPct(Number(r.time_hours) || 0) * 60 }), g: d.pct || 1, wf: advWMaxAvg(d.stat) }); } });
       add("t12", "t12research", navLabel("t12research"), t("adv_r_t12"), list);
     });
     await safe(async () => {
@@ -8731,8 +9022,8 @@ function advRefTypes() {
       tracks.forEach((tr) => {
         for (let i = Math.max(0, tr.from) + 1; i <= tr.top; i++) {
           const g0 = tr.gain(i - 1, lv) || {}, g1 = tr.gain(i, lv) || {};
-          const g = ADV_STATS.reduce((s, k) => s + (Number(g1[k]) || 0) - (Number(g0[k]) || 0), 0) * (tr.troop === "all" ? 3 : 1);
-          list.push({ usd: cost(tr.cost(i) || {}), g });
+          const g = ADV_STATS.reduce((s, k) => s + ((Number(g1[k]) || 0) - (Number(g0[k]) || 0)) * advWMaxAvg(k), 0) * (tr.troop === "all" ? 3 : 1);
+          list.push({ usd: cost(tr.cost(i) || {}), g, wf: 1 });
         }
       });
       return list;
@@ -8747,7 +9038,7 @@ function advRefTypes() {
         let prev = 0;
         (levels || []).forEach((r) => { const v = r.atk_def_pct != null ? Number(r.atk_def_pct) * 100 : prev; list.push({ usd: cost({ Food: Number(r.food) || 0, Manual: Number(r.manual) || 0, Potion: Number(r.potion) || 0, Serum: Number(r.serum) || 0 }), g: 6 * (v - prev) }); prev = v; });
       });
-      add("pets", "petsdata", navLabel("petsdata"), t("adv_r_pets"), list);
+      add("pets", "petsdata", navLabel("petsdata"), t("adv_r_pets"), list, { stats: ["Attack", "Defense"] });
     });
     // Islands: a Mythic building level = +1% for every troop (owner); copies per level.
     const lvls = [];
@@ -8757,12 +9048,12 @@ function advRefTypes() {
     add("isl_shard", "islandgallery", t("adv_r_isl_shard_t"), t("adv_r_isl_shard").replace("{n}", per), lvls.map((c) => ({ usd: cost({ "Mythic Island Shards": c * per }), g: 3 })), { img: "icons/island-shard.png" });
     add("isl_mark", "islandgallery", t("adv_r_isl_mark_t"), t("adv_r_isl_mark").replace("{n}", Number(ISL_RULES.markPrice) || ISL_MARK_PRICE), lvls.map((c) => ({ usd: cost({ "Mark of Revival": c * (Number(ISL_RULES.markPrice) || ISL_MARK_PRICE) }), g: 3 })), { img: "icons/mark-of-revival.png" });
     add("isl_tome", "islandgallery", t("adv_r_isl_tome_t"), t("adv_r_isl_tome").replace("{n}", Number(ISL_RULES.tomePrice) || 600), lvls.map((c) => ({ usd: cost({ "Glorious Tome": c * (Number(ISL_RULES.tomePrice) || 600) }), g: 3 })), { img: "icons/glorious-tome.png" });
-    add("lighthouse", "islandgallery", t("adv_t_light"), t("adv_r_light"), ISL_LIGHT.map((x) => ({ usd: cost({ "Construction Contract": x.ct }), g: 6 })), { img: "icons/lighthouse-blueprint.png" });
+    add("lighthouse", "islandgallery", t("adv_t_light"), t("adv_r_light"), ISL_LIGHT.map((x) => ({ usd: cost({ "Construction Contract": x.ct }), g: 6 })), { img: "icons/lighthouse-blueprint.png", stats: ["Lethality", "Health"] });
     // Skins by kind, from each skin's own bonus.
     await safe(async () => {
       const rows = await keptRows("skins", skinGalleryPath()), cats = await islandCatRows();
       const isl = new Set(cats.map((c) => c.category).concat([ISL_LIGHT_CAT, ISL_SHOP_CAT]));
-      const gOf = (r) => { let g = 0; ADV_SLOTS.forEach(([tk, vk]) => { const bs = cdaBonusStat(r[tk]); if (bs && r[vk] != null) g += (bs.troop === "all" ? 3 : 1) * (Number(r[vk]) || 0); }); return g; };
+      const gOf = (r) => { let g = 0; ADV_SLOTS.forEach(([tk, vk]) => { const bs = cdaBonusStat(r[tk]); if (bs && r[vk] != null) g += (bs.troop === "all" ? 3 : 1) * (Number(r[vk]) || 0) * advWMaxAvg(bs.stat); }); return g; };
       const globe = advIsGlobe;
       const tomes = shiningTomesPer(), kinds = new Map();
       rows.forEach((r) => {
@@ -8780,9 +9071,9 @@ function advRefTypes() {
       // rewards) and Private Chats on their own (free extras) are left out.
       kinds.forEach((list, k) => {
         const img = (list.find((r) => r.image_url) || {}).image_url || QUICK_ICONS.skingallery;
-        if (k === "__shining") return add("sk_shining", "skingallery", t("adv_t_shining"), t("adv_r_shining").replace("{n}", tomes.toLocaleString("en-US")), list.map((r) => ({ usd: cost({ "Glorious Tome": tomes }), g: gOf(r) })), { img: "icons/shining-city-pack.png" });
+        if (k === "__shining") return add("sk_shining", "skingallery", t("adv_t_shining"), t("adv_r_shining").replace("{n}", tomes.toLocaleString("en-US")), list.map((r) => ({ usd: cost({ "Glorious Tome": tomes }), g: gOf(r), wf: 1 })), { img: "icons/shining-city-pack.png" });
         const price = ADV_FIXED_PRICES[k];
-        if (price) add(`sk_${k}`, "skingallery", dataName(k), t("adv_r_skin").replace("{v}", price), list.map((r) => ({ usd: price, g: gOf(r) })), { img });
+        if (price) add(`sk_${k}`, "skingallery", dataName(k), t("adv_r_skin").replace("{v}", price), list.map((r) => ({ usd: price, g: gOf(r), wf: 1 })), { img });
       });
       // Prestige Appearance "Royal North" (+3% LETH all troops) with its gift, the Chief Profile
       // "Winter Bloom" (+2% HP all troops): 10,000 Prestige Emblems = all 10 Emblem of Exquisiteness
@@ -8790,7 +9081,7 @@ function advRefTypes() {
       // ($0); its gold item and chest aren't counted).
       const P = ADV_PRESTIGE, pack = P.price - P.gems * ADV_GEM_USD - P.speedH * 60 * advVal("Speedups (minutes)");
       const app = (kinds.get("Chief Appearance") || []).find((r) => r.name === P.appearance);
-      add("sk_prestige", "skingallery", t("adv_r_prestige_t"), t("adv_r_prestige").replace("{n}", P.packs), [{ usd: P.packs * pack, g: 3 * (P.leth + P.hp) }], { img: (app && app.image_url) || QUICK_ICONS.skingallery });
+      add("sk_prestige", "skingallery", t("adv_r_prestige_t"), t("adv_r_prestige").replace("{n}", P.packs), [{ usd: P.packs * pack, g: 3 * (P.leth * advWMaxAvg("Lethality") + P.hp * advWMaxAvg("Health")), wf: 1 }], { img: (app && app.image_url) || QUICK_ICONS.skingallery });
     });
     return out.filter((x) => x.n).sort((x, y) => x.mid - y.mid);
   })();
@@ -9011,7 +9302,7 @@ const CDA_PAGES = [
       const lab = (i) => { if (i < 0 || !levels[i]) return "0"; const l = String(levels[i].level_label), n = parseInt(l, 10) || 0; return /\.1$/.test(l) ? `${n} ${t("pet_adv_short")}` : String(n); };
       return { id: pet, troop: "all", from, to: Math.max(from, Math.min(to, levels.length - 1)), name: dataName(pet), lab,
         cost: (i) => { const r = levels[i] || {}; return { Food: Number(r.food) || 0, Manual: Number(r.manual) || 0, Potion: Number(r.potion) || 0, Serum: Number(r.serum) || 0 }; },
-        gain: (i) => { const v = statAt(i); return { Attack: v, Defense: v }; } };
+        gain: (i) => { const v = statAt(i), o = { Attack: v, Defense: v }; Object.entries(petSkillAtIdx(pet, i)).forEach(([k, x]) => { o[k] = (o[k] || 0) + x; }); return o; } };
     });
     return { tracks, bar: "pets", pic: (tr) => petImage(tr.raw) };
   } },
@@ -9098,9 +9389,10 @@ const CDA_PAGES = [
       e.skills.forEach((sk) => {
         const st = hs.skills[sk], sr = kit.SKILL_CACHE[`${hero}|${sk}`] || [], bankedExp = kit.skillExpHave(st);
         const cumS = (lv) => { const c = kit.skillCost(hero, sk, st.current, lv); return { b: c.book, t: Math.max(0, c.exp - bankedExp) / 60 }; };
-        tracks.push({ id: `exps|${hero}|${sk}`, troop: null, name: `${e.name || dataName(hero)} · ${dataName(sk)}`, img: e.img, from: Number(st.current) || 0, to: Math.max(Number(st.current) || 0, Math.min(Number(st.desired) || 0, sr.length ? Math.max(...sr.map((r) => r.level)) : 0)),
+        const skAt = (lv) => { let m = null; sr.forEach((r) => { if (r.level <= lv) m = r; }); const o = {}; if (m && m.stat_type) m.stat_type.split(",").forEach((k) => { k = k.trim(); if (ADV_STATS.includes(k) || isEnemyStat(k)) o[k] = Number(m.stat_value) || 0; }); return o; };
+        tracks.push({ id: `exps|${hero}|${sk}`, troop: "all", name: `${e.name || dataName(hero)} · ${dataName(sk)}`, img: e.img, from: Number(st.current) || 0, to: Math.max(Number(st.current) || 0, Math.min(Number(st.desired) || 0, sr.length ? Math.max(...sr.map((r) => r.level)) : 0)),
           cost: (lv) => { const a = cumS(lv), b = cumS(lv - 1); return { [BOOKS]: a.b - b.b, [CDA_ET]: a.t - b.t }; },
-          gain: () => ({}) });
+          gain: (lv) => skAt(lv) });
       });
     });
     return { tracks, have, conv, pic: (tr) => tr.img || "" };
@@ -9530,6 +9822,7 @@ function cdaBodyHtml(mid) {
   return `<div class="cdp cda">
     <div class="panel cda-top">
       <div class="rch-seg cdp-seg"><button type="button" data-cdamode="order" class="${best ? "" : "on"}">${esc(t("rch_my_order"))}</button><button type="button" data-cdamode="best" class="${best ? "on" : ""}">${esc(t("rch_best"))}</button></div>
+      ${best ? cdaBestNoteHtml() : ""}
       <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">${best ? "<span></span>" : `<button type="button" class="cda-ord" data-cdaorder>${esc(t("cda_edit_order"))} &#8250;</button>`}${visitorCan("bestupgrades") ? `<small class="meta">${esc(t("cda_same_best"))} <a href="#" data-cdago="bestupgrades" style="color:var(--ice); font-weight:700; text-decoration:none;">${esc(t("cda_same_best_l"))}</a></small>` : ""}</div>
       <label class="cda-sw"><input type="checkbox" class="bset-sw" data-cdapacks${CDA_SET.packs ? " checked" : ""} /><span><b>${esc(t("cda_packs"))}</b><small>${esc(CDA_SET.packs && wp ? t("cda_packs_n").replace("{b}", wp.bought).replace("{p}", wp.planned) : t("cda_packs_d"))}</small></span></label>
       <div class="cdp-ans"><div class="cdp-box"><div class="k">${esc(t("cdp_pages_up"))}</div><div class="v${upPages ? " g" : ""}">${P ? esc(t("cdp_of").replace("{n}", upPages).replace("{m}", P.pages.length)) : "…"}</div></div>
@@ -9706,13 +9999,19 @@ function mkApply() {
     if (s.before && s.before.parentElement === s.in) s.in.insertBefore(m, s.before); else s.in.appendChild(m);
   });
 }
+// Free now's Best value note: which stats count more for you (your Dashboard).
+function cdaBestNoteHtml() {
+  const w = advStatW();
+  const more = w ? ADV_STATS.filter((st) => advStatWAvg(w, st) > 1.005).map((st) => ADV_SHORT[st]).join(" / ") : "";
+  return `<div class="cda-bn">&#128200; ${esc(t("cda_best_dash"))}${more ? ` (<b>${esc(t("cda_best_dash_more").replace("{stats}", more))}</b>)` : ""}</div>`;
+}
 async function mkCompute() {
   const seq = ++MK_SEQ, tab = TAB;
   if (!visitorCan("cando") || !MK_SLOTS[tab]) { MK = null; return; }
   const pg = CDA_PAGES.find((p) => p.tab === tab);
   if (!pg) return;
   try {
-    await Promise.all([ensureUpgradeOrder(), cdaLoadSettings()]);
+    await Promise.all([ensureUpgradeOrder(), cdaLoadSettings(), UPGRADE_ORDER.mode === "best" || tab === "expertspage" ? advDashTotals() : null]);
     let b;
     if (pg.key === "hero_gear") {
       // Heroes Gears: the set shown on the page.
@@ -9820,7 +10119,7 @@ function cdaOrderSheet(opts = {}) {
       <div class="cando-hd"><b>${esc(t("cando_order"))}</b>${closeXHtml("data-cdx")}</div>
       <div class="cando-oh"><span class="meta cando-desc">${esc(t("cando_drag_hint"))}</span><span class="cando-ob">${arrangeBtnHtml("upgrade_order")}<button type="button" class="btn ghost small" data-cdreset>${esc(t("rch_order_reset"))}</button></span></div>
       ${opts.weights ? `<div class="cando-ord" style="margin-bottom:6px;">${["adv_ord_unlocks", "adv_ord_march"].map((k) => `<div class="rch-ord-row"><b>&#128274;</b><span>${esc(t(k))}<small class="meta" style="display:block; font-weight:400;">${esc(t(k + "_sub"))}</small></span><small class="meta">${esc(t("adv_ord_first"))}</small></div>`).join("")}</div>` : ""}
-      <div class="cando-ord"${arrangeHostAttr("upgrade_order")}>${UPGRADE_ORDER.rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-cdrow="${i}" data-cdkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>${opts.weights ? `<small class="meta">&times;${(1.5 - i / 11).toFixed(2)}</small>` : ""}${dsHandleHtml("data-cddrag")}</div>`).join("")}</div>
+      <div class="cando-ord"${arrangeHostAttr("upgrade_order")}>${UPGRADE_ORDER.rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-cdrow="${i}" data-cdkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>${opts.weights ? `<small class="meta">&times;${advOrderW(i).toFixed(2)}</small>` : ""}${dsHandleHtml("data-cddrag")}</div>`).join("")}</div>
       <div class="cando-foot"><button type="button" class="btn cando-done" data-cdx>${esc(t("gs_done"))}</button></div>
     </div>`;
     m.querySelectorAll("[data-cddrag]").forEach((h) => dragSort(h, {
@@ -11668,12 +11967,12 @@ const SCAN_SUMMARY_ROWS = [[/\bgems?\b/i, "Gems"], [/\bmeat\b/i, "Meat"], [/\bwo
 // running mismatched code; if it still doesn't match, the promise fails with
 // err.stale and the caller says so.
 const CODE_FILES = {
-  admin: "admin.min.js?v=20f7bd3941",
+  admin: "admin.min.js?v=ce6ffa64d5",
   scan: "scan.min.js?v=64a7ef20ff",
   packs: "packs.min.js?v=d85801810c",
   gallery: "gallery.min.js?v=28a7717641",
   purchases: "purchases.min.js?v=0849c1c5d5",
-  budgets: "budgets.min.js?v=9097fd485c",
+  budgets: "budgets.min.js?v=95889bd4a6",
 };
 const CODE_P = {}, CODE_OK = {};
 function loadCode(name) {
@@ -15842,7 +16141,7 @@ function g1FoldVal(key) {
 }
 function g1FoldSync(root) {
   (root || document).querySelectorAll("[data-g1fold]").forEach((b) => {
-    const folded = g1FoldVal(b.dataset.g1fold) === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc, .trd-rules, .pur-dn");
+    const folded = g1FoldVal(b.dataset.g1fold) === false, box = b.closest(".g1-top, .cg-ans, .b3-hd, .pca-tc, .trd-rules, .pur-dn, .adv-wt");
     if (box) box.classList.toggle("g1-folded", folded);
     // Compared as text: innerHTML gives back the real arrow, not "&#9662;", so an
     // HTML compare rewrote the button every time and the #content observer looped.
@@ -18358,17 +18657,26 @@ async function budgetStatDeltasMore(calcKey) {
         addRaw(tr, sum);
       });
     } else if (calcKey === "pets") {
-      // One ATK/DEF % per pet, the same for all troops (as on the Dashboard).
+      // One ATK/DEF % per pet, the same for all troops (as on the Dashboard); pet skills too.
       await ensurePetsData();
       let gain = 0;
+      const skg = {}, en = [];
       Object.keys(PETS_NODES_CACHE || {}).forEach((pet) => {
         if (!isPetUnlocked(pet)) return;
         const levels = PETS_NODES_CACHE[pet], s = PETS_STATE && PETS_STATE[pet];
         const st = s && typeof s === "object" ? s : { from: -1, to: IS_OWNER ? petMaxIdx(pet) : -1 };
         const pct = (i) => { for (let k = Math.min(i, levels.length - 1); k >= 0; k--) if (levels[k].atk_def_pct != null) return Number(levels[k].atk_def_pct) * 100; return 0; };
         if (st.to > st.from) gain += Math.max(0, pct(st.to) - (st.from >= 0 ? pct(st.from) : 0));
+        if (st.to > st.from) {
+          const a = petSkillAtIdx(pet, st.from), b = petSkillAtIdx(pet, st.to);
+          Object.keys(b).forEach((k) => {
+            if (isEnemyStat(k)) { if (b[k] > (a[k] || 0)) en.push({ k, a: a[k] || 0, b: b[k], who: dataName(pet) }); return; }
+            skg[k] = (skg[k] || 0) + Math.max(0, b[k] - (a[k] || 0));
+          });
+        }
       });
-      TROOPS.forEach((tr) => { add(tr, "ATT", gain); add(tr, "DEF", gain); });
+      TROOPS.forEach((tr) => { add(tr, "ATT", gain + (skg.Attack || 0)); add(tr, "DEF", gain + (skg.Defense || 0)); add(tr, "DMG", skg.Lethality || 0); add(tr, "HP", skg.Health || 0); });
+      BUDGET_ENEMY.pets = en;
     } else if (calcKey === "pets_refine") {
       // Refine plans every counted pet to its top released stage.
       await ensurePetsData();
@@ -18408,6 +18716,21 @@ async function budgetStatDeltasMore(calcKey) {
         if (tgt > cur) { addRow(at(tgt), 1); addRow(at(cur), -1); }
       });
       TROOPS.forEach((tr) => addRaw(tr, sum));
+      // Enemy stats down (Gareth's Fearsome Reputation …): their own line, never in your stats.
+      const skillAll = await loadExpertNodes("skill"), en = [];
+      EXPERTS_LIST.forEach((e) => {
+        if (!st[e.key] || !unlockedFor("experts", e.key, unl[e.key])) return;
+        (e.skills || []).forEach((skill) => {
+          const sk = st[e.key].skills && st[e.key].skills[skill];
+          if (!sk) return;
+          const at = (lv) => { let m = null; skillAll.forEach((r) => { if (r.expert === e.key && r.skill === skill && r.level <= lv) m = r; }); return m; };
+          const cur = Number(sk.current) || 0, tgt = Number(sk.desired) || 0;
+          if (!(tgt > cur)) return;
+          const A = at(cur), B = at(tgt), ek = (r) => (r && r.stat_type ? r.stat_type.split(",").map((k) => k.trim()).filter(isEnemyStat) : []);
+          ek(B).forEach((k) => { const a = ek(A).includes(k) ? Number(A.stat_value) || 0 : 0, b = Number(B.stat_value) || 0; if (b > a) en.push({ k, a, b, who: e.name || dataName(e.key) }); });
+        });
+      });
+      BUDGET_ENEMY.experts = en;
     } else if (calcKey === "hero_shards") {
       // The roster heroes (the Dashboard's Set 1): stars → ATK / DEF, widget → LETH / HP.
       const last = HERO_PLAN_LAST;
@@ -21448,7 +21771,7 @@ function saveBarHidden() {
   saveCalcState("bar_hidden", out);
 }
 // Folds that start hidden: saved as true (hidden) / false (shown); nothing saved = hidden.
-const BAR_DEFAULT_HIDDEN = new Set(["trd:rules"]);
+const BAR_DEFAULT_HIDDEN = new Set(["trd:rules", "adv:weights"]);
 function barFoldDefault(k) { if (BAR_DEFAULT_HIDDEN.has(k) && !(k in BAR_SHOW_ALL)) BAR_SHOW_ALL[k] = false; }
 // Where a page wants its summary drawn instead of above its boxes (element id).
 const BAR_SUMMARY_HOST = { t12_research: "t12Need", t11_helios: "t11Need", research_center: "rcNeed", chief_gear: "gearNeed", charm: "charmNeed", hero_gear: "heroGearNeed", pets: "petsNeed", pets_refine: "refineNeed" };
@@ -24543,6 +24866,91 @@ async function setHiddenFromVisitors(kind, name, hidden) {
 // The lock/unlock checkmark on cards is owner-only: a visitor's cards are
 // always unlocked (except hidden ones), whatever was saved earlier.
 // A whole pet the admin marked "Upcoming" (site_config "upcoming_pets").
+// Pet skills (Admin → Pets → Pet skill; site_config "pet_skills" = { pet: { name, stats: [{ kind,
+// vals: { "10.1": %, … } }] } }). A skill grows at each Advancement: at a pet level its value is the
+// one of the highest Advancement reached. "+" stats add to your own totals like the pet's ATK / DEF;
+// "Enemy" stats lower that enemy stat (Enemy stats down card, Best upgrades / Free now worth).
+const PET_SKILL_KINDS = {
+  "ATK+": { stat: "Attack" }, "DEF+": { stat: "Defense" }, "LETH+": { stat: "Lethality" }, "HP+": { stat: "Health" },
+  EATK: { enemy: "Enemy Attack" }, EDEF: { enemy: "Enemy Defense" }, ELETH: { enemy: "Enemy Lethality" }, EHP: { enemy: "Enemy Health" },
+};
+function petSkillOf(pet) {
+  const all = (typeof siteConfig === "function" ? siteConfig("pet_skills", {}) : {}) || {}, sk = all[pet];
+  if (!sk || !Array.isArray(sk.stats)) return null;
+  const stats = sk.stats.filter((x) => x && PET_SKILL_KINDS[x.kind] && x.vals && Object.values(x.vals).some((v) => Number(v) > 0));
+  return stats.length ? { name: sk.name || "", stats } : null;
+}
+// Level label → number ("40.1" Advancement = 40.1, "41" = 41).
+const petLvNum = (label) => { const n = parseFloat(String(label == null ? "" : label)); return Number.isFinite(n) ? n : -1; };
+// { stat or enemy stat: % } of a pet's skill at a level label (null / "" = not started).
+function petSkillAt(pet, label) {
+  const sk = petSkillOf(pet), o = {};
+  if (!sk) return o;
+  const lv = petLvNum(label);
+  sk.stats.forEach((x) => {
+    let v = 0, best = -1;
+    Object.entries(x.vals).forEach(([a, val]) => { const n = petLvNum(a); if (n >= 0 && lv >= n - 1e-9 && n > best && Number(val) > 0) { best = n; v = Number(val); } });
+    const k = PET_SKILL_KINDS[x.kind], key = k.stat || k.enemy;
+    if (v > 0) o[key] = (o[key] || 0) + v;
+  });
+  return o;
+}
+// The same by the pet's level index (PETS_NODES_CACHE order; -1 = not started).
+function petSkillAtIdx(pet, i) { const lv = (PETS_NODES_CACHE && PETS_NODES_CACHE[pet]) || []; return i >= 0 && lv[i] ? petSkillAt(pet, lv[i].level_label) : {}; }
+// Advancements where the skill grows, from a level index to another ("50.1, 60.1").
+function petSkillGrows(pet, fromIdx, toIdx) {
+  const sk = petSkillOf(pet), lv = (PETS_NODES_CACHE && PETS_NODES_CACHE[pet]) || [];
+  if (!sk || !(toIdx > fromIdx)) return [];
+  const a = fromIdx >= 0 && lv[fromIdx] ? petLvNum(lv[fromIdx].level_label) : -1, b = lv[toIdx] ? petLvNum(lv[toIdx].level_label) : -1;
+  const set = new Set();
+  sk.stats.forEach((x) => Object.keys(x.vals).forEach((k) => { const n = petLvNum(k); if (n > a + 1e-9 && n <= b + 1e-9 && Number(x.vals[k]) > 0) set.add(n); }));
+  return [...set].sort((x, y) => x - y).map((n) => n.toFixed(1));
+}
+// Enemy stats down right now: experts' skills (Gareth's Fearsome Reputation …) and pets' skills.
+// [{ k: "Enemy Lethality", v: %, who }] — never added to your own totals.
+async function enemyStatsNow() {
+  const out = [];
+  const [, saved, unl, skillRows] = await Promise.all([ensureExpertsRosterGlobal(), loadCalcState("experts"), loadCalcState("experts_unlocked"), loadExpertNodes("skill")]);
+  const st = renameExpertSkills(saved || {});
+  EXPERTS_LIST.forEach((e) => {
+    if (hiddenForVisitor("experts", e.key) || !unlockedFor("experts", e.key, (unl || {})[e.key])) return;
+    (e.skills || []).forEach((sk) => {
+      const lv = Number((((st[e.key] || {}).skills || {})[sk] || {}).current) || 0;
+      let m = null;
+      (skillRows || []).forEach((r) => { if (r.expert === e.key && r.skill === sk && r.level <= lv) m = r; });
+      if (m && m.stat_type) m.stat_type.split(",").map((k) => k.trim()).filter(isEnemyStat).forEach((k) => out.push({ k, v: Number(m.stat_value) || 0, who: e.name || dataName(e.key) }));
+    });
+  });
+  if (Object.values((typeof siteConfig === "function" ? siteConfig("pet_skills", {}) : {}) || {}).length) {
+    await ensurePetsData().catch(() => null);
+    Object.keys(PETS_NODES_CACHE || {}).forEach((pet) => {
+      if (hiddenForVisitor("pets", pet) || !isPetUnlocked(pet)) return;
+      const s = PETS_STATE && PETS_STATE[pet], from = s && typeof s === "object" ? Number(s.from) : -1;
+      Object.entries(petSkillAtIdx(pet, from)).forEach(([k, v]) => { if (isEnemyStat(k)) out.push({ k, v, who: dataName(pet) }); });
+    });
+  }
+  return out.filter((x) => x.v > 0);
+}
+function enemyCardHtml(list) {
+  if (!list || !list.length) return "";
+  return `<div class="enemy-card" data-enemycard><b class="t">${esc(t("enemy_card_title"))}</b><div class="enemy-chips">${list.map((x) => `<span class="enemy-chip">${esc(`${enemyShort(x.k)} ${enemyPct(x.v)}`)} <small>${esc(x.who)}</small></span>`).join("")}</div><div class="meta" style="font-size:11.5px; margin-top:5px;">${esc(t("enemy_card_note"))}</div></div>`;
+}
+// Pets Level card: the pet's skill under Now / Target ("Frost Roar · Enemy ATK −2% → −3%", "Grows at 50.1, 60.1").
+function petSkillRowHtml(pet, from, to) {
+  const sk = petSkillOf(pet);
+  if (!sk) return "";
+  const a = petSkillAtIdx(pet, from), b = petSkillAtIdx(pet, Math.max(from, to)), grows = petSkillGrows(pet, from, to);
+  const lines = sk.stats.map((x) => {
+    const k = PET_SKILL_KINDS[x.kind], key = k.stat || k.enemy, va = a[key] || 0, vb = b[key] || 0;
+    const fmt = (v) => (k.enemy ? (v > 0 ? enemyPct(v) : "0%") : `+${(Math.round(v * 100) / 100).toLocaleString("en-US")}%`);
+    const lab = k.enemy ? enemyShort(k.enemy) : ADV_SHORT[k.stat];
+    return `<div class="pet-sk-l">${esc(lab)} ${bidiNum(fmt(va))}${vb !== va ? ` &rarr; <b>${bidiNum(fmt(vb))}</b>` : ""}</div>`;
+  }).join("");
+  return `<div class="pet-sk"><b>${esc(sk.name || t("pet_skill_word"))}</b><span class="pet-sk-tag">${esc(t("pet_skill_word"))}</span>${lines}${grows.length ? `<div class="meta" style="font-size:11.5px;">${esc(t("pet_skill_grows").replace("{lv}", grows.join(", ")))}</div>` : ""}</div>`;
+}
+// Budgets: enemy stats a page's targets change ({ calcKey: [{ k, a, b, who }] }, set by budgetStatDeltasMore).
+const BUDGET_ENEMY = {};
+let DASH_ENEMY_HTML = ""; // the Dashboard's Enemy stats down card (kept for its redraws)
 function petIsUpcoming(pet) { const l = siteConfig("upcoming_pets", []); return Array.isArray(l) && l.includes(pet); }
 function unlockedFor(kind, name, savedFlag) {
   if (hiddenForVisitor(kind, name)) return false;
@@ -25436,10 +25844,18 @@ async function renderExpertsPage() {
       const at = (lv) => { let m = null; rows.forEach((r) => { if (r.level <= lv) m = r; }); return m; };
       const vAt = (lv) => { const r = at(lv); return troopTypes(r).length ? Number(r.stat_value) || 0 : 0; };
       const typesTxt = typed ? troopTypes(typed).map((k) => EXP_STAT_SHORT[k]).join(" · ") : "";
+      // Enemy stats down (Gareth's Fearsome Reputation …): shown like the other stats, never added to yours.
+      const enTypes = (r) => (r && r.stat_type ? r.stat_type.split(",").map((k) => k.trim()).filter(isEnemyStat) : []);
+      const eTyped = !typed && rows.find((r) => enTypes(r).length);
+      const eAt = (lv) => { const r = at(lv); return enTypes(r).length ? Number(r.stat_value) || 0 : 0; };
+      const eShort = eTyped ? enTypes(eTyped).map((k) => ADV_SHORT[ENEMY_STAT_OF[k]]).join(" · ") : "";
+      const ePct = (v) => (v > 0 ? enemyPct(v) : "0%");
       if (des <= cur && cur >= max) {
+        if (eTyped) return `<div class="exk-sl"><span class="exk-ck" aria-hidden="true">&#10003;</span><b>${esc(dataName(sk))}<span class="exk-sls"> · ${bidiNum(ePct(eAt(cur)))} ${esc(t("enemy_word"))} ${esc(eShort)}</span></b><span class="exk-mx">${esc(t("exp_lv_max_short").replace("{n}", cur))}${curSel}</span></div>`;
         return `<div class="exk-sl"><span class="exk-ck" aria-hidden="true">&#10003;</span><b>${esc(dataName(sk))}${typed ? `<span class="exk-sls"> · ${bidiNum(expPctTxt(vAt(cur)))} ${esc(typesTxt)}</span>` : ""}</b><span class="exk-mx">${esc(t("exp_lv_max_short").replace("{n}", cur))}${curSel}</span></div>`;
       }
-      const stat = typed ? `<div class="exk-bn">${esc(typesTxt)} ${bidiNum(expPctTxt(vAt(cur)))}${des > cur ? ` &rarr; <b>${bidiNum(expPctTxt(vAt(des)))}</b>` : ""}</div>` : "";
+      const stat = typed ? `<div class="exk-bn">${esc(typesTxt)} ${bidiNum(expPctTxt(vAt(cur)))}${des > cur ? ` &rarr; <b>${bidiNum(expPctTxt(vAt(des)))}</b>` : ""}</div>`
+        : eTyped ? `<div class="exk-bn"><span class="enemy-tag">${esc(t("enemy_word"))}</span> ${esc(eShort)} ${bidiNum(ePct(eAt(cur)))}${des > cur ? ` &rarr; <b>${bidiNum(ePct(eAt(des)))}</b>` : ""}</div>` : "";
       let line;
       if (des > cur) {
         const { exp, book } = skillNeed(hero, sk, st);
@@ -26196,6 +26612,7 @@ async function renderPetsDataPage() {
             ${step("from", from, -1, lastIdx, fromOpts)}
             ${step("to", to, Math.max(0, from), lastIdx, levelOpts(to))}
           </div>
+          ${petSkillRowHtml(pet, from, to)}
           ${done ? `<div class="pc-done">&#10003; ${esc(t("pet_done"))}</div>` : `<div class="pc-res">
             ${resBox("Food", PET_MATERIAL_ICONS.food, t("material_food"), needed.food)}
             ${resBox("Manual", PET_MATERIAL_ICONS.manual, t("material_manual"), needed.manual)}
@@ -27328,13 +27745,16 @@ function xhExpResearch(D, troop, ignoreOff) {
 // Pets Level: every counted pet's ATK / DEF now and at its highest open level (all troops).
 function xhPetsLevel() {
   let v = 0, m = 0;
+  const sk = { Attack: { v: 0, m: 0 }, Defense: { v: 0, m: 0 }, Lethality: { v: 0, m: 0 }, Health: { v: 0, m: 0 } };
   Object.keys(PETS_NODES_CACHE || {}).filter((p) => !hiddenForVisitor("pets", p)).forEach((pet) => {
     if (!isPetUnlocked(pet)) return;
     const lv = PETS_NODES_CACHE[pet] || [], s = PETS_STATE && PETS_STATE[pet], from = s && typeof s === "object" ? Number(s.from) : -1;
     if (from >= 0 && lv[from] && lv[from].atk_def_pct != null) v += Number(lv[from].atk_def_pct) * 100;
     for (let i = petMaxIdx(pet); i >= 0; i--) if (lv[i] && lv[i].atk_def_pct != null) { m += Number(lv[i].atk_def_pct) * 100; break; }
+    const a = petSkillAtIdx(pet, from), b = petSkillAtIdx(pet, petMaxIdx(pet));
+    Object.keys(sk).forEach((k) => { sk[k].v += Number(a[k]) || 0; sk[k].m += Number(b[k]) || 0; });
   });
-  return { v, m };
+  return { v, m, sk };
 }
 // Pet Refine for a troop: every counted pet's Lethality / Health now and at the top released stage.
 const XH_REFINE_KEYS = { Infantry: [["il", "infantry_lethality_pct"], ["ih", "infantry_health_pct"]], Lancer: [["ll", "lancer_lethality_pct"], ["lh", "lancer_health_pct"]], Marksman: [["ml", "marksman_lethality_pct"], ["mh", "marksman_health_pct"]] };
@@ -27400,7 +27820,7 @@ function xhPetsDraw() {
   if (!el) return;
   const L = xhPetsLevel(), R = xhPetsRefine(xhTroop("pets"));
   const box = (lab, v, m, dp, c) => `<div class="plx-stat" style="--sc:${c};"><span>${esc(lab)}</span><b>${xhNum(v, dp)}</b><small>${bidiNum(`/ +${Number(Number(m).toFixed(dp))}%`)}</small><div class="t12x-bar"><i style="width:${xhPct(v, m)}%;${m > 0 && v >= m - 1e-6 ? " background:var(--good);" : ""}"></i></div></div>`;
-  el.innerHTML = `${xhTabsHtml("pets")}<div class="plx-stats one xh-g4 xh-p4">${box("ATK", L.v, L.m, 1, "var(--ice)")}${box("DEF", L.v, L.m, 1, "var(--ice)")}${box("LETH", R[0].v, R[0].m, 2, XH_GOLD)}${box("HP", R[1].v, R[1].m, 2, XH_GOLD)}</div>`;
+  el.innerHTML = `${xhTabsHtml("pets")}<div class="plx-stats one xh-g4 xh-p4">${box("ATK", L.v + L.sk.Attack.v, L.m + L.sk.Attack.m, 1, "var(--ice)")}${box("DEF", L.v + L.sk.Defense.v, L.m + L.sk.Defense.m, 1, "var(--ice)")}${box("LETH", R[0].v + L.sk.Lethality.v, R[0].m + L.sk.Lethality.m, 2, XH_GOLD)}${box("HP", R[1].v + L.sk.Health.v, R[1].m + L.sk.Health.m, 2, XH_GOLD)}</div>`;
 }
 document.addEventListener("click", (e) => {
   const tb = e.target.closest && e.target.closest("[data-xhtroop]");

@@ -5,7 +5,7 @@
 // code and the Budgets state other pages read (My Purchases, the Menu, the Dashboard,
 // recordBudgetNeeds / budgetInvalidate, admin.js / scan.js / the planner worker) stay
 // in app.js. The site loads the packed copy budgets.min.js (tools/stamp.js).
-window.BUDGETS_BUILD = "9097fd485c";
+window.BUDGETS_BUILD = "95889bd4a6";
 
 // Order of the Budgets page tiles (owner picked A, 22 Nov 2026): per person in
 // calc_state budget_page_order = { order: [calcKeys] }; display only. Pages
@@ -21,7 +21,7 @@ function b3PageOrdered(list) {
 }
 async function cdaEnsure() {
   if (!visitorCan("cando")) return;
-  await Promise.all([ensureUpgradeOrder(), cdaLoadSettings()]);
+  await Promise.all([ensureUpgradeOrder(), cdaLoadSettings(), advDashTotals()]);
   if (CDA_BUILD_P) return CDA_BUILD_P;
   CDA_BUILT = {}; CDA_LOADED = 0; CDA_PLAN_MEMO = null; CDA_NOTE = null;
   let p = null;
@@ -1095,6 +1095,7 @@ async function renderBudgetsPageMain(opts = {}) {
         ${tradesHtml(pg, shareOf)}</div>
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("pack_cost_title"))}</div>${costHtml}</div>
       ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}${pg.calcKey === "hero_gear" ? ` · ${esc(t("bud_hg_set1").replace("{set}", gearSetDisplayName("Set 1")))}` : ""}</div>${statTableHtml(pg.deltas, pg.calcKey, swapNote)}</div>` : ""}
+      ${(BUDGET_ENEMY[pg.calcKey] || []).length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("enemy_stat_gain"))}</div><div class="enemy-chips">${BUDGET_ENEMY[pg.calcKey].map((x) => `<span class="enemy-chip">${esc(`${enemyShort(x.k)} ${x.a > 0 ? enemyPct(x.a) : "0%"} \u2192 ${enemyPct(x.b)}`)} <small>${esc(x.who)}</small></span>`).join("")}</div><div class="meta" style="font-size:11px; margin-top:4px;">${esc(t("enemy_card_note"))}</div></div>` : ""}
       ${pg.calcKey === "hero_gear" && hgOther.length ? `<div class="meta bud-hgnote">${esc(t("bud_hg_note").replace("{sets}", hgOther.map(gearSetDisplayName).join(" / ")))}</div>` : ""}`, false, { bpCovers });
   });
 
